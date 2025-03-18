@@ -158,7 +158,7 @@ const Dashboard = () => {
             </div>
           </div>
           
-          <EnergyForecastCard className="mb-6 animate-slide-up" style={{ animationDelay: '0.4s' }} />
+          <EnergyForecastCard className="mb-6 animate-slide-up" animationDelay="0.4s" />
           
           <GlassPanel className="mt-2 p-4 text-xs text-center text-muted-foreground animate-fade-in" style={{ animationDelay: '0.5s' }}>
             GridWise Energy Management System — Real-time data last updated: {new Date().toLocaleTimeString()}

@@ -38,9 +38,10 @@ const weatherConditions = [
 
 interface EnergyForecastCardProps {
   className?: string;
+  animationDelay?: string;
 }
 
-const EnergyForecastCard = ({ className }: EnergyForecastCardProps) => {
+const EnergyForecastCard = ({ className, animationDelay }: EnergyForecastCardProps) => {
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       const hourData = weatherConditions.find(item => item.hour === label);
@@ -78,6 +79,7 @@ const EnergyForecastCard = ({ className }: EnergyForecastCardProps) => {
       title="24-Hour Energy Forecast"
       icon={<LineChart size={18} />}
       className={className}
+      style={animationDelay ? { animationDelay } : undefined}
     >
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 mt-2 mb-4">
         <div className="glass-panel p-2 rounded-lg">
