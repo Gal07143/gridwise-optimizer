@@ -128,7 +128,7 @@ export const createDevice = async (deviceData: Omit<EnergyDevice, 'id' | 'create
 
     if (!siteId) {
       console.log("No site found, creating a new one");
-      const siteResponse = await import('./siteService').then(module => module.createDummySite());
+      const siteResponse = await import('../sites/siteService').then(module => module.createDummySite());
       if (siteResponse) {
         siteId = siteResponse.id;
         console.log("Created new site with ID:", siteId);
