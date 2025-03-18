@@ -25,13 +25,13 @@ export function useRealtimeUpdates({
   useEffect(() => {
     if (!enabled) return;
     
-    // Create a channel with a specific name
+    // Create a channel for db changes
     const channel = supabase.channel('db-changes');
     
-    // Track when we're subscribed
+    // Track subscription status
     let isSubscribed = false;
     
-    // Configure event handlers for presence
+    // Configure presence events
     channel
       .on('presence', { event: 'sync' }, () => {
         setConnected(true);
@@ -45,14 +45,14 @@ export function useRealtimeUpdates({
         console.log(`Left realtime channel for ${table}`);
       });
     
-    // Configure the postgres changes listeners - one for each event type
+    // Configure PostgreSQL change listeners for each event type
     events.forEach(event => {
       channel.on(
-        'postgres_changes',
+        'postgres_changes', 
         { 
           event: event, 
           schema: 'public', 
-          table: table
+          table: table 
         },
         (payload) => {
           console.log(`Realtime ${event} received:`, payload);
@@ -63,7 +63,7 @@ export function useRealtimeUpdates({
       );
     });
     
-    // Subscribe to the channel after all listeners are registered
+    // Subscribe to the channel
     channel.subscribe((status, err) => {
       if (status === 'SUBSCRIBED') {
         isSubscribed = true;
@@ -74,7 +74,7 @@ export function useRealtimeUpdates({
       }
     });
     
-    // Clean up subscription
+    // Clean up subscription on unmount
     return () => {
       if (isSubscribed) {
         console.log(`Removing channel for ${table}`);
