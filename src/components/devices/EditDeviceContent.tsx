@@ -1,106 +1,99 @@
 
-import React from 'react';
-import { useEditDeviceForm } from '@/hooks/useEditDeviceForm';
-import DeviceForm from '@/components/devices/DeviceForm';
-import DevicePageHeader from '@/components/devices/DevicePageHeader';
-import GlassPanel from '@/components/ui/GlassPanel';
-import { AlertTriangle, RefreshCw } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import React, { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { getDeviceById } from '@/services/devices';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Skeleton } from '@/components/ui/skeleton';
+import { AlertTriangle, BarChart, Settings, History, Tool, ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { validateDeviceForm, errorsToRecord } from '@/utils/validation';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import DeviceForm from './DeviceForm';
+import DeviceControls from './DeviceControls';
+import DeviceLogger from './DeviceLogger';
+import DevicePageHeader from './DevicePageHeader';
+import DeviceMaintenance from './DeviceMaintenance';
 
 const EditDeviceContent = () => {
-  const {
-    device,
-    isLoading,
-    isSubmitting,
-    error,
-    handleInputChange,
-    handleSelectChange,
-    handleSubmit,
-    navigateBack,
-    refetch
-  } = useEditDeviceForm();
+  const { deviceId } = useParams<{ deviceId: string }>();
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('details');
   
-  const [validationErrors, setValidationErrors] = React.useState<Record<string, string>>({});
-
-  const handleValidatedSubmit = (e?: React.FormEvent) => {
-    if (!device) return;
-    
-    const errors = validateDeviceForm(device);
-    const errorRecord = errorsToRecord(errors);
-    
-    setValidationErrors(errorRecord);
-    
-    if (errors.length === 0) {
-      handleSubmit(e);
-    }
-  };
-
+  const { data: device, isLoading, error } = useQuery({
+    queryKey: ['device', deviceId],
+    queryFn: () => getDeviceById(deviceId as string),
+    enabled: !!deviceId,
+  });
+  
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center h-full p-12">
-        <LoadingSpinner size="lg" className="text-primary mb-4" />
-        <p className="text-muted-foreground">Loading device information...</p>
+      <div className="container py-6">
+        <div className="flex flex-col space-y-8">
+          <Skeleton className="h-[50px] w-[300px]" />
+          <Skeleton className="h-[400px] w-full" />
+        </div>
       </div>
     );
   }
   
-  if (error) {
+  if (error || !device) {
     return (
-      <div className="flex flex-col items-center justify-center h-full">
-        <Alert variant="destructive" className="mb-4 max-w-lg">
+      <div className="container py-6">
+        <Button 
+          variant="ghost" 
+          className="mb-4" 
+          onClick={() => navigate('/devices')}
+        >
+          <ChevronLeft className="mr-2 h-4 w-4" /> Back to Devices
+        </Button>
+        
+        <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Error Loading Device</AlertTitle>
-          <AlertDescription className="flex items-center justify-between">
-            <span>Failed to load device information. The device may have been deleted or you don't have permission to view it.</span>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => refetch()}
-              className="ml-2 border-destructive hover:bg-destructive/10"
-            >
-              <RefreshCw className="h-3 w-3 mr-1" />
-              Retry
-            </Button>
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>
+            Failed to load device details. The device may not exist or there was a network error.
           </AlertDescription>
         </Alert>
-        
-        <Button onClick={navigateBack} className="mt-4">
-          Return to Devices
-        </Button>
       </div>
     );
   }
-
-  if (!device) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-muted-foreground">Device not found</p>
-      </div>
-    );
-  }
-
+  
   return (
-    <>
-      <DevicePageHeader 
-        title="Edit Device"
-        subtitle="Modify device configuration"
-        onBack={navigateBack}
-        onSave={handleValidatedSubmit}
-        isSaving={isSubmitting}
-      />
+    <div className="container py-6">
+      <DevicePageHeader device={device} />
       
-      <GlassPanel className="p-6">
-        <DeviceForm 
-          device={device}
-          handleInputChange={handleInputChange}
-          handleSelectChange={handleSelectChange}
-          validationErrors={validationErrors}
-        />
-      </GlassPanel>
-    </>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
+        <TabsList className="mb-8">
+          <TabsTrigger value="details">Details</TabsTrigger>
+          <TabsTrigger value="controls">Controls</TabsTrigger>
+          <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
+          <TabsTrigger value="history">History</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="details">
+          <DeviceForm deviceId={device.id} deviceType={device.type} />
+        </TabsContent>
+        
+        <TabsContent value="controls">
+          <DeviceControls device={device} />
+        </TabsContent>
+        
+        <TabsContent value="maintenance">
+          <DeviceMaintenance 
+            deviceId={device.id}
+            deviceType={device.type} 
+            deviceStatus={device.status}
+            deviceName={device.name}
+            installationDate={device.installation_date}
+          />
+        </TabsContent>
+        
+        <TabsContent value="history">
+          <DeviceLogger deviceId={device.id} deviceType={device.type} />
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 };
 

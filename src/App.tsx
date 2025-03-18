@@ -22,6 +22,10 @@ import Notifications from "./components/ui/Notifications";
 import Alerts from "./pages/Alerts";
 import Reports from "./pages/Reports";
 import Security from "./pages/Security";
+import Documentation from "./pages/Documentation";
+import SystemStatus from "./pages/SystemStatus";
+import EnergyFlow from "./pages/EnergyFlow";
+import MicrogridControl from "./pages/MicrogridControl";
 
 import GeneralSettings from "./pages/settings/GeneralSettings";
 import UserSettings from "./pages/settings/UserSettings";
@@ -44,6 +48,7 @@ import AddSite from "./pages/settings/AddSite";
 import EditSite from "./pages/settings/EditSite";
 import OperationalThresholds from "./pages/settings/OperationalThresholds";
 import OptimizationAlgorithms from "./pages/settings/OptimizationAlgorithms";
+import ApiKeyManagement from "./pages/settings/ApiKeyManagement";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -123,6 +128,10 @@ const App = () => (
                 <Route path="/alerts" element={<ProtectedRoute><Alerts /></ProtectedRoute>} />
                 <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
                 <Route path="/security" element={<ProtectedRoute><Security /></ProtectedRoute>} />
+                <Route path="/documentation" element={<ProtectedRoute><Documentation /></ProtectedRoute>} />
+                <Route path="/system-status" element={<ProtectedRoute><SystemStatus /></ProtectedRoute>} />
+                <Route path="/energy-flow" element={<ProtectedRoute><EnergyFlow /></ProtectedRoute>} />
+                <Route path="/microgrid" element={<ProtectedRoute><MicrogridControl /></ProtectedRoute>} />
                 
                 {/* Site Management */}
                 <Route path="/settings/sites/add" element={<ProtectedRoute><AddSite /></ProtectedRoute>} />
@@ -145,6 +154,7 @@ const App = () => (
                 
                 {/* Integrations */}
                 <Route path="/settings/api" element={<ProtectedRoute><ApiSettings /></ProtectedRoute>} />
+                <Route path="/settings/api-keys" element={<ProtectedRoute><ApiKeyManagement /></ProtectedRoute>} />
                 <Route path="/settings/services" element={<ProtectedRoute><ExternalServices /></ProtectedRoute>} />
                 <Route path="/settings/notifications" element={<ProtectedRoute><NotificationServices /></ProtectedRoute>} />
                 
@@ -159,14 +169,9 @@ const App = () => (
                 <Route path="/settings/algorithms" element={<ProtectedRoute><OptimizationAlgorithms /></ProtectedRoute>} />
                 
                 {/* Additional Settings */}
-                <Route path="/settings/api-keys" element={<ProtectedRoute><SettingsPlaceholder title="API Key Management" /></ProtectedRoute>} />
                 <Route path="/settings/profile" element={<ProtectedRoute><SettingsPlaceholder title="User Profile" /></ProtectedRoute>} />
                 <Route path="/settings/preferences" element={<ProtectedRoute><SettingsPlaceholder title="User Preferences" /></ProtectedRoute>} />
                 
-                <Route path="/energy-flow" element={<ProtectedRoute><SettingsPlaceholder title="Energy Flow" /></ProtectedRoute>} /> 
-                <Route path="/microgrid" element={<ProtectedRoute><SettingsPlaceholder title="Microgrid Control" /></ProtectedRoute>} /> 
-                <Route path="/system-status" element={<ProtectedRoute><SettingsPlaceholder title="System Status" /></ProtectedRoute>} />
-                <Route path="/documentation" element={<ProtectedRoute><SettingsPlaceholder title="Documentation" /></ProtectedRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
