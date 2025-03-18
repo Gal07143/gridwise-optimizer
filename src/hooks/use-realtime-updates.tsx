@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { RealtimeChannel } from '@supabase/supabase-js';
+import { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
 type RealtimeEvent = 'INSERT' | 'UPDATE' | 'DELETE';
 type RealtimeTable = 'devices' | 'energy_readings' | 'alerts';
@@ -49,11 +49,11 @@ export function useRealtimeUpdates({
     // Configure PostgreSQL change listeners for each event type
     events.forEach(event => {
       channel.on(
-        'postgres_changes', 
-        { 
-          event, 
-          schema: 'public', 
-          table 
+        'postgres_changes',
+        {
+          event,
+          schema: 'public',
+          table
         },
         (payload) => {
           console.log(`Realtime ${event} received:`, payload);
