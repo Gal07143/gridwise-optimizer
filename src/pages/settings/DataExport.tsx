@@ -7,12 +7,12 @@ import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { DatePicker } from '@/components/ui/date-picker';
 import { toast } from 'sonner';
 import { FileDown, Calendar, Download, FileSpreadsheet, FileText, BarChart4, Database } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { DatePicker } from '@/components/ui/date-picker';
-import { Badge } from '@/components/ui/badge';
 
 // Mock data
 const exportHistory = [
@@ -63,7 +63,7 @@ const exportHistory = [
   }
 ];
 
-const DataExport = () => {
+const DataExportPage = () => {
   return (
     <SettingsPageTemplate 
       title="Data Export" 
@@ -464,4 +464,4 @@ const DataExport = () => {
   );
 };
 
-export default DataExport;
+export default DataExportPage;

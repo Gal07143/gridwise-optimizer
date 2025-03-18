@@ -12,13 +12,15 @@ interface SettingsPageTemplateProps {
   description?: string;
   children: ReactNode;
   backLink?: string;
+  headerIcon?: ReactNode;
 }
 
 const SettingsPageTemplate = ({ 
   title, 
   description, 
   children, 
-  backLink = '/settings' 
+  backLink = '/settings',
+  headerIcon
 }: SettingsPageTemplateProps) => {
   const navigate = useNavigate();
 
@@ -38,7 +40,14 @@ const SettingsPageTemplate = ({
               <ChevronLeft size={16} />
               <span>Back to Settings</span>
             </Button>
-            <h1 className="text-2xl font-semibold mb-1">{title}</h1>
+            <div className="flex items-center gap-3 mb-1">
+              {headerIcon && (
+                <div className="rounded-full p-2 bg-primary/10 text-primary">
+                  {headerIcon}
+                </div>
+              )}
+              <h1 className="text-2xl font-semibold">{title}</h1>
+            </div>
             {description && <p className="text-muted-foreground">{description}</p>}
           </div>
           

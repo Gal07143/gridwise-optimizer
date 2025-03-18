@@ -10,10 +10,10 @@ import { Slider } from '@/components/ui/slider';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { Cpu, Sliders, BarChart4, LineChart, Cog, Code } from 'lucide-react';
+import { Cpu, Sliders, BarChart4, LineChart, Cog } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-const ProcessingSettings = () => {
+const ProcessingSettingsPage = () => {
   return (
     <SettingsPageTemplate 
       title="Processing Settings" 
@@ -87,408 +87,394 @@ const ProcessingSettings = () => {
             <Separator />
             
             <div>
-              <h3 className="text-lg font-medium mb-4">Error Handling</h3>
+              <h3 className="text-lg font-medium mb-4">Processing Queue</h3>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label htmlFor="autoRetry">Automatic Retry</Label>
-                    <p className="text-sm text-muted-foreground">Automatically retry failed processing tasks</p>
+                    <Label htmlFor="queueEnabled">Processing Queue</Label>
+                    <p className="text-sm text-muted-foreground">Enable background processing queue</p>
                   </div>
-                  <Switch id="autoRetry" defaultChecked />
+                  <Switch id="queueEnabled" defaultChecked />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="maxRetries">Maximum Retries</Label>
-                  <Select defaultValue="3">
-                    <SelectTrigger id="maxRetries">
-                      <SelectValue placeholder="Select max retries" />
+                  <Label htmlFor="queuePriority">Queue Priority Strategy</Label>
+                  <Select defaultValue="fifo">
+                    <SelectTrigger id="queuePriority">
+                      <SelectValue placeholder="Select strategy" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="1">1 retry</SelectItem>
-                      <SelectItem value="3">3 retries</SelectItem>
-                      <SelectItem value="5">5 retries</SelectItem>
-                      <SelectItem value="10">10 retries</SelectItem>
+                      <SelectItem value="fifo">First In, First Out</SelectItem>
+                      <SelectItem value="priority">Priority Based</SelectItem>
+                      <SelectItem value="deadline">Deadline Based</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="errorNotification">Error Notifications</Label>
-                    <p className="text-sm text-muted-foreground">Send notifications for processing errors</p>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="maxQueueSize">Maximum Queue Size</Label>
+                    <span className="text-muted-foreground">1000 items</span>
                   </div>
-                  <Switch id="errorNotification" defaultChecked />
+                  <Slider defaultValue={[1000]} min={100} max={10000} step={100} id="maxQueueSize" />
+                  <p className="text-xs text-muted-foreground">Maximum number of items in the processing queue</p>
                 </div>
               </div>
+            </div>
+            
+            <div className="flex justify-end">
+              <Button onClick={() => toast.success('Processing settings saved')}>
+                Save Changes
+              </Button>
             </div>
           </TabsContent>
           
           <TabsContent value="aggregation" className="space-y-6 pt-4">
             <div>
-              <h3 className="text-lg font-medium mb-4">Data Aggregation</h3>
-              
-              <Card className="mb-6">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <BarChart4 className="h-5 w-5" />
-                    <span>Energy Data Aggregation</span>
-                  </CardTitle>
-                  <CardDescription>
-                    Configure how energy data is aggregated for reports and visualization
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="defaultAggregation">Default Aggregation</Label>
-                      <Select defaultValue="hourly">
-                        <SelectTrigger id="defaultAggregation">
-                          <SelectValue placeholder="Select aggregation" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="minute">Per Minute</SelectItem>
-                          <SelectItem value="hourly">Hourly</SelectItem>
-                          <SelectItem value="daily">Daily</SelectItem>
-                          <SelectItem value="weekly">Weekly</SelectItem>
-                          <SelectItem value="monthly">Monthly</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label htmlFor="aggregateOnIngestion">Aggregate on Ingestion</Label>
-                        <p className="text-sm text-muted-foreground">Pre-aggregate data when it's first received</p>
-                      </div>
-                      <Switch id="aggregateOnIngestion" defaultChecked />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="aggregationMethod">Aggregation Method</Label>
-                      <Select defaultValue="avg">
-                        <SelectTrigger id="aggregationMethod">
-                          <SelectValue placeholder="Select method" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="avg">Average</SelectItem>
-                          <SelectItem value="sum">Sum</SelectItem>
-                          <SelectItem value="min">Minimum</SelectItem>
-                          <SelectItem value="max">Maximum</SelectItem>
-                          <SelectItem value="median">Median</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <h3 className="text-lg font-medium mb-4">Data Aggregation Settings</h3>
               
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <LineChart className="h-5 w-5" />
-                    <span>Metrics Aggregation</span>
-                  </CardTitle>
-                  <CardDescription>
-                    Configure how device metrics are aggregated
-                  </CardDescription>
+                  <CardTitle>Time-Based Aggregation</CardTitle>
+                  <CardDescription>Configure data aggregation intervals</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="minuteAggregation">Minute Aggregation</Label>
+                        <p className="text-sm text-muted-foreground">Aggregate data by minute</p>
+                      </div>
+                      <Switch id="minuteAggregation" defaultChecked />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="hourlyAggregation">Hourly Aggregation</Label>
+                        <p className="text-sm text-muted-foreground">Aggregate data by hour</p>
+                      </div>
+                      <Switch id="hourlyAggregation" defaultChecked />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="dailyAggregation">Daily Aggregation</Label>
+                        <p className="text-sm text-muted-foreground">Aggregate data by day</p>
+                      </div>
+                      <Switch id="dailyAggregation" defaultChecked />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="monthlyAggregation">Monthly Aggregation</Label>
+                        <p className="text-sm text-muted-foreground">Aggregate data by month</p>
+                      </div>
+                      <Switch id="monthlyAggregation" defaultChecked />
+                    </div>
+                    
                     <div className="space-y-2">
-                      <Label htmlFor="metricsAggregation">Default Metrics Aggregation</Label>
-                      <Select defaultValue="5min">
-                        <SelectTrigger id="metricsAggregation">
-                          <SelectValue placeholder="Select aggregation" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="raw">No Aggregation (Raw)</SelectItem>
-                          <SelectItem value="1min">1 Minute</SelectItem>
-                          <SelectItem value="5min">5 Minutes</SelectItem>
-                          <SelectItem value="15min">15 Minutes</SelectItem>
-                          <SelectItem value="hourly">Hourly</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label htmlFor="outlierDetection">Outlier Detection</Label>
-                        <p className="text-sm text-muted-foreground">Detect and handle outlier values</p>
-                      </div>
-                      <Switch id="outlierDetection" defaultChecked />
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label htmlFor="missingDataInterpolation">Missing Data Interpolation</Label>
-                        <p className="text-sm text-muted-foreground">Fill in missing data points using interpolation</p>
-                      </div>
-                      <Switch id="missingDataInterpolation" defaultChecked />
+                      <Label htmlFor="customInterval">Custom Aggregation Interval (minutes)</Label>
+                      <Input id="customInterval" type="number" defaultValue="15" min="1" />
+                      <p className="text-xs text-muted-foreground">Create custom aggregation intervals in minutes</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
+              
+              <Card className="mt-4">
+                <CardHeader>
+                  <CardTitle>Aggregation Methods</CardTitle>
+                  <CardDescription>Configure data aggregation calculation methods</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="grid gap-4 grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="numericMethod">Numeric Values</Label>
+                        <Select defaultValue="avg">
+                          <SelectTrigger id="numericMethod">
+                            <SelectValue placeholder="Select method" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="avg">Average</SelectItem>
+                            <SelectItem value="sum">Sum</SelectItem>
+                            <SelectItem value="min">Minimum</SelectItem>
+                            <SelectItem value="max">Maximum</SelectItem>
+                            <SelectItem value="median">Median</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="statusMethod">Status Values</Label>
+                        <Select defaultValue="latest">
+                          <SelectTrigger id="statusMethod">
+                            <SelectValue placeholder="Select method" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="latest">Latest Value</SelectItem>
+                            <SelectItem value="most_common">Most Common</SelectItem>
+                            <SelectItem value="worst">Worst Status</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="interpolation">Interpolation</Label>
+                        <p className="text-sm text-muted-foreground">Interpolate missing values</p>
+                      </div>
+                      <Switch id="interpolation" defaultChecked />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="outlierRemoval">Outlier Removal</Label>
+                        <p className="text-sm text-muted-foreground">Filter out statistical outliers</p>
+                      </div>
+                      <Switch id="outlierRemoval" defaultChecked />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            
+            <div className="flex justify-end">
+              <Button onClick={() => toast.success('Aggregation settings saved')}>
+                Save Changes
+              </Button>
             </div>
           </TabsContent>
           
           <TabsContent value="optimization" className="space-y-6 pt-4">
             <div>
-              <h3 className="text-lg font-medium mb-4">Optimization Settings</h3>
+              <h3 className="text-lg font-medium mb-4">Performance Optimization</h3>
               
-              <Card className="mb-6">
+              <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Sliders className="h-5 w-5" />
-                    <span>Performance Optimization</span>
-                  </CardTitle>
-                  <CardDescription>
-                    Configure system performance optimization
-                  </CardDescription>
+                  <CardTitle>Query Optimization</CardTitle>
+                  <CardDescription>Configure database query performance settings</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
-                        <Label htmlFor="cacheResults">Cache Processing Results</Label>
-                        <p className="text-sm text-muted-foreground">Cache results to improve query performance</p>
+                        <Label htmlFor="queryCache">Query Cache</Label>
+                        <p className="text-sm text-muted-foreground">Cache frequently used queries</p>
                       </div>
-                      <Switch id="cacheResults" defaultChecked />
+                      <Switch id="queryCache" defaultChecked />
                     </div>
                     
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <Label htmlFor="cacheSize">Cache Size (MB)</Label>
-                        <span className="text-muted-foreground">512</span>
+                        <Label htmlFor="queryCacheSize">Query Cache Size (MB)</Label>
+                        <span className="text-muted-foreground">256 MB</span>
                       </div>
-                      <Slider defaultValue={[512]} min={128} max={2048} step={128} id="cacheSize" />
-                      <p className="text-xs text-muted-foreground">Adjust cache size (128-2048 MB)</p>
+                      <Slider defaultValue={[256]} min={64} max={1024} step={64} id="queryCacheSize" />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="preparedStatements">Prepared Statements</Label>
+                        <p className="text-sm text-muted-foreground">Use prepared statements for performance</p>
+                      </div>
+                      <Switch id="preparedStatements" defaultChecked />
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="cacheExpiry">Cache Expiry</Label>
-                      <Select defaultValue="1h">
-                        <SelectTrigger id="cacheExpiry">
-                          <SelectValue placeholder="Select expiry time" />
+                      <Label htmlFor="indexingStrategy">Indexing Strategy</Label>
+                      <Select defaultValue="auto">
+                        <SelectTrigger id="indexingStrategy">
+                          <SelectValue placeholder="Select strategy" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="15m">15 minutes</SelectItem>
-                          <SelectItem value="30m">30 minutes</SelectItem>
-                          <SelectItem value="1h">1 hour</SelectItem>
-                          <SelectItem value="6h">6 hours</SelectItem>
-                          <SelectItem value="24h">24 hours</SelectItem>
+                          <SelectItem value="auto">Automatic</SelectItem>
+                          <SelectItem value="minimal">Minimal (Faster Writes)</SelectItem>
+                          <SelectItem value="aggressive">Aggressive (Faster Reads)</SelectItem>
+                          <SelectItem value="balanced">Balanced</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card className="mt-4">
+                <CardHeader>
+                  <CardTitle>Data Storage Optimization</CardTitle>
+                  <CardDescription>Optimize data storage for performance</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="compressionEnabled">Data Compression</Label>
+                        <p className="text-sm text-muted-foreground">Compress stored data to save space</p>
+                      </div>
+                      <Switch id="compressionEnabled" defaultChecked />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="compressionLevel">Compression Level</Label>
+                      <Select defaultValue="balanced">
+                        <SelectTrigger id="compressionLevel">
+                          <SelectValue placeholder="Select level" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="low">Low (Faster)</SelectItem>
+                          <SelectItem value="balanced">Balanced</SelectItem>
+                          <SelectItem value="high">High (Smaller)</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
-                        <Label htmlFor="queryOptimization">Query Optimization</Label>
-                        <p className="text-sm text-muted-foreground">Automatically optimize database queries</p>
+                        <Label htmlFor="partitioning">Data Partitioning</Label>
+                        <p className="text-sm text-muted-foreground">Partition data for faster queries</p>
                       </div>
-                      <Switch id="queryOptimization" defaultChecked />
+                      <Switch id="partitioning" defaultChecked />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="partitioningStrategy">Partitioning Strategy</Label>
+                      <Select defaultValue="time">
+                        <SelectTrigger id="partitioningStrategy">
+                          <SelectValue placeholder="Select strategy" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="time">Time-based</SelectItem>
+                          <SelectItem value="device">Device-based</SelectItem>
+                          <SelectItem value="hybrid">Hybrid</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-              
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Cog className="h-5 w-5" />
-                    <span>Resource Management</span>
-                  </CardTitle>
-                  <CardDescription>
-                    Configure system resource allocation
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="cpuLimit">CPU Limit (%)</Label>
-                        <span className="text-muted-foreground">75%</span>
-                      </div>
-                      <Slider defaultValue={[75]} min={25} max={100} step={5} id="cpuLimit" />
-                      <p className="text-xs text-muted-foreground">Limit CPU usage for processing tasks</p>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="memoryLimit">Memory Limit (%)</Label>
-                        <span className="text-muted-foreground">50%</span>
-                      </div>
-                      <Slider defaultValue={[50]} min={25} max={90} step={5} id="memoryLimit" />
-                      <p className="text-xs text-muted-foreground">Limit memory usage for processing tasks</p>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label htmlFor="lowPriorityBackground">Low Priority Background</Label>
-                        <p className="text-sm text-muted-foreground">Run background tasks at lower priority</p>
-                      </div>
-                      <Switch id="lowPriorityBackground" defaultChecked />
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label htmlFor="throttleOnLoad">Throttle on High Load</Label>
-                        <p className="text-sm text-muted-foreground">Automatically throttle processing on high system load</p>
-                      </div>
-                      <Switch id="throttleOnLoad" defaultChecked />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+            </div>
+            
+            <div className="flex justify-end">
+              <Button onClick={() => toast.success('Optimization settings saved')}>
+                Save Changes
+              </Button>
             </div>
           </TabsContent>
           
           <TabsContent value="advanced" className="space-y-6 pt-4">
             <div>
-              <h3 className="text-lg font-medium mb-4">Advanced Settings</h3>
-              
-              <Card className="mb-6">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Code className="h-5 w-5" />
-                    <span>Custom Processing Rules</span>
-                  </CardTitle>
-                  <CardDescription>
-                    Define custom processing logic
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label htmlFor="customRules">Enable Custom Rules</Label>
-                        <p className="text-sm text-muted-foreground">Apply custom processing rules to data</p>
-                      </div>
-                      <Switch id="customRules" />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="rulesConfig">Rules Configuration</Label>
-                      <div className="border rounded-md">
-                        <Input
-                          id="rulesConfig"
-                          className="font-mono text-xs"
-                          disabled
-                          defaultValue="{&quot;rules&quot;: [{&quot;id&quot;: &quot;rule1&quot;, &quot;condition&quot;: &quot;value > threshold&quot;, &quot;action&quot;: &quot;notify&quot;}]}"
-                        />
-                      </div>
-                      <p className="text-xs text-muted-foreground">JSON configuration for processing rules</p>
-                    </div>
-                    
-                    <Button 
-                      variant="outline" 
-                      className="w-full"
-                      onClick={() => toast.info('Rules editor will open')}
-                    >
-                      Open Rules Editor
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card className="mb-6">
-                <CardHeader>
-                  <CardTitle>Debug Mode</CardTitle>
-                  <CardDescription>
-                    Enable additional debugging information
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label htmlFor="debugMode">Debug Logging</Label>
-                        <p className="text-sm text-muted-foreground">Enable verbose debug logging</p>
-                      </div>
-                      <Switch id="debugMode" />
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label htmlFor="performanceTracking">Performance Tracking</Label>
-                        <p className="text-sm text-muted-foreground">Track detailed processing performance metrics</p>
-                      </div>
-                      <Switch id="performanceTracking" defaultChecked />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="logLevel">Log Level</Label>
-                      <Select defaultValue="info">
-                        <SelectTrigger id="logLevel">
-                          <SelectValue placeholder="Select log level" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="error">Error</SelectItem>
-                          <SelectItem value="warn">Warning</SelectItem>
-                          <SelectItem value="info">Info</SelectItem>
-                          <SelectItem value="debug">Debug</SelectItem>
-                          <SelectItem value="trace">Trace</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </CardContent>
-                <CardFooter>
-                  <Button 
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => toast.success('Debug logs cleared')}
-                  >
-                    Clear Debug Logs
-                  </Button>
-                </CardFooter>
-              </Card>
+              <h3 className="text-lg font-medium mb-4">Advanced Processing Settings</h3>
               
               <Card>
                 <CardHeader>
-                  <CardTitle>System Maintenance</CardTitle>
-                  <CardDescription>
-                    System maintenance operations
-                  </CardDescription>
+                  <CardTitle>Algorithm Configuration</CardTitle>
+                  <CardDescription>Customize data processing algorithms</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <Button 
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => toast.success('Temporary files cleared')}
-                    >
-                      Clear Temporary Files
-                    </Button>
+                    <div className="space-y-2">
+                      <Label htmlFor="filterAlgorithm">Filtering Algorithm</Label>
+                      <Select defaultValue="kalman">
+                        <SelectTrigger id="filterAlgorithm">
+                          <SelectValue placeholder="Select algorithm" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="kalman">Kalman Filter</SelectItem>
+                          <SelectItem value="moving_avg">Moving Average</SelectItem>
+                          <SelectItem value="exponential">Exponential Smoothing</SelectItem>
+                          <SelectItem value="none">No Filtering</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                     
-                    <Button 
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => toast.success('Processing queue cleared')}
-                    >
-                      Reset Processing Queue
-                    </Button>
+                    <div className="space-y-2">
+                      <Label htmlFor="predictionModel">Prediction Model</Label>
+                      <Select defaultValue="arima">
+                        <SelectTrigger id="predictionModel">
+                          <SelectValue placeholder="Select model" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="arima">ARIMA</SelectItem>
+                          <SelectItem value="lstm">LSTM Neural Network</SelectItem>
+                          <SelectItem value="prophet">Prophet</SelectItem>
+                          <SelectItem value="none">No Prediction</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                     
-                    <Button 
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => toast.success('Cache cleared')}
-                    >
-                      Clear Processing Cache
-                    </Button>
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="adaptiveProcessing">Adaptive Processing</Label>
+                        <p className="text-sm text-muted-foreground">Automatically adjust processing based on data patterns</p>
+                      </div>
+                      <Switch id="adaptiveProcessing" defaultChecked />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="debugLogging">Debug Logging</Label>
+                        <p className="text-sm text-muted-foreground">Enable detailed processing logs</p>
+                      </div>
+                      <Switch id="debugLogging" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card className="mt-4">
+                <CardHeader>
+                  <CardTitle>External Processing</CardTitle>
+                  <CardDescription>Configure external data processing services</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="externalEnabled">External Processing</Label>
+                        <p className="text-sm text-muted-foreground">Use external service for heavy processing</p>
+                      </div>
+                      <Switch id="externalEnabled" />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="externalEndpoint">Service Endpoint</Label>
+                      <Input id="externalEndpoint" placeholder="https://processing.example.com/api" disabled />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="apiKey">API Key</Label>
+                      <Input id="apiKey" type="password" placeholder="Your API key" disabled />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="failover">Local Failover</Label>
+                        <p className="text-sm text-muted-foreground">Fall back to local processing if service unavailable</p>
+                      </div>
+                      <Switch id="failover" defaultChecked />
+                    </div>
                   </div>
                 </CardContent>
               </Card>
             </div>
+            
+            <div className="flex justify-between">
+              <Button 
+                variant="outline" 
+                onClick={() => toast.info('Reset to default settings')}
+              >
+                Reset to Default
+              </Button>
+              <Button onClick={() => toast.success('Advanced settings saved')}>
+                Save Changes
+              </Button>
+            </div>
           </TabsContent>
         </Tabs>
-        
-        <div className="flex justify-end space-x-2">
-          <Button variant="outline">Reset to Default</Button>
-          <Button onClick={() => toast.success('Processing settings saved')}>Save Changes</Button>
-        </div>
       </div>
     </SettingsPageTemplate>
   );
 };
 
-export default ProcessingSettings;
+export default ProcessingSettingsPage;

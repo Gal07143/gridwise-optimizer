@@ -14,7 +14,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-const StorageConfiguration = () => {
+const StorageConfigurationPage = () => {
   return (
     <SettingsPageTemplate 
       title="Storage Configuration" 
@@ -585,4 +585,4 @@ const StorageConfiguration = () => {
   );
 };
 
-export default StorageConfiguration;
+export default StorageConfigurationPage;
