@@ -74,10 +74,17 @@ const Auth = () => {
   const onLoginSubmit = async (values: z.infer<typeof loginSchema>) => {
     setIsSubmitting(true);
     try {
+      console.log('Login attempt:', values.email);
       const { error } = await signIn(values.email, values.password);
       if (!error) {
+        console.log('Login successful, redirecting...');
         navigate('/');
+      } else {
+        console.error('Login error:', error);
       }
+    } catch (err) {
+      console.error('Login exception:', err);
+      toast.error('An unexpected error occurred');
     } finally {
       setIsSubmitting(false);
     }
@@ -86,6 +93,7 @@ const Auth = () => {
   const onSignupSubmit = async (values: z.infer<typeof signupSchema>) => {
     setIsSubmitting(true);
     try {
+      console.log('Signup attempt:', values.email);
       const { error } = await signUp(
         values.email,
         values.password,
@@ -99,6 +107,7 @@ const Auth = () => {
         // Set the role to admin if isAdmin is checked
         if (values.isAdmin) {
           try {
+            console.log('Attempting to set admin role');
             // First, get the user that was just created
             const { data: userData } = await supabase
               .from('profiles')
@@ -107,6 +116,7 @@ const Auth = () => {
               .single();
             
             if (userData) {
+              console.log('Found user profile:', userData);
               // Update the role to admin
               const { error: updateError } = await supabase
                 .from('profiles')
@@ -114,10 +124,14 @@ const Auth = () => {
                 .eq('id', userData.id);
               
               if (updateError) {
+                console.error('Failed to set admin role:', updateError);
                 toast.error(`Failed to set admin role: ${updateError.message}`);
               } else {
+                console.log('Admin role set successfully');
                 toast.success("Admin account created successfully");
               }
+            } else {
+              console.log('No user profile found');
             }
           } catch (err) {
             console.error("Error setting admin role:", err);
@@ -127,7 +141,12 @@ const Auth = () => {
         
         setAuthMode('login');
         toast.success("Account created successfully. Please check your email to verify your account.");
+      } else {
+        console.error('Signup error:', error);
       }
+    } catch (err) {
+      console.error('Signup exception:', err);
+      toast.error('An unexpected error occurred');
     } finally {
       setIsSubmitting(false);
     }
@@ -136,7 +155,11 @@ const Auth = () => {
   const onForgotPasswordSubmit = async (values: z.infer<typeof forgotPasswordSchema>) => {
     setIsSubmitting(true);
     try {
+      console.log('Reset password attempt:', values.email);
       await resetPassword(values.email);
+    } catch (err) {
+      console.error('Reset password exception:', err);
+      toast.error('An unexpected error occurred');
     } finally {
       setIsSubmitting(false);
     }
