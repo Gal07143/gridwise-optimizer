@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { RealtimeChannel } from '@supabase/supabase-js';
 
 type RealtimeEvent = 'INSERT' | 'UPDATE' | 'DELETE';
 type RealtimeTable = 'devices' | 'energy_readings' | 'alerts';
@@ -26,7 +27,7 @@ export function useRealtimeUpdates({
     if (!enabled) return;
     
     // Create a channel for db changes
-    const channel = supabase.channel('db-changes');
+    const channel: RealtimeChannel = supabase.channel('db-changes');
     
     // Track subscription status
     let isSubscribed = false;
@@ -50,9 +51,9 @@ export function useRealtimeUpdates({
       channel.on(
         'postgres_changes', 
         { 
-          event: event, 
+          event, 
           schema: 'public', 
-          table: table 
+          table 
         },
         (payload) => {
           console.log(`Realtime ${event} received:`, payload);
