@@ -23,10 +23,20 @@ import TariffSettings from "./pages/settings/TariffSettings";
 import DataExport from "./pages/settings/DataExport";
 import ProcessingSettings from "./pages/settings/ProcessingSettings";
 import StorageConfiguration from "./pages/settings/StorageConfiguration";
+import SystemUpdates from "./pages/settings/SystemUpdates";
+import BackupSettings from "./pages/settings/BackupSettings";
+import UserAccounts from "./pages/settings/UserAccounts";
+import RoleManagement from "./pages/settings/RoleManagement";
+import Permissions from "./pages/settings/Permissions";
+import Authentication from "./pages/settings/Authentication";
+import Encryption from "./pages/settings/Encryption";
+import AuditLogging from "./pages/settings/AuditLogging";
+import ExternalServices from "./pages/settings/ExternalServices";
+import NotificationServices from "./pages/settings/NotificationServices";
 
 const queryClient = new QueryClient();
 
-// DataExport, ProcessingSettings and other remaining settings pages will be implemented later
+// Placeholder for any settings pages not yet implemented
 const SettingsPlaceholder = ({ title }: { title: string }) => (
   <div className="flex h-screen">
     <div className="flex-1 flex flex-col">
@@ -36,54 +46,6 @@ const SettingsPlaceholder = ({ title }: { title: string }) => (
       </div>
     </div>
   </div>
-);
-
-const SystemUpdates = () => (
-  <SettingsPlaceholder title="System Updates" />
-);
-
-const BackupSettings = () => (
-  <SettingsPlaceholder title="Backup & Restore" />
-);
-
-const UserAccounts = () => (
-  <SettingsPlaceholder title="User Accounts" />
-);
-
-const RoleManagement = () => (
-  <SettingsPlaceholder title="Role Management" />
-);
-
-const Permissions = () => (
-  <SettingsPlaceholder title="Permissions" />
-);
-
-const Authentication = () => (
-  <SettingsPlaceholder title="Authentication" />
-);
-
-const Encryption = () => (
-  <SettingsPlaceholder title="Encryption" />
-);
-
-const AuditLogging = () => (
-  <SettingsPlaceholder title="Audit Logging" />
-);
-
-const ExternalServices = () => (
-  <SettingsPlaceholder title="External Services" />
-);
-
-const NotificationServices = () => (
-  <SettingsPlaceholder title="Notification Services" />
-);
-
-const DataExport = () => (
-  <SettingsPlaceholder title="Data Export" />
-);
-
-const ProcessingSettings = () => (
-  <SettingsPlaceholder title="Processing Settings" />
 );
 
 const SystemStatus = () => (
