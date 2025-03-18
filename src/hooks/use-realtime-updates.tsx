@@ -47,16 +47,20 @@ export function useRealtimeUpdates({
     
     // Configure the postgres changes listeners - one for each event type
     events.forEach(event => {
-      channel.on('postgres_changes', { 
-        event: event,
-        schema: 'public',
-        table: table
-      }, (payload) => {
-        console.log(`Realtime ${event} received:`, payload);
-        if (onData) {
-          onData(payload);
+      channel.on(
+        'postgres_changes', 
+        { 
+          event, 
+          schema: 'public', 
+          table 
+        }, 
+        (payload) => {
+          console.log(`Realtime ${event} received:`, payload);
+          if (onData) {
+            onData(payload);
+          }
         }
-      });
+      );
     });
     
     // Subscribe to the channel after all listeners are registered
