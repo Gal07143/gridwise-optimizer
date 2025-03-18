@@ -11,6 +11,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address' }),
@@ -22,6 +25,7 @@ const signupSchema = z.object({
   password: z.string().min(6, { message: 'Password must be at least 6 characters' }),
   firstName: z.string().optional(),
   lastName: z.string().optional(),
+  isAdmin: z.boolean().default(false),
 });
 
 const forgotPasswordSchema = z.object({
@@ -56,6 +60,7 @@ const Auth = () => {
       password: '',
       firstName: '',
       lastName: '',
+      isAdmin: false,
     },
   });
 
@@ -89,8 +94,39 @@ const Auth = () => {
           lastName: values.lastName,
         }
       );
+      
       if (!error) {
+        // Set the role to admin if isAdmin is checked
+        if (values.isAdmin) {
+          try {
+            // First, get the user that was just created
+            const { data: userData } = await supabase
+              .from('profiles')
+              .select('id')
+              .eq('email', values.email)
+              .single();
+            
+            if (userData) {
+              // Update the role to admin
+              const { error: updateError } = await supabase
+                .from('profiles')
+                .update({ role: 'admin' })
+                .eq('id', userData.id);
+              
+              if (updateError) {
+                toast.error(`Failed to set admin role: ${updateError.message}`);
+              } else {
+                toast.success("Admin account created successfully");
+              }
+            }
+          } catch (err) {
+            console.error("Error setting admin role:", err);
+            toast.error("Account created, but admin role setting failed");
+          }
+        }
+        
         setAuthMode('login');
+        toast.success("Account created successfully. Please check your email to verify your account.");
       }
     } finally {
       setIsSubmitting(false);
@@ -220,6 +256,28 @@ const Auth = () => {
                     </FormItem>
                   )}
                 />
+                
+                <FormField
+                  control={signupForm.control}
+                  name="isAdmin"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>Admin Account</FormLabel>
+                        <p className="text-sm text-muted-foreground">
+                          Create this account with administrator privileges
+                        </p>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+                
                 <Button type="submit" className="w-full" disabled={isSubmitting}>
                   {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                   Create Account

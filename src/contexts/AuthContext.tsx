@@ -35,6 +35,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       if (session?.user) {
         await fetchUserProfile(session.user);
+        
+        // Update last_login time
+        const now = new Date().toISOString();
+        await supabase
+          .from('profiles')
+          .update({ last_login: now })
+          .eq('id', session.user.id);
       }
       
       setLoading(false);
@@ -46,6 +53,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           
           if (event === 'SIGNED_IN' && session) {
             await fetchUserProfile(session.user);
+            
+            // Update last_login time on sign in
+            const now = new Date().toISOString();
+            await supabase
+              .from('profiles')
+              .update({ last_login: now })
+              .eq('id', session.user.id);
           } else if (event === 'SIGNED_OUT') {
             setUser(null);
           } else if (event === 'USER_UPDATED' && session) {
