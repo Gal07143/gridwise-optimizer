@@ -85,7 +85,7 @@ const AddDevice = () => {
             )}
             
             {hasSiteError && (
-              <Alert variant="warning" className="mb-4">
+              <Alert variant="default" className="mb-4">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertTitle>Site Configuration Issue</AlertTitle>
                 <AlertDescription>
