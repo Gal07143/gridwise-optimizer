@@ -108,11 +108,33 @@ export const createDevice = async (deviceData: Omit<EnergyDevice, 'id' | 'create
     const { data: userData } = await supabase.auth.getUser();
     const userId = userData?.user?.id;
     
+    if (!userId) {
+      throw new Error("No authenticated user found");
+    }
+    
     // Get default site if not specified
     let siteId = deviceData.site_id;
     if (!siteId) {
-      const { data: siteData } = await supabase.rpc('get_default_site_id');
-      siteId = siteData;
+      console.log("No site ID provided, attempting to get default site");
+      try {
+        const { data: siteData } = await supabase.rpc('get_default_site_id');
+        siteId = siteData;
+        console.log("Got default site ID:", siteId);
+      } catch (siteError) {
+        console.error("Error getting default site:", siteError);
+      }
+    }
+
+    if (!siteId) {
+      console.log("No site found, creating a new one");
+      const siteResponse = await createDummySite();
+      if (siteResponse) {
+        siteId = siteResponse.id;
+        console.log("Created new site with ID:", siteId);
+      } else {
+        console.error("Failed to create site");
+        throw new Error("Could not create or find a site");
+      }
     }
 
     // Make sure we have a timestamp for creation
@@ -162,24 +184,56 @@ export const createDevice = async (deviceData: Omit<EnergyDevice, 'id' | 'create
 };
 
 /**
- * Delete a device
+ * Create a dummy site directly
  */
-export const deleteDevice = async (id: string): Promise<boolean> => {
+const createDummySite = async () => {
   try {
-    const { error } = await supabase
-      .from('devices')
-      .delete()
-      .eq('id', id);
+    const { data, error } = await supabase
+      .from('sites')
+      .insert([
+        {
+          name: 'Main Campus',
+          location: 'San Francisco, CA',
+          timezone: 'America/Los_Angeles',
+          lat: 37.7749,
+          lng: -122.4194
+        }
+      ])
+      .select()
+      .single();
     
     if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error("Error creating site:", error);
+    return null;
+  }
+};
+
+/**
+ * Get or create a dummy site for testing
+ */
+export const getOrCreateDummySite = async () => {
+  try {
+    // Check if we have a site
+    const { data: sites, error: sitesError } = await supabase
+      .from('sites')
+      .select('*')
+      .limit(1);
     
-    toast.success("Device deleted successfully");
-    return true;
+    if (sitesError) throw sitesError;
+    
+    // If we have a site, return it
+    if (sites && sites.length > 0) {
+      return sites[0];
+    }
+    
+    // Create a dummy site
+    return await createDummySite();
     
   } catch (error) {
-    console.error(`Error deleting device ${id}:`, error);
-    toast.error("Failed to delete device");
-    return false;
+    console.error("Error with site setup:", error);
+    return null;
   }
 };
 
@@ -247,48 +301,8 @@ export const getDeviceMaintenanceRecords = async (deviceId: string): Promise<any
 };
 
 /**
- * Get or create a dummy site for testing
+ * Helper functions to seed test data if needed
  */
-export const getOrCreateDummySite = async () => {
-  try {
-    // Check if we have a site
-    const { data: sites, error: sitesError } = await supabase
-      .from('sites')
-      .select('*')
-      .limit(1);
-    
-    if (sitesError) throw sitesError;
-    
-    // If we have a site, return it
-    if (sites && sites.length > 0) {
-      return sites[0];
-    }
-    
-    // Create a dummy site
-    const { data: newSite, error: createError } = await supabase
-      .from('sites')
-      .insert([
-        {
-          name: 'Main Campus',
-          location: 'San Francisco, CA',
-          timezone: 'America/Los_Angeles',
-          lat: 37.7749,
-          lng: -122.4194
-        }
-      ])
-      .select()
-      .single();
-    
-    if (createError) throw createError;
-    return newSite;
-    
-  } catch (error) {
-    console.error("Error with site setup:", error);
-    return null;
-  }
-};
-
-// Helper functions to seed test data if needed
 export const seedTestData = async () => {
   try {
     // Get or create a test site

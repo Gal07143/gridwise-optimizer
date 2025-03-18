@@ -32,7 +32,7 @@ const DeviceForm: React.FC<DeviceFormProps> = ({
   handleSelectChange
 }) => {
   return (
-    <form className="space-y-6">
+    <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-4">
           <div>
@@ -43,6 +43,7 @@ const DeviceForm: React.FC<DeviceFormProps> = ({
               value={device.name} 
               onChange={handleInputChange}
               placeholder="e.g., Rooftop Solar Array"
+              required
             />
           </div>
           
@@ -72,9 +73,10 @@ const DeviceForm: React.FC<DeviceFormProps> = ({
               id="capacity" 
               name="capacity" 
               type="number"
-              value={device.capacity.toString()} 
+              value={device.capacity === 0 ? '' : device.capacity.toString()} 
               onChange={handleInputChange}
               placeholder="e.g., 50"
+              required
             />
           </div>
         </div>
@@ -88,6 +90,7 @@ const DeviceForm: React.FC<DeviceFormProps> = ({
               value={device.location} 
               onChange={handleInputChange}
               placeholder="e.g., Main Building Rooftop"
+              required
             />
           </div>
           

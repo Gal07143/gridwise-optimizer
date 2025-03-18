@@ -6,6 +6,7 @@ import GlassPanel from '@/components/ui/GlassPanel';
 import DeviceForm from '@/components/devices/DeviceForm';
 import DevicePageHeader from '@/components/devices/DevicePageHeader';
 import { useDeviceForm } from '@/hooks/useDeviceForm';
+import { Toaster } from 'sonner';
 
 const AddDevice = () => {
   const {
@@ -40,6 +41,7 @@ const AddDevice = () => {
           </GlassPanel>
         </div>
       </div>
+      <Toaster />
     </div>
   );
 };
