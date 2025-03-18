@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BarChart3, Battery, Bolt, Globe, Home, Thermometer, Wind, Zap } from 'lucide-react';
 import DashboardCard from '@/components/dashboard/DashboardCard';
@@ -6,11 +5,13 @@ import MetricsCard from '@/components/dashboard/MetricsCard';
 import LiveChart from '@/components/dashboard/LiveChart';
 import EnergyFlowChart from '@/components/dashboard/EnergyFlowChart';
 import StatusOverview from '@/components/dashboard/StatusOverview';
+import PowerQualityCard from '@/components/dashboard/PowerQualityCard';
+import AdvancedBatteryCard from '@/components/dashboard/AdvancedBatteryCard';
+import EnergyForecastCard from '@/components/dashboard/EnergyForecastCard';
 import Header from '@/components/layout/Header';
 import Sidebar from '@/components/layout/Sidebar';
 import GlassPanel from '@/components/ui/GlassPanel';
 
-// Mock data for charts
 const powerGenerationData = [
   { time: '00:00', value: 45 },
   { time: '03:00', value: 35 },
@@ -102,7 +103,7 @@ const Dashboard = () => {
             />
           </div>
           
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
             <div className="lg:col-span-2 space-y-6 animate-slide-up" style={{ animationDelay: '0.2s' }}>
               <DashboardCard 
                 title="Energy Generation & Consumption"
@@ -132,36 +133,15 @@ const Dashboard = () => {
                 </div>
               </DashboardCard>
               
-              <DashboardCard 
-                title="Energy Flow Visualization"
-                icon={<Bolt size={18} />}
-              >
-                <EnergyFlowChart />
-              </DashboardCard>
+              <EnergyFlowChart />
+              
+              <PowerQualityCard />
             </div>
             
             <div className="space-y-6 animate-slide-up" style={{ animationDelay: '0.3s' }}>
-              <DashboardCard 
-                title="System Status Overview"
-                icon={<Thermometer size={18} />}
-              >
-                <StatusOverview />
-              </DashboardCard>
+              <StatusOverview />
               
-              <DashboardCard 
-                title="Battery State"
-                icon={<Battery size={18} />}
-              >
-                <LiveChart
-                  data={batteryStateData}
-                  color="rgba(4, 150, 255, 1)"
-                  type="area"
-                  gradientFrom="rgba(4, 150, 255, 0.5)"
-                  gradientTo="rgba(4, 150, 255, 0)"
-                  hideAxis={false}
-                  yAxisLabel="Capacity (%)"
-                />
-              </DashboardCard>
+              <AdvancedBatteryCard />
               
               <DashboardCard 
                 title="Grid Feed-In Power"
@@ -178,7 +158,9 @@ const Dashboard = () => {
             </div>
           </div>
           
-          <GlassPanel className="mt-6 p-4 text-xs text-center text-muted-foreground animate-fade-in" style={{ animationDelay: '0.4s' }}>
+          <EnergyForecastCard className="mb-6 animate-slide-up" style={{ animationDelay: '0.4s' }} />
+          
+          <GlassPanel className="mt-2 p-4 text-xs text-center text-muted-foreground animate-fade-in" style={{ animationDelay: '0.5s' }}>
             GridWise Energy Management System — Real-time data last updated: {new Date().toLocaleTimeString()}
           </GlassPanel>
         </div>

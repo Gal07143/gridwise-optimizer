@@ -1,4 +1,3 @@
-
 // Types for the Energy Management System
 
 export type DeviceType = 'solar' | 'wind' | 'battery' | 'grid' | 'load' | 'ev_charger';
@@ -132,6 +131,59 @@ export interface WeatherData {
   precipitation?: number | null;
   source?: string | null;
   forecast: boolean;
+}
+
+export interface PowerQualityReading {
+  id: string;
+  device_id: string;
+  timestamp: string;
+  frequency: number; // in Hz
+  voltage: number; // in V
+  current?: number | null; // in A
+  active_power?: number | null; // in kW
+  reactive_power?: number | null; // in kVAR
+  apparent_power?: number | null; // in kVA
+  power_factor?: number | null; // unitless (0-1)
+  voltage_thd?: number | null; // Total Harmonic Distortion in %
+  current_thd?: number | null; // Total Harmonic Distortion in %
+  voltage_imbalance?: number | null; // in %
+  harmonics?: Record<string, number> | null; // Harmonic values by order
+  created_at: string;
+}
+
+export interface BatteryHealthData {
+  id: string;
+  device_id: string;
+  timestamp: string;
+  state_of_charge: number; // in percentage
+  state_of_health: number; // in percentage
+  temperature: number; // in Celsius
+  cycle_count: number; // count
+  dc_internal_resistance?: number | null; // in mOhm
+  capacity_actual?: number | null; // in kWh
+  capacity_remaining?: number | null; // in kWh
+  charge_current_limit?: number | null; // in A
+  discharge_current_limit?: number | null; // in A
+  charge_voltage_limit?: number | null; // in V
+  discharge_voltage_limit?: number | null; // in V
+  cell_imbalance?: number | null; // in mV
+  created_at: string;
+}
+
+export interface EnergyForecast {
+  id: string;
+  site_id: string;
+  timestamp: string;
+  forecast_time: string;
+  generation_forecast: number; // in kWh
+  consumption_forecast: number; // in kWh
+  weather_condition?: string | null;
+  temperature?: number | null; // in Celsius
+  cloud_cover?: number | null; // in percentage
+  wind_speed?: number | null; // in m/s
+  confidence?: number | null; // in percentage
+  source: string; // 'model', 'historical', etc.
+  created_at: string;
 }
 
 // Add validation utility functions
