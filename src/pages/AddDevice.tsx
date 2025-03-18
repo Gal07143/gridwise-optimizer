@@ -10,9 +10,10 @@ import { Toaster } from 'sonner';
 import ErrorBoundary from '@/components/ui/ErrorBoundary';
 import { validateDeviceForm, errorsToRecord } from '@/utils/validation';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle, Wifi, WifiOff } from 'lucide-react';
+import { AlertTriangle, Wifi, WifiOff, RefreshCw } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { Button } from '@/components/ui/button';
 
 const AddDevice = () => {
   const {
@@ -23,7 +24,8 @@ const AddDevice = () => {
     handleInputChange,
     handleSelectChange,
     handleSubmit,
-    navigateBack
+    navigateBack,
+    reloadSite
   } = useDeviceForm();
   
   const [validationErrors, setValidationErrors] = React.useState<Record<string, string>>({});
@@ -86,16 +88,25 @@ const AddDevice = () => {
               <Alert className="mb-4 border-yellow-500 text-yellow-800 dark:text-yellow-200">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertTitle>Site Configuration Issue</AlertTitle>
-                <AlertDescription>
-                  Using fallback site configuration. Some features may be limited.
+                <AlertDescription className="flex items-center justify-between">
+                  <span>Using fallback site configuration. Some features may be limited.</span>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={reloadSite}
+                    className="ml-2"
+                  >
+                    <RefreshCw className="h-3 w-3 mr-1" />
+                    Retry
+                  </Button>
                 </AlertDescription>
               </Alert>
             )}
             
             {isLoadingSite ? (
-              <div className="flex justify-center p-6">
-                <LoadingSpinner size="lg" />
-                <span className="ml-2">Loading site information...</span>
+              <div className="flex flex-col items-center justify-center p-12 bg-background/50 rounded-lg border border-border/50">
+                <LoadingSpinner size="lg" className="text-primary mb-4" />
+                <p className="text-muted-foreground">Loading site information...</p>
               </div>
             ) : (
               <GlassPanel className={`${isMobile ? 'p-4' : 'p-6'}`}>
@@ -110,7 +121,7 @@ const AddDevice = () => {
           </div>
         </ErrorBoundary>
       </div>
-      <Toaster position="top-right" closeButton />
+      <Toaster position="top-right" closeButton richColors />
     </div>
   );
 };

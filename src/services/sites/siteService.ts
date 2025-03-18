@@ -1,5 +1,6 @@
+
 import { supabase } from "@/integrations/supabase/client";
-import { Site } from "@/types/energy";
+import { Site, createEmptySite } from "@/types/energy";
 import { toast } from "sonner";
 
 /**
@@ -28,7 +29,17 @@ export const getOrCreateDummySite = async (): Promise<Site | null> => {
     
   } catch (error) {
     console.error("Error in getOrCreateDummySite:", error);
-    throw error;
+    
+    // Return a client-side fallback site with a predefined ID
+    // This prevents continuous retries that might trigger recursion
+    return {
+      id: "00000000-0000-0000-0000-000000000000",
+      name: "Fallback Site",
+      location: "Local",
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
   }
 };
 
@@ -37,13 +48,7 @@ export const getOrCreateDummySite = async (): Promise<Site | null> => {
  */
 export const createDummySite = async (): Promise<Site | null> => {
   try {
-    const defaultSite = {
-      name: "Default Site",
-      location: "Default Location",
-      timezone: "UTC",
-      lat: 0,
-      lng: 0
-    };
+    const defaultSite = createEmptySite();
     
     const { data, error } = await supabase
       .from('sites')
@@ -64,6 +69,15 @@ export const createDummySite = async (): Promise<Site | null> => {
     
   } catch (error) {
     console.error("Error creating dummy site:", error);
-    throw error;
+    
+    // Return a client-side fallback site
+    return {
+      id: "00000000-0000-0000-0000-000000000000",
+      name: "Fallback Site",
+      location: "Local",
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
   }
 };

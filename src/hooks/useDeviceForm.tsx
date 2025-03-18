@@ -1,9 +1,10 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { createDevice, getOrCreateDummySite } from '@/services/deviceService';
+import { createDevice } from '@/services/deviceService';
+import { getOrCreateDummySite } from '@/services/sites/siteService';
 import { useBaseDeviceForm, DeviceFormState } from './useBaseDeviceForm';
 
 export const useDeviceForm = () => {
@@ -11,49 +12,44 @@ export const useDeviceForm = () => {
   const [defaultSiteId, setDefaultSiteId] = useState<string | null>(null);
   const [siteError, setSiteError] = useState<boolean>(false);
   const [isLoadingSite, setIsLoadingSite] = useState<boolean>(true);
-  const [retryCount, setRetryCount] = useState<number>(0);
+  const [maxRetries] = useState<number>(1); // Reduce retries to prevent infinite recursion
 
-  useEffect(() => {
-    const fetchDefaultSite = async () => {
-      try {
-        setIsLoadingSite(true);
-        // Always set a fallback ID first to ensure we have something
-        setDefaultSiteId("00000000-0000-0000-0000-000000000000");
+  // Use a useCallback to handle site fetching
+  const fetchDefaultSite = useCallback(async () => {
+    try {
+      setIsLoadingSite(true);
+      // Always set a fallback ID first to ensure we have something
+      setDefaultSiteId("00000000-0000-0000-0000-000000000000");
+      setSiteError(false);
+      
+      // Try to get site from API
+      const site = await getOrCreateDummySite();
+      
+      if (site) {
+        console.log("Successfully fetched site:", site);
+        setDefaultSiteId(site.id);
         setSiteError(false);
-        
-        // Try to get site from API with retry mechanism
-        const site = await getOrCreateDummySite();
-        
-        if (site) {
-          console.log("Successfully fetched site:", site);
-          setDefaultSiteId(site.id);
-          setSiteError(false);
-        } else {
-          throw new Error("Failed to fetch site data");
-        }
-      } catch (error) {
-        console.error("Error fetching default site:", error);
-        
-        // Implement retry mechanism (max 3 attempts)
-        if (retryCount < 3) {
-          console.log(`Retrying site fetch (attempt ${retryCount + 1})...`);
-          setRetryCount(prev => prev + 1);
-          // Wait exponentially longer between retries
-          setTimeout(() => fetchDefaultSite(), 1000 * Math.pow(2, retryCount));
-        } else {
-          setSiteError(true);
-          toast.error("Failed to fetch site information", {
-            description: "Using fallback configuration.",
-            duration: 5000
-          });
-        }
-      } finally {
-        setIsLoadingSite(false);
+      } else {
+        throw new Error("Failed to fetch site data");
       }
-    };
-    
+    } catch (error) {
+      console.error("Error fetching default site:", error);
+      setSiteError(true);
+      
+      // Use a single toast instead of multiple
+      toast.error("Failed to fetch site information", {
+        description: "Using fallback configuration.",
+        duration: 5000,
+        id: "site-fetch-error" // Prevent duplicate toasts
+      });
+    } finally {
+      setIsLoadingSite(false);
+    }
+  }, []);
+  
+  useEffect(() => {
     fetchDefaultSite();
-  }, [retryCount]);
+  }, [fetchDefaultSite]);
 
   const handleCreateDevice = async (deviceData: DeviceFormState) => {
     if (!user) {
@@ -63,7 +59,10 @@ export const useDeviceForm = () => {
 
     // Display a warning if we're using the fallback site ID
     if (siteError) {
-      toast.warning("Using fallback site configuration. Some features may be limited.");
+      toast.warning("Using fallback site configuration", {
+        description: "Some features may be limited.",
+        id: "fallback-site-warning" // Prevent duplicate toasts
+      });
     }
     
     try {
@@ -103,5 +102,6 @@ export const useDeviceForm = () => {
     isSubmitting: baseFormHook.isSubmitting,
     hasSiteError: siteError,
     isLoadingSite,
+    reloadSite: fetchDefaultSite // Add ability to retry loading
   };
 };
