@@ -12,12 +12,14 @@ import {
   Server, 
   Shield, 
   User, 
-  Zap
+  Zap,
+  ChevronRight
 } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Sidebar from '@/components/layout/Sidebar';
 import { cn } from '@/lib/utils';
 import GlassPanel from '@/components/ui/GlassPanel';
+import { Link } from 'react-router-dom';
 
 const Settings = () => {
   // In a real app, these would be dynamic and connected to state
@@ -26,69 +28,189 @@ const Settings = () => {
       id: 'system',
       name: 'System Settings',
       description: 'General system configuration',
-      icon: <Cog size={20} />,
+      icon: <Cog className="h-8 w-8 text-primary" />,
       settings: [
-        { id: 'general', name: 'General Configuration', description: 'Basic system parameters' },
-        { id: 'update', name: 'System Updates', description: 'Update firmware and software' },
-        { id: 'backup', name: 'Backup & Restore', description: 'System backup options' },
+        { 
+          id: 'general', 
+          name: 'General Configuration', 
+          description: 'Basic system parameters',
+          path: '/settings/general'
+        },
+        { 
+          id: 'update', 
+          name: 'System Updates', 
+          description: 'Update firmware and software',
+          path: '/settings/updates'
+        },
+        { 
+          id: 'backup', 
+          name: 'Backup & Restore', 
+          description: 'System backup options',
+          path: '/settings/backup'
+        },
       ]
     },
     {
       id: 'users',
       name: 'User Management',
       description: 'User accounts and access control',
-      icon: <User size={20} />,
+      icon: <User className="h-8 w-8 text-primary" />,
       settings: [
-        { id: 'accounts', name: 'User Accounts', description: 'Manage system users' },
-        { id: 'roles', name: 'Role Management', description: 'Configure access levels' },
-        { id: 'permissions', name: 'Permissions', description: 'Fine-grained access control' },
+        { 
+          id: 'accounts', 
+          name: 'User Accounts', 
+          description: 'Manage system users',
+          path: '/settings/users'
+        },
+        { 
+          id: 'roles', 
+          name: 'Role Management', 
+          description: 'Configure access levels',
+          path: '/settings/roles'
+        },
+        { 
+          id: 'permissions', 
+          name: 'Permissions', 
+          description: 'Fine-grained access control',
+          path: '/settings/permissions'
+        },
       ]
     },
     {
       id: 'security',
       name: 'Security & Compliance',
       description: 'System security settings',
-      icon: <Shield size={20} />,
+      icon: <Shield className="h-8 w-8 text-primary" />,
       settings: [
-        { id: 'auth', name: 'Authentication', description: 'Login and identity verification' },
-        { id: 'encryption', name: 'Encryption', description: 'Data protection settings' },
-        { id: 'audit', name: 'Audit Logging', description: 'System activity tracking' },
+        { 
+          id: 'auth', 
+          name: 'Authentication', 
+          description: 'Login and identity verification',
+          path: '/settings/authentication'
+        },
+        { 
+          id: 'encryption', 
+          name: 'Encryption', 
+          description: 'Data protection settings',
+          path: '/settings/encryption'
+        },
+        { 
+          id: 'audit', 
+          name: 'Audit Logging', 
+          description: 'System activity tracking',
+          path: '/settings/audit'
+        },
       ]
     },
     {
       id: 'integration',
       name: 'Integrations',
       description: 'External system connections',
-      icon: <Globe size={20} />,
+      icon: <Globe className="h-8 w-8 text-primary" />,
       settings: [
-        { id: 'api', name: 'API Configuration', description: 'External API connections' },
-        { id: 'services', name: 'External Services', description: 'Third-party integrations' },
-        { id: 'notifications', name: 'Notification Services', description: 'Email, SMS, push notifications' },
+        { 
+          id: 'api', 
+          name: 'API Configuration', 
+          description: 'External API connections',
+          path: '/settings/api'
+        },
+        { 
+          id: 'services', 
+          name: 'External Services', 
+          description: 'Third-party integrations',
+          path: '/settings/services'
+        },
+        { 
+          id: 'notifications', 
+          name: 'Notification Services', 
+          description: 'Email, SMS, push notifications',
+          path: '/settings/notifications'
+        },
       ]
     },
     {
       id: 'data',
       name: 'Data Management',
-      description: 'Data storage and processing settings',
-      icon: <Database size={20} />,
+      description: 'Data storage and processing',
+      icon: <Database className="h-8 w-8 text-primary" />,
       settings: [
-        { id: 'storage', name: 'Storage Configuration', description: 'Data retention policies' },
-        { id: 'export', name: 'Data Export', description: 'Export system data' },
-        { id: 'processing', name: 'Processing Settings', description: 'Configure data processing' },
+        { 
+          id: 'storage', 
+          name: 'Storage Configuration', 
+          description: 'Data retention policies',
+          path: '/settings/storage'
+        },
+        { 
+          id: 'export', 
+          name: 'Data Export', 
+          description: 'Export system data',
+          path: '/settings/export'
+        },
+        { 
+          id: 'processing', 
+          name: 'Processing Settings', 
+          description: 'Configure data processing',
+          path: '/settings/processing'
+        },
       ]
     },
     {
       id: 'energy',
       name: 'Energy Settings',
       description: 'Energy system specific configuration',
-      icon: <Zap size={20} />,
+      icon: <Zap className="h-8 w-8 text-primary" />,
       settings: [
-        { id: 'thresholds', name: 'Operational Thresholds', description: 'System operational parameters' },
-        { id: 'algorithms', name: 'Optimization Algorithms', description: 'AI and optimization settings' },
-        { id: 'tariffs', name: 'Energy Tariffs', description: 'Pricing and billing configuration' },
+        { 
+          id: 'thresholds', 
+          name: 'Operational Thresholds', 
+          description: 'System operational parameters',
+          path: '/settings/thresholds'
+        },
+        { 
+          id: 'algorithms', 
+          name: 'Optimization Algorithms', 
+          description: 'AI and optimization settings',
+          path: '/settings/algorithms'
+        },
+        { 
+          id: 'tariffs', 
+          name: 'Energy Tariffs', 
+          description: 'Pricing and billing configuration',
+          path: '/settings/tariffs'
+        },
       ]
     },
   ];
+  
+  const SettingItem = ({ name, description, path }: { name: string; description: string; path: string }) => (
+    <Link 
+      to={path} 
+      className="flex justify-between items-center p-3 rounded-lg hover:bg-secondary/30 transition-colors cursor-pointer border-b border-border/30 last:border-0"
+    >
+      <div>
+        <div className="font-medium text-sm">{name}</div>
+        <div className="text-xs text-muted-foreground">{description}</div>
+      </div>
+      <div className="text-primary">
+        <ChevronRight size={20} />
+      </div>
+    </Link>
+  );
+
+  const QuickActionItem = ({ icon, title, description, path }: 
+    { icon: React.ReactNode; title: string; description: string; path: string }) => (
+    <Link to={path}>
+      <GlassPanel className="p-4 flex items-center space-x-4 hover:bg-secondary/10 transition-colors">
+        <div className="rounded-full p-3 bg-primary/10 text-primary">
+          {icon}
+        </div>
+        <div>
+          <h3 className="font-medium">{title}</h3>
+          <p className="text-sm text-muted-foreground">{description}</p>
+        </div>
+      </GlassPanel>
+    </Link>
+  );
   
   return (
     <div className="flex h-screen overflow-hidden">
@@ -119,24 +241,13 @@ const Settings = () => {
                 </div>
                 
                 <div className="p-2">
-                  {category.settings.map((setting, idx) => (
-                    <div 
-                      key={setting.id} 
-                      className={cn(
-                        "flex justify-between items-center p-3 rounded-lg hover:bg-secondary/30 transition-colors cursor-pointer",
-                        idx < category.settings.length - 1 && "border-b border-border/30"
-                      )}
-                    >
-                      <div>
-                        <div className="font-medium text-sm">{setting.name}</div>
-                        <div className="text-xs text-muted-foreground">{setting.description}</div>
-                      </div>
-                      <div className="text-primary">
-                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      </div>
-                    </div>
+                  {category.settings.map((setting) => (
+                    <SettingItem
+                      key={setting.id}
+                      name={setting.name}
+                      description={setting.description}
+                      path={setting.path}
+                    />
                   ))}
                 </div>
               </GlassPanel>
@@ -144,45 +255,33 @@ const Settings = () => {
           </div>
           
           <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4 animate-slide-up" style={{ animationDelay: '0.5s' }}>
-            <GlassPanel className="p-4 flex items-center space-x-4">
-              <div className="rounded-full p-3 bg-primary/10 text-primary">
-                <Lock size={18} />
-              </div>
-              <div>
-                <h3 className="font-medium">API Key Management</h3>
-                <p className="text-sm text-muted-foreground">Configure secure API access keys</p>
-              </div>
-            </GlassPanel>
+            <QuickActionItem 
+              icon={<Key size={18} />} 
+              title="API Key Management" 
+              description="Configure secure API access keys" 
+              path="/settings/api-keys"
+            />
             
-            <GlassPanel className="p-4 flex items-center space-x-4">
-              <div className="rounded-full p-3 bg-primary/10 text-primary">
-                <RefreshCw size={18} />
-              </div>
-              <div>
-                <h3 className="font-medium">Firmware Update</h3>
-                <p className="text-sm text-muted-foreground">System v4.2.1 available</p>
-              </div>
-            </GlassPanel>
+            <QuickActionItem 
+              icon={<RefreshCw size={18} />} 
+              title="Firmware Update" 
+              description="System v4.2.1 available" 
+              path="/settings/updates"
+            />
             
-            <GlassPanel className="p-4 flex items-center space-x-4">
-              <div className="rounded-full p-3 bg-primary/10 text-primary">
-                <Book size={18} />
-              </div>
-              <div>
-                <h3 className="font-medium">Documentation</h3>
-                <p className="text-sm text-muted-foreground">Access system documentation</p>
-              </div>
-            </GlassPanel>
+            <QuickActionItem 
+              icon={<Book size={18} />} 
+              title="Documentation" 
+              description="Access system documentation" 
+              path="/documentation"
+            />
             
-            <GlassPanel className="p-4 flex items-center space-x-4">
-              <div className="rounded-full p-3 bg-primary/10 text-primary">
-                <Server size={18} />
-              </div>
-              <div>
-                <h3 className="font-medium">System Status</h3>
-                <p className="text-sm text-muted-foreground">All services operational</p>
-              </div>
-            </GlassPanel>
+            <QuickActionItem 
+              icon={<Server size={18} />} 
+              title="System Status" 
+              description="All services operational" 
+              path="/system-status"
+            />
           </div>
         </div>
       </div>
