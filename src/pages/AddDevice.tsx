@@ -12,6 +12,7 @@ import { validateDeviceForm, errorsToRecord } from '@/utils/validation';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { AlertTriangle, Wifi, WifiOff } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 const AddDevice = () => {
   const {
@@ -26,16 +27,13 @@ const AddDevice = () => {
   } = useDeviceForm();
   
   const [validationErrors, setValidationErrors] = React.useState<Record<string, string>>({});
-  const [isOnline, setIsOnline] = React.useState<boolean>(true);
+  const [isOnline, setIsOnline] = React.useState<boolean>(navigator.onLine);
   const isMobile = useIsMobile();
   
   // Listen for online/offline events
   React.useEffect(() => {
     const handleOffline = () => setIsOnline(false);
     const handleOnline = () => setIsOnline(true);
-    
-    // Set initial state
-    setIsOnline(navigator.onLine);
     
     // Add event listeners
     window.addEventListener('offline', handleOffline);
@@ -85,7 +83,7 @@ const AddDevice = () => {
             )}
             
             {hasSiteError && (
-              <Alert variant="default" className="mb-4">
+              <Alert className="mb-4 border-yellow-500 text-yellow-800 dark:text-yellow-200">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertTitle>Site Configuration Issue</AlertTitle>
                 <AlertDescription>
@@ -96,7 +94,8 @@ const AddDevice = () => {
             
             {isLoadingSite ? (
               <div className="flex justify-center p-6">
-                <div className="animate-pulse">Loading site information...</div>
+                <LoadingSpinner size="lg" />
+                <span className="ml-2">Loading site information...</span>
               </div>
             ) : (
               <GlassPanel className={`${isMobile ? 'p-4' : 'p-6'}`}>
@@ -111,7 +110,7 @@ const AddDevice = () => {
           </div>
         </ErrorBoundary>
       </div>
-      <Toaster />
+      <Toaster position="top-right" closeButton />
     </div>
   );
 };

@@ -8,6 +8,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  authError: string | null;
   signIn: (email: string, password: string) => Promise<{ error: any | null }>;
   signUp: (email: string, password: string, userData: { firstName?: string; lastName?: string }) => Promise<{ error: any | null }>;
   signOut: () => Promise<void>;
@@ -21,21 +22,36 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
     // Initialize session and profile on mount
     const initializeAuth = async () => {
       setLoading(true);
+      setAuthError(null);
       
-      // Get current session
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      
-      if (session?.user) {
-        await fetchUserProfile(session.user);
+      try {
+        // Get current session
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error("Error fetching session:", sessionError);
+          setAuthError(sessionError.message);
+          setLoading(false);
+          return;
+        }
+        
+        setSession(session);
+        
+        if (session?.user) {
+          await fetchUserProfile(session.user);
+        }
+      } catch (error) {
+        console.error("Authentication initialization error:", error);
+        setAuthError("Failed to initialize authentication");
+      } finally {
+        setLoading(false);
       }
-      
-      setLoading(false);
       
       // Listen for auth changes
       const { data: { subscription } } = await supabase.auth.onAuthStateChange(
@@ -63,6 +79,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setSession(null);
           } else if (event === 'USER_UPDATED' && session) {
             await fetchUserProfile(session.user);
+          } else if (event === 'TOKEN_REFRESHED' && session) {
+            console.log('Token refreshed successfully');
           }
         }
       );
@@ -268,7 +286,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const signOut = async () => {
     try {
       console.log('Signing out');
-      await supabase.auth.signOut();
+      
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('Error during sign out:', error);
+        toast.error("Sign out failed", {
+          description: error.message,
+        });
+        return;
+      }
+      
       setUser(null);
       setSession(null);
       toast.success("Signed out", {
@@ -375,6 +403,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     user,
     session,
     loading,
+    authError,
     signIn,
     signUp,
     signOut,

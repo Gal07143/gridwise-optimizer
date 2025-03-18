@@ -1,56 +1,69 @@
-
 import { supabase } from "@/integrations/supabase/client";
+import { Site } from "@/types/energy";
+import { toast } from "sonner";
 
 /**
- * Create a dummy site directly
+ * Get or create a dummy site if none exists
  */
-export const createDummySite = async () => {
+export const getOrCreateDummySite = async (): Promise<Site | null> => {
   try {
-    const { data, error } = await supabase
-      .from('sites')
-      .insert([
-        {
-          name: 'Main Campus',
-          location: 'San Francisco, CA',
-          timezone: 'America/Los_Angeles',
-          lat: 37.7749,
-          lng: -122.4194
-        }
-      ])
-      .select()
-      .single();
-    
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error("Error creating site:", error);
-    return null;
-  }
-};
-
-/**
- * Get or create a dummy site for testing
- */
-export const getOrCreateDummySite = async () => {
-  try {
-    // Check if we have a site
-    const { data: sites, error: sitesError } = await supabase
+    // First try to get any existing site
+    const { data: existingSites, error: fetchError } = await supabase
       .from('sites')
       .select('*')
       .limit(1);
     
-    if (sitesError) throw sitesError;
-    
-    // If we have a site, return it
-    if (sites && sites.length > 0) {
-      return sites[0];
+    if (fetchError) {
+      console.error("Error fetching sites:", fetchError);
+      throw fetchError;
     }
     
-    // Create a dummy site
+    // If we have a site, return it
+    if (existingSites && existingSites.length > 0) {
+      return existingSites[0] as Site;
+    }
+    
+    // Otherwise, create a new dummy site
     return await createDummySite();
     
   } catch (error) {
-    console.error("Error with site setup:", error);
-    return null;
+    console.error("Error in getOrCreateDummySite:", error);
+    throw error;
+  }
+};
+
+/**
+ * Create a dummy site for testing when no real site exists
+ */
+export const createDummySite = async (): Promise<Site | null> => {
+  try {
+    const defaultSite = {
+      name: "Default Site",
+      location: "Default Location",
+      timezone: "UTC",
+      lat: 0,
+      lng: 0
+    };
+    
+    const { data, error } = await supabase
+      .from('sites')
+      .insert([defaultSite])
+      .select()
+      .single();
+    
+    if (error) {
+      console.error("Error creating dummy site:", error);
+      throw error;
+    }
+    
+    if (!data) {
+      throw new Error("No data returned from site creation");
+    }
+    
+    return data as Site;
+    
+  } catch (error) {
+    console.error("Error creating dummy site:", error);
+    throw error;
   }
 };

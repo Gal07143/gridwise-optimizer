@@ -11,6 +11,7 @@ export const useDeviceForm = () => {
   const [defaultSiteId, setDefaultSiteId] = useState<string | null>(null);
   const [siteError, setSiteError] = useState<boolean>(false);
   const [isLoadingSite, setIsLoadingSite] = useState<boolean>(true);
+  const [retryCount, setRetryCount] = useState<number>(0);
 
   useEffect(() => {
     const fetchDefaultSite = async () => {
@@ -20,22 +21,39 @@ export const useDeviceForm = () => {
         setDefaultSiteId("00000000-0000-0000-0000-000000000000");
         setSiteError(false);
         
-        // Try to get site from API
+        // Try to get site from API with retry mechanism
         const site = await getOrCreateDummySite();
+        
         if (site) {
+          console.log("Successfully fetched site:", site);
           setDefaultSiteId(site.id);
+          setSiteError(false);
+        } else {
+          throw new Error("Failed to fetch site data");
         }
       } catch (error) {
         console.error("Error fetching default site:", error);
-        setSiteError(true);
-        // We'll continue with the dummy ID set above
+        
+        // Implement retry mechanism (max 3 attempts)
+        if (retryCount < 3) {
+          console.log(`Retrying site fetch (attempt ${retryCount + 1})...`);
+          setRetryCount(prev => prev + 1);
+          // Wait exponentially longer between retries
+          setTimeout(() => fetchDefaultSite(), 1000 * Math.pow(2, retryCount));
+        } else {
+          setSiteError(true);
+          toast.error("Failed to fetch site information", {
+            description: "Using fallback configuration.",
+            duration: 5000
+          });
+        }
       } finally {
         setIsLoadingSite(false);
       }
     };
     
     fetchDefaultSite();
-  }, []);
+  }, [retryCount]);
 
   const handleCreateDevice = async (deviceData: DeviceFormState) => {
     if (!user) {
@@ -48,16 +66,32 @@ export const useDeviceForm = () => {
       toast.warning("Using fallback site configuration. Some features may be limited.");
     }
     
-    console.log("Creating device with data:", {
-      ...deviceData,
-      site_id: defaultSiteId
-    });
-    
-    // Create the new device with the user ID and default site
-    return await createDevice({
-      ...deviceData,
-      site_id: defaultSiteId
-    });
+    try {
+      console.log("Creating device with data:", {
+        ...deviceData,
+        site_id: defaultSiteId
+      });
+      
+      // Create the new device with the user ID and default site
+      const result = await createDevice({
+        ...deviceData,
+        site_id: defaultSiteId
+      });
+      
+      if (result) {
+        toast.success("Device created successfully", {
+          description: `${deviceData.name} has been added to your system.`
+        });
+      }
+      
+      return result;
+    } catch (error) {
+      console.error("Error creating device:", error);
+      toast.error("Failed to create device", {
+        description: "Please try again later."
+      });
+      return null;
+    }
   };
 
   const baseFormHook = useBaseDeviceForm({

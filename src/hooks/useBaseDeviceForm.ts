@@ -53,19 +53,45 @@ export const useBaseDeviceForm = ({
     setDevice(prev => ({ ...prev, [field]: value }));
   };
 
+  const validateForm = (): boolean => {
+    // Basic validation
+    if (!device.name.trim()) {
+      toast.error("Device name is required");
+      return false;
+    }
+    
+    if (!device.location.trim()) {
+      toast.error("Location is required");
+      return false;
+    }
+    
+    if (device.capacity <= 0) {
+      toast.error("Capacity must be greater than zero");
+      return false;
+    }
+    
+    return true;
+  };
+
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) {
       e.preventDefault();
     }
     
-    // Validate inputs
-    if (!device.name || !device.location || !device.capacity) {
-      toast.error('Please fill in all required fields');
+    // Validate form
+    if (!validateForm()) {
       return;
     }
 
     try {
       setIsSubmitting(true);
+      
+      // Check network connection
+      if (!navigator.onLine) {
+        toast.warning("You are offline. Changes will be saved when you're back online.");
+        // In a real app, we would implement offline storage and sync here
+      }
+      
       const result = await onSubmit(device);
       
       if (result) {
