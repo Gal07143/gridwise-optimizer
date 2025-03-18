@@ -27,7 +27,7 @@ export function useRealtimeUpdates({
     if (!enabled) return;
     
     // Create a channel for db changes
-    const channel: RealtimeChannel = supabase.channel('db-changes');
+    const channel = supabase.channel('db-changes');
     
     // Track subscription status
     let isSubscribed = false;
@@ -49,13 +49,13 @@ export function useRealtimeUpdates({
     // Configure PostgreSQL change listeners for each event type
     events.forEach(event => {
       channel.on(
-        'postgres_changes',
-        {
-          event,
-          schema: 'public',
-          table
-        },
-        (payload) => {
+        'postgres_changes', 
+        { 
+          event: event, 
+          schema: 'public', 
+          table: table 
+        } as any,
+        (payload: RealtimePostgresChangesPayload<any>) => {
           console.log(`Realtime ${event} received:`, payload);
           if (onData) {
             onData(payload);
