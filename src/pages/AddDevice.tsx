@@ -1,103 +1,21 @@
 
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Save } from 'lucide-react';
+import React from 'react';
 import Header from '@/components/layout/Header';
 import Sidebar from '@/components/layout/Sidebar';
 import GlassPanel from '@/components/ui/GlassPanel';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { createDevice, getOrCreateDummySite } from '@/services/deviceService';
-import { toast } from 'sonner';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { DeviceType, DeviceStatus } from '@/types/energy';
-import { useAuth } from '@/contexts/AuthContext';
+import DeviceForm from '@/components/devices/DeviceForm';
+import DevicePageHeader from '@/components/devices/DevicePageHeader';
+import { useDeviceForm } from '@/hooks/useDeviceForm';
 
 const AddDevice = () => {
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [defaultSiteId, setDefaultSiteId] = useState<string | null>(null);
-  
-  useEffect(() => {
-    const fetchDefaultSite = async () => {
-      try {
-        const site = await getOrCreateDummySite();
-        if (site) {
-          setDefaultSiteId(site.id);
-        }
-      } catch (error) {
-        console.error("Error fetching default site:", error);
-      }
-    };
-    
-    fetchDefaultSite();
-  }, []);
-  
-  const [device, setDevice] = useState({
-    name: '',
-    location: '',
-    type: 'solar' as DeviceType,
-    status: 'online' as DeviceStatus,
-    capacity: 0,
-    firmware: '',
-    description: '',
-  });
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setDevice(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSelectChange = (field: string, value: string) => {
-    setDevice(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Validate inputs
-    if (!device.name || !device.location || !device.capacity) {
-      toast.error('Please fill in all required fields');
-      return;
-    }
-
-    if (!user) {
-      toast.error('You must be logged in to create a device');
-      return;
-    }
-
-    try {
-      setIsSubmitting(true);
-      
-      // Create the new device with the user ID and default site
-      const newDevice = await createDevice({
-        ...device,
-        capacity: Number(device.capacity),
-        site_id: defaultSiteId
-      });
-      
-      if (newDevice) {
-        toast.success('Device created successfully');
-        navigate(`/devices`);
-      } else {
-        toast.error('Failed to create device');
-      }
-    } catch (error: any) {
-      console.error('Error creating device:', error);
-      toast.error(`Failed to create device: ${error.message || 'Unknown error'}`);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  const {
+    device,
+    isSubmitting,
+    handleInputChange,
+    handleSelectChange,
+    handleSubmit,
+    navigateBack
+  } = useDeviceForm();
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -105,133 +23,20 @@ const AddDevice = () => {
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
         <div className="flex-1 overflow-y-auto p-6 animate-fade-in">
-          <div className="mb-6 flex items-center justify-between">
-            <div>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="flex items-center gap-1 mb-2"
-                onClick={() => navigate('/devices')}
-              >
-                <ChevronLeft size={16} />
-                <span>Back to Devices</span>
-              </Button>
-              <h1 className="text-2xl font-semibold">Add New Device</h1>
-              <p className="text-muted-foreground">Add a new energy device to the system</p>
-            </div>
-            <Button 
-              className="flex items-center gap-2"
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-            >
-              <Save size={16} />
-              <span>{isSubmitting ? 'Saving...' : 'Save Device'}</span>
-            </Button>
-          </div>
+          <DevicePageHeader 
+            title="Add New Device"
+            subtitle="Add a new energy device to the system"
+            onBack={navigateBack}
+            onSave={handleSubmit}
+            isSaving={isSubmitting}
+          />
           
           <GlassPanel className="p-6">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="name">Device Name *</Label>
-                    <Input 
-                      id="name" 
-                      name="name" 
-                      value={device.name} 
-                      onChange={handleInputChange}
-                      placeholder="e.g., Rooftop Solar Array"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="type">Device Type *</Label>
-                    <Select 
-                      value={device.type} 
-                      onValueChange={(value) => handleSelectChange('type', value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select device type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="solar">Solar</SelectItem>
-                        <SelectItem value="wind">Wind</SelectItem>
-                        <SelectItem value="battery">Battery</SelectItem>
-                        <SelectItem value="grid">Grid</SelectItem>
-                        <SelectItem value="load">Load</SelectItem>
-                        <SelectItem value="ev_charger">EV Charger</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="capacity">Capacity (kW/kWh) *</Label>
-                    <Input 
-                      id="capacity" 
-                      name="capacity" 
-                      type="number"
-                      value={device.capacity.toString()} 
-                      onChange={handleInputChange}
-                      placeholder="e.g., 50"
-                    />
-                  </div>
-                </div>
-                
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="location">Location *</Label>
-                    <Input 
-                      id="location" 
-                      name="location" 
-                      value={device.location} 
-                      onChange={handleInputChange}
-                      placeholder="e.g., Main Building Rooftop"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="status">Status</Label>
-                    <Select 
-                      value={device.status} 
-                      onValueChange={(value) => handleSelectChange('status', value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="online">Online</SelectItem>
-                        <SelectItem value="offline">Offline</SelectItem>
-                        <SelectItem value="maintenance">Maintenance</SelectItem>
-                        <SelectItem value="error">Error</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="firmware">Firmware Version</Label>
-                    <Input 
-                      id="firmware" 
-                      name="firmware" 
-                      value={device.firmware} 
-                      onChange={handleInputChange}
-                      placeholder="e.g., v2.4.1"
-                    />
-                  </div>
-                </div>
-              </div>
-              
-              <div>
-                <Label htmlFor="description">Notes</Label>
-                <Textarea 
-                  id="description" 
-                  name="description" 
-                  rows={4}
-                  value={device.description}
-                  onChange={handleInputChange}
-                  placeholder="Additional information about this device..."
-                />
-              </div>
-            </form>
+            <DeviceForm 
+              device={device}
+              handleInputChange={handleInputChange}
+              handleSelectChange={handleSelectChange}
+            />
           </GlassPanel>
         </div>
       </div>
