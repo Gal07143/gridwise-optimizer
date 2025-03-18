@@ -15,7 +15,8 @@ export const useEditDeviceForm = () => {
   const { 
     data: deviceData, 
     isLoading,
-    error: fetchError
+    error: fetchError,
+    refetch
   } = useQuery({
     queryKey: ['device', deviceId],
     queryFn: () => deviceId ? getDeviceById(deviceId) : null,
@@ -103,5 +104,7 @@ export const useEditDeviceForm = () => {
     isLoading,
     validationErrors,
     validateDeviceData,
+    error: fetchError, // Add the error property
+    refetch, // Add the refetch property
   };
 };
