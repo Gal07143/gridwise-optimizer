@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Save } from 'lucide-react';
 import Header from '@/components/layout/Header';
@@ -8,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { createDevice } from '@/services/deviceService';
+import { createDevice, getOrCreateDummySite } from '@/services/deviceService';
 import { toast } from 'sonner';
 import {
   Select,
@@ -24,6 +25,22 @@ const AddDevice = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [defaultSiteId, setDefaultSiteId] = useState<string | null>(null);
+  
+  useEffect(() => {
+    const fetchDefaultSite = async () => {
+      try {
+        const site = await getOrCreateDummySite();
+        if (site) {
+          setDefaultSiteId(site.id);
+        }
+      } catch (error) {
+        console.error("Error fetching default site:", error);
+      }
+    };
+    
+    fetchDefaultSite();
+  }, []);
   
   const [device, setDevice] = useState({
     name: '',
@@ -61,10 +78,11 @@ const AddDevice = () => {
     try {
       setIsSubmitting(true);
       
-      // Create the new device with the user ID
+      // Create the new device with the user ID and default site
       const newDevice = await createDevice({
         ...device,
         capacity: Number(device.capacity),
+        site_id: defaultSiteId
       });
       
       if (newDevice) {

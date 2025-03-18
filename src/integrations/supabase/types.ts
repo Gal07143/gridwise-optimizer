@@ -463,6 +463,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_default_site_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
     }
     Enums: {
       alert_type: "warning" | "critical" | "info"

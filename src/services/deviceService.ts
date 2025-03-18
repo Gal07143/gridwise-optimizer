@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { EnergyDevice, EnergyReading, DeviceStatus, DeviceType } from "@/types/energy";
 import { toast } from "sonner";
@@ -108,6 +107,13 @@ export const createDevice = async (deviceData: Omit<EnergyDevice, 'id' | 'create
     // Add the user id to track who created the device
     const { data: userData } = await supabase.auth.getUser();
     const userId = userData?.user?.id;
+    
+    // Get default site if not specified
+    let siteId = deviceData.site_id;
+    if (!siteId) {
+      const { data: siteData } = await supabase.rpc('get_default_site_id');
+      siteId = siteData;
+    }
 
     // Make sure we have a timestamp for creation
     const timestamp = new Date().toISOString();
@@ -117,9 +123,12 @@ export const createDevice = async (deviceData: Omit<EnergyDevice, 'id' | 'create
       ...deviceData,
       created_by: userId,
       last_updated: timestamp,
+      site_id: siteId,
       status: deviceData.status || 'online',
       metrics: deviceData.metrics || null
     };
+    
+    console.log("Creating device with data:", preparedData);
     
     const { data, error } = await supabase
       .from('devices')
@@ -145,9 +154,9 @@ export const createDevice = async (deviceData: Omit<EnergyDevice, 'id' | 'create
     toast.success("Device created successfully");
     return device;
     
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error creating device:", error);
-    toast.error("Failed to create device");
+    toast.error(`Failed to create device: ${error.message || 'Unknown error'}`);
     return null;
   }
 };
