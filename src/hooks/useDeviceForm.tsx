@@ -10,10 +10,12 @@ export const useDeviceForm = () => {
   const { user } = useAuth();
   const [defaultSiteId, setDefaultSiteId] = useState<string | null>(null);
   const [siteError, setSiteError] = useState<boolean>(false);
+  const [isLoadingSite, setIsLoadingSite] = useState<boolean>(true);
 
   useEffect(() => {
     const fetchDefaultSite = async () => {
       try {
+        setIsLoadingSite(true);
         // Always set a fallback ID first to ensure we have something
         setDefaultSiteId("00000000-0000-0000-0000-000000000000");
         setSiteError(false);
@@ -27,6 +29,8 @@ export const useDeviceForm = () => {
         console.error("Error fetching default site:", error);
         setSiteError(true);
         // We'll continue with the dummy ID set above
+      } finally {
+        setIsLoadingSite(false);
       }
     };
     
@@ -64,5 +68,6 @@ export const useDeviceForm = () => {
     ...baseFormHook,
     isSubmitting: baseFormHook.isSubmitting,
     hasSiteError: siteError,
+    isLoadingSite,
   };
 };

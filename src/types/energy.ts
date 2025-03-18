@@ -133,3 +133,21 @@ export interface WeatherData {
   source?: string | null;
   forecast: boolean;
 }
+
+// Add validation utility functions
+export const isValidDeviceType = (type: string): type is DeviceType => {
+  return ['solar', 'wind', 'battery', 'grid', 'load', 'ev_charger'].includes(type as DeviceType);
+};
+
+export const isValidDeviceStatus = (status: string): status is DeviceStatus => {
+  return ['online', 'offline', 'maintenance', 'error'].includes(status as DeviceStatus);
+};
+
+// Site management utilities
+export const createEmptySite = (): Omit<Site, 'id' | 'created_at' | 'updated_at'> => {
+  return {
+    name: 'Default Site',
+    location: 'Default Location',
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+  };
+};

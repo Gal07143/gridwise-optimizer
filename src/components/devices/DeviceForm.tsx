@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DeviceType, DeviceStatus } from '@/types/energy';
+import { AlertCircle } from 'lucide-react';
 
 interface DeviceFormProps {
   device: {
@@ -24,19 +25,23 @@ interface DeviceFormProps {
   };
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   handleSelectChange: (field: string, value: string) => void;
+  validationErrors?: Record<string, string>;
 }
 
 const DeviceForm: React.FC<DeviceFormProps> = ({
   device,
   handleInputChange,
-  handleSelectChange
+  handleSelectChange,
+  validationErrors = {}
 }) => {
   return (
     <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-4">
           <div>
-            <Label htmlFor="name">Device Name *</Label>
+            <Label htmlFor="name" className={validationErrors.name ? "text-destructive" : ""}>
+              Device Name *
+            </Label>
             <Input 
               id="name" 
               name="name" 
@@ -44,7 +49,14 @@ const DeviceForm: React.FC<DeviceFormProps> = ({
               onChange={handleInputChange}
               placeholder="e.g., Rooftop Solar Array"
               required
+              className={validationErrors.name ? "border-destructive" : ""}
             />
+            {validationErrors.name && (
+              <div className="flex items-center mt-1 text-sm text-destructive">
+                <AlertCircle className="h-4 w-4 mr-1" />
+                <span>{validationErrors.name}</span>
+              </div>
+            )}
           </div>
           
           <div>
@@ -68,7 +80,9 @@ const DeviceForm: React.FC<DeviceFormProps> = ({
           </div>
           
           <div>
-            <Label htmlFor="capacity">Capacity (kW/kWh) *</Label>
+            <Label htmlFor="capacity" className={validationErrors.capacity ? "text-destructive" : ""}>
+              Capacity (kW/kWh) *
+            </Label>
             <Input 
               id="capacity" 
               name="capacity" 
@@ -77,13 +91,22 @@ const DeviceForm: React.FC<DeviceFormProps> = ({
               onChange={handleInputChange}
               placeholder="e.g., 50"
               required
+              className={validationErrors.capacity ? "border-destructive" : ""}
             />
+            {validationErrors.capacity && (
+              <div className="flex items-center mt-1 text-sm text-destructive">
+                <AlertCircle className="h-4 w-4 mr-1" />
+                <span>{validationErrors.capacity}</span>
+              </div>
+            )}
           </div>
         </div>
         
         <div className="space-y-4">
           <div>
-            <Label htmlFor="location">Location *</Label>
+            <Label htmlFor="location" className={validationErrors.location ? "text-destructive" : ""}>
+              Location *
+            </Label>
             <Input 
               id="location" 
               name="location" 
@@ -91,7 +114,14 @@ const DeviceForm: React.FC<DeviceFormProps> = ({
               onChange={handleInputChange}
               placeholder="e.g., Main Building Rooftop"
               required
+              className={validationErrors.location ? "border-destructive" : ""}
             />
+            {validationErrors.location && (
+              <div className="flex items-center mt-1 text-sm text-destructive">
+                <AlertCircle className="h-4 w-4 mr-1" />
+                <span>{validationErrors.location}</span>
+              </div>
+            )}
           </div>
           
           <div>

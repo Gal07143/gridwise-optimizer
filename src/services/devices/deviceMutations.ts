@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { EnergyDevice, DeviceStatus, DeviceType } from "@/types/energy";
+import { EnergyDevice, DeviceStatus, DeviceType, isValidDeviceStatus, isValidDeviceType } from "@/types/energy";
 import { createDummySite } from "../sites/siteService";
 import { toast } from "sonner";
 
@@ -11,6 +11,15 @@ export const updateDevice = async (id: string, updates: Partial<EnergyDevice>): 
   try {
     // Remove any fields that shouldn't be updated directly
     const { id: _id, created_at, ...updateData } = updates as any;
+    
+    // Validate device type and status if they're being updated
+    if (updateData.type && !isValidDeviceType(updateData.type)) {
+      throw new Error(`Invalid device type: ${updateData.type}`);
+    }
+    
+    if (updateData.status && !isValidDeviceStatus(updateData.status)) {
+      throw new Error(`Invalid device status: ${updateData.status}`);
+    }
     
     console.log("Updating device with data:", updateData);
     
@@ -54,6 +63,15 @@ export const updateDevice = async (id: string, updates: Partial<EnergyDevice>): 
  */
 export const createDevice = async (deviceData: Omit<EnergyDevice, 'id' | 'created_at' | 'last_updated'>): Promise<EnergyDevice | null> => {
   try {
+    // Validate device type and status
+    if (!isValidDeviceType(deviceData.type)) {
+      throw new Error(`Invalid device type: ${deviceData.type}`);
+    }
+    
+    if (deviceData.status && !isValidDeviceStatus(deviceData.status)) {
+      throw new Error(`Invalid device status: ${deviceData.status}`);
+    }
+    
     // Add the user id to track who created the device
     const { data: userData } = await supabase.auth.getUser();
     const userId = userData?.user?.id;
@@ -172,4 +190,33 @@ export const deleteDevice = async (id: string): Promise<boolean> => {
     toast.error(`Failed to delete device: ${error.message || 'Unknown error'}`);
     return false;
   }
+};
+
+/**
+ * Batch update multiple devices
+ * @param devices Array of device IDs and their updates
+ */
+export const batchUpdateDevices = async (devices: Array<{ id: string, updates: Partial<EnergyDevice> }>): Promise<number> => {
+  let successCount = 0;
+  
+  // Create a batch transaction
+  for (const device of devices) {
+    try {
+      const result = await updateDevice(device.id, device.updates);
+      if (result) successCount++;
+    } catch (error) {
+      console.error(`Error updating device ${device.id} in batch operation:`, error);
+      // Continue with other updates
+    }
+  }
+  
+  if (successCount === 0) {
+    toast.error("Failed to update any devices");
+  } else if (successCount < devices.length) {
+    toast.warning(`Updated ${successCount} of ${devices.length} devices`);
+  } else {
+    toast.success(`All ${successCount} devices updated successfully`);
+  }
+  
+  return successCount;
 };
