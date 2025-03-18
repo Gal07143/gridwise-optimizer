@@ -16,6 +16,7 @@ export interface EnergyDevice {
   capacity: number; // in kW or kWh
   site_id?: string | null;
   firmware?: string | null;
+  description?: string | null;  // Added this field
   lat?: number | null;
   lng?: number | null;
   metrics?: Record<string, number> | null;
