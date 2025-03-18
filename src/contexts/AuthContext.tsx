@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
@@ -61,6 +60,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             }
           } else if (event === 'SIGNED_OUT') {
             setUser(null);
+            setSession(null);
           } else if (event === 'USER_UPDATED' && session) {
             await fetchUserProfile(session.user);
           }
@@ -86,6 +86,29 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         
       if (error) {
         console.error('Error fetching user profile:', error);
+        
+        // Handle the error case but still allow user to be authenticated
+        // Create a basic user object from auth data
+        setUser({
+          id: authUser.id,
+          email: authUser.email || '',
+          firstName: authUser.user_metadata?.first_name,
+          lastName: authUser.user_metadata?.last_name,
+          role: 'viewer' as UserRole,
+          createdAt: new Date().toISOString(),
+          preferences: {
+            theme: 'system',
+            notifications: {
+              email: true,
+              push: false,
+              sms: false
+            },
+            dashboardLayout: null
+          }
+        });
+        
+        // Try to create the profile
+        await createUserProfile(authUser);
         return;
       }
       
@@ -111,30 +134,73 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         });
       } else {
         console.log('No profile found, creating one...');
-        // In case the profile doesn't exist (which might happen if the trigger failed)
-        try {
-          const { error: createError } = await supabase
-            .from('profiles')
-            .insert({
-              id: authUser.id,
-              email: authUser.email,
-              first_name: authUser.user_metadata.first_name,
-              last_name: authUser.user_metadata.last_name,
-              role: 'viewer'
-            });
-            
-          if (createError) {
-            console.error('Error creating profile:', createError);
-          } else {
-            // Fetch the newly created profile
-            await fetchUserProfile(authUser);
-          }
-        } catch (createError) {
-          console.error('Exception creating profile:', createError);
-        }
+        await createUserProfile(authUser);
       }
     } catch (error) {
       console.error('Error during profile fetch:', error);
+      // Even if there's an error, allow user to be authenticated with basic data
+      setUser({
+        id: authUser.id,
+        email: authUser.email || '',
+        firstName: authUser.user_metadata?.first_name,
+        lastName: authUser.user_metadata?.last_name,
+        role: 'viewer' as UserRole,
+        createdAt: new Date().toISOString(),
+        preferences: {
+          theme: 'system',
+          notifications: {
+            email: true,
+            push: false,
+            sms: false
+          },
+          dashboardLayout: null
+        }
+      });
+    }
+  };
+  
+  const createUserProfile = async (authUser: SupabaseUser) => {
+    try {
+      console.log('Creating new profile for user:', authUser.id);
+      const { error: createError } = await supabase
+        .from('profiles')
+        .insert({
+          id: authUser.id,
+          email: authUser.email,
+          first_name: authUser.user_metadata?.first_name,
+          last_name: authUser.user_metadata?.last_name,
+          role: 'viewer',
+          theme_preference: 'system',
+          email_notifications: true,
+          push_notifications: false,
+          sms_notifications: false
+        });
+        
+      if (createError) {
+        console.error('Error creating profile:', createError);
+      } else {
+        console.log('Profile created successfully');
+        // Set the user with default values
+        setUser({
+          id: authUser.id,
+          email: authUser.email || '',
+          firstName: authUser.user_metadata?.first_name,
+          lastName: authUser.user_metadata?.last_name,
+          role: 'viewer' as UserRole,
+          createdAt: new Date().toISOString(),
+          preferences: {
+            theme: 'system',
+            notifications: {
+              email: true,
+              push: false,
+              sms: false
+            },
+            dashboardLayout: null
+          }
+        });
+      }
+    } catch (createError) {
+      console.error('Exception creating profile:', createError);
     }
   };
   
@@ -204,6 +270,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       console.log('Signing out');
       await supabase.auth.signOut();
       setUser(null);
+      setSession(null);
       toast.success("Signed out", {
         description: "You have been signed out successfully.",
       });

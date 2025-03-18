@@ -9,7 +9,7 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { user, loading } = useAuth();
+  const { session, loading } = useAuth();
 
   if (loading) {
     return (
@@ -19,10 +19,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     );
   }
 
-  if (!user) {
+  // Check for session, not user, to determine if authenticated
+  if (!session) {
+    console.log('No session found, redirecting to auth page');
     return <Navigate to="/auth" />;
   }
 
+  console.log('Session found, rendering protected content');
   return <>{children}</>;
 };
 

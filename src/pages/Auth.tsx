@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -33,17 +32,17 @@ const forgotPasswordSchema = z.object({
 });
 
 const Auth = () => {
-  const { signIn, signUp, resetPassword, user, loading } = useAuth();
+  const { signIn, signUp, resetPassword, session, loading } = useAuth();
   const navigate = useNavigate();
   const [authMode, setAuthMode] = useState<'login' | 'signup' | 'forgotPassword'>('login');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Redirect if already logged in
   useEffect(() => {
-    if (user) {
+    if (session) {
+      console.log('Session exists, redirecting to dashboard');
       navigate('/');
     }
-  }, [user, navigate]);
+  }, [session, navigate]);
 
   const loginForm = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -104,11 +103,9 @@ const Auth = () => {
       );
       
       if (!error) {
-        // Set the role to admin if isAdmin is checked
         if (values.isAdmin) {
           try {
             console.log('Attempting to set admin role');
-            // First, get the user that was just created
             const { data: userData } = await supabase
               .from('profiles')
               .select('id')
@@ -117,7 +114,6 @@ const Auth = () => {
             
             if (userData) {
               console.log('Found user profile:', userData);
-              // Update the role to admin
               const { error: updateError } = await supabase
                 .from('profiles')
                 .update({ role: 'admin' })
