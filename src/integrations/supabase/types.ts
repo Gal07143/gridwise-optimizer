@@ -115,6 +115,62 @@ export type Database = {
           },
         ]
       }
+      energy_forecasts: {
+        Row: {
+          cloud_cover: number | null
+          confidence: number | null
+          consumption_forecast: number
+          created_at: string
+          forecast_time: string
+          generation_forecast: number
+          id: string
+          site_id: string
+          source: string
+          temperature: number | null
+          timestamp: string
+          weather_condition: string | null
+          wind_speed: number | null
+        }
+        Insert: {
+          cloud_cover?: number | null
+          confidence?: number | null
+          consumption_forecast?: number
+          created_at?: string
+          forecast_time: string
+          generation_forecast?: number
+          id?: string
+          site_id: string
+          source?: string
+          temperature?: number | null
+          timestamp?: string
+          weather_condition?: string | null
+          wind_speed?: number | null
+        }
+        Update: {
+          cloud_cover?: number | null
+          confidence?: number | null
+          consumption_forecast?: number
+          created_at?: string
+          forecast_time?: string
+          generation_forecast?: number
+          id?: string
+          site_id?: string
+          source?: string
+          temperature?: number | null
+          timestamp?: string
+          weather_condition?: string | null
+          wind_speed?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "energy_forecasts_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       energy_readings: {
         Row: {
           created_at: string
