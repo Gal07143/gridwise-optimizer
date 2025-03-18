@@ -24,7 +24,7 @@ import SiteSelector from '@/components/sites/SiteSelector';
 import { useSite } from '@/contexts/SiteContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { getReports } from '@/services/reportService';
+import { getAllReports } from '@/services/reportService';
 import { toast } from 'sonner';
 import {
   DropdownMenu,
@@ -56,7 +56,7 @@ const ReportsPage = () => {
     refetch
   } = useQuery({
     queryKey: ['reports', currentSite?.id],
-    queryFn: () => getReports({ siteId: currentSite?.id }),
+    queryFn: () => getAllReports({ siteId: currentSite?.id }),
     enabled: !!currentSite
   });
   

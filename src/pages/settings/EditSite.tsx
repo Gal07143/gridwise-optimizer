@@ -78,6 +78,7 @@ const EditSite = () => {
     <SettingsPageTemplate
       title={`Edit Site: ${site.name}`}
       description="Update site information and settings"
+      backLink="/settings/sites"
       actions={
         <Button 
           variant="outline"

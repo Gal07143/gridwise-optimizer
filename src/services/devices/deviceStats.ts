@@ -1,6 +1,5 @@
-
 import { supabase } from "@/integrations/supabase/client";
-import { DeviceStatus, DeviceType } from "@/types/energy";
+import { DeviceStatus, DeviceType, isValidDeviceStatus, isValidDeviceType } from "@/types/energy";
 
 /**
  * Get count of devices by site
@@ -24,34 +23,31 @@ export const getDeviceCountBySite = async (siteId: string): Promise<number> => {
 /**
  * Get device count with optional filters
  */
-export const getDeviceCount = async (options: {
+export const getDeviceCount = async (options?: {
   siteId?: string;
-  status?: DeviceStatus | string;
-  type?: DeviceType | string;
+  status?: DeviceStatus;
+  type?: DeviceType;
   search?: string;
-} = {}): Promise<number> => {
+}): Promise<number> => {
   try {
-    const { siteId, status, type, search } = options;
-    
     let query = supabase
       .from('devices')
-      .select('id', { count: 'exact', head: true });
+      .select('id', { count: 'exact' });
     
-    // Apply filters
-    if (siteId) {
-      query = query.eq('site_id', siteId);
+    if (options?.siteId) {
+      query = query.eq('site_id', options.siteId);
     }
     
-    if (status) {
-      query = query.eq('status', status);
+    if (options?.status) {
+      query = query.eq('status', options.status);
     }
     
-    if (type) {
-      query = query.eq('type', type);
+    if (options?.type) {
+      query = query.eq('type', options.type);
     }
     
-    if (search) {
-      query = query.or(`name.ilike.%${search}%,location.ilike.%${search}%`);
+    if (options?.search) {
+      query = query.or(`name.ilike.%${options.search}%,location.ilike.%${options.search}%`);
     }
     
     const { count, error } = await query;
@@ -59,9 +55,8 @@ export const getDeviceCount = async (options: {
     if (error) throw error;
     
     return count || 0;
-    
   } catch (error) {
-    console.error("Error counting devices:", error);
+    console.error('Error counting devices:', error);
     return 0;
   }
 };
@@ -159,5 +154,53 @@ export const getDeviceTypeStats = async (siteId?: string): Promise<Record<Device
       load: 0,
       ev_charger: 0
     };
+  }
+};
+
+/**
+ * Get devices by status
+ */
+export const getDevicesByStatus = async (status: DeviceStatus): Promise<number> => {
+  try {
+    // Validate status before querying
+    if (!isValidDeviceStatus(status)) {
+      throw new Error(`Invalid device status: ${status}`);
+    }
+    
+    const { count, error } = await supabase
+      .from('devices')
+      .select('*', { count: 'exact' })
+      .eq('status', status);
+    
+    if (error) throw error;
+    
+    return count || 0;
+  } catch (error) {
+    console.error(`Error getting devices with status ${status}:`, error);
+    return 0;
+  }
+};
+
+/**
+ * Get devices by type
+ */
+export const getDevicesByType = async (type: DeviceType): Promise<number> => {
+  try {
+    // Validate type before querying
+    if (!isValidDeviceType(type)) {
+      throw new Error(`Invalid device type: ${type}`);
+    }
+    
+    const { count, error } = await supabase
+      .from('devices')
+      .select('*', { count: 'exact' })
+      .eq('type', type);
+    
+    if (error) throw error;
+    
+    return count || 0;
+  } catch (error) {
+    console.error(`Error getting devices with type ${type}:`, error);
+    return 0;
   }
 };

@@ -36,6 +36,7 @@ const AddSite = () => {
     <SettingsPageTemplate
       title="Add New Site"
       description="Create a new energy management site"
+      backLink="/settings/sites"
       actions={
         <Button 
           variant="outline"

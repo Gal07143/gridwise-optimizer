@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { CloudSun, LineChart, Zap } from 'lucide-react';
 import DashboardCard from './DashboardCard';
@@ -10,7 +9,7 @@ import {
   XAxis,
   YAxis 
 } from 'recharts';
-import { useSiteContext } from '@/contexts/SiteContext';
+import { useSite } from '@/contexts/SiteContext';
 import { getSiteForecasts, getSiteForecastMetrics, generateSampleForecasts, insertEnergyForecasts } from '@/services/forecastService';
 import { EnergyForecast } from '@/types/energy';
 import { format } from 'date-fns';
@@ -23,7 +22,7 @@ interface EnergyForecastCardProps {
 }
 
 const EnergyForecastCard = ({ className, animationDelay }: EnergyForecastCardProps) => {
-  const { selectedSite } = useSiteContext();
+  const { currentSite: selectedSite } = useSite();
   const [hasForecastData, setHasForecastData] = useState(false);
 
   // Fetch forecasts for the selected site

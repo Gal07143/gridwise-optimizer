@@ -26,6 +26,7 @@ import GlassPanel from '@/components/ui/GlassPanel';
 import LiveChart from '@/components/dashboard/LiveChart';
 import { getAllDevices, getDeviceById, deleteDevice } from '@/services/deviceService';
 import { getDeviceReadings } from '@/services/devices/readingsService';
+import { getDeviceCount } from '@/services/devices/deviceStats';
 import { EnergyDevice, DeviceType, DeviceStatus } from '@/types/energy';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -55,7 +56,6 @@ import {
   Pagination,
   PaginationContent,
   PaginationItem,
-  PaginationLink,
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
@@ -456,9 +456,14 @@ const Devices = () => {
                       {/* First page */}
                       {currentPage > 1 && (
                         <PaginationItem>
-                          <PaginationLink onClick={() => setCurrentPage(0)}>
+                          <Button 
+                            variant="outline"
+                            size="icon"
+                            onClick={() => setCurrentPage(0)}
+                            className="h-9 w-9"
+                          >
                             1
-                          </PaginationLink>
+                          </Button>
                         </PaginationItem>
                       )}
                       
@@ -472,25 +477,39 @@ const Devices = () => {
                       {/* Current page - 1 if applicable */}
                       {currentPage > 0 && (
                         <PaginationItem>
-                          <PaginationLink onClick={() => setCurrentPage(currentPage - 1)}>
+                          <Button 
+                            variant="outline"
+                            size="icon"
+                            onClick={() => setCurrentPage(currentPage - 1)}
+                            className="h-9 w-9"
+                          >
                             {currentPage}
-                          </PaginationLink>
+                          </Button>
                         </PaginationItem>
                       )}
                       
                       {/* Current page */}
                       <PaginationItem>
-                        <PaginationLink isActive>
+                        <Button 
+                          variant="outline"
+                          size="icon"
+                          className="h-9 w-9 bg-primary text-primary-foreground hover:bg-primary/90"
+                        >
                           {currentPage + 1}
-                        </PaginationLink>
+                        </Button>
                       </PaginationItem>
                       
                       {/* Current page + 1 if applicable */}
                       {currentPage < totalPages - 1 && (
                         <PaginationItem>
-                          <PaginationLink onClick={() => setCurrentPage(currentPage + 1)}>
+                          <Button 
+                            variant="outline"
+                            size="icon"
+                            onClick={() => setCurrentPage(currentPage + 1)}
+                            className="h-9 w-9"
+                          >
                             {currentPage + 2}
-                          </PaginationLink>
+                          </Button>
                         </PaginationItem>
                       )}
                       
@@ -504,9 +523,14 @@ const Devices = () => {
                       {/* Last page */}
                       {currentPage < totalPages - 2 && (
                         <PaginationItem>
-                          <PaginationLink onClick={() => setCurrentPage(totalPages - 1)}>
+                          <Button 
+                            variant="outline"
+                            size="icon"
+                            onClick={() => setCurrentPage(totalPages - 1)}
+                            className="h-9 w-9"
+                          >
                             {totalPages}
-                          </PaginationLink>
+                          </Button>
                         </PaginationItem>
                       )}
                       
