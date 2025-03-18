@@ -31,14 +31,7 @@ export function useRealtimeUpdates({
     // Track when we're subscribed
     let isSubscribed = false;
     
-    // Build configuration for postgres changes
-    const postgresConfig = {
-      event: events,
-      schema: 'public', 
-      table
-    };
-    
-    // Subscribe to the channel
+    // Configure event handlers for presence
     channel
       .on('presence', { event: 'sync' }, () => {
         setConnected(true);
@@ -50,31 +43,41 @@ export function useRealtimeUpdates({
       .on('presence', { event: 'leave' }, () => {
         setConnected(false);
         console.log(`Left realtime channel for ${table}`);
-      })
-      .subscribe((status, err) => {
-        if (status === 'SUBSCRIBED') {
-          isSubscribed = true;
-          
-          // After subscription succeeds, listen for postgres changes
-          channel.on(
-            'postgres_changes',
-            postgresConfig,
-            (payload) => {
-              console.log('Realtime update received:', payload);
-              if (onData) {
-                onData(payload);
-              }
-            }
-          );
-        } else if (err) {
-          setError(new Error(`Failed to subscribe to realtime updates: ${err.message}`));
-          console.error('Realtime subscription error:', err);
-        }
       });
+      
+    // Configure the postgres changes listener
+    events.forEach(event => {
+      channel.on(
+        'postgres_changes', 
+        {
+          event: event,
+          schema: 'public',
+          table: table
+        },
+        (payload) => {
+          console.log(`Realtime ${event} received:`, payload);
+          if (onData) {
+            onData(payload);
+          }
+        }
+      );
+    });
+    
+    // Subscribe to the channel
+    channel.subscribe((status, err) => {
+      if (status === 'SUBSCRIBED') {
+        isSubscribed = true;
+        console.log(`Successfully subscribed to ${table} changes`);
+      } else if (err) {
+        setError(new Error(`Failed to subscribe to realtime updates: ${err.message}`));
+        console.error('Realtime subscription error:', err);
+      }
+    });
     
     // Clean up subscription
     return () => {
       if (isSubscribed) {
+        console.log(`Removing channel for ${table}`);
         supabase.removeChannel(channel);
       }
     };
