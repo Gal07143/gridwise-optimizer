@@ -28,10 +28,15 @@ export const useDeviceForm = () => {
         clearSiteCache();
       }
       
-      // Try to get site from API
-      const site = await getOrCreateDummySite();
+      // Try to get site from API with a timeout to prevent hanging
+      const timeoutPromise = new Promise<null>((_, reject) => {
+        setTimeout(() => reject(new Error("Site fetch timeout")), 5000);
+      });
       
-      if (site) {
+      const sitePromise = getOrCreateDummySite();
+      const site = await Promise.race([sitePromise, timeoutPromise]) as any;
+      
+      if (site && site.id) {
         console.log("Successfully fetched site:", site);
         setDefaultSiteId(site.id);
         setSiteError(false);

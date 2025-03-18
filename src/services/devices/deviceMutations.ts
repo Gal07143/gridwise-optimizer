@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { EnergyDevice, DeviceStatus, DeviceType, isValidDeviceStatus, isValidDeviceType } from "@/types/energy";
 import { getOrCreateDummySite } from "../sites/siteService";
@@ -43,26 +42,18 @@ const getValidSiteId = async (providedSiteId?: string): Promise<string> => {
   }
   
   try {
-    // Try to get default site using RPC function
-    const { data: siteData, error } = await supabase.rpc('get_default_site_id');
+    // Try to get a site with a direct query to avoid RLS issues
+    const { data: sites, error } = await supabase
+      .from('sites')
+      .select('id')
+      .limit(1);
     
-    if (!error && siteData) {
-      return siteData;
+    if (!error && sites && sites.length > 0) {
+      return sites[0].id;
     }
   } catch (siteError) {
-    console.error("Error getting default site ID via RPC:", siteError);
+    console.error("Error getting site ID via direct query:", siteError);
     // Continue with fallback mechanisms
-  }
-  
-  // Try getting or creating a site
-  try {
-    const site = await getOrCreateDummySite();
-    if (site && site.id) {
-      return site.id;
-    }
-  } catch (siteError) {
-    console.error("Error getting or creating site:", siteError);
-    // Continue with final fallback
   }
   
   // Final fallback - use dummy ID
