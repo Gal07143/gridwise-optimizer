@@ -1,7 +1,5 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft, Save } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Sidebar from '@/components/layout/Sidebar';
@@ -19,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DeviceType } from '@/types/energy';
+import { DeviceType, DeviceStatus } from '@/types/energy';
 
 const AddDevice = () => {
   const navigate = useNavigate();
@@ -29,7 +27,7 @@ const AddDevice = () => {
     name: '',
     location: '',
     type: 'solar' as DeviceType,
-    status: 'online',
+    status: 'online' as DeviceStatus,
     capacity: 0,
     firmware: '',
   });
