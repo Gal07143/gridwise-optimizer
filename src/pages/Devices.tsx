@@ -447,10 +447,15 @@ const Devices = () => {
                   <Pagination className="mt-4">
                     <PaginationContent>
                       <PaginationItem>
-                        <PaginationPrevious 
+                        <Button 
+                          variant="outline"
+                          size="icon"
                           onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
                           disabled={currentPage === 0}
-                        />
+                          className="h-9 w-9"
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
                       </PaginationItem>
                       
                       {/* First page */}
@@ -535,10 +540,15 @@ const Devices = () => {
                       )}
                       
                       <PaginationItem>
-                        <PaginationNext 
+                        <Button 
+                          variant="outline"
+                          size="icon"
                           onClick={() => setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))}
                           disabled={currentPage >= totalPages - 1}
-                        />
+                          className="h-9 w-9"
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
                       </PaginationItem>
                     </PaginationContent>
                   </Pagination>
