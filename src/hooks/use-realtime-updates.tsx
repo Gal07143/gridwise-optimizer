@@ -49,7 +49,11 @@ export function useRealtimeUpdates({
     events.forEach(event => {
       channel.on(
         'postgres_changes', 
-        { event, schema: 'public', table },
+        {
+          event: event,
+          schema: 'public',
+          table: table
+        },
         (payload) => {
           console.log(`Realtime ${event} received:`, payload);
           if (onData) {
