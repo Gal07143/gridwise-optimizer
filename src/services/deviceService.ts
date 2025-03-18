@@ -8,7 +8,7 @@ export {
   updateDevice,
   createDevice,
   deleteDevice
-} from './devices/deviceCore';
+} from './devices';
 
 // Device readings
 export {
