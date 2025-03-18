@@ -1,15 +1,46 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Battery, BatteryCharging, Cloud, PlugZap, Sun, Wind, AlertTriangle, Activity } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { 
+  Battery, 
+  BatteryCharging, 
+  Cloud, 
+  PlugZap, 
+  Sun, 
+  Wind, 
+  AlertTriangle, 
+  Activity, 
+  Plus,
+  Trash2,
+  Edit,
+  MoreHorizontal
+} from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Sidebar from '@/components/layout/Sidebar';
 import DashboardCard from '@/components/dashboard/DashboardCard';
 import GlassPanel from '@/components/ui/GlassPanel';
 import LiveChart from '@/components/dashboard/LiveChart';
-import { getAllDevices, getDeviceById, getDeviceReadings } from '@/services/deviceService';
+import { getAllDevices, getDeviceById, getDeviceReadings, deleteDevice } from '@/services/deviceService';
 import { EnergyDevice } from '@/types/energy';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const DeviceTypeIcons = {
   solar: <Sun size={20} />,
@@ -31,9 +62,12 @@ const getStatusColor = (status: string) => {
 };
 
 const Devices = () => {
+  const navigate = useNavigate();
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deviceToDelete, setDeviceToDelete] = useState<string | null>(null);
   
-  const { data: devices = [], isLoading: isLoadingDevices } = useQuery({
+  const { data: devices = [], isLoading: isLoadingDevices, refetch: refetchDevices } = useQuery({
     queryKey: ['devices'],
     queryFn: getAllDevices
   });
@@ -60,6 +94,47 @@ const Devices = () => {
     time: new Date(reading.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     value: reading.power
   }));
+
+  const handleAddDevice = () => {
+    navigate('/devices/add');
+  };
+
+  const handleEditDevice = (deviceId: string) => {
+    navigate(`/devices/edit/${deviceId}`);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deviceToDelete) return;
+    
+    try {
+      const success = await deleteDevice(deviceToDelete);
+      
+      if (success) {
+        toast.success("Device deleted successfully");
+        refetchDevices();
+        
+        // If we deleted the selected device, select another one
+        if (deviceToDelete === selectedDeviceId) {
+          const remainingDevices = devices.filter(d => d.id !== deviceToDelete);
+          setSelectedDeviceId(remainingDevices.length > 0 ? remainingDevices[0].id : null);
+        }
+      } else {
+        toast.error("Failed to delete device");
+      }
+    } catch (error) {
+      console.error("Error deleting device:", error);
+      toast.error("An error occurred while deleting the device");
+    } finally {
+      setDeleteDialogOpen(false);
+      setDeviceToDelete(null);
+    }
+  };
+
+  const openDeleteDialog = (deviceId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setDeviceToDelete(deviceId);
+    setDeleteDialogOpen(true);
+  };
   
   return (
     <div className="flex h-screen overflow-hidden">
@@ -67,9 +142,18 @@ const Devices = () => {
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
         <div className="flex-1 overflow-y-auto p-6 animate-fade-in">
-          <div className="mb-6">
-            <h1 className="text-2xl font-semibold mb-1">Energy Devices</h1>
-            <p className="text-muted-foreground">Monitor and manage all connected energy devices</p>
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-semibold mb-1">Energy Devices</h1>
+              <p className="text-muted-foreground">Monitor and manage all connected energy devices</p>
+            </div>
+            <Button 
+              onClick={handleAddDevice}
+              className="flex items-center gap-2"
+            >
+              <Plus size={16} />
+              <span>Add Device</span>
+            </Button>
           </div>
           
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -82,13 +166,12 @@ const Devices = () => {
                 ) : (
                   <div className="space-y-2">
                     {devices.map(device => (
-                      <Button
+                      <div
                         key={device.id}
-                        variant="ghost"
-                        className={`w-full justify-start p-3 h-auto ${selectedDeviceId === device.id ? 'bg-accent/50' : ''}`}
+                        className={`flex items-center justify-between p-3 rounded-lg cursor-pointer ${selectedDeviceId === device.id ? 'bg-accent/50' : 'hover:bg-secondary/30'}`}
                         onClick={() => setSelectedDeviceId(device.id)}
                       >
-                        <div className="flex items-center space-x-3 w-full">
+                        <div className="flex items-center space-x-3 flex-1">
                           <div className="text-muted-foreground">
                             {DeviceTypeIcons[device.type] || <AlertTriangle size={20} />}
                           </div>
@@ -98,7 +181,30 @@ const Devices = () => {
                           </div>
                           <div className={`rounded-full h-2.5 w-2.5 ${getStatusColor(device.status)}`}></div>
                         </div>
-                      </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreHorizontal size={16} />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditDevice(device.id);
+                            }}>
+                              <Edit size={16} className="mr-2" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              className="text-destructive focus:text-destructive"
+                              onClick={(e) => openDeleteDialog(device.id, e)}
+                            >
+                              <Trash2 size={16} className="mr-2" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     ))}
                   </div>
                 )}
@@ -122,7 +228,24 @@ const Devices = () => {
                         </div>
                         <div className="mt-1 text-muted-foreground">{selectedDevice.location}</div>
                       </div>
-                      <Button size="sm" variant="outline">Configure</Button>
+                      <div className="flex space-x-2">
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => handleEditDevice(selectedDevice.id)}
+                        >
+                          <Edit size={14} className="mr-1" />
+                          Edit
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="destructive"
+                          onClick={(e) => openDeleteDialog(selectedDevice.id, e)}
+                        >
+                          <Trash2 size={14} className="mr-1" />
+                          Delete
+                        </Button>
+                      </div>
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
@@ -209,6 +332,23 @@ const Devices = () => {
           </div>
         </div>
       </div>
+      
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Device</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this device? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

@@ -1,15 +1,45 @@
 
 import React from 'react';
-import { Bell, Search, Settings, User } from 'lucide-react';
+import { Bell, Search, Settings, User, Plus } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Header = () => {
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast.success('Signed out successfully');
+      navigate('/auth');
+    } catch (error) {
+      console.error('Error signing out:', error);
+      toast.error('Failed to sign out');
+    }
+  };
+
+  const handleAddDevice = () => {
+    navigate('/devices/add');
+  };
+
   return (
     <header className="w-full h-16 px-6 border-b border-border flex items-center justify-between bg-background/80 backdrop-blur-sm z-10">
       <div className="flex items-center">
-        <div className="mr-2 text-xl font-medium bg-clip-text text-transparent bg-gradient-to-r from-energy-blue to-energy-teal">
+        <Link to="/" className="mr-2 text-xl font-medium bg-clip-text text-transparent bg-gradient-to-r from-energy-blue to-energy-teal">
           GridWise
-        </div>
+        </Link>
       </div>
 
       <div className="flex-1 max-w-xl mx-8">
@@ -26,19 +56,96 @@ const Header = () => {
       </div>
 
       <div className="flex items-center space-x-1">
-        <button className={cn(
-          "p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition duration-200",
-        )}>
-          <Bell size={20} />
-        </button>
-        <button className={cn(
-          "p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition duration-200",
-        )}>
-          <Settings size={20} />
-        </button>
-        <button className="ml-2 p-1.5 rounded-full bg-secondary hover:bg-secondary/80 transition duration-200">
-          <User size={20} />
-        </button>
+        <Button 
+          variant="outline"
+          size="sm"
+          className="flex items-center gap-1 mr-2"
+          onClick={handleAddDevice}
+        >
+          <Plus size={16} />
+          <span>Add Device</span>
+        </Button>
+        
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition duration-200"
+            >
+              <Bell size={20} />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-80">
+            <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <div className="max-h-96 overflow-y-auto">
+              <div className="p-3 text-center text-muted-foreground">
+                No new notifications
+              </div>
+            </div>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link to="/alerts" className="cursor-pointer justify-center">View all alerts</Link>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition duration-200"
+            >
+              <Settings size={20} />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>Settings</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link to="/settings/general">General</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/settings/users">User Management</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/settings/api">API Configuration</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/settings">All Settings</Link>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button 
+              variant="secondary" 
+              size="icon" 
+              className="ml-2 p-1.5 rounded-full hover:bg-secondary/80 transition duration-200"
+            >
+              <User size={20} />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>
+              {user?.email || 'User Account'}
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link to="/settings/profile">Profile</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/settings/preferences">Preferences</Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleSignOut}>
+              Sign Out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );

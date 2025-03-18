@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,6 +8,8 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import Dashboard from "./pages/Dashboard";
 import Analytics from "./pages/Analytics";
 import Devices from "./pages/Devices";
+import AddDevice from "./pages/AddDevice";
+import EditDevice from "./pages/EditDevice";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
@@ -36,6 +39,10 @@ const Documentation = () => (
   <SettingsPlaceholder title="Documentation" />
 );
 
+const Alerts = () => (
+  <SettingsPlaceholder title="System Alerts" />
+);
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
@@ -50,7 +57,10 @@ const App = () => (
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
             <Route path="/devices" element={<ProtectedRoute><Devices /></ProtectedRoute>} />
+            <Route path="/devices/add" element={<ProtectedRoute><AddDevice /></ProtectedRoute>} />
+            <Route path="/devices/edit/:deviceId" element={<ProtectedRoute><EditDevice /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+            <Route path="/alerts" element={<ProtectedRoute><Alerts /></ProtectedRoute>} />
             
             <Route path="/settings/general" element={<ProtectedRoute><SettingsPlaceholder title="General Configuration" /></ProtectedRoute>} />
             <Route path="/settings/updates" element={<ProtectedRoute><SettingsPlaceholder title="System Updates" /></ProtectedRoute>} />
@@ -71,10 +81,12 @@ const App = () => (
             <Route path="/settings/algorithms" element={<ProtectedRoute><SettingsPlaceholder title="Optimization Algorithms" /></ProtectedRoute>} />
             <Route path="/settings/tariffs" element={<ProtectedRoute><SettingsPlaceholder title="Energy Tariffs" /></ProtectedRoute>} />
             <Route path="/settings/api-keys" element={<ProtectedRoute><SettingsPlaceholder title="API Key Management" /></ProtectedRoute>} />
+            <Route path="/settings/profile" element={<ProtectedRoute><SettingsPlaceholder title="User Profile" /></ProtectedRoute>} />
+            <Route path="/settings/preferences" element={<ProtectedRoute><SettingsPlaceholder title="User Preferences" /></ProtectedRoute>} />
             
             <Route path="/energy-flow" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} /> 
             <Route path="/microgrid" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} /> 
-            <Route path="/alerts" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} /> 
+            <Route path="/alerts" element={<ProtectedRoute><Alerts /></ProtectedRoute>} /> 
             <Route path="/reports" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} /> 
             <Route path="/security" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
             <Route path="/system-status" element={<ProtectedRoute><SystemStatus /></ProtectedRoute>} />
