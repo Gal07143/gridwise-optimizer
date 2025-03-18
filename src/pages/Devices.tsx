@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
@@ -13,18 +14,25 @@ import {
   Plus,
   Trash2,
   Edit,
-  MoreHorizontal
+  MoreHorizontal,
+  Search,
+  Filter,
+  SlidersHorizontal
 } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Sidebar from '@/components/layout/Sidebar';
 import DashboardCard from '@/components/dashboard/DashboardCard';
 import GlassPanel from '@/components/ui/GlassPanel';
 import LiveChart from '@/components/dashboard/LiveChart';
-import { getAllDevices, getDeviceById, getDeviceReadings, deleteDevice } from '@/services/deviceService';
-import { EnergyDevice } from '@/types/energy';
+import { getAllDevices, getDeviceById, deleteDevice } from '@/services/deviceService';
+import { getDeviceReadings } from '@/services/devices/readingsService';
+import { EnergyDevice, DeviceType, DeviceStatus } from '@/types/energy';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import SiteSelector from '@/components/sites/SiteSelector';
+import { useSite } from '@/contexts/SiteContext';
+import { Input } from '@/components/ui/input';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,9 +48,19 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
-const DeviceTypeIcons = {
+const DeviceTypeIcons: Record<DeviceType | string, React.ReactNode> = {
   solar: <Sun size={20} />,
   wind: <Wind size={20} />,
   battery: <Battery size={20} />,
@@ -61,24 +79,69 @@ const getStatusColor = (status: string) => {
   }
 };
 
+interface DeviceFilterOptions {
+  status?: DeviceStatus | null;
+  type?: DeviceType | null;
+  search: string;
+}
+
+const ITEMS_PER_PAGE = 10;
+
 const Devices = () => {
   const navigate = useNavigate();
+  const { currentSite } = useSite();
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deviceToDelete, setDeviceToDelete] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(0);
   
-  const { data: devices = [], isLoading: isLoadingDevices, refetch: refetchDevices } = useQuery({
-    queryKey: ['devices'],
-    queryFn: getAllDevices
+  const [filters, setFilters] = useState<DeviceFilterOptions>({
+    status: null,
+    type: null,
+    search: '',
   });
   
-  const { data: selectedDevice, isLoading: isLoadingDevice } = useQuery({
+  const {
+    data: devices = [],
+    isLoading: isLoadingDevices,
+    refetch: refetchDevices
+  } = useQuery({
+    queryKey: ['devices', currentSite?.id, filters, currentPage],
+    queryFn: () => getAllDevices({
+      siteId: currentSite?.id,
+      page: currentPage,
+      pageSize: ITEMS_PER_PAGE,
+      status: filters.status || undefined,
+      type: filters.type || undefined,
+      search: filters.search || undefined,
+    }),
+    enabled: !!currentSite
+  });
+  
+  const { data: totalDevices = 0 } = useQuery({
+    queryKey: ['deviceCount', currentSite?.id, filters],
+    queryFn: () => getDeviceCount({
+      siteId: currentSite?.id,
+      status: filters.status || undefined,
+      type: filters.type || undefined,
+      search: filters.search || undefined,
+    }),
+    enabled: !!currentSite
+  });
+  
+  const { 
+    data: selectedDevice,
+    isLoading: isLoadingDevice
+  } = useQuery({
     queryKey: ['device', selectedDeviceId],
     queryFn: () => selectedDeviceId ? getDeviceById(selectedDeviceId) : null,
     enabled: !!selectedDeviceId
   });
   
-  const { data: deviceReadings = [], isLoading: isLoadingReadings } = useQuery({
+  const { 
+    data: deviceReadings = [],
+    isLoading: isLoadingReadings
+  } = useQuery({
     queryKey: ['deviceReadings', selectedDeviceId],
     queryFn: () => selectedDeviceId ? getDeviceReadings(selectedDeviceId) : [],
     enabled: !!selectedDeviceId
@@ -136,6 +199,18 @@ const Devices = () => {
     setDeleteDialogOpen(true);
   };
   
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFilters(prev => ({ ...prev, search: e.target.value }));
+    setCurrentPage(0); // Reset to first page when search changes
+  };
+  
+  const clearFilters = () => {
+    setFilters({ status: null, type: null, search: '' });
+    setCurrentPage(0);
+  };
+  
+  const totalPages = Math.ceil(totalDevices / ITEMS_PER_PAGE);
+  
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar />
@@ -144,8 +219,15 @@ const Devices = () => {
         <div className="flex-1 overflow-y-auto p-6 animate-fade-in">
           <div className="mb-6 flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-semibold mb-1">Energy Devices</h1>
-              <p className="text-muted-foreground">Monitor and manage all connected energy devices</p>
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-semibold">Energy Devices</h1>
+                <SiteSelector />
+              </div>
+              <p className="text-muted-foreground mt-1">
+                {currentSite 
+                  ? `Monitor and manage devices at ${currentSite.name}`
+                  : 'Monitor and manage all connected energy devices'}
+              </p>
             </div>
             <Button 
               onClick={handleAddDevice}
@@ -156,13 +238,163 @@ const Devices = () => {
             </Button>
           </div>
           
+          <div className="mb-6 flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search devices..."
+                className="pl-8"
+                value={filters.search}
+                onChange={handleSearchChange}
+              />
+            </div>
+            <div className="flex gap-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="flex items-center gap-2">
+                    <Filter size={16} />
+                    <span className="hidden sm:inline">Filter</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem disabled className="text-xs font-medium text-muted-foreground">
+                    Device Status
+                  </DropdownMenuItem>
+                  <DropdownMenuCheckboxItem
+                    checked={filters.status === 'online'}
+                    onCheckedChange={() => setFilters(prev => ({
+                      ...prev,
+                      status: prev.status === 'online' ? null : 'online'
+                    }))}
+                  >
+                    Online
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                    checked={filters.status === 'offline'}
+                    onCheckedChange={() => setFilters(prev => ({
+                      ...prev,
+                      status: prev.status === 'offline' ? null : 'offline'
+                    }))}
+                  >
+                    Offline
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                    checked={filters.status === 'maintenance'}
+                    onCheckedChange={() => setFilters(prev => ({
+                      ...prev,
+                      status: prev.status === 'maintenance' ? null : 'maintenance'
+                    }))}
+                  >
+                    Maintenance
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                    checked={filters.status === 'error'}
+                    onCheckedChange={() => setFilters(prev => ({
+                      ...prev,
+                      status: prev.status === 'error' ? null : 'error'
+                    }))}
+                  >
+                    Error
+                  </DropdownMenuCheckboxItem>
+                  
+                  <DropdownMenuSeparator />
+                  
+                  <DropdownMenuItem disabled className="text-xs font-medium text-muted-foreground">
+                    Device Type
+                  </DropdownMenuItem>
+                  <DropdownMenuCheckboxItem
+                    checked={filters.type === 'solar'}
+                    onCheckedChange={() => setFilters(prev => ({
+                      ...prev,
+                      type: prev.type === 'solar' ? null : 'solar'
+                    }))}
+                  >
+                    Solar
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                    checked={filters.type === 'wind'}
+                    onCheckedChange={() => setFilters(prev => ({
+                      ...prev,
+                      type: prev.type === 'wind' ? null : 'wind'
+                    }))}
+                  >
+                    Wind
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                    checked={filters.type === 'battery'}
+                    onCheckedChange={() => setFilters(prev => ({
+                      ...prev,
+                      type: prev.type === 'battery' ? null : 'battery'
+                    }))}
+                  >
+                    Battery
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                    checked={filters.type === 'grid'}
+                    onCheckedChange={() => setFilters(prev => ({
+                      ...prev,
+                      type: prev.type === 'grid' ? null : 'grid'
+                    }))}
+                  >
+                    Grid
+                  </DropdownMenuCheckboxItem>
+                  
+                  <DropdownMenuSeparator />
+                  
+                  <DropdownMenuItem onClick={clearFilters}>
+                    Clear All Filters
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="flex items-center gap-2">
+                    <SlidersHorizontal size={16} />
+                    <span className="hidden sm:inline">Sort</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem>
+                    Name (A-Z)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    Name (Z-A)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    Status
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    Type
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    Recently Added
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+          
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             <div className="lg:col-span-1">
               <GlassPanel className="p-2 space-y-2 h-full overflow-auto">
-                <div className="p-2 font-medium text-sm">All Devices</div>
+                <div className="p-2 font-medium text-sm flex justify-between items-center">
+                  <span>All Devices</span>
+                  {(filters.status || filters.type || filters.search) && (
+                    <Button variant="ghost" size="sm" onClick={clearFilters} className="h-7 px-2">
+                      Clear Filters
+                    </Button>
+                  )}
+                </div>
                 
                 {isLoadingDevices ? (
                   <div className="p-4 text-center text-muted-foreground">Loading devices...</div>
+                ) : devices.length === 0 ? (
+                  <div className="p-4 text-center text-muted-foreground">
+                    {filters.status || filters.type || filters.search 
+                      ? "No devices match your filters"
+                      : "No devices found"}
+                  </div>
                 ) : (
                   <div className="space-y-2">
                     {devices.map(device => (
@@ -207,6 +439,83 @@ const Devices = () => {
                       </div>
                     ))}
                   </div>
+                )}
+                
+                {totalPages > 1 && (
+                  <Pagination className="mt-4">
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious 
+                          onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
+                          disabled={currentPage === 0}
+                        />
+                      </PaginationItem>
+                      
+                      {/* First page */}
+                      {currentPage > 1 && (
+                        <PaginationItem>
+                          <PaginationLink onClick={() => setCurrentPage(0)}>
+                            1
+                          </PaginationLink>
+                        </PaginationItem>
+                      )}
+                      
+                      {/* Ellipsis if needed */}
+                      {currentPage > 2 && (
+                        <PaginationItem>
+                          <span className="px-2.5">...</span>
+                        </PaginationItem>
+                      )}
+                      
+                      {/* Current page - 1 if applicable */}
+                      {currentPage > 0 && (
+                        <PaginationItem>
+                          <PaginationLink onClick={() => setCurrentPage(currentPage - 1)}>
+                            {currentPage}
+                          </PaginationLink>
+                        </PaginationItem>
+                      )}
+                      
+                      {/* Current page */}
+                      <PaginationItem>
+                        <PaginationLink isActive>
+                          {currentPage + 1}
+                        </PaginationLink>
+                      </PaginationItem>
+                      
+                      {/* Current page + 1 if applicable */}
+                      {currentPage < totalPages - 1 && (
+                        <PaginationItem>
+                          <PaginationLink onClick={() => setCurrentPage(currentPage + 1)}>
+                            {currentPage + 2}
+                          </PaginationLink>
+                        </PaginationItem>
+                      )}
+                      
+                      {/* Ellipsis if needed */}
+                      {currentPage < totalPages - 3 && (
+                        <PaginationItem>
+                          <span className="px-2.5">...</span>
+                        </PaginationItem>
+                      )}
+                      
+                      {/* Last page */}
+                      {currentPage < totalPages - 2 && (
+                        <PaginationItem>
+                          <PaginationLink onClick={() => setCurrentPage(totalPages - 1)}>
+                            {totalPages}
+                          </PaginationLink>
+                        </PaginationItem>
+                      )}
+                      
+                      <PaginationItem>
+                        <PaginationNext 
+                          onClick={() => setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))}
+                          disabled={currentPage >= totalPages - 1}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
                 )}
               </GlassPanel>
             </div>

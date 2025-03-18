@@ -1,5 +1,7 @@
+
 import React from 'react';
 import { BarChart3, Battery, Bolt, Globe, Home, Thermometer, Wind, Zap } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import DashboardCard from '@/components/dashboard/DashboardCard';
 import MetricsCard from '@/components/dashboard/MetricsCard';
 import LiveChart from '@/components/dashboard/LiveChart';
@@ -10,7 +12,11 @@ import AdvancedBatteryCard from '@/components/dashboard/AdvancedBatteryCard';
 import EnergyForecastCard from '@/components/dashboard/EnergyForecastCard';
 import Header from '@/components/layout/Header';
 import Sidebar from '@/components/layout/Sidebar';
+import SiteSelector from '@/components/sites/SiteSelector';
 import GlassPanel from '@/components/ui/GlassPanel';
+import { useSite } from '@/contexts/SiteContext';
+import { getAllDevices } from '@/services/devices';
+import { getSiteStatistics } from '@/services/siteService';
 
 const powerGenerationData = [
   { time: '00:00', value: 45 },
@@ -61,15 +67,36 @@ const gridFeedInData = [
 ];
 
 const Dashboard = () => {
+  const { currentSite } = useSite();
+  
+  const { data: devices = [] } = useQuery({
+    queryKey: ['devices', currentSite?.id],
+    queryFn: () => currentSite ? getAllDevices({ siteId: currentSite.id }) : [],
+    enabled: !!currentSite,
+  });
+  
+  const { data: siteStats } = useQuery({
+    queryKey: ['siteStats', currentSite?.id],
+    queryFn: () => currentSite ? getSiteStatistics(currentSite.id) : null,
+    enabled: !!currentSite,
+  });
+
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
         <div className="flex-1 overflow-y-auto p-6 animate-fade-in">
-          <div className="mb-6">
-            <h1 className="text-2xl font-semibold mb-1">Energy Management Dashboard</h1>
-            <p className="text-muted-foreground">Real-time monitoring and control of your energy systems</p>
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <h1 className="text-2xl font-semibold">Energy Management Dashboard</h1>
+                <SiteSelector />
+              </div>
+              <p className="text-muted-foreground">
+                {currentSite ? `Monitoring ${currentSite.name} at ${currentSite.location}` : 'Real-time monitoring and control of your energy systems'}
+              </p>
+            </div>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 animate-slide-up" style={{ animationDelay: '0.1s' }}>

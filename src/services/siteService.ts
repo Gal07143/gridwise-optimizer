@@ -4,14 +4,28 @@ import { Site } from "@/types/energy";
 import { toast } from "sonner";
 
 /**
- * Get all sites
+ * Get all sites with optional pagination
  */
-export const getAllSites = async (): Promise<Site[]> => {
+export const getAllSites = async (
+  page = 0, 
+  pageSize = 100,
+  orderBy = 'name',
+  ascending = true
+): Promise<Site[]> => {
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('sites')
       .select('*')
-      .order('name');
+      .order(orderBy, { ascending });
+    
+    // Apply pagination if specified
+    if (pageSize > 0) {
+      const start = page * pageSize;
+      const end = start + pageSize - 1;
+      query = query.range(start, end);
+    }
+    
+    const { data, error } = await query;
     
     if (error) throw error;
     return data || [];
@@ -19,6 +33,27 @@ export const getAllSites = async (): Promise<Site[]> => {
   } catch (error) {
     console.error("Error fetching sites:", error);
     toast.error("Failed to fetch sites");
+    return [];
+  }
+};
+
+/**
+ * Search sites by name or location
+ */
+export const searchSites = async (searchTerm: string): Promise<Site[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('sites')
+      .select('*')
+      .or(`name.ilike.%${searchTerm}%,location.ilike.%${searchTerm}%`)
+      .order('name');
+    
+    if (error) throw error;
+    return data || [];
+    
+  } catch (error) {
+    console.error(`Error searching sites with term "${searchTerm}":`, error);
+    toast.error("Failed to search sites");
     return [];
   }
 };
@@ -119,12 +154,35 @@ export const deleteSite = async (id: string): Promise<boolean> => {
 /**
  * Get devices for a site
  */
-export const getSiteDevices = async (siteId: string): Promise<any[]> => {
+export const getSiteDevices = async (
+  siteId: string, 
+  page = 0, 
+  pageSize = 50,
+  filters?: { status?: string, type?: string }
+): Promise<any[]> => {
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('devices')
       .select('*')
       .eq('site_id', siteId);
+    
+    // Apply filters if provided
+    if (filters?.status) {
+      query = query.eq('status', filters.status);
+    }
+    
+    if (filters?.type) {
+      query = query.eq('type', filters.type);
+    }
+    
+    // Apply pagination
+    if (pageSize > 0) {
+      const start = page * pageSize;
+      const end = start + pageSize - 1;
+      query = query.range(start, end);
+    }
+    
+    const { data, error } = await query;
     
     if (error) throw error;
     return data || [];
@@ -137,44 +195,51 @@ export const getSiteDevices = async (siteId: string): Promise<any[]> => {
 };
 
 /**
- * Grant a user access to a site
+ * Get site statistics (device counts, status, etc.)
  */
-export const grantUserSiteAccess = async (userId: string, siteId: string): Promise<boolean> => {
+export const getSiteStatistics = async (siteId: string): Promise<any> => {
   try {
-    const { error } = await supabase
-      .from('user_site_access')
-      .insert([{ user_id: userId, site_id: siteId }]);
+    // Get all devices for the site
+    const devices = await getSiteDevices(siteId, 0, 1000);
     
-    if (error) throw error;
+    // Calculate device statistics
+    const stats = {
+      totalDevices: devices.length,
+      byType: {} as Record<string, number>,
+      byStatus: {} as Record<string, number>,
+      totalCapacity: 0,
+    };
     
-    toast.success("User access granted");
-    return true;
+    // Count devices by type and status
+    devices.forEach(device => {
+      // Count by type
+      if (!stats.byType[device.type]) {
+        stats.byType[device.type] = 0;
+      }
+      stats.byType[device.type]++;
+      
+      // Count by status
+      if (!stats.byStatus[device.status]) {
+        stats.byStatus[device.status] = 0;
+      }
+      stats.byStatus[device.status]++;
+      
+      // Sum capacities
+      if (device.capacity) {
+        stats.totalCapacity += device.capacity;
+      }
+    });
+    
+    return stats;
     
   } catch (error) {
-    console.error(`Error granting user ${userId} access to site ${siteId}:`, error);
-    toast.error("Failed to grant access");
-    return false;
+    console.error(`Error getting statistics for site ${siteId}:`, error);
+    return null;
   }
 };
 
-/**
- * Revoke a user's access to a site
- */
-export const revokeUserSiteAccess = async (userId: string, siteId: string): Promise<boolean> => {
-  try {
-    const { error } = await supabase
-      .from('user_site_access')
-      .delete()
-      .match({ user_id: userId, site_id: siteId });
-    
-    if (error) throw error;
-    
-    toast.success("User access revoked");
-    return true;
-    
-  } catch (error) {
-    console.error(`Error revoking user ${userId} access to site ${siteId}:`, error);
-    toast.error("Failed to revoke access");
-    return false;
-  }
+// Export other functions from the original file
+export {
+  grantUserSiteAccess,
+  revokeUserSiteAccess,
 };
