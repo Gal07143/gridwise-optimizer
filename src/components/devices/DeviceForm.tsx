@@ -117,7 +117,7 @@ const DeviceForm: React.FC<DeviceFormProps> = ({
             <Input 
               id="firmware" 
               name="firmware" 
-              value={device.firmware} 
+              value={device.firmware || ''} 
               onChange={handleInputChange}
               placeholder="e.g., v2.4.1"
             />
@@ -131,7 +131,7 @@ const DeviceForm: React.FC<DeviceFormProps> = ({
           id="description" 
           name="description" 
           rows={4}
-          value={device.description}
+          value={device.description || ''}
           onChange={handleInputChange}
           placeholder="Additional information about this device..."
         />
