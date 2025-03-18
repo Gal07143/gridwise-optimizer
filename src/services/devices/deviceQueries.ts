@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { EnergyDevice, DeviceStatus, DeviceType } from "@/types/energy";
+import { EnergyDevice, DeviceStatus, DeviceType, isValidDeviceStatus, isValidDeviceType } from "@/types/energy";
 import { toast } from "sonner";
 
 interface DeviceQueryOptions {
@@ -40,11 +40,11 @@ export const getAllDevices = async (options: DeviceQueryOptions = {}): Promise<E
       query = query.eq('site_id', siteId);
     }
     
-    if (status) {
+    if (status && isValidDeviceStatus(status)) {
       query = query.eq('status', status);
     }
     
-    if (type) {
+    if (type && isValidDeviceType(type)) {
       query = query.eq('type', type);
     }
     
@@ -96,11 +96,11 @@ export const getDeviceCount = async (options: DeviceQueryOptions = {}): Promise<
       query = query.eq('site_id', siteId);
     }
     
-    if (status) {
+    if (status && isValidDeviceStatus(status)) {
       query = query.eq('status', status);
     }
     
-    if (type) {
+    if (type && isValidDeviceType(type)) {
       query = query.eq('type', type);
     }
     

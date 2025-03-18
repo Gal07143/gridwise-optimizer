@@ -18,10 +18,10 @@ const SiteContext = createContext<SiteContextType | undefined>(undefined);
 export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentSite, setCurrentSite] = useState<Site | null>(null);
   
-  // Fetch all available sites
+  // Fetch all available sites with correct query function format
   const { data: sites = [], isLoading, error } = useQuery({
     queryKey: ['sites'],
-    queryFn: getAllSites,
+    queryFn: () => getAllSites(),
   });
 
   // Set initial site when sites are loaded

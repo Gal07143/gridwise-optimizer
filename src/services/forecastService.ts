@@ -8,6 +8,7 @@ import { toast } from "sonner";
  */
 export const getSiteForecasts = async (siteId: string, hours = 24): Promise<EnergyForecast[]> => {
   try {
+    // Query the energy_forecasts table with safe casting
     const { data, error } = await supabase
       .from('energy_forecasts')
       .select('*')
@@ -16,7 +17,9 @@ export const getSiteForecasts = async (siteId: string, hours = 24): Promise<Ener
       .limit(hours);
     
     if (error) throw error;
-    return data || [];
+    
+    // Cast data to the correct type
+    return (data || []) as EnergyForecast[];
     
   } catch (error) {
     console.error(`Error fetching forecasts for site ${siteId}:`, error);

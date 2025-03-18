@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
@@ -17,7 +16,8 @@ import {
   MoreHorizontal,
   Search,
   Filter,
-  SlidersHorizontal
+  SlidersHorizontal,
+  FileText
 } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Sidebar from '@/components/layout/Sidebar';
@@ -59,6 +59,8 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import DeviceControls from '@/components/devices/DeviceControls';
+import DeviceLogger from '@/components/devices/DeviceLogger';
 
 const DeviceTypeIcons: Record<DeviceType | string, React.ReactNode> = {
   solar: <Sun size={20} />,
@@ -575,30 +577,46 @@ const Devices = () => {
                       />
                     </div>
                   </GlassPanel>
-                  
-                  <DashboardCard title="Power Output" icon={<BatteryCharging size={18} />}>
-                    <LiveChart
-                      data={chartData}
-                      height={250}
-                      color={selectedDevice.type === 'solar' ? 'rgba(45, 211, 111, 1)' : 
-                             selectedDevice.type === 'wind' ? 'rgba(4, 150, 255, 1)' :
-                             selectedDevice.type === 'battery' ? 'rgba(255, 196, 9, 1)' : 
-                             'rgba(122, 90, 248, 1)'}
-                      type="area"
-                      gradientFrom={selectedDevice.type === 'solar' ? 'rgba(45, 211, 111, 0.5)' : 
-                                   selectedDevice.type === 'wind' ? 'rgba(4, 150, 255, 0.5)' :
-                                   selectedDevice.type === 'battery' ? 'rgba(255, 196, 9, 0.5)' : 
-                                   'rgba(122, 90, 248, 0.5)'}
-                      gradientTo={selectedDevice.type === 'solar' ? 'rgba(45, 211, 111, 0)' : 
-                                 selectedDevice.type === 'wind' ? 'rgba(4, 150, 255, 0)' :
-                                 selectedDevice.type === 'battery' ? 'rgba(255, 196, 9, 0)' : 
-                                 'rgba(122, 90, 248, 0)'}
-                      yAxisLabel="Power (kW)"
-                    />
-                  </DashboardCard>
-                  
+    
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+                    <DashboardCard title="Device Controls" icon={<SlidersHorizontal size={18} />}>
+                      <DeviceControls 
+                        deviceId={selectedDevice.id} 
+                        deviceType={selectedDevice.type}
+                        deviceStatus={selectedDevice.status}
+                      />
+                    </DashboardCard>
+                    
+                    <div className="space-y-6">
+                      <DashboardCard title="Power Output" icon={<BatteryCharging size={18} />}>
+                        <LiveChart
+                          data={chartData}
+                          height={250}
+                          color={selectedDevice.type === 'solar' ? 'rgba(45, 211, 111, 1)' : 
+                                 selectedDevice.type === 'wind' ? 'rgba(4, 150, 255, 1)' :
+                                 selectedDevice.type === 'battery' ? 'rgba(255, 196, 9, 1)' : 
+                                 'rgba(122, 90, 248, 1)'}
+                          type="area"
+                          gradientFrom={selectedDevice.type === 'solar' ? 'rgba(45, 211, 111, 0.5)' : 
+                                       selectedDevice.type === 'wind' ? 'rgba(4, 150, 255, 0.5)' :
+                                       selectedDevice.type === 'battery' ? 'rgba(255, 196, 9, 0.5)' : 
+                                       'rgba(122, 90, 248, 0.5)'}
+                          gradientTo={selectedDevice.type === 'solar' ? 'rgba(45, 211, 111, 0)' : 
+                                     selectedDevice.type === 'wind' ? 'rgba(4, 150, 255, 0)' :
+                                     selectedDevice.type === 'battery' ? 'rgba(255, 196, 9, 0)' : 
+                                     'rgba(122, 90, 248, 0)'}
+                          yAxisLabel="Power (kW)"
+                        />
+                      </DashboardCard>
+                      
+                      <DashboardCard title="Device Logs" icon={<FileText size={18} />}>
+                        <DeviceLogger deviceId={selectedDevice.id} />
+                      </DashboardCard>
+                    </div>
+                  </div>
+    
                   {selectedDevice.metrics && (
-                    <DashboardCard title="Device Metrics" icon={<Activity size={18} />}>
+                    <DashboardCard title="Device Metrics" icon={<Activity size={18} />} className="mt-6">
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                         {Object.entries(selectedDevice.metrics).map(([key, value]) => (
                           <DeviceMetricCard key={key} name={key} value={value} />
@@ -607,7 +625,7 @@ const Devices = () => {
                     </DashboardCard>
                   )}
                   
-                  <DashboardCard title="Maintenance Information" icon={<AlertTriangle size={18} />}>
+                  <DashboardCard title="Maintenance Information" icon={<AlertTriangle size={18} />} className="mt-6">
                     <div className="space-y-4">
                       <div className="flex justify-between p-3 bg-background/50 rounded-md">
                         <div className="text-sm">Installation Date</div>
