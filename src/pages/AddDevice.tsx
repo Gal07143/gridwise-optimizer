@@ -9,6 +9,9 @@ import { useDeviceForm } from '@/hooks/useDeviceForm';
 import { Toaster } from 'sonner';
 import ErrorBoundary from '@/components/ui/ErrorBoundary';
 import { validateDeviceForm, errorsToRecord } from '@/utils/validation';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { AlertTriangle, Wifi, WifiOff } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const AddDevice = () => {
   const {
@@ -23,6 +26,27 @@ const AddDevice = () => {
   } = useDeviceForm();
   
   const [validationErrors, setValidationErrors] = React.useState<Record<string, string>>({});
+  const [isOnline, setIsOnline] = React.useState<boolean>(true);
+  const isMobile = useIsMobile();
+  
+  // Listen for online/offline events
+  React.useEffect(() => {
+    const handleOffline = () => setIsOnline(false);
+    const handleOnline = () => setIsOnline(true);
+    
+    // Set initial state
+    setIsOnline(navigator.onLine);
+    
+    // Add event listeners
+    window.addEventListener('offline', handleOffline);
+    window.addEventListener('online', handleOnline);
+    
+    // Cleanup
+    return () => {
+      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('online', handleOnline);
+    };
+  }, []);
   
   const handleValidatedSubmit = (e?: React.FormEvent) => {
     const errors = validateDeviceForm(device);
@@ -50,10 +74,24 @@ const AddDevice = () => {
               isSaving={isSubmitting}
             />
             
+            {!isOnline && (
+              <Alert variant="destructive" className="mb-4">
+                <WifiOff className="h-4 w-4" />
+                <AlertTitle>Network Unavailable</AlertTitle>
+                <AlertDescription>
+                  You're currently offline. Device creation will be queued until connection is restored.
+                </AlertDescription>
+              </Alert>
+            )}
+            
             {hasSiteError && (
-              <div className="mb-4 p-4 bg-yellow-100 text-yellow-800 rounded-lg">
-                Warning: Using fallback site configuration. Some features may be limited.
-              </div>
+              <Alert variant="warning" className="mb-4">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Site Configuration Issue</AlertTitle>
+                <AlertDescription>
+                  Using fallback site configuration. Some features may be limited.
+                </AlertDescription>
+              </Alert>
             )}
             
             {isLoadingSite ? (
@@ -61,7 +99,7 @@ const AddDevice = () => {
                 <div className="animate-pulse">Loading site information...</div>
               </div>
             ) : (
-              <GlassPanel className="p-6">
+              <GlassPanel className={`${isMobile ? 'p-4' : 'p-6'}`}>
                 <DeviceForm 
                   device={device}
                   handleInputChange={handleInputChange}

@@ -1,13 +1,14 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Save } from 'lucide-react';
+import { ChevronLeft, Save, Loader2 } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface DevicePageHeaderProps {
   title: string;
   subtitle: string;
   onBack: () => void;
-  onSave: (e?: React.FormEvent) => void;  // Updated to accept an optional FormEvent
+  onSave: (e?: React.FormEvent) => void;
   isSaving: boolean;
 }
 
@@ -18,8 +19,10 @@ const DevicePageHeader: React.FC<DevicePageHeaderProps> = ({
   onSave,
   isSaving
 }) => {
+  const isMobile = useIsMobile();
+  
   return (
-    <div className="mb-6 flex items-center justify-between">
+    <div className={`mb-6 ${isMobile ? 'flex flex-col gap-3' : 'flex items-center justify-between'}`}>
       <div>
         <Button 
           variant="ghost" 
@@ -34,11 +37,15 @@ const DevicePageHeader: React.FC<DevicePageHeaderProps> = ({
         <p className="text-muted-foreground">{subtitle}</p>
       </div>
       <Button 
-        className="flex items-center gap-2"
-        onClick={(e) => onSave(e)}  // Pass the event to the onSave function
+        className={`flex items-center gap-2 ${isMobile ? 'w-full mt-3' : ''}`}
+        onClick={(e) => onSave(e)}
         disabled={isSaving}
       >
-        <Save size={16} />
+        {isSaving ? (
+          <Loader2 size={16} className="animate-spin" />
+        ) : (
+          <Save size={16} />
+        )}
         <span>{isSaving ? 'Saving...' : 'Save Device'}</span>
       </Button>
     </div>

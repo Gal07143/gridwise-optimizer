@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -15,6 +14,8 @@ import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import Index from "./pages/Index";
+import ErrorBoundary from "./components/ui/ErrorBoundary";
+import Notifications from "./components/ui/Notifications";
 
 import GeneralSettings from "./pages/settings/GeneralSettings";
 import UserSettings from "./pages/settings/UserSettings";
@@ -34,9 +35,23 @@ import AuditLogging from "./pages/settings/AuditLogging";
 import ExternalServices from "./pages/settings/ExternalServices";
 import NotificationServices from "./pages/settings/NotificationServices";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: (failureCount, error) => {
+        if (error instanceof Error && 
+            (error.message.includes('404') || error.message.includes('401'))) {
+          return false;
+        }
+        return failureCount < 3;
+      },
+      staleTime: 30000,
+      refetchOnWindowFocus: true,
+      refetchOnReconnect: true,
+    },
+  },
+});
 
-// Placeholder for any settings pages not yet implemented
 const SettingsPlaceholder = ({ title }: { title: string }) => (
   <div className="flex h-screen">
     <div className="flex-1 flex flex-col">
@@ -60,72 +75,102 @@ const Alerts = () => (
   <SettingsPlaceholder title="System Alerts" />
 );
 
+const NetworkStatusListener = () => {
+  const handleOffline = () => {
+    if (typeof window !== 'undefined') {
+      document.dispatchEvent(new CustomEvent('app:offline'));
+    }
+  };
+
+  const handleOnline = () => {
+    if (typeof window !== 'undefined') {
+      document.dispatchEvent(new CustomEvent('app:online'));
+    }
+  };
+
+  React.useEffect(() => {
+    window.addEventListener('offline', handleOffline);
+    window.addEventListener('online', handleOnline);
+    
+    return () => {
+      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('online', handleOnline);
+    };
+  }, []);
+
+  return null;
+};
+
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/auth" element={<Auth />} />
-            
-            <Route path="/" element={<Index />} />
-            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
-            <Route path="/devices" element={<ProtectedRoute><Devices /></ProtectedRoute>} />
-            <Route path="/devices/add" element={<ProtectedRoute><AddDevice /></ProtectedRoute>} />
-            <Route path="/devices/edit/:deviceId" element={<ProtectedRoute><EditDevice /></ProtectedRoute>} />
-            <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-            <Route path="/alerts" element={<ProtectedRoute><Alerts /></ProtectedRoute>} />
-            
-            {/* System Settings */}
-            <Route path="/settings/general" element={<ProtectedRoute><GeneralSettings /></ProtectedRoute>} />
-            <Route path="/settings/updates" element={<ProtectedRoute><SystemUpdates /></ProtectedRoute>} />
-            <Route path="/settings/backup" element={<ProtectedRoute><BackupSettings /></ProtectedRoute>} />
-            
-            {/* User Management */}
-            <Route path="/settings/users" element={<ProtectedRoute><UserAccounts /></ProtectedRoute>} />
-            <Route path="/settings/roles" element={<ProtectedRoute><RoleManagement /></ProtectedRoute>} />
-            <Route path="/settings/permissions" element={<ProtectedRoute><Permissions /></ProtectedRoute>} />
-            
-            {/* Security & Compliance */}
-            <Route path="/settings/authentication" element={<ProtectedRoute><Authentication /></ProtectedRoute>} />
-            <Route path="/settings/encryption" element={<ProtectedRoute><Encryption /></ProtectedRoute>} />
-            <Route path="/settings/audit" element={<ProtectedRoute><AuditLogging /></ProtectedRoute>} />
-            
-            {/* Integrations */}
-            <Route path="/settings/api" element={<ProtectedRoute><ApiSettings /></ProtectedRoute>} />
-            <Route path="/settings/services" element={<ProtectedRoute><ExternalServices /></ProtectedRoute>} />
-            <Route path="/settings/notifications" element={<ProtectedRoute><NotificationServices /></ProtectedRoute>} />
-            
-            {/* Data Management */}
-            <Route path="/settings/storage" element={<ProtectedRoute><StorageConfiguration /></ProtectedRoute>} />
-            <Route path="/settings/export" element={<ProtectedRoute><DataExport /></ProtectedRoute>} />
-            <Route path="/settings/processing" element={<ProtectedRoute><ProcessingSettings /></ProtectedRoute>} />
-            
-            {/* Energy Settings */}
-            <Route path="/settings/tariffs" element={<ProtectedRoute><TariffSettings /></ProtectedRoute>} />
-            <Route path="/settings/thresholds" element={<ProtectedRoute><SettingsPlaceholder title="Operational Thresholds" /></ProtectedRoute>} />
-            <Route path="/settings/algorithms" element={<ProtectedRoute><SettingsPlaceholder title="Optimization Algorithms" /></ProtectedRoute>} />
-            
-            {/* Additional Settings */}
-            <Route path="/settings/api-keys" element={<ProtectedRoute><SettingsPlaceholder title="API Key Management" /></ProtectedRoute>} />
-            <Route path="/settings/profile" element={<ProtectedRoute><SettingsPlaceholder title="User Profile" /></ProtectedRoute>} />
-            <Route path="/settings/preferences" element={<ProtectedRoute><SettingsPlaceholder title="User Preferences" /></ProtectedRoute>} />
-            
-            <Route path="/energy-flow" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} /> 
-            <Route path="/microgrid" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} /> 
-            <Route path="/reports" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} /> 
-            <Route path="/security" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-            <Route path="/system-status" element={<ProtectedRoute><SystemStatus /></ProtectedRoute>} />
-            <Route path="/documentation" element={<ProtectedRoute><Documentation /></ProtectedRoute>} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </AuthProvider>
-  </QueryClientProvider>
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner closeButton position="top-right" />
+          <NetworkStatusListener />
+          <Notifications enableRealtime={true} />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/auth" element={<Auth />} />
+              
+              <Route path="/" element={<Index />} />
+              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+              <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+              <Route path="/devices" element={<ProtectedRoute><Devices /></ProtectedRoute>} />
+              <Route path="/devices/add" element={<ProtectedRoute><AddDevice /></ProtectedRoute>} />
+              <Route path="/devices/edit/:deviceId" element={<ProtectedRoute><EditDevice /></ProtectedRoute>} />
+              <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+              <Route path="/alerts" element={<ProtectedRoute><Alerts /></ProtectedRoute>} />
+              
+              {/* System Settings */}
+              <Route path="/settings/general" element={<ProtectedRoute><GeneralSettings /></ProtectedRoute>} />
+              <Route path="/settings/updates" element={<ProtectedRoute><SystemUpdates /></ProtectedRoute>} />
+              <Route path="/settings/backup" element={<ProtectedRoute><BackupSettings /></ProtectedRoute>} />
+              
+              {/* User Management */}
+              <Route path="/settings/users" element={<ProtectedRoute><UserAccounts /></ProtectedRoute>} />
+              <Route path="/settings/roles" element={<ProtectedRoute><RoleManagement /></ProtectedRoute>} />
+              <Route path="/settings/permissions" element={<ProtectedRoute><Permissions /></ProtectedRoute>} />
+              
+              {/* Security & Compliance */}
+              <Route path="/settings/authentication" element={<ProtectedRoute><Authentication /></ProtectedRoute>} />
+              <Route path="/settings/encryption" element={<ProtectedRoute><Encryption /></ProtectedRoute>} />
+              <Route path="/settings/audit" element={<ProtectedRoute><AuditLogging /></ProtectedRoute>} />
+              
+              {/* Integrations */}
+              <Route path="/settings/api" element={<ProtectedRoute><ApiSettings /></ProtectedRoute>} />
+              <Route path="/settings/services" element={<ProtectedRoute><ExternalServices /></ProtectedRoute>} />
+              <Route path="/settings/notifications" element={<ProtectedRoute><NotificationServices /></ProtectedRoute>} />
+              
+              {/* Data Management */}
+              <Route path="/settings/storage" element={<ProtectedRoute><StorageConfiguration /></ProtectedRoute>} />
+              <Route path="/settings/export" element={<ProtectedRoute><DataExport /></ProtectedRoute>} />
+              <Route path="/settings/processing" element={<ProtectedRoute><ProcessingSettings /></ProtectedRoute>} />
+              
+              {/* Energy Settings */}
+              <Route path="/settings/tariffs" element={<ProtectedRoute><TariffSettings /></ProtectedRoute>} />
+              <Route path="/settings/thresholds" element={<ProtectedRoute><SettingsPlaceholder title="Operational Thresholds" /></ProtectedRoute>} />
+              <Route path="/settings/algorithms" element={<ProtectedRoute><SettingsPlaceholder title="Optimization Algorithms" /></ProtectedRoute>} />
+              
+              {/* Additional Settings */}
+              <Route path="/settings/api-keys" element={<ProtectedRoute><SettingsPlaceholder title="API Key Management" /></ProtectedRoute>} />
+              <Route path="/settings/profile" element={<ProtectedRoute><SettingsPlaceholder title="User Profile" /></ProtectedRoute>} />
+              <Route path="/settings/preferences" element={<ProtectedRoute><SettingsPlaceholder title="User Preferences" /></ProtectedRoute>} />
+              
+              <Route path="/energy-flow" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} /> 
+              <Route path="/microgrid" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} /> 
+              <Route path="/reports" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} /> 
+              <Route path="/security" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+              <Route path="/system-status" element={<ProtectedRoute><SystemStatus /></ProtectedRoute>} />
+              <Route path="/documentation" element={<ProtectedRoute><Documentation /></ProtectedRoute>} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;

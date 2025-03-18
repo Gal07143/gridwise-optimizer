@@ -21,12 +21,22 @@ export const useEditDeviceForm = () => {
     queryFn: () => deviceId ? getDeviceById(deviceId) : null,
     enabled: !!deviceId,
     retry: 1,
-    onError: (error: any) => {
-      toast.error(`Failed to fetch device: ${error.message || 'Unknown error'}`);
-      // Navigate back to devices list if device cannot be found
-      setTimeout(() => navigate('/devices'), 2000);
+    meta: {
+      onError: (error: any) => {
+        toast.error(`Failed to fetch device: ${error.message || 'Unknown error'}`);
+        // Navigate back to devices list if device cannot be found
+        setTimeout(() => navigate('/devices'), 2000);
+      }
     }
   });
+  
+  // Handle errors outside the query config
+  useEffect(() => {
+    if (fetchError) {
+      toast.error(`Failed to fetch device: ${fetchError instanceof Error ? fetchError.message : 'Unknown error'}`);
+      setTimeout(() => navigate('/devices'), 2000);
+    }
+  }, [fetchError, navigate]);
   
   const validateDeviceData = (data: DeviceFormState): boolean => {
     const errors: Record<string, string> = {};
@@ -87,13 +97,6 @@ export const useEditDeviceForm = () => {
       });
     }
   }, [deviceData]);
-
-  // Check if device fetch failed
-  useEffect(() => {
-    if (fetchError) {
-      console.error('Error fetching device:', fetchError);
-    }
-  }, [fetchError]);
 
   return {
     ...baseFormHook,

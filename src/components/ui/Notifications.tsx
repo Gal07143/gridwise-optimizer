@@ -3,17 +3,28 @@ import React, { useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { toast as sonnerToast } from 'sonner';
 import { useRealtimeUpdates } from '@/hooks/use-realtime-updates';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export type NotificationType = 'info' | 'success' | 'warning' | 'error';
+export type NotificationPosition = 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left' | 'top-center' | 'bottom-center';
 
 interface NotificationProps {
   enableRealtime?: boolean;
+  position?: NotificationPosition;
+  duration?: number;
 }
 
 export const Notifications: React.FC<NotificationProps> = ({ 
-  enableRealtime = true 
+  enableRealtime = true,
+  position,
+  duration = 5000
 }) => {
   const { toast } = useToast();
+  const isMobile = useIsMobile();
+  
+  // Set different default positions based on device type
+  const defaultPosition: NotificationPosition = isMobile ? 'top-center' : 'top-right';
+  const effectivePosition = position || defaultPosition;
   
   // Set up realtime notifications for device and alert events
   useRealtimeUpdates({
@@ -21,11 +32,19 @@ export const Notifications: React.FC<NotificationProps> = ({
     events: ['UPDATE'],
     enabled: enableRealtime,
     onData: (payload) => {
-      const { new: newData } = payload;
-      if (newData && newData.status === 'error') {
-        sonnerToast.error(`Device ${newData.name} is reporting an error`);
-      } else if (newData && newData.status === 'maintenance') {
-        sonnerToast.warning(`Device ${newData.name} is in maintenance mode`);
+      const { new: newData, old: oldData } = payload;
+      
+      // Only notify about significant changes
+      if (newData && oldData && newData.status !== oldData.status) {
+        if (newData.status === 'error') {
+          showNotification(`Device ${newData.name} is reporting an error`, 'error', duration, effectivePosition);
+        } else if (newData.status === 'maintenance') {
+          showNotification(`Device ${newData.name} is in maintenance mode`, 'warning', duration, effectivePosition);
+        } else if (oldData.status === 'offline' && newData.status === 'online') {
+          showNotification(`Device ${newData.name} is now online`, 'success', duration, effectivePosition);
+        } else if (oldData.status === 'online' && newData.status === 'offline') {
+          showNotification(`Device ${newData.name} went offline`, 'warning', duration, effectivePosition);
+        }
       }
     }
   });
@@ -38,11 +57,11 @@ export const Notifications: React.FC<NotificationProps> = ({
       const { new: newData } = payload;
       if (newData) {
         if (newData.type === 'critical') {
-          sonnerToast.error(`Critical Alert: ${newData.message}`);
+          showNotification(`Critical Alert: ${newData.message}`, 'error', duration, effectivePosition);
         } else if (newData.type === 'warning') {
-          sonnerToast.warning(`Warning: ${newData.message}`);
+          showNotification(`Warning: ${newData.message}`, 'warning', duration, effectivePosition);
         } else {
-          sonnerToast.info(`Info: ${newData.message}`);
+          showNotification(`Info: ${newData.message}`, 'info', duration, effectivePosition);
         }
       }
     }
@@ -54,20 +73,59 @@ export const Notifications: React.FC<NotificationProps> = ({
 export const showNotification = (
   message: string, 
   type: NotificationType = 'info', 
-  duration = 5000
+  duration = 5000,
+  position?: NotificationPosition
 ) => {
+  const options = {
+    duration,
+    position: position as any, // Sonner has compatible position types
+  };
+  
   switch (type) {
     case 'success':
-      sonnerToast.success(message, { duration });
+      sonnerToast.success(message, options);
       break;
     case 'warning':
-      sonnerToast.warning(message, { duration });
+      sonnerToast.warning(message, options);
       break;
     case 'error':
-      sonnerToast.error(message, { duration });
+      sonnerToast.error(message, options);
       break;
     default:
-      sonnerToast.info(message, { duration });
+      sonnerToast.info(message, options);
+  }
+};
+
+// Helper function to create a notification with a dedicated action button
+export const showActionNotification = (
+  message: string,
+  actionText: string,
+  onAction: () => void,
+  type: NotificationType = 'info',
+  duration = 8000,
+  position?: NotificationPosition
+) => {
+  const options = {
+    duration,
+    position: position as any,
+    action: {
+      label: actionText,
+      onClick: onAction,
+    },
+  };
+  
+  switch (type) {
+    case 'success':
+      sonnerToast.success(message, options);
+      break;
+    case 'warning':
+      sonnerToast.warning(message, options);
+      break;
+    case 'error':
+      sonnerToast.error(message, options);
+      break;
+    default:
+      sonnerToast.info(message, options);
   }
 };
 
