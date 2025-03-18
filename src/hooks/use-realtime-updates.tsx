@@ -31,22 +31,15 @@ export function useRealtimeUpdates({
     // Track when we're subscribed
     let isSubscribed = false;
     
-    // Add event handlers to the channel
+    // Build configuration for postgres changes
+    const postgresConfig = {
+      event: events,
+      schema: 'public', 
+      table
+    };
+    
+    // Subscribe to the channel
     channel
-      .on(
-        'postgres_changes',
-        { 
-          event: events,
-          schema: 'public', 
-          table 
-        },
-        (payload) => {
-          console.log('Realtime update received:', payload);
-          if (onData) {
-            onData(payload);
-          }
-        }
-      )
       .on('presence', { event: 'sync' }, () => {
         setConnected(true);
         console.log(`Connected to realtime updates for ${table}`);
@@ -57,17 +50,27 @@ export function useRealtimeUpdates({
       .on('presence', { event: 'leave' }, () => {
         setConnected(false);
         console.log(`Left realtime channel for ${table}`);
+      })
+      .subscribe((status, err) => {
+        if (status === 'SUBSCRIBED') {
+          isSubscribed = true;
+          
+          // After subscription succeeds, listen for postgres changes
+          channel.on(
+            'postgres_changes',
+            postgresConfig,
+            (payload) => {
+              console.log('Realtime update received:', payload);
+              if (onData) {
+                onData(payload);
+              }
+            }
+          );
+        } else if (err) {
+          setError(new Error(`Failed to subscribe to realtime updates: ${err.message}`));
+          console.error('Realtime subscription error:', err);
+        }
       });
-    
-    // Subscribe to the channel
-    channel.subscribe((status, err) => {
-      if (status === 'SUBSCRIBED') {
-        isSubscribed = true;
-      } else if (err) {
-        setError(new Error(`Failed to subscribe to realtime updates: ${err.message}`));
-        console.error('Realtime subscription error:', err);
-      }
-    });
     
     // Clean up subscription
     return () => {
