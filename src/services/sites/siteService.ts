@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Site, createEmptySite } from "@/types/energy";
 import { toast } from "sonner";
@@ -31,6 +32,12 @@ export const getOrCreateDummySite = async (): Promise<Site> => {
       .limit(1);
     
     if (fetchError) {
+      // Check for specific error types and handle accordingly
+      if (fetchError.message?.includes('recursion') || fetchError.code === '42P17') {
+        console.warn("Detected recursion issue, using alternative fetch method");
+        return await getFallbackSite();
+      }
+      
       console.error("Error fetching sites:", fetchError);
       throw fetchError;
     }
@@ -117,24 +124,57 @@ export const createDummySite = async (): Promise<Site | null> => {
   try {
     const defaultSite = createEmptySite();
     
-    const { data, error } = await supabase
-      .from('sites')
-      .insert([defaultSite])
-      .select()
-      .single();
+    // Add retry logic for site creation
+    let retries = 0;
+    const maxRetries = 2;
+    let result = null;
     
-    if (error) {
-      console.error("Error creating dummy site:", error);
-      throw error;
+    while (retries <= maxRetries) {
+      try {
+        const { data, error } = await supabase
+          .from('sites')
+          .insert([defaultSite])
+          .select()
+          .single();
+        
+        if (error) {
+          if (error.code === '23505') { // Duplicate key error
+            console.log("Site already exists, attempting to fetch instead");
+            const { data: existingSite, error: fetchError } = await supabase
+              .from('sites')
+              .select('*')
+              .limit(1)
+              .single();
+              
+            if (!fetchError && existingSite) {
+              result = existingSite;
+              break;
+            }
+          }
+          throw error;
+        }
+        
+        if (data) {
+          result = data;
+          break;
+        }
+        
+        throw new Error("No data returned from site creation");
+      } catch (err) {
+        retries++;
+        if (retries > maxRetries) throw err;
+        console.log(`Retrying site creation (attempt ${retries})`);
+        await new Promise(r => setTimeout(r, 500)); // Short delay before retry
+      }
     }
     
-    if (!data) {
-      throw new Error("No data returned from site creation");
+    if (!result) {
+      throw new Error("Failed to create site after retries");
     }
     
     // Cache the created site
-    siteCache = data as Site;
-    return data as Site;
+    siteCache = result as Site;
+    return result as Site;
     
   } catch (error) {
     console.error("Error creating dummy site:", error);

@@ -13,9 +13,12 @@ export const useDeviceForm = () => {
   const [siteError, setSiteError] = useState<boolean>(false);
   const [isLoadingSite, setIsLoadingSite] = useState<boolean>(true);
   const [retryCount, setRetryCount] = useState<number>(0);
+  const [isMounted, setIsMounted] = useState(true); // Track component mount state
 
   // Use a useCallback to handle site fetching
   const fetchDefaultSite = useCallback(async () => {
+    if (!isMounted) return; // Prevent state updates if unmounted
+    
     try {
       setIsLoadingSite(true);
       setSiteError(false);
@@ -36,6 +39,8 @@ export const useDeviceForm = () => {
       const sitePromise = getOrCreateDummySite();
       const site = await Promise.race([sitePromise, timeoutPromise]) as any;
       
+      if (!isMounted) return; // Check again before setting state
+      
       if (site && site.id) {
         console.log("Successfully fetched site:", site);
         setDefaultSiteId(site.id);
@@ -44,6 +49,8 @@ export const useDeviceForm = () => {
         throw new Error("Failed to fetch site data");
       }
     } catch (error) {
+      if (!isMounted) return;
+      
       console.error("Error fetching default site:", error);
       setSiteError(true);
       
@@ -54,14 +61,22 @@ export const useDeviceForm = () => {
         id: "site-fetch-error" // Prevent duplicate toasts
       });
     } finally {
-      setIsLoadingSite(false);
+      if (isMounted) {
+        setIsLoadingSite(false);
+      }
     }
-  }, [retryCount]);
+  }, [retryCount, isMounted]);
+  
+  // Set up mount tracking
+  useEffect(() => {
+    setIsMounted(true);
+    return () => setIsMounted(false);
+  }, []);
   
   // Reload site when retry count changes
   useEffect(() => {
     fetchDefaultSite();
-  }, [fetchDefaultSite, retryCount]);
+  }, [fetchDefaultSite]);
   
   // Function to manually retry site fetching
   const reloadSite = () => {

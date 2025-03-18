@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { EnergyDevice, DeviceStatus, DeviceType, isValidDeviceStatus, isValidDeviceType } from "@/types/energy";
 import { getOrCreateDummySite } from "../sites/siteService";
@@ -54,6 +55,17 @@ const getValidSiteId = async (providedSiteId?: string): Promise<string> => {
   } catch (siteError) {
     console.error("Error getting site ID via direct query:", siteError);
     // Continue with fallback mechanisms
+  }
+  
+  // Try to get or create a site using the site service
+  try {
+    const site = await getOrCreateDummySite();
+    if (site && site.id) {
+      return site.id;
+    }
+  } catch (siteError) {
+    console.error("Error getting site via service:", siteError);
+    // Continue with final fallback
   }
   
   // Final fallback - use dummy ID
