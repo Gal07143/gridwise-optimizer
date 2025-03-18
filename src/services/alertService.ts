@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { Alert } from "@/types/energy";
+import { Alert, AlertType } from "@/types/energy";
 import { toast } from "sonner";
 
 /**
@@ -9,7 +9,7 @@ import { toast } from "sonner";
 export const getAlerts = async (options?: {
   deviceId?: string;
   acknowledged?: boolean;
-  type?: string;
+  type?: AlertType;
   limit?: number;
 }): Promise<Alert[]> => {
   try {

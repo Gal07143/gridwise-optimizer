@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { EnergyDevice, EnergyReading } from "@/types/energy";
+import { EnergyDevice, EnergyReading, DeviceStatus, DeviceType } from "@/types/energy";
 import { toast } from "sonner";
 
 /**
@@ -13,7 +13,16 @@ export const getAllDevices = async (): Promise<EnergyDevice[]> => {
       .select('*');
     
     if (error) throw error;
-    return data || [];
+    
+    // Convert the database response to match our TypeScript interface
+    const devices: EnergyDevice[] = data?.map(device => ({
+      ...device,
+      type: device.type as DeviceType,
+      status: device.status as DeviceStatus,
+      metrics: device.metrics as Record<string, number> | null
+    })) || [];
+    
+    return devices;
     
   } catch (error) {
     console.error("Error fetching devices:", error);
@@ -34,7 +43,18 @@ export const getDeviceById = async (id: string): Promise<EnergyDevice | null> =>
       .single();
     
     if (error) throw error;
-    return data;
+    
+    if (!data) return null;
+    
+    // Convert the database response to match our TypeScript interface
+    const device: EnergyDevice = {
+      ...data,
+      type: data.type as DeviceType,
+      status: data.status as DeviceStatus,
+      metrics: data.metrics as Record<string, number> | null
+    };
+    
+    return device;
     
   } catch (error) {
     console.error(`Error fetching device ${id}:`, error);
@@ -60,8 +80,18 @@ export const updateDevice = async (id: string, updates: Partial<EnergyDevice>): 
     
     if (error) throw error;
     
+    if (!data) return null;
+    
+    // Convert the database response to match our TypeScript interface
+    const device: EnergyDevice = {
+      ...data,
+      type: data.type as DeviceType,
+      status: data.status as DeviceStatus,
+      metrics: data.metrics as Record<string, number> | null
+    };
+    
     toast.success("Device updated successfully");
-    return data;
+    return device;
     
   } catch (error) {
     console.error(`Error updating device ${id}:`, error);
@@ -83,8 +113,18 @@ export const createDevice = async (deviceData: Omit<EnergyDevice, 'id' | 'create
     
     if (error) throw error;
     
+    if (!data) return null;
+    
+    // Convert the database response to match our TypeScript interface
+    const device: EnergyDevice = {
+      ...data,
+      type: data.type as DeviceType,
+      status: data.status as DeviceStatus,
+      metrics: data.metrics as Record<string, number> | null
+    };
+    
     toast.success("Device created successfully");
-    return data;
+    return device;
     
   } catch (error) {
     console.error("Error creating device:", error);
@@ -243,8 +283,8 @@ export const seedTestData = async () => {
     const testDevices = [
       {
         name: "Rooftop Solar Array",
-        type: "solar",
-        status: "online",
+        type: "solar" as DeviceType,
+        status: "online" as DeviceStatus,
         location: "Main Building",
         capacity: 50,
         site_id: site.id,
@@ -257,8 +297,8 @@ export const seedTestData = async () => {
       },
       {
         name: "Primary Storage System",
-        type: "battery",
-        status: "online",
+        type: "battery" as DeviceType,
+        status: "online" as DeviceStatus,
         location: "Utility Room",
         capacity: 120,
         site_id: site.id,
@@ -271,8 +311,8 @@ export const seedTestData = async () => {
       },
       {
         name: "Wind Turbine Array",
-        type: "wind",
-        status: "online",
+        type: "wind" as DeviceType,
+        status: "online" as DeviceStatus,
         location: "North Field",
         capacity: 30,
         site_id: site.id,
@@ -285,8 +325,8 @@ export const seedTestData = async () => {
       },
       {
         name: "EV Charging Station 1",
-        type: "ev_charger",
-        status: "online",
+        type: "ev_charger" as DeviceType,
+        status: "online" as DeviceStatus,
         location: "Parking Level 1",
         capacity: 22,
         site_id: site.id,
@@ -299,8 +339,8 @@ export const seedTestData = async () => {
       },
       {
         name: "Grid Connection Point",
-        type: "grid",
-        status: "online",
+        type: "grid" as DeviceType,
+        status: "online" as DeviceStatus,
         location: "Main Distribution",
         capacity: 200,
         site_id: site.id,

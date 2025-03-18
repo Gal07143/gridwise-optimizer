@@ -41,15 +41,16 @@ export function useRealtimeUpdates({
           }
         }
       )
-      .on('system', { event: '*' }, (status) => {
-        if (status.extension === 'realtime') {
-          if (status.status === 'SUBSCRIBED') {
-            setConnected(true);
-            console.log(`Connected to realtime updates for ${table}`);
-          } else {
-            setConnected(false);
-          }
-        }
+      .on('presence', { event: 'sync' }, () => {
+        setConnected(true);
+        console.log(`Connected to realtime updates for ${table}`);
+      })
+      .on('presence', { event: 'join' }, () => {
+        console.log(`Joined realtime channel for ${table}`);
+      })
+      .on('presence', { event: 'leave' }, () => {
+        setConnected(false);
+        console.log(`Left realtime channel for ${table}`);
       })
       .subscribe((status, err) => {
         if (status !== 'SUBSCRIBED') {

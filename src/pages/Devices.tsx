@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Battery, BatteryCharging, Cloud, PlugZap, Sun, Wind, AlertTriangle, Activity } from 'lucide-react';
@@ -51,14 +50,12 @@ const Devices = () => {
     enabled: !!selectedDeviceId
   });
   
-  // Set the first device as selected by default if none is selected
   useEffect(() => {
     if (!selectedDeviceId && devices.length > 0) {
       setSelectedDeviceId(devices[0].id);
     }
   }, [devices, selectedDeviceId]);
   
-  // Format readings data for the chart
   const chartData = deviceReadings.map(reading => ({
     time: new Date(reading.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     value: reading.power
@@ -76,7 +73,6 @@ const Devices = () => {
           </div>
           
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            {/* Device List */}
             <div className="lg:col-span-1">
               <GlassPanel className="p-2 space-y-2 h-full overflow-auto">
                 <div className="p-2 font-medium text-sm">All Devices</div>
@@ -109,7 +105,6 @@ const Devices = () => {
               </GlassPanel>
             </div>
             
-            {/* Device Details */}
             <div className="lg:col-span-3 space-y-6">
               {selectedDevice ? (
                 <>
@@ -143,7 +138,7 @@ const Devices = () => {
                       />
                       <DeviceStatusCard 
                         title="Last Updated" 
-                        value={new Date(selectedDevice.lastUpdated).toLocaleString()} 
+                        value={selectedDevice?.last_updated ? new Date(selectedDevice.last_updated).toLocaleString() : 'Unknown'} 
                         icon={<Activity size={18} />}
                       />
                     </div>
@@ -231,18 +226,16 @@ const DeviceStatusCard = ({ title, value, icon }: { title: string, value: string
 };
 
 const DeviceMetricCard = ({ name, value }: { name: string, value: number }) => {
-  // Format the metric name to be more readable
   const formatMetricName = (name: string) => {
     return name
-      .replace(/([A-Z])/g, ' $1') // Add space before capital letters
-      .replace(/([a-z])([A-Z])/g, '$1 $2') // Handle camelCase
-      .replace(/_/g, ' ') // Replace underscores with spaces
+      .replace(/([A-Z])/g, ' $1')
+      .replace(/([a-z])([A-Z])/g, '$1 $2')
+      .replace(/_/g, ' ')
       .split(' ')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
       .join(' ');
   };
   
-  // Add units based on metric name
   const getMetricWithUnit = (name: string, value: number) => {
     const nameLower = name.toLowerCase();
     

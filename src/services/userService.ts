@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { User } from "@/types/energy";
+import { User, UserRole } from "@/types/energy";
 import { toast } from "sonner";
 
 /**
@@ -86,7 +86,7 @@ export const getUserById = async (userId: string): Promise<Partial<User> | null>
 /**
  * Update user role (admin only)
  */
-export const updateUserRole = async (userId: string, role: string): Promise<boolean> => {
+export const updateUserRole = async (userId: string, role: UserRole): Promise<boolean> => {
   try {
     const { error } = await supabase
       .from('profiles')
