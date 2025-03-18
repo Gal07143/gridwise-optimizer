@@ -42,6 +42,8 @@ import ExternalServices from "./pages/settings/ExternalServices";
 import NotificationServices from "./pages/settings/NotificationServices";
 import AddSite from "./pages/settings/AddSite";
 import EditSite from "./pages/settings/EditSite";
+import OperationalThresholds from "./pages/settings/OperationalThresholds";
+import OptimizationAlgorithms from "./pages/settings/OptimizationAlgorithms";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -153,8 +155,8 @@ const App = () => (
                 
                 {/* Energy Settings */}
                 <Route path="/settings/tariffs" element={<ProtectedRoute><TariffSettings /></ProtectedRoute>} />
-                <Route path="/settings/thresholds" element={<ProtectedRoute><SettingsPlaceholder title="Operational Thresholds" /></ProtectedRoute>} />
-                <Route path="/settings/algorithms" element={<ProtectedRoute><SettingsPlaceholder title="Optimization Algorithms" /></ProtectedRoute>} />
+                <Route path="/settings/thresholds" element={<ProtectedRoute><OperationalThresholds /></ProtectedRoute>} />
+                <Route path="/settings/algorithms" element={<ProtectedRoute><OptimizationAlgorithms /></ProtectedRoute>} />
                 
                 {/* Additional Settings */}
                 <Route path="/settings/api-keys" element={<ProtectedRoute><SettingsPlaceholder title="API Key Management" /></ProtectedRoute>} />
