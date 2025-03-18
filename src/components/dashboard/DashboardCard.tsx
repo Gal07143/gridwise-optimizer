@@ -11,6 +11,7 @@ interface DashboardCardProps {
   actions?: React.ReactNode;
   loading?: boolean;
   interactive?: boolean;
+  style?: React.CSSProperties;
 }
 
 const DashboardCard = ({
@@ -21,11 +22,13 @@ const DashboardCard = ({
   actions,
   loading = false,
   interactive = false,
+  style,
 }: DashboardCardProps) => {
   return (
     <GlassPanel
       className={cn("overflow-hidden", className)}
       interactive={interactive}
+      style={style}
     >
       <div className="flex items-center justify-between p-4 border-b border-border/50">
         <div className="flex items-center space-x-3">
