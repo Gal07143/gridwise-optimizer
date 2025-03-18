@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { createDevice } from '@/services/deviceService';
-import { getOrCreateDummySite } from '@/services/sites/siteService';
+import { getOrCreateDummySite, clearSiteCache } from '@/services/sites/siteService';
 import { useBaseDeviceForm, DeviceFormState } from './useBaseDeviceForm';
 
 export const useDeviceForm = () => {
@@ -12,15 +12,21 @@ export const useDeviceForm = () => {
   const [defaultSiteId, setDefaultSiteId] = useState<string | null>(null);
   const [siteError, setSiteError] = useState<boolean>(false);
   const [isLoadingSite, setIsLoadingSite] = useState<boolean>(true);
-  const [maxRetries] = useState<number>(1); // Reduce retries to prevent infinite recursion
+  const [retryCount, setRetryCount] = useState<number>(0);
 
   // Use a useCallback to handle site fetching
   const fetchDefaultSite = useCallback(async () => {
     try {
       setIsLoadingSite(true);
+      setSiteError(false);
+      
       // Always set a fallback ID first to ensure we have something
       setDefaultSiteId("00000000-0000-0000-0000-000000000000");
-      setSiteError(false);
+      
+      // On retry, clear the site cache to force a fresh fetch
+      if (retryCount > 0) {
+        clearSiteCache();
+      }
       
       // Try to get site from API
       const site = await getOrCreateDummySite();
@@ -45,11 +51,17 @@ export const useDeviceForm = () => {
     } finally {
       setIsLoadingSite(false);
     }
-  }, []);
+  }, [retryCount]);
   
+  // Reload site when retry count changes
   useEffect(() => {
     fetchDefaultSite();
-  }, [fetchDefaultSite]);
+  }, [fetchDefaultSite, retryCount]);
+  
+  // Function to manually retry site fetching
+  const reloadSite = () => {
+    setRetryCount(prev => prev + 1);
+  };
 
   const handleCreateDevice = async (deviceData: DeviceFormState) => {
     if (!user) {
@@ -102,6 +114,6 @@ export const useDeviceForm = () => {
     isSubmitting: baseFormHook.isSubmitting,
     hasSiteError: siteError,
     isLoadingSite,
-    reloadSite: fetchDefaultSite // Add ability to retry loading
+    reloadSite // Add ability to retry loading
   };
 };

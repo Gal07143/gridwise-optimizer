@@ -1,8 +1,73 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { EnergyDevice, DeviceStatus, DeviceType, isValidDeviceStatus, isValidDeviceType } from "@/types/energy";
-import { createDummySite } from "../sites/siteService";
+import { getOrCreateDummySite } from "../sites/siteService";
 import { toast } from "sonner";
+
+/**
+ * Validate device type and status
+ * @param deviceData Partial device data to validate
+ * @throws Error if validation fails
+ */
+const validateDeviceData = (deviceData: Partial<EnergyDevice>) => {
+  if (deviceData.type && !isValidDeviceType(deviceData.type)) {
+    throw new Error(`Invalid device type: ${deviceData.type}`);
+  }
+  
+  if (deviceData.status && !isValidDeviceStatus(deviceData.status)) {
+    throw new Error(`Invalid device status: ${deviceData.status}`);
+  }
+};
+
+/**
+ * Get the current authenticated user ID or throw error if not authenticated
+ */
+const getAuthenticatedUserId = async (): Promise<string> => {
+  const { data: userData } = await supabase.auth.getUser();
+  const userId = userData?.user?.id;
+  
+  if (!userId) {
+    throw new Error("Authentication required");
+  }
+  
+  return userId;
+};
+
+/**
+ * Get a valid site ID, with fallbacks if needed
+ */
+const getValidSiteId = async (providedSiteId?: string): Promise<string> => {
+  // If site ID is provided, use it
+  if (providedSiteId) {
+    return providedSiteId;
+  }
+  
+  try {
+    // Try to get default site using RPC function
+    const { data: siteData, error } = await supabase.rpc('get_default_site_id');
+    
+    if (!error && siteData) {
+      return siteData;
+    }
+  } catch (siteError) {
+    console.error("Error getting default site ID via RPC:", siteError);
+    // Continue with fallback mechanisms
+  }
+  
+  // Try getting or creating a site
+  try {
+    const site = await getOrCreateDummySite();
+    if (site && site.id) {
+      return site.id;
+    }
+  } catch (siteError) {
+    console.error("Error getting or creating site:", siteError);
+    // Continue with final fallback
+  }
+  
+  // Final fallback - use dummy ID
+  return "00000000-0000-0000-0000-000000000000";
+};
 
 /**
  * Update a device's properties
@@ -12,14 +77,8 @@ export const updateDevice = async (id: string, updates: Partial<EnergyDevice>): 
     // Remove any fields that shouldn't be updated directly
     const { id: _id, created_at, ...updateData } = updates as any;
     
-    // Validate device type and status if they're being updated
-    if (updateData.type && !isValidDeviceType(updateData.type)) {
-      throw new Error(`Invalid device type: ${updateData.type}`);
-    }
-    
-    if (updateData.status && !isValidDeviceStatus(updateData.status)) {
-      throw new Error(`Invalid device status: ${updateData.status}`);
-    }
+    // Validate device data
+    validateDeviceData(updateData);
     
     console.log("Updating device with data:", updateData);
     
@@ -63,65 +122,15 @@ export const updateDevice = async (id: string, updates: Partial<EnergyDevice>): 
  */
 export const createDevice = async (deviceData: Omit<EnergyDevice, 'id' | 'created_at' | 'last_updated'>): Promise<EnergyDevice | null> => {
   try {
-    // Validate device type and status
-    if (!isValidDeviceType(deviceData.type)) {
-      throw new Error(`Invalid device type: ${deviceData.type}`);
-    }
+    // Validate device data
+    validateDeviceData(deviceData);
     
-    if (deviceData.status && !isValidDeviceStatus(deviceData.status)) {
-      throw new Error(`Invalid device status: ${deviceData.status}`);
-    }
+    // Get the authenticated user ID
+    const userId = await getAuthenticatedUserId();
     
-    // Add the user id to track who created the device
-    const { data: userData } = await supabase.auth.getUser();
-    const userId = userData?.user?.id;
+    // Get a valid site ID
+    const siteId = await getValidSiteId(deviceData.site_id);
     
-    if (!userId) {
-      toast.error("Authentication required to create device");
-      throw new Error("No authenticated user found");
-    }
-    
-    // Get default site if not specified
-    let siteId = deviceData.site_id;
-    if (!siteId) {
-      console.log("No site ID provided, attempting to get default site");
-      try {
-        const { data: siteData, error } = await supabase.rpc('get_default_site_id');
-        
-        if (error) {
-          console.error("Error getting default site ID:", error);
-          // Continue with fallback default
-        } else if (siteData) {
-          siteId = siteData;
-          console.log("Got default site ID:", siteId);
-        }
-      } catch (siteError) {
-        console.error("Error getting default site:", siteError);
-        // Continue with fallback default
-      }
-    }
-
-    // If still no site ID, use fallback or create new one
-    if (!siteId) {
-      console.log("No site found, using fallback or creating a new one");
-      // First try creating a site only if we need to
-      try {
-        const siteResponse = await createDummySite();
-        if (siteResponse) {
-          siteId = siteResponse.id;
-          console.log("Created new site with ID:", siteId);
-        }
-      } catch (createError) {
-        console.error("Failed to create site:", createError);
-      }
-      
-      // Final fallback - use a dummy ID if nothing else worked
-      if (!siteId) {
-        console.log("Using fallback site ID");
-        siteId = "00000000-0000-0000-0000-000000000000";
-      }
-    }
-
     // Make sure we have a timestamp for creation
     const timestamp = new Date().toISOString();
     

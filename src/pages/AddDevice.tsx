@@ -10,7 +10,7 @@ import { Toaster } from 'sonner';
 import ErrorBoundary from '@/components/ui/ErrorBoundary';
 import { validateDeviceForm, errorsToRecord } from '@/utils/validation';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle, Wifi, WifiOff, RefreshCw } from 'lucide-react';
+import { AlertTriangle, Wifi, WifiOff, RefreshCw, ServerOff } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Button } from '@/components/ui/button';
@@ -85,8 +85,8 @@ const AddDevice = () => {
             )}
             
             {hasSiteError && (
-              <Alert className="mb-4 border-yellow-500 text-yellow-800 dark:text-yellow-200">
-                <AlertTriangle className="h-4 w-4" />
+              <Alert className="mb-4 border-yellow-500 text-yellow-800 dark:text-yellow-300 bg-yellow-50 dark:bg-yellow-900/20">
+                <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
                 <AlertTitle>Site Configuration Issue</AlertTitle>
                 <AlertDescription className="flex items-center justify-between">
                   <span>Using fallback site configuration. Some features may be limited.</span>
@@ -94,7 +94,7 @@ const AddDevice = () => {
                     variant="outline" 
                     size="sm" 
                     onClick={reloadSite}
-                    className="ml-2"
+                    className="ml-2 border-yellow-500 hover:bg-yellow-100 dark:hover:bg-yellow-900/30"
                   >
                     <RefreshCw className="h-3 w-3 mr-1" />
                     Retry
