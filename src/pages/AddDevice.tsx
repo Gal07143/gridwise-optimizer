@@ -18,9 +18,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DeviceType, DeviceStatus } from '@/types/energy';
+import { useAuth } from '@/contexts/AuthContext';
 
 const AddDevice = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [device, setDevice] = useState({
@@ -30,6 +32,7 @@ const AddDevice = () => {
     status: 'online' as DeviceStatus,
     capacity: 0,
     firmware: '',
+    description: '',
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -50,9 +53,19 @@ const AddDevice = () => {
       return;
     }
 
+    if (!user) {
+      toast.error('You must be logged in to create a device');
+      return;
+    }
+
     try {
       setIsSubmitting(true);
-      const newDevice = await createDevice(device);
+      
+      // Create the new device with the user ID
+      const newDevice = await createDevice({
+        ...device,
+        capacity: Number(device.capacity),
+      });
       
       if (newDevice) {
         toast.success('Device created successfully');
@@ -60,9 +73,9 @@ const AddDevice = () => {
       } else {
         toast.error('Failed to create device');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating device:', error);
-      toast.error('An error occurred while creating the device');
+      toast.error(`Failed to create device: ${error.message || 'Unknown error'}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -195,6 +208,8 @@ const AddDevice = () => {
                   id="description" 
                   name="description" 
                   rows={4}
+                  value={device.description}
+                  onChange={handleInputChange}
                   placeholder="Additional information about this device..."
                 />
               </div>

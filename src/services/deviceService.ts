@@ -105,13 +105,32 @@ export const updateDevice = async (id: string, updates: Partial<EnergyDevice>): 
  */
 export const createDevice = async (deviceData: Omit<EnergyDevice, 'id' | 'created_at' | 'last_updated'>): Promise<EnergyDevice | null> => {
   try {
+    // Add the user id to track who created the device
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData?.user?.id;
+
+    // Make sure we have a timestamp for creation
+    const timestamp = new Date().toISOString();
+    
+    // Prepare the data with defaults for required fields
+    const preparedData = {
+      ...deviceData,
+      created_by: userId,
+      last_updated: timestamp,
+      status: deviceData.status || 'online',
+      metrics: deviceData.metrics || null
+    };
+    
     const { data, error } = await supabase
       .from('devices')
-      .insert([deviceData])
+      .insert([preparedData])
       .select()
       .single();
     
-    if (error) throw error;
+    if (error) {
+      console.error("Error creating device:", error);
+      throw error;
+    }
     
     if (!data) return null;
     
