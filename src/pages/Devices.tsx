@@ -17,7 +17,9 @@ import {
   Search,
   Filter,
   SlidersHorizontal,
-  FileText
+  FileText,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import Sidebar from '@/components/layout/Sidebar';
@@ -761,3 +763,4 @@ const DeviceMetricCard = ({ name, value }: { name: string, value: number }) => {
 };
 
 export default Devices;
+

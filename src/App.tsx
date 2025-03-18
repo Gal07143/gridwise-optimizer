@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -21,6 +20,9 @@ import ErrorBoundary from "./components/ui/ErrorBoundary";
 import Notifications from "./components/ui/Notifications";
 import Alerts from "./pages/Alerts";
 import Reports from "./pages/Reports";
+import Security from "./pages/Security";
+import EnergyFlow from "./pages/EnergyFlow";
+import MicrogridControl from "./pages/MicrogridControl";
 
 import GeneralSettings from "./pages/settings/GeneralSettings";
 import UserSettings from "./pages/settings/UserSettings";
@@ -40,6 +42,12 @@ import AuditLogging from "./pages/settings/AuditLogging";
 import ExternalServices from "./pages/settings/ExternalServices";
 import NotificationServices from "./pages/settings/NotificationServices";
 import AddSite from "./pages/settings/AddSite";
+import EditSite from "./pages/settings/EditSite";
+import OperationalThresholds from "./pages/settings/OperationalThresholds";
+import OptimizationAlgorithms from "./pages/settings/OptimizationAlgorithms";
+import ApiKeyManagement from "./pages/settings/ApiKeyManagement";
+import SystemStatus from "./pages/SystemStatus";
+import Documentation from "./pages/Documentation";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -126,9 +134,11 @@ const App = () => (
                 <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
                 <Route path="/alerts" element={<ProtectedRoute><Alerts /></ProtectedRoute>} />
                 <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+                <Route path="/security" element={<ProtectedRoute><Security /></ProtectedRoute>} />
                 
                 {/* Site Management */}
                 <Route path="/settings/sites/add" element={<ProtectedRoute><AddSite /></ProtectedRoute>} />
+                <Route path="/settings/sites/edit/:id" element={<ProtectedRoute><EditSite /></ProtectedRoute>} />
                 
                 {/* System Settings */}
                 <Route path="/settings/general" element={<ProtectedRoute><GeneralSettings /></ProtectedRoute>} />
@@ -157,16 +167,16 @@ const App = () => (
                 
                 {/* Energy Settings */}
                 <Route path="/settings/tariffs" element={<ProtectedRoute><TariffSettings /></ProtectedRoute>} />
-                <Route path="/settings/thresholds" element={<ProtectedRoute><SettingsPlaceholder title="Operational Thresholds" /></ProtectedRoute>} />
-                <Route path="/settings/algorithms" element={<ProtectedRoute><SettingsPlaceholder title="Optimization Algorithms" /></ProtectedRoute>} />
+                <Route path="/settings/thresholds" element={<ProtectedRoute><OperationalThresholds /></ProtectedRoute>} />
+                <Route path="/settings/algorithms" element={<ProtectedRoute><OptimizationAlgorithms /></ProtectedRoute>} />
                 
                 {/* Additional Settings */}
-                <Route path="/settings/api-keys" element={<ProtectedRoute><SettingsPlaceholder title="API Key Management" /></ProtectedRoute>} />
+                <Route path="/settings/api-keys" element={<ProtectedRoute><ApiKeyManagement /></ProtectedRoute>} />
                 <Route path="/settings/profile" element={<ProtectedRoute><SettingsPlaceholder title="User Profile" /></ProtectedRoute>} />
                 <Route path="/settings/preferences" element={<ProtectedRoute><SettingsPlaceholder title="User Preferences" /></ProtectedRoute>} />
                 
-                <Route path="/energy-flow" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} /> 
-                <Route path="/microgrid" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} /> 
+                <Route path="/energy-flow" element={<ProtectedRoute><EnergyFlow /></ProtectedRoute>} /> 
+                <Route path="/microgrid" element={<ProtectedRoute><MicrogridControl /></ProtectedRoute>} /> 
                 <Route path="/system-status" element={<ProtectedRoute><SystemStatus /></ProtectedRoute>} />
                 <Route path="/documentation" element={<ProtectedRoute><Documentation /></ProtectedRoute>} />
                 <Route path="*" element={<NotFound />} />
