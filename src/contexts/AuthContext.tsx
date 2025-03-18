@@ -3,7 +3,6 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { supabase } from '@/integrations/supabase/client';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { User, UserRole } from '@/types/energy';
-import { useToast } from '@/hooks/use-toast';
 import { toast } from 'sonner';
 
 interface AuthContextType {
@@ -23,7 +22,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const { toast: hookToast } = useToast();
 
   useEffect(() => {
     // Initialize session and profile on mount
@@ -147,14 +145,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       if (error) {
         console.error('Sign in error:', error);
-        toast({
-          title: "Sign in failed",
+        toast.error("Sign in failed", {
           description: error.message,
         });
       } else {
         console.log('Sign in successful');
-        toast({
-          title: "Signed in successfully",
+        toast.success("Signed in successfully", {
           description: "Welcome back!",
         });
       }
@@ -186,14 +182,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       if (error) {
         console.error('Sign up error:', error);
-        toast({
-          title: "Sign up failed",
+        toast.error("Sign up failed", {
           description: error.message,
         });
       } else {
         console.log('Sign up successful');
-        toast({
-          title: "Account created",
+        toast.success("Account created", {
           description: "Please check your email to confirm your account.",
         });
       }
@@ -210,16 +204,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       console.log('Signing out');
       await supabase.auth.signOut();
       setUser(null);
-      toast({
-        title: "Signed out",
+      toast.success("Signed out", {
         description: "You have been signed out successfully.",
       });
     } catch (error) {
       console.error('Error during sign out:', error);
-      toast({
-        title: "Sign out failed",
+      toast.error("Sign out failed", {
         description: "There was an error signing you out.",
-        variant: "destructive"
       });
     }
   };
@@ -232,16 +223,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
       
       if (!error) {
-        toast({
-          title: "Password reset email sent",
+        toast.success("Password reset email sent", {
           description: "Check your email for the password reset link.",
         });
       } else {
         console.error('Reset password error:', error);
-        toast({
-          title: "Failed to send reset email",
+        toast.error("Failed to send reset email", {
           description: error.message,
-          variant: "destructive"
         });
       }
       
@@ -296,16 +284,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           ...updates
         });
         
-        toast({
-          title: "Profile updated",
+        toast.success("Profile updated", {
           description: "Your profile has been updated successfully."
         });
       } else {
         console.error('Profile update error:', error);
-        toast({
-          title: "Profile update failed",
+        toast.error("Profile update failed", {
           description: error?.message || "Failed to update profile",
-          variant: "destructive"
         });
       }
       
