@@ -12,6 +12,8 @@ export const updateDevice = async (id: string, updates: Partial<EnergyDevice>): 
     // Remove any fields that shouldn't be updated directly
     const { id: _id, created_at, ...updateData } = updates as any;
     
+    console.log("Updating device with data:", updateData);
+    
     const { data, error } = await supabase
       .from('devices')
       .update({ ...updateData, last_updated: new Date().toISOString() })
@@ -19,9 +21,15 @@ export const updateDevice = async (id: string, updates: Partial<EnergyDevice>): 
       .select()
       .single();
     
-    if (error) throw error;
+    if (error) {
+      console.error(`Error updating device ${id}:`, error);
+      throw error;
+    }
     
-    if (!data) return null;
+    if (!data) {
+      toast.error("No device data returned from update");
+      return null;
+    }
     
     // Convert the database response to match our TypeScript interface
     const device: EnergyDevice = {
@@ -34,9 +42,9 @@ export const updateDevice = async (id: string, updates: Partial<EnergyDevice>): 
     toast.success("Device updated successfully");
     return device;
     
-  } catch (error) {
+  } catch (error: any) {
     console.error(`Error updating device ${id}:`, error);
-    toast.error("Failed to update device");
+    toast.error(`Failed to update device: ${error.message || 'Unknown error'}`);
     return null;
   }
 };
@@ -51,6 +59,7 @@ export const createDevice = async (deviceData: Omit<EnergyDevice, 'id' | 'create
     const userId = userData?.user?.id;
     
     if (!userId) {
+      toast.error("Authentication required to create device");
       throw new Error("No authenticated user found");
     }
     
@@ -59,23 +68,39 @@ export const createDevice = async (deviceData: Omit<EnergyDevice, 'id' | 'create
     if (!siteId) {
       console.log("No site ID provided, attempting to get default site");
       try {
-        const { data: siteData } = await supabase.rpc('get_default_site_id');
-        siteId = siteData;
-        console.log("Got default site ID:", siteId);
+        const { data: siteData, error } = await supabase.rpc('get_default_site_id');
+        
+        if (error) {
+          console.error("Error getting default site ID:", error);
+          // Continue with fallback default
+        } else if (siteData) {
+          siteId = siteData;
+          console.log("Got default site ID:", siteId);
+        }
       } catch (siteError) {
         console.error("Error getting default site:", siteError);
+        // Continue with fallback default
       }
     }
 
+    // If still no site ID, use fallback or create new one
     if (!siteId) {
-      console.log("No site found, creating a new one");
-      const siteResponse = await createDummySite();
-      if (siteResponse) {
-        siteId = siteResponse.id;
-        console.log("Created new site with ID:", siteId);
-      } else {
-        console.error("Failed to create site");
-        throw new Error("Could not create or find a site");
+      console.log("No site found, using fallback or creating a new one");
+      // First try creating a site only if we need to
+      try {
+        const siteResponse = await createDummySite();
+        if (siteResponse) {
+          siteId = siteResponse.id;
+          console.log("Created new site with ID:", siteId);
+        }
+      } catch (createError) {
+        console.error("Failed to create site:", createError);
+      }
+      
+      // Final fallback - use a dummy ID if nothing else worked
+      if (!siteId) {
+        console.log("Using fallback site ID");
+        siteId = "00000000-0000-0000-0000-000000000000";
       }
     }
 
@@ -105,7 +130,10 @@ export const createDevice = async (deviceData: Omit<EnergyDevice, 'id' | 'create
       throw error;
     }
     
-    if (!data) return null;
+    if (!data) {
+      toast.error("No device data returned");
+      return null;
+    }
     
     // Convert the database response to match our TypeScript interface
     const device: EnergyDevice = {
@@ -137,10 +165,11 @@ export const deleteDevice = async (id: string): Promise<boolean> => {
     
     if (error) throw error;
     
+    toast.success("Device deleted successfully");
     return true;
-  } catch (error) {
+  } catch (error: any) {
     console.error(`Error deleting device ${id}:`, error);
-    toast.error("Failed to delete device");
+    toast.error(`Failed to delete device: ${error.message || 'Unknown error'}`);
     return false;
   }
 };

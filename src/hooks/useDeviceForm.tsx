@@ -9,21 +9,24 @@ import { useBaseDeviceForm, DeviceFormState } from './useBaseDeviceForm';
 export const useDeviceForm = () => {
   const { user } = useAuth();
   const [defaultSiteId, setDefaultSiteId] = useState<string | null>(null);
+  const [siteError, setSiteError] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchDefaultSite = async () => {
       try {
-        // Hardcode a dummy site ID for now to bypass the permission issues
+        // Always set a fallback ID first to ensure we have something
         setDefaultSiteId("00000000-0000-0000-0000-000000000000");
+        setSiteError(false);
         
-        // Try to get site from API, but don't block on it
+        // Try to get site from API
         const site = await getOrCreateDummySite();
         if (site) {
           setDefaultSiteId(site.id);
         }
       } catch (error) {
         console.error("Error fetching default site:", error);
-        // We'll continue with the dummy ID
+        setSiteError(true);
+        // We'll continue with the dummy ID set above
       }
     };
     
@@ -36,6 +39,11 @@ export const useDeviceForm = () => {
       return null;
     }
 
+    // Display a warning if we're using the fallback site ID
+    if (siteError) {
+      toast.warning("Using fallback site configuration. Some features may be limited.");
+    }
+    
     console.log("Creating device with data:", {
       ...deviceData,
       site_id: defaultSiteId
@@ -44,7 +52,7 @@ export const useDeviceForm = () => {
     // Create the new device with the user ID and default site
     return await createDevice({
       ...deviceData,
-      site_id: defaultSiteId || "00000000-0000-0000-0000-000000000000" // Fallback if still null
+      site_id: defaultSiteId
     });
   };
 
@@ -55,5 +63,6 @@ export const useDeviceForm = () => {
   return {
     ...baseFormHook,
     isSubmitting: baseFormHook.isSubmitting,
+    hasSiteError: siteError,
   };
 };
