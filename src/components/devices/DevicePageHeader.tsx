@@ -7,7 +7,7 @@ interface DevicePageHeaderProps {
   title: string;
   subtitle: string;
   onBack: () => void;
-  onSave: () => void;
+  onSave: (e?: React.FormEvent) => void;  // Updated to accept an optional FormEvent
   isSaving: boolean;
 }
 
@@ -35,7 +35,7 @@ const DevicePageHeader: React.FC<DevicePageHeaderProps> = ({
       </div>
       <Button 
         className="flex items-center gap-2"
-        onClick={onSave}
+        onClick={(e) => onSave(e)}  // Pass the event to the onSave function
         disabled={isSaving}
       >
         <Save size={16} />
