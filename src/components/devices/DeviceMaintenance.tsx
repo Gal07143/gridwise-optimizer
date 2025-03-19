@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   Calendar,
   Clock,
-  Wrench, // Replace Tool with Wrench since Tool is not available
+  Wrench, // Changed from Tool to Wrench
   AlertTriangle,
   CheckCircle,
   ArrowRight,
@@ -15,7 +14,7 @@ import {
   RefreshCw,
   Zap,
   HelpCircle,
-  Tags // Replace Tag with Tags since Tag is not available
+  Tags // Changed from Tag to Tags
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -618,8 +617,7 @@ const DeviceMaintenance: React.FC<DeviceMaintenanceProps> = ({
                   <div className="space-y-3">
                     {anomalies.map((anomaly, index) => (
                       <Alert key={index} variant={
-                        anomaly.severity === 'high' ? 'destructive' : 
-                        anomaly.severity === 'medium' ? 'default' : 'default'
+                        anomaly.severity === 'high' ? 'destructive' : 'default'
                       }>
                         <AlertTitle className="flex items-center gap-2">
                           {anomaly.metric}

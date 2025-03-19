@@ -78,11 +78,27 @@ const EditDeviceContent = () => {
         </TabsList>
         
         <TabsContent value="details">
-          <DeviceForm device={device} />
+          <DeviceForm 
+            device={{
+              name: device.name,
+              location: device.location || '',
+              type: device.type,
+              status: device.status,
+              capacity: device.capacity,
+              firmware: device.firmware || '',
+              description: device.description || '',
+            }}
+            handleInputChange={() => {}}
+            handleSelectChange={() => {}}
+          />
         </TabsContent>
         
         <TabsContent value="controls">
-          <DeviceControls deviceId={device.id} />
+          <DeviceControls 
+            deviceId={device.id} 
+            deviceType={device.type}
+            deviceStatus={device.status}
+          />
         </TabsContent>
         
         <TabsContent value="maintenance">
