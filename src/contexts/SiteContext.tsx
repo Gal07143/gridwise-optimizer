@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Site } from '@/types/energy';
-import { getAllSites } from '@/services/siteService';
+import { getAllSites } from '@/services/sites/siteService';
 import { getOrCreateDummySite } from '@/services/sites/siteService';
 
 interface SiteContextType {
