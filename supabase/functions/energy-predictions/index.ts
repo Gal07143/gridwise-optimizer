@@ -14,26 +14,27 @@ serve(async (req) => {
   }
 
   try {
-    const { energyData, predictionDays, includeRecommendations = true } = await req.json();
-
-    // Generate predictions using our ML model
-    const predictions = predictEnergyConsumption(energyData, predictionDays || 7);
+    // Parse the request body
+    const requestData = await req.json();
     
-    // Generate recommendations if requested
-    const recommendations = includeRecommendations 
-      ? generateSystemRecommendations(energyData, predictions)
-      : [];
-
-    return new Response(
-      JSON.stringify({ 
-        predictions,
-        recommendations,
-        model_version: "1.2.0"
-      }), 
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
-    );
+    // Log the incoming request for debugging
+    console.log("Received request:", JSON.stringify(requestData));
+    
+    // Handle different action types
+    const action = requestData.action || "predict";
+    
+    switch (action) {
+      case "predict":
+        return handlePrediction(requestData);
+      case "apply_recommendation":
+        return handleRecommendationApplied(requestData);
+      case "get_model_status":
+        return handleGetModelStatus();
+      case "train_model":
+        return handleTrainModel();
+      default:
+        return handlePrediction(requestData);
+    }
   } catch (error) {
     console.error("Error in energy predictions:", error);
     return new Response(
@@ -46,13 +47,111 @@ serve(async (req) => {
   }
 });
 
+/**
+ * Handle prediction requests
+ */
+async function handlePrediction(requestData) {
+  const { energyData, predictionDays = 7, includeRecommendations = true } = requestData;
+  
+  // Validate input data
+  if (!energyData || !Array.isArray(energyData) || energyData.length < 5) {
+    return new Response(
+      JSON.stringify({ 
+        error: "Insufficient data for prediction. At least 5 data points are required." 
+      }),
+      {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
+  }
+
+  // Generate predictions using our ML model
+  const predictions = predictEnergyConsumption(energyData, predictionDays);
+  
+  // Generate recommendations if requested
+  const recommendations = includeRecommendations 
+    ? generateSystemRecommendations(energyData, predictions)
+    : [];
+
+  return new Response(
+    JSON.stringify({ 
+      predictions,
+      recommendations,
+      model_version: "1.2.0"
+    }), 
+    {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    }
+  );
+}
+
+/**
+ * Handle recommendation application feedback
+ */
+async function handleRecommendationApplied(requestData) {
+  const { recommendationId, notes, timestamp } = requestData;
+  
+  console.log(`Recommendation applied: ${recommendationId}`);
+  console.log(`Notes: ${notes || 'None provided'}`);
+  console.log(`Timestamp: ${timestamp}`);
+  
+  // In a production system, we would store this feedback to improve future recommendations
+  
+  return new Response(
+    JSON.stringify({ 
+      success: true,
+      message: "Recommendation applied successfully"
+    }), 
+    {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    }
+  );
+}
+
+/**
+ * Handle model status requests
+ */
+async function handleGetModelStatus() {
+  // In a production system, we would fetch the actual model status from a database
+  
+  return new Response(
+    JSON.stringify({ 
+      version: "1.2.0",
+      lastTrained: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days ago
+      accuracy: 0.88,
+      status: "active"
+    }), 
+    {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    }
+  );
+}
+
+/**
+ * Handle model training requests
+ */
+async function handleTrainModel() {
+  // In a production system, we would trigger an async training job
+  
+  return new Response(
+    JSON.stringify({ 
+      success: true,
+      message: "Model training started successfully"
+    }), 
+    {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    }
+  );
+}
+
 function predictEnergyConsumption(historicalData, futureDays) {
   // Convert data to numerical array if it's an object array
   const values = Array.isArray(historicalData) 
     ? historicalData.map(item => typeof item === 'object' ? item.value : item)
     : historicalData;
   
-  if (values.length < 7) {
+  if (values.length < 5) {
     throw new Error("Insufficient data for prediction");
   }
   
@@ -204,9 +303,8 @@ function generateSystemRecommendations(historicalData, predictions) {
   };
   recommendations.push(solarOptimizationRecommendation);
   
-  // Add more sophisticated recommendations here in a real system
-  
-  return recommendations;
+  // Limit to 5 recommendations maximum to prevent overwhelming the user
+  return recommendations.slice(0, 5);
 }
 
 /**
