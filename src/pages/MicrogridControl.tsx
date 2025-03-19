@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Grid, Power } from 'lucide-react';
@@ -6,6 +5,7 @@ import { useSite } from '@/contexts/SiteContext';
 import { toast } from 'sonner';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import AppLayout from '@/components/layout/AppLayout';
 
 // Import the refactored components
 import MicrogridNavMenu from '@/components/microgrid/MicrogridNavMenu';
@@ -217,68 +217,70 @@ const MicrogridControl = () => {
   };
   
   return (
-    <div className="container mx-auto px-4 py-8 animate-in fade-in duration-500">
-      <Card className="p-6 mb-8 bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 shadow-md">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold">Microgrid Control</h1>
-            <p className="text-muted-foreground mt-1">
-              Advanced monitoring and management of your microgrid system
-            </p>
+    <AppLayout>
+      <div className="animate-in fade-in duration-500">
+        <Card className="p-6 mb-8 bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 shadow-md">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-bold">Microgrid Control</h1>
+              <p className="text-muted-foreground mt-1">
+                Advanced monitoring and management of your microgrid system
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge className={`${microgridState.gridConnection ? 'bg-green-500' : 'bg-orange-500'} text-white px-3 py-1.5`}>
+                {microgridState.gridConnection ? 'Grid Connected' : 'Island Mode'}
+              </Badge>
+              <Badge className="bg-primary px-3 py-1.5">
+                {microgridState.operatingMode.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+              </Badge>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Badge className={`${microgridState.gridConnection ? 'bg-green-500' : 'bg-orange-500'} text-white px-3 py-1.5`}>
-              {microgridState.gridConnection ? 'Grid Connected' : 'Island Mode'}
-            </Badge>
-            <Badge className="bg-primary px-3 py-1.5">
-              {microgridState.operatingMode.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-            </Badge>
-          </div>
+        </Card>
+        
+        <div className="mb-6">
+          <MicrogridNavMenu />
         </div>
-      </Card>
-      
-      <div className="mb-6">
-        <MicrogridNavMenu />
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8" id="status">
-        <div className="lg:col-span-2 space-y-6">
-          <StatusOverview microgridState={microgridState} />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8" id="status">
+          <div className="lg:col-span-2 space-y-6">
+            <StatusOverview microgridState={microgridState} />
+          </div>
+          
+          <div>
+            <AlertsPanel 
+              alerts={alerts}
+              onAcknowledge={handleAcknowledgeAlert}
+            />
+          </div>
         </div>
         
-        <div>
-          <AlertsPanel 
-            alerts={alerts}
-            onAcknowledge={handleAcknowledgeAlert}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8" id="controls">
+          <MicrogridControls
+            microgridState={microgridState}
+            minBatteryReserve={settings.minBatteryReserve}
+            onModeChange={handleModeChange}
+            onGridConnectionToggle={handleGridConnectionToggle}
+            onBatteryDischargeToggle={handleBatteryDischargeToggle}
+            onBatteryReserveChange={(value) => handleSettingsChange('minBatteryReserve', value)}
+          />
+          
+          <AdvancedControlSettings
+            settings={settings}
+            onSettingsChange={handleSettingsChange}
+            onSaveSettings={handleSaveSettings}
           />
         </div>
-      </div>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8" id="controls">
-        <MicrogridControls
-          microgridState={microgridState}
-          minBatteryReserve={settings.minBatteryReserve}
-          onModeChange={handleModeChange}
-          onGridConnectionToggle={handleGridConnectionToggle}
-          onBatteryDischargeToggle={handleBatteryDischargeToggle}
-          onBatteryReserveChange={(value) => handleSettingsChange('minBatteryReserve', value)}
-        />
-        
-        <AdvancedControlSettings
-          settings={settings}
-          onSettingsChange={handleSettingsChange}
-          onSaveSettings={handleSaveSettings}
-        />
-      </div>
 
-      <div className="mb-8" id="devices">
-        <DeviceControlsPanel />
+        <div className="mb-8" id="devices">
+          <DeviceControlsPanel />
+        </div>
+        
+        <div className="mb-8" id="history">
+          <CommandHistory commandHistory={commandHistory} />
+        </div>
       </div>
-      
-      <div className="mb-8" id="history">
-        <CommandHistory commandHistory={commandHistory} />
-      </div>
-    </div>
+    </AppLayout>
   );
 };
 
