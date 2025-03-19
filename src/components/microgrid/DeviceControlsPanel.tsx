@@ -1,12 +1,36 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { PanelTop, Wind, Sun, Battery, Bolt } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import WindControls from '@/components/devices/controls/WindControls';
+import { DeviceType } from '@/types/energy';
+import ControlDialog from '@/components/devices/controls/ControlDialog';
+import { toast } from 'sonner';
 
 const DeviceControlsPanel: React.FC = () => {
+  const [activeDialog, setActiveDialog] = useState<{
+    isOpen: boolean;
+    deviceType: DeviceType;
+    deviceId: string;
+  }>({
+    isOpen: false,
+    deviceType: 'wind',
+    deviceId: 'wind-1'
+  });
+
+  const openControlDialog = (deviceType: DeviceType, deviceId: string) => {
+    setActiveDialog({
+      isOpen: true,
+      deviceType,
+      deviceId
+    });
+    toast.info(`Opening ${deviceType} controls`);
+  };
+
+  const closeControlDialog = () => {
+    setActiveDialog(prev => ({ ...prev, isOpen: false }));
+  };
+
   return (
     <Card>
       <CardHeader className="bg-primary/5">
@@ -20,63 +44,108 @@ const DeviceControlsPanel: React.FC = () => {
       </CardHeader>
       
       <CardContent className="pt-6">
-        <Tabs defaultValue="wind">
-          <TabsList className="grid grid-cols-4 w-full">
-            <TabsTrigger value="wind">
-              <Wind className="mr-2 h-4 w-4" />
-              Wind Turbine
-            </TabsTrigger>
-            <TabsTrigger value="solar">
-              <Sun className="mr-2 h-4 w-4" />
-              Solar Array
-            </TabsTrigger>
-            <TabsTrigger value="battery">
-              <Battery className="mr-2 h-4 w-4" />
-              Battery System
-            </TabsTrigger>
-            <TabsTrigger value="loads">
-              <Bolt className="mr-2 h-4 w-4" />
-              Loads
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="wind" className="pt-6">
-            <WindControls deviceId="wind-1" />
-          </TabsContent>
-          
-          <TabsContent value="solar" className="pt-6">
-            <div className="p-8 text-center">
-              <Sun className="h-16 w-16 mx-auto text-yellow-500 mb-4" />
-              <h3 className="text-xl font-medium">Solar Array Control</h3>
-              <p className="text-muted-foreground mt-2 mb-4">
-                Solar array control interface is currently being upgraded
-              </p>
-              <Button>Go to Solar Controls</Button>
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          <Button 
+            variant="outline" 
+            className="flex flex-col items-center justify-center h-32 gap-2"
+            onClick={() => openControlDialog('wind', 'wind-1')}
+          >
+            <Wind className="h-10 w-10 text-blue-500" />
+            <div className="text-center">
+              <p className="font-medium">Wind Turbine</p>
+              <p className="text-xs text-muted-foreground">Control wind generation</p>
             </div>
-          </TabsContent>
+          </Button>
           
-          <TabsContent value="battery" className="pt-6">
-            <div className="p-8 text-center">
-              <Battery className="h-16 w-16 mx-auto text-blue-500 mb-4" />
-              <h3 className="text-xl font-medium">Battery System Control</h3>
-              <p className="text-muted-foreground mt-2 mb-4">
-                Battery system control interface is currently being upgraded
-              </p>
-              <Button>Go to Battery Controls</Button>
+          <Button 
+            variant="outline" 
+            className="flex flex-col items-center justify-center h-32 gap-2"
+            onClick={() => openControlDialog('solar', 'solar-1')}
+          >
+            <Sun className="h-10 w-10 text-yellow-500" />
+            <div className="text-center">
+              <p className="font-medium">Solar Array</p>
+              <p className="text-xs text-muted-foreground">Manage solar production</p>
             </div>
-          </TabsContent>
+          </Button>
           
-          <TabsContent value="loads" className="pt-6">
-            <div className="p-8 text-center">
-              <Bolt className="h-16 w-16 mx-auto text-orange-500 mb-4" />
-              <h3 className="text-xl font-medium">Load Management</h3>
-              <p className="text-muted-foreground mt-2 mb-4">
-                Load management interface is currently being upgraded
-              </p>
-              <Button>Go to Load Controls</Button>
+          <Button 
+            variant="outline" 
+            className="flex flex-col items-center justify-center h-32 gap-2"
+            onClick={() => openControlDialog('battery', 'battery-1')}
+          >
+            <Battery className="h-10 w-10 text-green-500" />
+            <div className="text-center">
+              <p className="font-medium">Battery System</p>
+              <p className="text-xs text-muted-foreground">Control energy storage</p>
             </div>
-          </TabsContent>
-        </Tabs>
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            className="flex flex-col items-center justify-center h-32 gap-2"
+            onClick={() => openControlDialog('load', 'load-1')}
+          >
+            <Bolt className="h-10 w-10 text-orange-500" />
+            <div className="text-center">
+              <p className="font-medium">Loads</p>
+              <p className="text-xs text-muted-foreground">Manage consumption</p>
+            </div>
+          </Button>
+        </div>
+
+        <div className="mt-8 grid grid-cols-2 gap-4">
+          <Button 
+            variant="outline" 
+            className="flex flex-col items-center justify-center h-24 gap-2"
+            onClick={() => toast.info("Switching to automatic control mode")}
+          >
+            <div className="text-center">
+              <p className="font-medium">Automatic</p>
+              <p className="text-xs text-muted-foreground">Optimized control</p>
+            </div>
+          </Button>
+          
+          <Button 
+            variant="default" 
+            className="flex flex-col items-center justify-center h-24 gap-2 bg-blue-500 hover:bg-blue-600"
+            onClick={() => toast.info("Manual control mode active")}
+          >
+            <div className="text-center">
+              <p className="font-medium">Manual</p>
+              <p className="text-xs text-muted-foreground">User-defined settings</p>
+            </div>
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            className="flex flex-col items-center justify-center h-24 gap-2"
+            onClick={() => toast.success("Island Mode activated")}
+          >
+            <div className="text-center">
+              <p className="font-medium">Island Mode</p>
+              <p className="text-xs text-muted-foreground">Off-grid operation</p>
+            </div>
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            className="flex flex-col items-center justify-center h-24 gap-2"
+            onClick={() => toast.success("Grid Connected Mode activated")}
+          >
+            <div className="text-center">
+              <p className="font-medium">Grid Connected</p>
+              <p className="text-xs text-muted-foreground">Grid-tied operation</p>
+            </div>
+          </Button>
+        </div>
+        
+        <ControlDialog 
+          isOpen={activeDialog.isOpen}
+          onClose={closeControlDialog}
+          deviceType={activeDialog.deviceType}
+          deviceId={activeDialog.deviceId}
+        />
       </CardContent>
     </Card>
   );
