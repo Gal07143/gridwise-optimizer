@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { AreaChart, BarChart3, Calendar, TrendingUp, Zap, Activity, Download, PieChart, BarChart, History } from 'lucide-react';
+import { BarChart3, Calendar, TrendingUp, Zap, Activity, Download, PieChart, BarChart, History } from 'lucide-react';
 import DashboardCard from '@/components/dashboard/DashboardCard';
 import LiveChart from '@/components/dashboard/LiveChart';
 import Header from '@/components/layout/Header';
@@ -18,8 +17,17 @@ import {
   ChartLegendContent,
 } from '@/components/ui/chart';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { 
+  AreaChart as RechartsAreaChart, 
+  Area, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip,
+  ResponsiveContainer,
+  Legend
+} from 'recharts';
 
-// Mock data for charts
 const weeklyEnergyData = [
   { time: 'Mon', value: 320, comparison: 290 },
   { time: 'Tue', value: 350, comparison: 310 },
@@ -169,25 +177,44 @@ const Analytics = () => {
                         },
                       }}
                     >
-                      <AreaChart 
-                        width={500} 
-                        height={250} 
-                        data={weeklyEnergyData}
-                        margin={{ top: 20, right: 20, left: 20, bottom: 20 }}
-                      >
-                        <defs>
-                          <linearGradient id="colorCurrent" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="rgba(122, 90, 248, 0.8)" stopOpacity={0.8}/>
-                            <stop offset="95%" stopColor="rgba(122, 90, 248, 0.1)" stopOpacity={0.1}/>
-                          </linearGradient>
-                          <linearGradient id="colorPrevious" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="rgba(122, 90, 248, 0.3)" stopOpacity={0.3}/>
-                            <stop offset="95%" stopColor="rgba(122, 90, 248, 0)" stopOpacity={0}/>
-                          </linearGradient>
-                        </defs>
-                        <ChartTooltip content={<ChartTooltipContent />} />
-                        <ChartLegend content={<ChartLegendContent />} />
-                      </AreaChart>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <RechartsAreaChart 
+                          data={weeklyEnergyData}
+                          margin={{ top: 20, right: 20, left: 20, bottom: 20 }}
+                        >
+                          <defs>
+                            <linearGradient id="colorCurrent" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="rgba(122, 90, 248, 0.8)" stopOpacity={0.8}/>
+                              <stop offset="95%" stopColor="rgba(122, 90, 248, 0.1)" stopOpacity={0.1}/>
+                            </linearGradient>
+                            <linearGradient id="colorPrevious" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="rgba(122, 90, 248, 0.3)" stopOpacity={0.3}/>
+                              <stop offset="95%" stopColor="rgba(122, 90, 248, 0)" stopOpacity={0}/>
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                          <XAxis dataKey="time" tick={{ fontSize: 12 }} />
+                          <YAxis tick={{ fontSize: 12 }} />
+                          <Tooltip content={<ChartTooltipContent />} />
+                          <Legend content={<ChartLegendContent />} />
+                          <Area 
+                            type="monotone" 
+                            dataKey="value" 
+                            name="current"
+                            stroke="rgba(122, 90, 248, 1)"
+                            fillOpacity={1}
+                            fill="url(#colorCurrent)"
+                          />
+                          <Area 
+                            type="monotone" 
+                            dataKey="comparison" 
+                            name="previous"
+                            stroke="rgba(122, 90, 248, 0.3)"
+                            fillOpacity={1}
+                            fill="url(#colorPrevious)"
+                          />
+                        </RechartsAreaChart>
+                      </ResponsiveContainer>
                     </ChartContainer>
                   </div>
                 </DashboardCard>
