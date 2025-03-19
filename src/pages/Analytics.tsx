@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BarChart3, Calendar, TrendingUp, Zap, Activity, Download, PieChart, BarChart, History } from 'lucide-react';
+import { BarChart3, Calendar, TrendingUp, Zap, Activity, Download, PieChart, BarChart, History, BarChartHorizontal } from 'lucide-react';
 import DashboardCard from '@/components/dashboard/DashboardCard';
 import LiveChart from '@/components/dashboard/LiveChart';
 import Header from '@/components/layout/Header';
@@ -27,6 +27,9 @@ import {
   ResponsiveContainer,
   Legend
 } from 'recharts';
+import { Toggle } from '@/components/ui/toggle';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
 
 const weeklyEnergyData = [
   { time: 'Mon', value: 320, comparison: 290 },
@@ -88,7 +91,7 @@ const costBreakdownData = [
 
 const Analytics = () => {
   const [timeframe, setTimeframe] = useState('week');
-  const [dataComparisonEnabled, setDataComparisonEnabled] = useState(false);
+  const [dataComparisonEnabled, setDataComparisonEnabled] = useState(true);
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -113,6 +116,21 @@ const Analytics = () => {
                   <SelectItem value="year">Last 12 Months</SelectItem>
                 </SelectContent>
               </Select>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center space-x-2">
+                  <Switch 
+                    id="comparison-toggle"
+                    checked={dataComparisonEnabled}
+                    onCheckedChange={setDataComparisonEnabled}
+                  />
+                  <label 
+                    htmlFor="comparison-toggle" 
+                    className="text-sm font-medium cursor-pointer"
+                  >
+                    Compare with previous {timeframe}
+                  </label>
+                </div>
+              </div>
               <Button variant="outline" size="sm" className="flex items-center gap-1">
                 <Download size={16} />
                 <span>Export</span>
@@ -205,14 +223,16 @@ const Analytics = () => {
                             fillOpacity={1}
                             fill="url(#colorCurrent)"
                           />
-                          <Area 
-                            type="monotone" 
-                            dataKey="comparison" 
-                            name="previous"
-                            stroke="rgba(122, 90, 248, 0.3)"
-                            fillOpacity={1}
-                            fill="url(#colorPrevious)"
-                          />
+                          {dataComparisonEnabled && (
+                            <Area 
+                              type="monotone" 
+                              dataKey="comparison" 
+                              name="previous"
+                              stroke="rgba(122, 90, 248, 0.3)"
+                              fillOpacity={1}
+                              fill="url(#colorPrevious)"
+                            />
+                          )}
                         </RechartsAreaChart>
                       </ResponsiveContainer>
                     </ChartContainer>
@@ -376,15 +396,48 @@ const Analytics = () => {
                 title="Monthly Energy Generation (kWh)"
                 icon={<BarChart3 size={18} />}
               >
-                <LiveChart
-                  data={monthlyGenerationData}
-                  height={300}
-                  color="rgba(45, 211, 111, 1)"
-                  type="area"
-                  gradientFrom="rgba(45, 211, 111, 0.5)"
-                  gradientTo="rgba(45, 211, 111, 0)"
-                  animated={false}
-                />
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RechartsAreaChart 
+                      data={monthlyGenerationData}
+                      margin={{ top: 20, right: 20, left: 20, bottom: 20 }}
+                    >
+                      <defs>
+                        <linearGradient id="colorGenCurrent" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="rgba(45, 211, 111, 0.8)" stopOpacity={0.8}/>
+                          <stop offset="95%" stopColor="rgba(45, 211, 111, 0.1)" stopOpacity={0.1}/>
+                        </linearGradient>
+                        <linearGradient id="colorGenPrevious" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="rgba(45, 211, 111, 0.3)" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="rgba(45, 211, 111, 0)" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                      <XAxis dataKey="time" tick={{ fontSize: 12 }} />
+                      <YAxis tick={{ fontSize: 12 }} />
+                      <Tooltip />
+                      <Legend />
+                      <Area 
+                        type="monotone" 
+                        dataKey="value" 
+                        name="This Year"
+                        stroke="rgba(45, 211, 111, 1)"
+                        fillOpacity={1}
+                        fill="url(#colorGenCurrent)"
+                      />
+                      {dataComparisonEnabled && (
+                        <Area 
+                          type="monotone" 
+                          dataKey="comparison" 
+                          name="Last Year"
+                          stroke="rgba(45, 211, 111, 0.3)"
+                          fillOpacity={1}
+                          fill="url(#colorGenPrevious)"
+                        />
+                      )}
+                    </RechartsAreaChart>
+                  </ResponsiveContainer>
+                </div>
               </DashboardCard>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
