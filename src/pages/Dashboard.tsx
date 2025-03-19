@@ -13,6 +13,27 @@ import AdvancedBatteryCard from '@/components/dashboard/AdvancedBatteryCard';
 import { useSite } from '@/contexts/SiteContext';
 import { useToast } from '@/hooks/use-toast';
 
+// Define interfaces for components that are missing them
+interface StatusOverviewProps {
+  animationDelay?: string;
+}
+
+interface LiveChartProps {
+  animationDelay?: string;
+}
+
+interface PowerQualityCardProps {
+  animationDelay?: string;
+}
+
+interface EnergyFlowChartProps {
+  animationDelay?: string;
+}
+
+interface AdvancedBatteryCardProps {
+  animationDelay?: string;
+}
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();

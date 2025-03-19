@@ -6,37 +6,42 @@ import { ArrowUpRight, ArrowDownRight, Minus } from 'lucide-react';
 interface MetricsCardProps {
   title: string;
   value: string | number;
-  change?: {
-    value: number;
-    type: 'increase' | 'decrease' | 'neutral';
-  };
+  unit?: string;
+  changeValue?: number;
+  changeType?: 'increase' | 'decrease' | 'neutral';
   icon?: React.ReactNode;
   className?: string;
   subtitle?: string;
+  description?: string;
+  animationDelay?: string;
 }
 
 const MetricsCard = ({
   title,
   value,
-  change,
+  unit,
+  changeValue,
+  changeType,
   icon,
   className,
   subtitle,
+  description,
+  animationDelay,
 }: MetricsCardProps) => {
   const renderChangeIcon = () => {
-    if (!change) return null;
+    if (!changeValue && !changeType) return null;
     
-    const changeAbsValue = Math.abs(change.value);
+    const changeAbsValue = Math.abs(changeValue || 0);
     const formattedChange = `${changeAbsValue}%`;
     
-    if (change.type === 'increase') {
+    if (changeType === 'increase') {
       return (
         <div className="flex items-center text-energy-green text-xs font-medium">
           <ArrowUpRight size={14} className="mr-1" />
           <span>{formattedChange}</span>
         </div>
       );
-    } else if (change.type === 'decrease') {
+    } else if (changeType === 'decrease') {
       return (
         <div className="flex items-center text-energy-red text-xs font-medium">
           <ArrowDownRight size={14} className="mr-1" />
@@ -54,16 +59,21 @@ const MetricsCard = ({
   };
 
   return (
-    <div className={cn(
-      "rounded-xl flex items-start group transition-all duration-300 shadow-sm overflow-hidden",
-      "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/50",
-      className
-    )}>
+    <div 
+      className={cn(
+        "rounded-xl flex items-start group transition-all duration-300 shadow-sm overflow-hidden",
+        "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/50",
+        className
+      )}
+      style={animationDelay ? { animationDelay } : undefined}
+    >
       <div className="flex flex-col h-full w-full p-4">
         <div className="text-xs font-medium text-muted-foreground mb-1">{title}</div>
-        <div className="text-2xl font-semibold mb-1">{value}</div>
+        <div className="text-2xl font-semibold mb-1">
+          {value}{unit && <span className="text-lg ml-1">{unit}</span>}
+        </div>
         <div className="flex items-center justify-between mt-1">
-          {subtitle && <div className="text-xs text-muted-foreground">{subtitle}</div>}
+          {description && <div className="text-xs text-muted-foreground">{description}</div>}
           {renderChangeIcon()}
         </div>
         
