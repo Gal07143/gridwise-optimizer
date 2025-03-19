@@ -1,1 +1,21 @@
+
 project_id = "xullgeycueouyxeirrqs"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage"]
+
+[db]
+enabled = true
+port = 54322
+
+[realtime]
+enabled = true
+
+[studio]
+enabled = true
+port = 54323
+
+[functions.energy-predictions]
+verify_jwt = false
