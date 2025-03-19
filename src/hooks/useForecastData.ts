@@ -9,7 +9,7 @@ import {
   getSiteForecastMetrics, 
   generateSampleForecasts, 
   insertEnergyForecasts 
-} from '@/services/forecastService';
+} from '@/services/forecasts';
 import { EnergyForecast } from '@/types/energy';
 
 export interface ForecastDataPoint {
@@ -113,19 +113,17 @@ export const useForecastData = () => {
   const effectiveForecasts = (forecasts && forecasts.length > 0) ? forecasts : localForecasts;
   
   // Process forecast data for the chart
-  const processedData: ForecastDataPoint[] = React.useMemo(() => {
-    if (!effectiveForecasts || effectiveForecasts.length === 0) return [];
-    
-    return effectiveForecasts.map(forecast => ({
-      hour: format(new Date(forecast.forecast_time), 'HH:00'),
-      generation: forecast.generation_forecast,
-      consumption: forecast.consumption_forecast,
-      net: forecast.generation_forecast - forecast.consumption_forecast,
-      weather: forecast.weather_condition,
-      temp: forecast.temperature,
-      windSpeed: forecast.wind_speed
-    }));
-  }, [effectiveForecasts]);
+  const processedData: ForecastDataPoint[] = effectiveForecasts.length > 0
+    ? effectiveForecasts.map(forecast => ({
+        hour: format(new Date(forecast.forecast_time), 'HH:00'),
+        generation: forecast.generation_forecast,
+        consumption: forecast.consumption_forecast,
+        net: forecast.generation_forecast - forecast.consumption_forecast,
+        weather: forecast.weather_condition,
+        temp: forecast.temperature,
+        windSpeed: forecast.wind_speed
+      }))
+    : [];
   
   // Calculate metrics or use the ones from the query
   const forecastMetrics: ForecastMetrics = metrics || {
