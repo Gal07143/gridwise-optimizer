@@ -1,32 +1,8 @@
 
-// This file re-exports all device-related service functions
+/**
+ * @deprecated This file has been refactored into separate modules.
+ * Please import from src/services/devices instead.
+ */
 
-// Core device operations
-export {
-  getAllDevices,
-  getDeviceById,
-  updateDevice,
-  createDevice,
-  deleteDevice
-} from './devices';
-
-// Device readings
-export {
-  getDeviceReadings,
-  addDeviceReading
-} from './devices/readingsService';
-
-// Maintenance operations
-export {
-  getDeviceMaintenanceRecords
-} from './devices/maintenanceService';
-
-// Site operations
-export {
-  getOrCreateDummySite
-} from './sites/siteService';
-
-// Test data seeding
-export {
-  seedTestData
-} from './devices/seedService';
+// Re-export from the new location for backward compatibility
+export * from './devices';
