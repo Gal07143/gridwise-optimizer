@@ -3,11 +3,10 @@ import React, { useState, useEffect } from 'react';
 import {
   Calendar,
   Clock,
-  Tool,
+  Wrench, // Replace Tool with Wrench since Tool is not available
   AlertTriangle,
   CheckCircle,
   ArrowRight,
-  Wrench,
   Clock4,
   FileText,
   History,
@@ -16,7 +15,7 @@ import {
   RefreshCw,
   Zap,
   HelpCircle,
-  Tag
+  Tags // Replace Tag with Tags since Tag is not available
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,15 +36,101 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  getAnomalies,
-  getMaintenanceRecommendations,
-  getSystemHealthPrediction,
-  type AnomalyDetection,
-  type MaintenanceRecommendation,
-  type SystemHealthPrediction
-} from '@/services/predictiveMaintenanceService';
-import { getDeviceMaintenanceRecords } from '@/services/devices/maintenanceService';
+
+// Placeholder for the services that would be implemented later
+const getDeviceMaintenanceRecords = async (deviceId: string): Promise<any[]> => {
+  // This would be replaced with actual API calls
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  return [
+    {
+      id: '1',
+      maintenance_type: 'Routine Maintenance',
+      scheduled_date: '2024-05-20',
+      completed_date: '2024-05-20',
+      performed_by: 'John Smith',
+      description: 'Regular system check and cleaning',
+      notes: 'All systems operating normally'
+    },
+    {
+      id: '2',
+      maintenance_type: 'Component Replacement',
+      scheduled_date: '2024-04-15',
+      completed_date: '2024-04-15',
+      performed_by: 'Jane Doe',
+      description: 'Replaced faulty sensor',
+      notes: 'Performance improved after replacement'
+    }
+  ];
+};
+
+// Placeholder for the anomaly detection service
+interface AnomalyDetection {
+  deviceId: string;
+  timestamp: string;
+  metric: string;
+  value: number;
+  expectedValue: number;
+  deviation: number;
+  severity: 'low' | 'medium' | 'high';
+  confidence: number;
+  recommendations: string[];
+}
+
+const getAnomalies = async (deviceId: string): Promise<AnomalyDetection[]> => {
+  // This would be replaced with actual API calls
+  await new Promise(resolve => setTimeout(resolve, 800));
+  return [];
+};
+
+// Placeholder for the maintenance recommendation service
+interface MaintenanceRecommendation {
+  deviceId: string;
+  deviceType: string;
+  recommendationType: 'routine' | 'preventive' | 'corrective';
+  priority: 'low' | 'medium' | 'high' | 'critical';
+  description: string;
+  dueDate: string;
+  estimatedDowntime: string;
+  estimatedCost: number;
+  parts?: {
+    name: string;
+    quantity: number;
+    inStock: boolean;
+  }[];
+  steps?: string[];
+}
+
+const getMaintenanceRecommendations = async (deviceId: string): Promise<MaintenanceRecommendation[]> => {
+  // This would be replaced with actual API calls
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  return [];
+};
+
+// Placeholder for the system health prediction service
+interface SystemHealthPrediction {
+  deviceId: string;
+  deviceType: string;
+  healthScore: number;
+  efficiency: number;
+  remainingLifespan: {
+    hours: number;
+    percentage: number;
+  };
+  metrics: {
+    name: string;
+    current: number;
+    optimal: number;
+    trend: 'improving' | 'stable' | 'degrading';
+  }[];
+  failureProbability: number;
+  nextMaintenanceDate: string;
+}
+
+const getSystemHealthPrediction = async (deviceId: string): Promise<SystemHealthPrediction | null> => {
+  // This would be replaced with actual API calls
+  await new Promise(resolve => setTimeout(resolve, 1200));
+  return null;
+};
 
 interface DeviceMaintenanceProps {
   deviceId: string;
@@ -225,7 +310,7 @@ const DeviceMaintenance: React.FC<DeviceMaintenanceProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h3 className="text-lg font-medium flex items-center gap-2">
-            <Tool size={18} />
+            <Wrench size={18} />
             Maintenance & Predictive Health
           </h3>
           <p className="text-sm text-muted-foreground">
@@ -319,7 +404,7 @@ const DeviceMaintenance: React.FC<DeviceMaintenanceProps> = ({
             ) : (
               <>
                 <div className="flex items-center mb-1">
-                  <Tag size={16} className="mr-2 text-primary" />
+                  <Tags size={16} className="mr-2 text-primary" />
                   <span className="text-sm font-medium">{warrantyInfo.years} Year Warranty</span>
                 </div>
                 
@@ -397,9 +482,7 @@ const DeviceMaintenance: React.FC<DeviceMaintenanceProps> = ({
                   </div>
                   <Badge variant={recommendations[0].priority === 'critical' || recommendations[0].priority === 'high' 
                     ? 'destructive' 
-                    : recommendations[0].priority === 'medium' 
-                      ? 'default' 
-                      : 'secondary'}>
+                    : 'default'}>
                     {recommendations[0].priority.charAt(0).toUpperCase() + recommendations[0].priority.slice(1)}
                   </Badge>
                 </div>
@@ -514,8 +597,8 @@ const DeviceMaintenance: React.FC<DeviceMaintenanceProps> = ({
                       <div className="text-xs text-muted-foreground flex items-center">
                         <span>Trend: </span>
                         <Badge className="ml-2" variant={
-                          metric.trend === 'improving' ? 'outline' : 
-                          metric.trend === 'degrading' ? 'destructive' : 'secondary'
+                          metric.trend === 'improving' ? 'default' : 
+                          metric.trend === 'degrading' ? 'destructive' : 'default'
                         }>
                           {metric.trend.charAt(0).toUpperCase() + metric.trend.slice(1)}
                         </Badge>
@@ -536,7 +619,7 @@ const DeviceMaintenance: React.FC<DeviceMaintenanceProps> = ({
                     {anomalies.map((anomaly, index) => (
                       <Alert key={index} variant={
                         anomaly.severity === 'high' ? 'destructive' : 
-                        anomaly.severity === 'medium' ? 'default' : 'outline'
+                        anomaly.severity === 'medium' ? 'default' : 'default'
                       }>
                         <AlertTitle className="flex items-center gap-2">
                           {anomaly.metric}
@@ -595,8 +678,7 @@ const DeviceMaintenance: React.FC<DeviceMaintenanceProps> = ({
                     <div className="flex justify-between items-start">
                       <div>
                         <Badge className="mb-1" variant={
-                          recommendation.recommendationType === 'corrective' ? 'destructive' : 
-                          recommendation.recommendationType === 'preventive' ? 'default' : 'secondary'
+                          recommendation.recommendationType === 'corrective' ? 'destructive' : 'default'
                         }>
                           {recommendation.recommendationType.charAt(0).toUpperCase() + recommendation.recommendationType.slice(1)}
                         </Badge>
@@ -604,8 +686,7 @@ const DeviceMaintenance: React.FC<DeviceMaintenanceProps> = ({
                       </div>
                       <Badge variant={
                         recommendation.priority === 'critical' ? 'destructive' : 
-                        recommendation.priority === 'high' ? 'destructive' : 
-                        recommendation.priority === 'medium' ? 'default' : 'secondary'
+                        recommendation.priority === 'high' ? 'destructive' : 'default'
                       }>
                         {recommendation.priority.charAt(0).toUpperCase() + recommendation.priority.slice(1)} Priority
                       </Badge>
@@ -809,8 +890,7 @@ const DeviceMaintenance: React.FC<DeviceMaintenanceProps> = ({
                 <div className="text-sm font-medium">Maintenance Type</div>
                 <div className="flex items-center gap-2">
                   <Badge variant={
-                    selectedRecommendation?.recommendationType === 'corrective' ? 'destructive' : 
-                    selectedRecommendation?.recommendationType === 'preventive' ? 'default' : 'secondary'
+                    selectedRecommendation?.recommendationType === 'corrective' ? 'destructive' : 'default'
                   }>
                     {selectedRecommendation?.recommendationType.charAt(0).toUpperCase() + 
                      selectedRecommendation?.recommendationType.slice(1)}

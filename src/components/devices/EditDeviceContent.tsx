@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { getDeviceById } from '@/services/devices';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertTriangle, BarChart, Settings, History, Tool, ChevronLeft } from 'lucide-react';
+import { AlertTriangle, BarChart, Settings, History, Wrench, ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import DeviceForm from './DeviceForm';
@@ -61,7 +61,13 @@ const EditDeviceContent = () => {
   
   return (
     <div className="container py-6">
-      <DevicePageHeader device={device} />
+      <DevicePageHeader 
+        title={device.name}
+        subtitle={`Type: ${device.type} • ID: ${device.id}`}
+        onBack={() => navigate('/devices')}
+        onSave={() => {}} // Empty function since we're not saving through header
+        isSaving={false}
+      />
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
         <TabsList className="mb-8">
@@ -72,11 +78,11 @@ const EditDeviceContent = () => {
         </TabsList>
         
         <TabsContent value="details">
-          <DeviceForm deviceId={device.id} deviceType={device.type} />
+          <DeviceForm device={device} />
         </TabsContent>
         
         <TabsContent value="controls">
-          <DeviceControls device={device} />
+          <DeviceControls deviceId={device.id} />
         </TabsContent>
         
         <TabsContent value="maintenance">
@@ -90,7 +96,7 @@ const EditDeviceContent = () => {
         </TabsContent>
         
         <TabsContent value="history">
-          <DeviceLogger deviceId={device.id} deviceType={device.type} />
+          <DeviceLogger deviceId={device.id} />
         </TabsContent>
       </Tabs>
     </div>
