@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { getSiteById, updateSite } from '@/services/siteService';
+import { getSiteById, updateSite } from '@/services/sites/siteService';
 import SettingsPageTemplate from '@/components/settings/SettingsPageTemplate';
 import SiteForm from '@/components/sites/SiteForm';
 import { Button } from '@/components/ui/button';

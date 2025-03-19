@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { createSite } from '@/services/siteService';
+import { createSite } from '@/services/sites/siteService';
 import SettingsPageTemplate from '@/components/settings/SettingsPageTemplate';
 import SiteForm from '@/components/sites/SiteForm';
 import { CornerDownLeft } from 'lucide-react';

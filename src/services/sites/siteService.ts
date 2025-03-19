@@ -181,3 +181,107 @@ export const createDummySite = async (): Promise<Site | null> => {
     return null;
   }
 };
+
+/**
+ * Get all sites from the database
+ */
+export const getAllSites = async (): Promise<Site[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('sites')
+      .select('*')
+      .order('name');
+    
+    if (error) throw error;
+    
+    return data as Site[] || [];
+  } catch (error) {
+    console.error("Error fetching sites:", error);
+    toast.error("Failed to fetch sites");
+    return [];
+  }
+};
+
+/**
+ * Get a site by ID
+ */
+export const getSiteById = async (id: string): Promise<Site | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('sites')
+      .select('*')
+      .eq('id', id)
+      .single();
+    
+    if (error) throw error;
+    
+    return data as Site;
+  } catch (error) {
+    console.error(`Error fetching site ${id}:`, error);
+    toast.error("Failed to fetch site details");
+    return null;
+  }
+};
+
+/**
+ * Create a new site
+ */
+export const createSite = async (siteData: Omit<Site, 'id' | 'created_at' | 'updated_at'>): Promise<Site | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('sites')
+      .insert([siteData])
+      .select()
+      .single();
+    
+    if (error) throw error;
+    
+    return data as Site;
+  } catch (error) {
+    console.error("Error creating site:", error);
+    toast.error("Failed to create site");
+    return null;
+  }
+};
+
+/**
+ * Update an existing site
+ */
+export const updateSite = async (id: string, updates: Partial<Site>): Promise<Site | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('sites')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    
+    return data as Site;
+  } catch (error) {
+    console.error(`Error updating site ${id}:`, error);
+    toast.error("Failed to update site");
+    return null;
+  }
+};
+
+/**
+ * Delete a site by ID
+ */
+export const deleteSite = async (id: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('sites')
+      .delete()
+      .eq('id', id);
+    
+    if (error) throw error;
+    
+    return true;
+  } catch (error) {
+    console.error(`Error deleting site ${id}:`, error);
+    toast.error("Failed to delete site");
+    return false;
+  }
+};
