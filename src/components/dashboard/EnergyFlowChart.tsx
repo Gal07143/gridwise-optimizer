@@ -61,19 +61,16 @@ const EnergyFlowChart = () => {
     return () => clearInterval(interval);
   }, []);
   
-  // In a real app this would be a much more sophisticated visualization
-  // possibly using D3.js or another specialized library
   return (
-    <div className="w-full h-full min-h-[300px] p-4 rounded-xl">
-      <div className="text-sm font-medium mb-4">Energy Flow Visualization</div>
-      <div className="relative w-full h-[260px] overflow-hidden rounded-lg glass-panel grid-pattern">
+    <div className="w-full h-full min-h-[300px]">
+      <div className="relative w-full h-[260px] overflow-hidden rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50">
         {/* Energy Sources */}
         <div className="absolute left-6 top-0 w-[120px] h-full flex flex-col justify-around">
           {nodes.filter(n => n.type === 'source').map(node => (
             <div 
               key={node.id} 
               className={cn(
-                "glass-panel p-3 rounded-lg border transition-all",
+                "bg-white dark:bg-slate-800 p-3 rounded-lg border shadow-sm transition-all",
                 node.status === 'active' ? 'border-energy-green/50' : 'border-energy-orange/50'
               )}
             >
@@ -94,14 +91,14 @@ const EnergyFlowChart = () => {
           {nodes.filter(n => n.type === 'storage').map(node => (
             <div 
               key={node.id} 
-              className="glass-panel p-3 rounded-lg border border-energy-blue/50 w-[120px]"
+              className="bg-white dark:bg-slate-800 p-3 rounded-lg border border-energy-blue/50 w-[120px] shadow-sm"
             >
               <div className="text-xs font-medium">{node.label}</div>
               <div className="text-sm font-semibold flex items-center gap-1 mt-1">
                 <div className="w-2 h-2 rounded-full animate-pulse bg-energy-blue"></div>
                 {node.power.toFixed(1)} kW
               </div>
-              <div className="mt-2 bg-secondary/50 rounded-full h-1.5 overflow-hidden">
+              <div className="mt-2 bg-slate-100 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden">
                 <div className="bg-energy-blue h-full" style={{ width: '68%' }}></div>
               </div>
             </div>
@@ -113,7 +110,7 @@ const EnergyFlowChart = () => {
           {nodes.filter(n => n.type === 'consumption').map(node => (
             <div 
               key={node.id} 
-              className="glass-panel p-3 rounded-lg border border-energy-purple/50"
+              className="bg-white dark:bg-slate-800 p-3 rounded-lg border border-energy-purple/50 shadow-sm"
             >
               <div className="text-xs font-medium">{node.label}</div>
               <div className="text-sm font-semibold flex items-center gap-1 mt-1">
@@ -124,7 +121,7 @@ const EnergyFlowChart = () => {
           ))}
         </div>
         
-        {/* Energy flow lines - in a real app these would be SVG paths with animated particles */}
+        {/* Energy flow lines - simplified for demo purposes */}
         {connections.map((conn, idx) => {
           // This is a simplified version - a real version would calculate actual path coordinates 
           // based on node positions and use SVG paths with animated gradients
@@ -134,8 +131,6 @@ const EnergyFlowChart = () => {
           if (!fromNode || !toNode) return null;
           
           let lineStyle = {};
-          let startPoint = '';
-          let endPoint = '';
           
           // Extremely simplified positioning logic
           if (fromNode.type === 'source' && toNode.type === 'storage') {
@@ -151,27 +146,27 @@ const EnergyFlowChart = () => {
               className="absolute bg-energy-blue overflow-hidden" 
               style={lineStyle}
             >
-              <div className="card-shimmer h-full w-full"></div>
+              <div className="h-full w-full animate-pulse"></div>
             </div>
           );
         })}
       </div>
       
       <div className="mt-4 grid grid-cols-3 gap-2">
-        <div className="glass-panel p-2 rounded-lg border border-energy-green/20">
-          <div className="text-xs text-muted-foreground">Generation</div>
+        <div className="bg-white dark:bg-slate-800 p-2 rounded-lg border border-slate-200 dark:border-slate-700/50 shadow-sm">
+          <div className="text-xs text-slate-500 dark:text-slate-400">Generation</div>
           <div className="text-lg font-medium">
             {(nodes.filter(n => n.type === 'source').reduce((sum, node) => sum + node.power, 0)).toFixed(1)} kW
           </div>
         </div>
-        <div className="glass-panel p-2 rounded-lg border border-energy-blue/20">
-          <div className="text-xs text-muted-foreground">Storage</div>
+        <div className="bg-white dark:bg-slate-800 p-2 rounded-lg border border-slate-200 dark:border-slate-700/50 shadow-sm">
+          <div className="text-xs text-slate-500 dark:text-slate-400">Storage</div>
           <div className="text-lg font-medium">
             {(nodes.find(n => n.id === 'battery')?.power || 0).toFixed(1)} kW
           </div>
         </div>
-        <div className="glass-panel p-2 rounded-lg border border-energy-purple/20">
-          <div className="text-xs text-muted-foreground">Consumption</div>
+        <div className="bg-white dark:bg-slate-800 p-2 rounded-lg border border-slate-200 dark:border-slate-700/50 shadow-sm">
+          <div className="text-xs text-slate-500 dark:text-slate-400">Consumption</div>
           <div className="text-lg font-medium">
             {(nodes.filter(n => n.type === 'consumption').reduce((sum, node) => sum + node.power, 0)).toFixed(1)} kW
           </div>

@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
-import GlassPanel from '../ui/GlassPanel';
 
 interface DashboardCardProps {
   title: string;
@@ -25,14 +24,18 @@ const DashboardCard = ({
   style,
 }: DashboardCardProps) => {
   return (
-    <GlassPanel
-      className={cn("overflow-hidden", className)}
-      interactive={interactive}
+    <div
+      className={cn(
+        "rounded-xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-700/50",
+        "bg-white dark:bg-slate-800",
+        interactive && "hover:shadow-md transition-shadow duration-300",
+        className
+      )}
       style={style}
     >
-      <div className="flex items-center justify-between p-4 border-b border-border/50">
+      <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-700/50">
         <div className="flex items-center space-x-3">
-          {icon && <div className="text-muted-foreground">{icon}</div>}
+          {icon && <div className="text-primary">{icon}</div>}
           <h3 className="font-medium text-sm">{title}</h3>
         </div>
         {actions && <div>{actions}</div>}
@@ -40,7 +43,7 @@ const DashboardCard = ({
       <div className={cn("p-4", loading && "animate-pulse")}>
         {children}
       </div>
-    </GlassPanel>
+    </div>
   );
 };
 

@@ -24,7 +24,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import GlassPanel from '@/components/ui/GlassPanel';
 
 const Sidebar = () => {
   const [expanded, setExpanded] = useState(true);
@@ -58,13 +57,13 @@ const Sidebar = () => {
         className={cn(
           'flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors',
           isActive 
-            ? 'bg-primary text-primary-foreground' 
-            : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+            ? 'bg-primary/10 text-primary' 
+            : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
         )}
       >
         {React.cloneElement(icon as React.ReactElement, {
-          className: cn('mr-3 h-4 w-4', 
-            isActive ? 'text-primary-foreground' : 'text-muted-foreground'
+          className: cn('mr-3 h-5 w-5', 
+            isActive ? 'text-primary' : 'text-slate-500 dark:text-slate-400'
           ),
         })}
         <span className={cn('flex-1', !expanded && 'hidden')}>
@@ -78,21 +77,21 @@ const Sidebar = () => {
     <>
       <div
         className={cn(
-          "bg-secondary/20 backdrop-blur-sm h-screen fixed inset-0 z-40 transition-opacity lg:hidden",
+          "bg-black/20 backdrop-blur-sm h-screen fixed inset-0 z-40 transition-opacity lg:hidden",
           expanded ? "opacity-100" : "opacity-0 pointer-events-none"
         )}
         onClick={toggleSidebar}
       />
-      <GlassPanel
+      <div
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex flex-col w-64 transition-transform lg:translate-x-0 lg:z-0 lg:fixed lg:h-screen",
+          "fixed inset-y-0 left-0 z-50 flex flex-col w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700/50 transition-transform lg:translate-x-0 lg:z-10 lg:fixed lg:h-screen",
           !expanded && "-translate-x-full"
         )}
       >
-        <div className="flex items-center justify-between h-14 px-4">
+        <div className="flex items-center justify-between h-16 px-4 border-b border-slate-200 dark:border-slate-700/50">
           <div className="flex items-center gap-2 text-primary font-semibold text-lg">
-            <Zap size={24} />
-            <span className={cn("font-semibold", !expanded && "hidden")}>Energy EMS</span>
+            <Zap size={24} className="text-primary" />
+            <span className={cn("font-semibold", !expanded && "hidden")}>GridWise</span>
           </div>
           <Button 
             variant="ghost" 
@@ -104,81 +103,66 @@ const Sidebar = () => {
           </Button>
         </div>
         
-        <ScrollArea className="flex-1 px-3 py-4">
-          <div className="space-y-1">
-            <NavItem href="/dashboard" icon={<LayoutDashboard size={16} />}>
+        <ScrollArea className="flex-1 py-4">
+          <div className="px-3 space-y-1">
+            <NavItem href="/dashboard" icon={<LayoutDashboard size={18} />}>
               Dashboard
             </NavItem>
-            <NavItem href="/analytics" icon={<BarChart2 size={16} />}>
+            <NavItem href="/analytics" icon={<BarChart2 size={18} />}>
               Analytics
             </NavItem>
-            <NavItem href="/devices" icon={<Activity size={16} />}>
+            <NavItem href="/devices" icon={<Activity size={18} />}>
               Devices
             </NavItem>
-            <NavItem href="/alerts" icon={<BellRing size={16} />}>
+            <NavItem href="/alerts" icon={<BellRing size={18} />}>
               Alerts
             </NavItem>
-            <NavItem href="/reports" icon={<FileBarChart size={16} />}>
+            <NavItem href="/reports" icon={<FileBarChart size={18} />}>
               Reports
             </NavItem>
           </div>
           
-          <Separator className="my-4" />
+          <Separator className="my-4 mx-3" />
           
-          <div className="space-y-1">
-            <p className={cn("px-3 text-xs text-muted-foreground mb-2", !expanded && "hidden")}>
+          <div className="px-3 space-y-1">
+            <div className={cn("px-3 text-xs text-slate-500 dark:text-slate-400 font-medium mb-2", !expanded && "hidden")}>
               System Control
-            </p>
-            <NavItem href="/energy-flow" icon={<CircuitBoard size={16} />}>
+            </div>
+            <NavItem href="/energy-flow" icon={<CircuitBoard size={18} />}>
               Energy Flow
             </NavItem>
-            <NavItem href="/microgrid" icon={<Cpu size={16} />}>
+            <NavItem href="/microgrid" icon={<Cpu size={18} />}>
               Microgrid Control
             </NavItem>
-            <NavItem href="/system-status" icon={<MonitorCheck size={16} />}>
+            <NavItem href="/system-status" icon={<MonitorCheck size={18} />}>
               System Status
             </NavItem>
           </div>
           
-          <Separator className="my-4" />
+          <Separator className="my-4 mx-3" />
           
-          <div className="space-y-1">
-            <p className={cn("px-3 text-xs text-muted-foreground mb-2", !expanded && "hidden")}>
+          <div className="px-3 space-y-1">
+            <div className={cn("px-3 text-xs text-slate-500 dark:text-slate-400 font-medium mb-2", !expanded && "hidden")}>
               Administration
-            </p>
-            <NavItem href="/settings" icon={<Settings size={16} />}>
+            </div>
+            <NavItem href="/settings" icon={<Settings size={18} />}>
               Settings
             </NavItem>
-            <NavItem href="/security" icon={<Shield size={16} />}>
+            <NavItem href="/security" icon={<Shield size={18} />}>
               Security
             </NavItem>
-            <NavItem href="/documentation" icon={<Book size={16} />}>
+            <NavItem href="/documentation" icon={<Book size={18} />}>
               Documentation
             </NavItem>
           </div>
         </ScrollArea>
         
-        <div className="p-4">
+        <div className="p-4 border-t border-slate-200 dark:border-slate-700/50">
           <Button 
             variant="outline" 
             size={expanded ? "default" : "icon"} 
             onClick={toggleSidebar}
-            className="w-full lg:hidden"
-          >
-            {expanded ? (
-              <>
-                <X size={16} className="mr-2" />
-                Close Menu
-              </>
-            ) : (
-              <Menu size={16} />
-            )}
-          </Button>
-          <Button 
-            variant="outline" 
-            size={expanded ? "default" : "icon"} 
-            onClick={toggleSidebar}
-            className="w-full hidden lg:flex"
+            className="w-full"
           >
             {expanded ? (
               <>
@@ -190,7 +174,7 @@ const Sidebar = () => {
             )}
           </Button>
         </div>
-      </GlassPanel>
+      </div>
       
       {!expanded && !isMobile && (
         <div className="fixed top-0 left-0 z-10 h-screen w-14 bg-transparent flex items-center justify-center">
@@ -198,7 +182,7 @@ const Sidebar = () => {
             variant="ghost" 
             size="icon" 
             onClick={toggleSidebar}
-            className="text-muted-foreground hover:text-foreground"
+            className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
           >
             <Menu size={20} />
           </Button>

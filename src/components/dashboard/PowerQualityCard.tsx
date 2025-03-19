@@ -2,6 +2,7 @@
 import React from 'react';
 import { Activity, AlertTriangle, Check } from 'lucide-react';
 import DashboardCard from './DashboardCard';
+import { cn } from '@/lib/utils';
 
 interface PowerQualityCardProps {
   frequency?: number;
@@ -59,40 +60,40 @@ const PowerQualityCard = ({
       className={className}
     >
       <div className="grid grid-cols-2 gap-3 mt-2">
-        <div className="glass-panel p-3 rounded-lg">
+        <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-200 dark:border-slate-700/50">
           <div className="flex justify-between items-center mb-1">
-            <div className="text-xs text-muted-foreground">Frequency</div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">Frequency</div>
             {renderStatusIndicator(getFrequencyStatus())}
           </div>
           <div className="text-xl font-semibold">{frequency} Hz</div>
-          <div className="text-xs text-muted-foreground mt-1">Nominal: 60.00 Hz</div>
+          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">Nominal: 60.00 Hz</div>
         </div>
         
-        <div className="glass-panel p-3 rounded-lg">
+        <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-200 dark:border-slate-700/50">
           <div className="flex justify-between items-center mb-1">
-            <div className="text-xs text-muted-foreground">Voltage</div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">Voltage</div>
             {renderStatusIndicator(getVoltageStatus())}
           </div>
           <div className="text-xl font-semibold">{voltage} V</div>
-          <div className="text-xs text-muted-foreground mt-1">Nominal: 240 V</div>
+          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">Nominal: 240 V</div>
         </div>
         
-        <div className="glass-panel p-3 rounded-lg">
+        <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-200 dark:border-slate-700/50">
           <div className="flex justify-between items-center mb-1">
-            <div className="text-xs text-muted-foreground">Power Factor</div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">Power Factor</div>
             {renderStatusIndicator(getPowerFactorStatus())}
           </div>
           <div className="text-xl font-semibold">{powerFactor}</div>
-          <div className="text-xs text-muted-foreground mt-1">Target: ≥0.95</div>
+          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">Target: ≥0.95</div>
         </div>
         
-        <div className="glass-panel p-3 rounded-lg">
+        <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-200 dark:border-slate-700/50">
           <div className="flex justify-between items-center mb-1">
-            <div className="text-xs text-muted-foreground">THD</div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">THD</div>
             {renderStatusIndicator(getThdStatus())}
           </div>
           <div className="text-xl font-semibold">{thd}%</div>
-          <div className="text-xs text-muted-foreground mt-1">Target: ≤3%</div>
+          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">Target: ≤3%</div>
         </div>
       </div>
     </DashboardCard>

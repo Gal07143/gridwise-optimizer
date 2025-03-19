@@ -86,26 +86,27 @@ const Dashboard = () => {
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
-        <div className="flex-1 overflow-y-auto p-6 animate-fade-in">
-          <div className="mb-6 flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <h1 className="text-2xl font-semibold">Energy Management Dashboard</h1>
-                <SiteSelector />
+        <div className="flex-1 overflow-y-auto p-6 bg-slate-50 dark:bg-slate-900 animate-fade-in">
+          <div className="mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h1 className="text-2xl font-semibold mb-1">Energy Management Dashboard</h1>
+                <p className="text-muted-foreground">
+                  {currentSite ? `Monitoring ${currentSite.name} at ${currentSite.location}` : 'Real-time monitoring and control of your energy systems'}
+                </p>
               </div>
-              <p className="text-muted-foreground">
-                {currentSite ? `Monitoring ${currentSite.name} at ${currentSite.location}` : 'Real-time monitoring and control of your energy systems'}
-              </p>
+              <SiteSelector />
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 animate-slide-up" style={{ animationDelay: '0.1s' }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-6 animate-slide-up" style={{ animationDelay: '0.1s' }}>
             <MetricsCard
               title="Power Generation"
               value="153.7 kW"
               change={{ value: 12.4, type: 'increase' }}
               icon={<Zap size={18} />}
               subtitle="Solar + Wind"
+              className="bg-white/80 dark:bg-slate-800/80"
             />
             <MetricsCard
               title="Power Consumption"
@@ -113,6 +114,7 @@ const Dashboard = () => {
               change={{ value: 5.7, type: 'increase' }}
               icon={<Home size={18} />}
               subtitle="Building + EV"
+              className="bg-white/80 dark:bg-slate-800/80"
             />
             <MetricsCard
               title="Battery Capacity"
@@ -120,6 +122,7 @@ const Dashboard = () => {
               change={{ value: 3.1, type: 'decrease' }}
               icon={<Battery size={18} />}
               subtitle="120 kWh System"
+              className="bg-white/80 dark:bg-slate-800/80"
             />
             <MetricsCard
               title="Grid Exchange"
@@ -127,17 +130,20 @@ const Dashboard = () => {
               change={{ value: 0, type: 'neutral' }}
               icon={<Globe size={18} />}
               subtitle="Exporting"
+              className="bg-white/80 dark:bg-slate-800/80"
             />
           </div>
           
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-            <div className="lg:col-span-2 space-y-6 animate-slide-up" style={{ animationDelay: '0.2s' }}>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
+            <div className="lg:col-span-2 space-y-5 animate-slide-up" style={{ animationDelay: '0.2s' }}>
               <DashboardCard 
                 title="Energy Generation & Consumption"
                 icon={<BarChart3 size={18} />}
+                className="bg-white/80 dark:bg-slate-800/80"
               >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
+                    <h4 className="text-sm font-medium mb-2">Power Generation (kW)</h4>
                     <LiveChart
                       data={powerGenerationData}
                       title="Power Generation (kW)"
@@ -148,6 +154,7 @@ const Dashboard = () => {
                     />
                   </div>
                   <div>
+                    <h4 className="text-sm font-medium mb-2">Power Consumption (kW)</h4>
                     <LiveChart
                       data={energyConsumptionData}
                       title="Power Consumption (kW)"
@@ -160,19 +167,26 @@ const Dashboard = () => {
                 </div>
               </DashboardCard>
               
-              <EnergyFlowChart />
+              <DashboardCard 
+                title="Energy Flow Visualization"
+                icon={<Bolt size={18} />}
+                className="bg-white/80 dark:bg-slate-800/80"
+              >
+                <EnergyFlowChart />
+              </DashboardCard>
               
-              <PowerQualityCard />
+              <PowerQualityCard className="bg-white/80 dark:bg-slate-800/80" />
             </div>
             
-            <div className="space-y-6 animate-slide-up" style={{ animationDelay: '0.3s' }}>
-              <StatusOverview />
+            <div className="space-y-5 animate-slide-up" style={{ animationDelay: '0.3s' }}>
+              <StatusOverview className="bg-white/80 dark:bg-slate-800/80" />
               
-              <AdvancedBatteryCard />
+              <AdvancedBatteryCard className="bg-white/80 dark:bg-slate-800/80" />
               
               <DashboardCard 
                 title="Grid Feed-In Power"
                 icon={<Wind size={18} />}
+                className="bg-white/80 dark:bg-slate-800/80"
               >
                 <LiveChart
                   data={gridFeedInData}
@@ -185,11 +199,11 @@ const Dashboard = () => {
             </div>
           </div>
           
-          <EnergyForecastCard className="mb-6 animate-slide-up" animationDelay="0.4s" />
+          <EnergyForecastCard className="mb-6 animate-slide-up bg-white/80 dark:bg-slate-800/80" animationDelay="0.4s" />
           
-          <GlassPanel className="mt-2 p-4 text-xs text-center text-muted-foreground animate-fade-in" style={{ animationDelay: '0.5s' }}>
+          <div className="mt-2 p-4 text-xs text-center text-muted-foreground animate-fade-in" style={{ animationDelay: '0.5s' }}>
             GridWise Energy Management System — Real-time data last updated: {new Date().toLocaleTimeString()}
-          </GlassPanel>
+          </div>
         </div>
       </div>
     </div>

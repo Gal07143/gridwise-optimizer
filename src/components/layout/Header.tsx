@@ -35,31 +35,31 @@ const Header = () => {
   };
 
   return (
-    <header className="w-full h-16 px-6 border-b border-border flex items-center justify-between bg-background/80 backdrop-blur-sm z-10">
+    <header className="w-full h-16 px-6 border-b border-slate-200 dark:border-slate-700/50 flex items-center justify-between bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm z-10">
       <div className="flex items-center">
-        <Link to="/" className="mr-2 text-xl font-medium bg-clip-text text-transparent bg-gradient-to-r from-energy-blue to-energy-teal">
+        <Link to="/" className="mr-2 text-xl font-medium text-primary">
           GridWise
         </Link>
       </div>
 
       <div className="flex-1 max-w-xl mx-8">
         <div className="relative">
-          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-muted-foreground">
+          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
             <Search size={18} />
           </div>
           <input
             type="search"
-            className="w-full py-2 pl-10 pr-4 border border-border rounded-full bg-background focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all"
+            className="w-full py-2 pl-10 pr-4 border border-slate-200 dark:border-slate-700 rounded-full bg-slate-50 dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all text-sm"
             placeholder="Search devices, metrics, reports..."
           />
         </div>
       </div>
 
-      <div className="flex items-center space-x-1">
+      <div className="flex items-center space-x-2">
         <Button 
           variant="outline"
           size="sm"
-          className="flex items-center gap-1 mr-2"
+          className="flex items-center gap-1 mr-2 text-sm"
           onClick={handleAddDevice}
         >
           <Plus size={16} />
@@ -71,7 +71,7 @@ const Header = () => {
             <Button 
               variant="ghost" 
               size="icon" 
-              className="p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition duration-200"
+              className="p-2 rounded-full text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition duration-200"
             >
               <Bell size={20} />
             </Button>
@@ -80,7 +80,7 @@ const Header = () => {
             <DropdownMenuLabel>Notifications</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <div className="max-h-96 overflow-y-auto">
-              <div className="p-3 text-center text-muted-foreground">
+              <div className="p-3 text-center text-slate-500 dark:text-slate-400">
                 No new notifications
               </div>
             </div>
@@ -96,7 +96,7 @@ const Header = () => {
             <Button 
               variant="ghost" 
               size="icon" 
-              className="p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition duration-200"
+              className="p-2 rounded-full text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition duration-200"
             >
               <Settings size={20} />
             </Button>
@@ -124,7 +124,7 @@ const Header = () => {
             <Button 
               variant="secondary" 
               size="icon" 
-              className="ml-2 p-1.5 rounded-full hover:bg-secondary/80 transition duration-200"
+              className="ml-2 p-1.5 rounded-full"
             >
               <User size={20} />
             </Button>

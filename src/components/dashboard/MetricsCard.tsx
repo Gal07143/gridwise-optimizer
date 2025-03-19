@@ -55,22 +55,23 @@ const MetricsCard = ({
 
   return (
     <div className={cn(
-      "glass-panel p-4 rounded-xl flex items-start group transition-all duration-300",
-      "hover:shadow-md hover:bg-white/20 dark:hover:bg-white/[0.07]",
+      "rounded-xl flex items-start group transition-all duration-300 shadow-sm overflow-hidden",
+      "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/50",
       className
     )}>
-      {icon && (
-        <div className="icon-circle mr-4 text-primary bg-primary/10 group-hover:bg-primary/20 transition-colors duration-300">
-          {icon}
-        </div>
-      )}
-      <div className="flex-1">
+      <div className="flex flex-col h-full w-full p-4">
         <div className="text-xs font-medium text-muted-foreground mb-1">{title}</div>
         <div className="text-2xl font-semibold mb-1">{value}</div>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mt-1">
           {subtitle && <div className="text-xs text-muted-foreground">{subtitle}</div>}
           {renderChangeIcon()}
         </div>
+        
+        {icon && (
+          <div className="absolute right-4 top-4 text-primary opacity-50">
+            {icon}
+          </div>
+        )}
       </div>
     </div>
   );

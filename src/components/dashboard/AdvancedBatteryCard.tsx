@@ -54,13 +54,13 @@ const AdvancedBatteryCard = ({
       className={className}
     >
       <div className="grid grid-cols-2 gap-3 mt-2">
-        <div className="glass-panel p-3 rounded-lg">
+        <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-200 dark:border-slate-700/50">
           <div className="flex items-center gap-2 mb-1">
             <Zap size={14} className="text-primary" />
-            <div className="text-xs text-muted-foreground">State of Charge</div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">State of Charge</div>
           </div>
           <div className="text-xl font-semibold">{stateOfCharge}%</div>
-          <div className="mt-2 bg-secondary/50 rounded-full h-1.5 overflow-hidden">
+          <div className="mt-2 bg-slate-200/50 dark:bg-slate-700/50 rounded-full h-1.5 overflow-hidden">
             <div 
               className={cn(
                 "h-full", 
@@ -71,20 +71,20 @@ const AdvancedBatteryCard = ({
               style={{ width: `${stateOfCharge}%` }}
             ></div>
           </div>
-          <div className="text-xs text-muted-foreground mt-2">
+          <div className="text-xs text-slate-500 dark:text-slate-400 mt-2">
             Est. remaining: {Math.round(stateOfCharge * 1.2)} kWh
           </div>
         </div>
         
-        <div className="glass-panel p-3 rounded-lg">
+        <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-200 dark:border-slate-700/50">
           <div className="flex items-center gap-2 mb-1">
             <Thermometer size={14} className="text-primary" />
-            <div className="text-xs text-muted-foreground">Temperature</div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">Temperature</div>
           </div>
           <div className={cn("text-xl font-semibold", getTempColorClass())}>
             {temperature}°C
           </div>
-          <div className="flex justify-between text-xs text-muted-foreground mt-2">
+          <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 mt-2">
             <span>Min: 18.2°C</span>
             <span>Max: 27.8°C</span>
           </div>
@@ -93,15 +93,15 @@ const AdvancedBatteryCard = ({
           </div>
         </div>
         
-        <div className="glass-panel p-3 rounded-lg">
+        <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-200 dark:border-slate-700/50">
           <div className="flex items-center gap-2 mb-1">
             <Battery size={14} className="text-primary" />
-            <div className="text-xs text-muted-foreground">State of Health</div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">State of Health</div>
           </div>
           <div className="text-xl font-semibold">
             {stateOfHealth}%
           </div>
-          <div className="mt-1 bg-secondary/50 rounded-full h-1.5 overflow-hidden">
+          <div className="mt-1 bg-slate-200/50 dark:bg-slate-700/50 rounded-full h-1.5 overflow-hidden">
             <div 
               className={cn(
                 "h-full", 
@@ -112,26 +112,26 @@ const AdvancedBatteryCard = ({
               style={{ width: `${stateOfHealth}%` }}
             ></div>
           </div>
-          <div className="text-xs text-muted-foreground mt-2">
+          <div className="text-xs text-slate-500 dark:text-slate-400 mt-2">
             Status: {getHealthStatus()}
           </div>
         </div>
         
-        <div className="glass-panel p-3 rounded-lg">
+        <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-200 dark:border-slate-700/50">
           <div className="flex items-center gap-2 mb-1">
             <Clock size={14} className="text-primary" />
-            <div className="text-xs text-muted-foreground">Lifecycle</div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">Lifecycle</div>
           </div>
           <div className="text-xl font-semibold">
             {cycleCount} cycles
           </div>
-          <div className="mt-1 bg-secondary/50 rounded-full h-1.5 overflow-hidden">
+          <div className="mt-1 bg-slate-200/50 dark:bg-slate-700/50 rounded-full h-1.5 overflow-hidden">
             <div 
               className="h-full bg-energy-blue" 
               style={{ width: `${100 - remainingLifePercent}%` }}
             ></div>
           </div>
-          <div className="text-xs text-muted-foreground mt-2">
+          <div className="text-xs text-slate-500 dark:text-slate-400 mt-2">
             Est. remaining: {remainingCycles} cycles
           </div>
         </div>
