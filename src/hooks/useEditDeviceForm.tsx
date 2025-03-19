@@ -1,16 +1,19 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { getDeviceById, updateDevice } from '@/services/deviceService';
+import { getDeviceById, updateDevice } from '@/services/devices';
 import { useBaseDeviceForm, DeviceFormState } from './useBaseDeviceForm';
 import { toast } from 'sonner';
+import { EnergyDevice } from '@/types/energy';
+import { validateDeviceData, formatValidationErrors, ValidationError } from '@/services/devices/mutations/deviceValidation';
 
 export const useEditDeviceForm = () => {
   const { deviceId } = useParams<{ deviceId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [isSaving, setIsSaving] = useState(false);
   
   const { 
     data: deviceData, 
@@ -22,13 +25,7 @@ export const useEditDeviceForm = () => {
     queryFn: () => deviceId ? getDeviceById(deviceId) : null,
     enabled: !!deviceId,
     retry: 1,
-    meta: {
-      onError: (error: any) => {
-        toast.error(`Failed to fetch device: ${error.message || 'Unknown error'}`);
-        // Navigate back to devices list if device cannot be found
-        setTimeout(() => navigate('/devices'), 2000);
-      }
-    }
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
   
   // Handle errors outside the query config
@@ -39,46 +36,47 @@ export const useEditDeviceForm = () => {
     }
   }, [fetchError, navigate]);
   
-  const validateDeviceData = (data: DeviceFormState): boolean => {
-    const errors: Record<string, string> = {};
+  const validateDeviceForm = useCallback((data: DeviceFormState): boolean => {
+    const errors: ValidationError[] = validateDeviceData(data as Partial<EnergyDevice>);
+    const formattedErrors = formatValidationErrors(errors);
     
-    if (!data.name.trim()) {
-      errors.name = 'Device name is required';
-    }
-    
-    if (!data.location.trim()) {
-      errors.location = 'Location is required';
-    }
-    
-    if (data.capacity <= 0) {
-      errors.capacity = 'Capacity must be greater than 0';
-    }
-    
-    setValidationErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
+    setValidationErrors(formattedErrors);
+    return Object.keys(formattedErrors).length === 0;
+  }, []);
   
-  const handleUpdateDevice = async (deviceData: DeviceFormState) => {
+  const handleUpdateDevice = useCallback(async (deviceData: DeviceFormState) => {
     if (!deviceId) {
       toast.error('Device ID is missing');
       return null;
     }
     
-    if (!validateDeviceData(deviceData)) {
+    if (!validateDeviceForm(deviceData)) {
       toast.error('Please fix the validation errors before saving');
       return null;
     }
     
-    const updatedDevice = await updateDevice(deviceId, deviceData);
+    setIsSaving(true);
     
-    if (updatedDevice) {
-      // Invalidate and refetch device data
-      queryClient.invalidateQueries({ queryKey: ['device', deviceId] });
-      queryClient.invalidateQueries({ queryKey: ['devices'] });
+    try {
+      const updatedDevice = await updateDevice(deviceId, deviceData);
+      
+      if (updatedDevice) {
+        toast.success('Device updated successfully');
+        // Invalidate and refetch device data
+        queryClient.invalidateQueries({ queryKey: ['device', deviceId] });
+        queryClient.invalidateQueries({ queryKey: ['devices'] });
+        return updatedDevice;
+      } else {
+        toast.error('Failed to update device');
+        return null;
+      }
+    } catch (error: any) {
+      toast.error(`Failed to update device: ${error?.message || 'Unknown error'}`);
+      return null;
+    } finally {
+      setIsSaving(false);
     }
-    
-    return updatedDevice;
-  };
+  }, [deviceId, queryClient, validateDeviceForm]);
 
   const baseFormHook = useBaseDeviceForm({
     initialDevice: deviceData,
@@ -95,6 +93,7 @@ export const useEditDeviceForm = () => {
         capacity: deviceData.capacity,
         firmware: deviceData.firmware || '',
         description: deviceData.description || '',
+        site_id: deviceData.site_id || '',
       });
     }
   }, [deviceData]);
@@ -102,9 +101,19 @@ export const useEditDeviceForm = () => {
   return {
     ...baseFormHook,
     isLoading,
+    isSaving,
     validationErrors,
-    validateDeviceData,
-    error: fetchError, // Add the error property
-    refetch, // Add the refetch property
+    validateDeviceForm,
+    error: fetchError,
+    refetch,
+    clearValidationError: (field: string) => {
+      setValidationErrors(prev => {
+        const updated = { ...prev };
+        delete updated[field];
+        return updated;
+      });
+    }
   };
 };
+
+export default useEditDeviceForm;

@@ -7,6 +7,8 @@ import BatteryControls from './controls/BatteryControls';
 import GridControls from './controls/GridControls';
 import LoadControls from './controls/LoadControls';
 import EVChargerControls from './controls/EVChargerControls';
+import { AlertTriangle, PowerOff } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface DeviceControlsProps {
   deviceId: string;
@@ -19,11 +21,21 @@ const DeviceControls: React.FC<DeviceControlsProps> = ({ deviceId, deviceType, d
   
   if (!isDeviceOnline) {
     return (
-      <div className="p-4 bg-amber-950/10 rounded-md text-center">
-        <p className="text-amber-500 font-medium">Device is offline</p>
-        <p className="text-sm text-muted-foreground mt-1">
-          Control features are disabled when the device is offline
-        </p>
+      <div className="space-y-4">
+        <Alert variant="warning">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Device Offline</AlertTitle>
+          <AlertDescription>
+            This device is currently offline. Control features are not available when the device is disconnected.
+          </AlertDescription>
+        </Alert>
+        
+        <div className="p-8 bg-muted/30 rounded-md text-center">
+          <PowerOff className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+          <p className="text-muted-foreground">
+            Control features are disabled when the device is offline
+          </p>
+        </div>
       </div>
     );
   }
@@ -43,7 +55,7 @@ const DeviceControls: React.FC<DeviceControlsProps> = ({ deviceId, deviceType, d
       return <EVChargerControls deviceId={deviceId} />;
     default:
       return (
-        <div className="p-4 bg-secondary/20 rounded-md text-center">
+        <div className="p-8 bg-secondary/20 rounded-md text-center">
           <p className="text-muted-foreground">No controls available for this device type</p>
         </div>
       );

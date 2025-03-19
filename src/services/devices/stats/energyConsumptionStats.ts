@@ -1,10 +1,22 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+
+export type EnergyConsumptionPeriod = 'day' | 'week' | 'month';
+
+export interface EnergyReading {
+  device_id: string;
+  timestamp: string;
+  energy: number;
+}
 
 /**
  * Get energy consumption statistics for devices
  */
-export const getEnergyConsumptionStats = async (siteId?: string, period: 'day' | 'week' | 'month' = 'day') => {
+export const getEnergyConsumptionStats = async (
+  siteId?: string, 
+  period: EnergyConsumptionPeriod = 'day'
+): Promise<EnergyReading[]> => {
   try {
     let query = supabase
       .from('energy_readings')
@@ -45,7 +57,11 @@ export const getEnergyConsumptionStats = async (siteId?: string, period: 'day' |
     
     const { data, error } = await query;
     
-    if (error) throw error;
+    if (error) {
+      console.error('Error fetching energy consumption stats:', error);
+      toast.error(`Failed to fetch energy data: ${error.message}`);
+      throw error;
+    }
     
     return data || [];
   } catch (error) {
@@ -57,12 +73,20 @@ export const getEnergyConsumptionStats = async (siteId?: string, period: 'day' |
 /**
  * Get total energy consumption for a period
  */
-export const getTotalEnergyConsumption = async (siteId?: string, period: 'day' | 'week' | 'month' = 'day') => {
-  const stats = await getEnergyConsumptionStats(siteId, period);
-  
-  const total = stats.reduce((sum, record) => {
-    return sum + (record.energy || 0);
-  }, 0);
-  
-  return total;
+export const getTotalEnergyConsumption = async (
+  siteId?: string, 
+  period: EnergyConsumptionPeriod = 'day'
+): Promise<number> => {
+  try {
+    const stats = await getEnergyConsumptionStats(siteId, period);
+    
+    const total = stats.reduce((sum, record) => {
+      return sum + (record.energy || 0);
+    }, 0);
+    
+    return total;
+  } catch (error) {
+    console.error('Error calculating total energy consumption:', error);
+    return 0;
+  }
 };

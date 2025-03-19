@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { createSite } from '@/services/sites/siteService';
 import SettingsPageTemplate from '@/components/settings/SettingsPageTemplate';
 import SiteForm from '@/components/sites/SiteForm';
-import { CornerDownLeft } from 'lucide-react';
+import { CornerDownLeft, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const AddSite = () => {
@@ -24,9 +24,9 @@ const AddSite = () => {
       } else {
         toast.error("Failed to create site");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating site:", error);
-      toast.error("An error occurred while creating the site");
+      toast.error(`An error occurred: ${error?.message || 'Unknown error'}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -48,7 +48,9 @@ const AddSite = () => {
         </Button>
       }
     >
-      <SiteForm onSubmit={handleSubmit} isSubmitting={isSubmitting} />
+      <div className="max-w-3xl mx-auto">
+        <SiteForm onSubmit={handleSubmit} isSubmitting={isSubmitting} />
+      </div>
     </SettingsPageTemplate>
   );
 };

@@ -1,8 +1,9 @@
+
 import React, { useState } from 'react';
 import DeviceForm from '../DeviceForm';
 import { DeviceType, DeviceStatus } from '@/types/energy';
 import { Button } from '@/components/ui/button';
-import { updateDevice } from '@/services/deviceService';
+import { updateDevice } from '@/services/devices'; // Fixed import path
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 

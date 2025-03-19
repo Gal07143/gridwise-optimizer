@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Loader2, MapPin, Plus } from 'lucide-react';
+import { Loader2, MapPin, Plus, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { getAllSites, deleteSite } from '@/services/sites/siteService';
@@ -19,12 +19,14 @@ import {
 } from '@/components/ui/alert-dialog';
 import SettingsPageTemplate from '@/components/settings/SettingsPageTemplate';
 import SiteCard from '@/components/sites/SiteCard';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const SiteSettings = () => {
   const navigate = useNavigate();
   const [siteToDelete, setSiteToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   
-  const { data: sites = [], isLoading, refetch } = useQuery({
+  const { data: sites = [], isLoading, error, refetch } = useQuery({
     queryKey: ['sites'],
     queryFn: () => getAllSites(),
   });
@@ -44,19 +46,45 @@ const SiteSettings = () => {
   const handleDeleteSite = async () => {
     if (!siteToDelete) return;
     
+    setIsDeleting(true);
     try {
       const success = await deleteSite(siteToDelete);
       if (success) {
         refetch();
         toast.success("Site deleted successfully");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error deleting site:", error);
-      toast.error("Failed to delete site");
+      toast.error(`Failed to delete site: ${error?.message || 'Unknown error'}`);
     } finally {
+      setIsDeleting(false);
       setSiteToDelete(null);
     }
   };
+
+  const siteToDeleteName = siteToDelete 
+    ? sites.find(site => site.id === siteToDelete)?.name || 'this site' 
+    : '';
+
+  if (error) {
+    return (
+      <SettingsPageTemplate
+        title="Site Management"
+        description="Manage your organization's sites and locations"
+      >
+        <Alert variant="destructive" className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Error loading sites. Please try refreshing the page.
+          </AlertDescription>
+        </Alert>
+        
+        <Button onClick={() => refetch()}>
+          Retry
+        </Button>
+      </SettingsPageTemplate>
+    );
+  }
 
   return (
     <SettingsPageTemplate
@@ -107,19 +135,27 @@ const SiteSettings = () => {
       <AlertDialog open={!!siteToDelete} onOpenChange={(open) => !open && setSiteToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Site</AlertDialogTitle>
+            <AlertDialogTitle>Delete {siteToDeleteName}</AlertDialogTitle>
             <AlertDialogDescription>
               This action cannot be undone. This will permanently delete the site
               and all associated data.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleDeleteSite}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isDeleting}
             >
-              Delete
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                'Delete'
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

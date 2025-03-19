@@ -19,9 +19,9 @@ export const deleteDevice = async (id: string): Promise<boolean> => {
     // First check if the device exists
     const { data: existingDevice, error: fetchError } = await supabase
       .from('devices')
-      .select('id')
+      .select('id, name')
       .eq('id', id)
-      .maybeSingle(); // Use maybeSingle instead of single to avoid errors
+      .maybeSingle();
       
     if (fetchError) {
       console.error(`Error checking if device ${id} exists:`, fetchError);
@@ -46,7 +46,7 @@ export const deleteDevice = async (id: string): Promise<boolean> => {
     }
     
     if (readingsCount && readingsCount > 0) {
-      console.log(`Device has ${readingsCount} readings that will be orphaned`);
+      console.log(`Device has ${readingsCount} readings that will be deleted or orphaned`);
       // Consider adding logic to handle related records
     }
     
@@ -60,7 +60,7 @@ export const deleteDevice = async (id: string): Promise<boolean> => {
       throw error;
     }
     
-    toast.success("Device deleted successfully");
+    toast.success(`Device "${existingDevice.name}" deleted successfully`);
     return true;
   } catch (error) {
     const pgError = error as PostgrestError;

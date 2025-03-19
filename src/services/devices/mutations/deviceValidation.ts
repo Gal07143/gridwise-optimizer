@@ -40,9 +40,9 @@ export const validateDeviceData = (deviceData: Partial<EnergyDevice>): Validatio
   // Capacity validation
   if (deviceData.capacity === undefined || deviceData.capacity === null) {
     errors.push({ field: 'capacity', message: 'Capacity is required' });
-  } else if (isNaN(deviceData.capacity) || deviceData.capacity <= 0) {
+  } else if (isNaN(Number(deviceData.capacity)) || Number(deviceData.capacity) <= 0) {
     errors.push({ field: 'capacity', message: 'Capacity must be greater than 0' });
-  } else if (deviceData.capacity > 1000000) {
+  } else if (Number(deviceData.capacity) > 1000000) {
     errors.push({ field: 'capacity', message: 'Capacity value is unrealistically high' });
   }
   
@@ -53,6 +53,11 @@ export const validateDeviceData = (deviceData: Partial<EnergyDevice>): Validatio
   
   if (deviceData.description && deviceData.description.length > 1000) {
     errors.push({ field: 'description', message: 'Description must be less than 1000 characters' });
+  }
+  
+  // Site ID validation (if applicable)
+  if (deviceData.site_id === '') {
+    errors.push({ field: 'site_id', message: 'Site is required' });
   }
   
   return errors;
@@ -81,4 +86,27 @@ export const formatValidationErrors = (errors: ValidationError[]): Record<string
     acc[error.field] = error.message;
     return acc;
   }, {} as Record<string, string>);
+};
+
+/**
+ * Validate a single field
+ * @param fieldName Field to validate
+ * @param value Value to validate
+ * @param deviceData Complete device data for context-dependent validation
+ * @returns Error message if invalid, empty string if valid
+ */
+export const validateDeviceField = (
+  fieldName: string, 
+  value: any, 
+  deviceData?: Partial<EnergyDevice>
+): string => {
+  const testData = { 
+    ...deviceData, 
+    [fieldName]: value 
+  };
+  
+  const errors = validateDeviceData(testData);
+  const fieldError = errors.find(err => err.field === fieldName);
+  
+  return fieldError ? fieldError.message : '';
 };

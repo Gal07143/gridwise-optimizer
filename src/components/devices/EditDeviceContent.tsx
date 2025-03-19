@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { AlertTriangle, ChevronLeft } from 'lucide-react';
-import { getDeviceById } from '@/services/devices';
+import { getDeviceById } from '@/services/devices'; // Fixed import
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -79,7 +79,7 @@ const EditDeviceContent = () => {
         <TabsContent value="details">
           <DeviceDetailTab 
             device={{
-              id: device.id, // Add the missing id property
+              id: device.id,
               name: device.name,
               location: device.location || '',
               type: device.type,
