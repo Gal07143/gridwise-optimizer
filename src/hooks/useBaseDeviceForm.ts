@@ -38,6 +38,8 @@ export const useBaseDeviceForm = ({
     description: initialDevice?.description || '',
   });
 
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     
@@ -47,30 +49,48 @@ export const useBaseDeviceForm = ({
     } else {
       setDevice(prev => ({ ...prev, [name]: value }));
     }
+    
+    // Clear validation error for this field
+    if (validationErrors[name]) {
+      setValidationErrors(prev => {
+        const updated = { ...prev };
+        delete updated[name];
+        return updated;
+      });
+    }
   };
 
-  const handleSelectChange = (field: string, value: string) => {
+  const handleSelectChange = (field: keyof DeviceFormState, value: string) => {
     setDevice(prev => ({ ...prev, [field]: value }));
+    
+    // Clear validation error for this field
+    if (validationErrors[field]) {
+      setValidationErrors(prev => {
+        const updated = { ...prev };
+        delete updated[field];
+        return updated;
+      });
+    }
   };
 
   const validateForm = (): boolean => {
+    const errors: Record<string, string> = {};
+    
     // Basic validation
     if (!device.name.trim()) {
-      toast.error("Device name is required");
-      return false;
+      errors.name = "Device name is required";
     }
     
     if (!device.location.trim()) {
-      toast.error("Location is required");
-      return false;
+      errors.location = "Location is required";
     }
     
     if (device.capacity <= 0) {
-      toast.error("Capacity must be greater than zero");
-      return false;
+      errors.capacity = "Capacity must be greater than zero";
     }
     
-    return true;
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const handleSubmit = async (e?: React.FormEvent) => {
@@ -100,9 +120,27 @@ export const useBaseDeviceForm = ({
       } else {
         toast.error('Failed to save device');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving device:', error);
-      toast.error('An error occurred while saving the device');
+      toast.error(`An error occurred: ${error.message || 'Unknown error'}`);
+      
+      // Parse error message for field-specific errors
+      if (error.message) {
+        const errorMessages = error.message.split(', ');
+        const fieldErrors: Record<string, string> = {};
+        
+        errorMessages.forEach((msg: string) => {
+          if (msg.includes('name')) fieldErrors.name = msg;
+          else if (msg.includes('location')) fieldErrors.location = msg;
+          else if (msg.includes('capacity')) fieldErrors.capacity = msg;
+          else if (msg.includes('type')) fieldErrors.type = msg;
+          else if (msg.includes('status')) fieldErrors.status = msg;
+        });
+        
+        if (Object.keys(fieldErrors).length > 0) {
+          setValidationErrors(fieldErrors);
+        }
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -111,10 +149,23 @@ export const useBaseDeviceForm = ({
   return {
     device,
     isSubmitting,
+    validationErrors,
     handleInputChange,
     handleSelectChange,
     handleSubmit,
     navigateBack: () => navigate('/devices'),
     setDevice,
+    resetForm: () => {
+      setDevice({
+        name: '',
+        location: '',
+        type: 'solar',
+        status: 'online',
+        capacity: 0,
+        firmware: '',
+        description: '',
+      });
+      setValidationErrors({});
+    },
   };
 };

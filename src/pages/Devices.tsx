@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
@@ -28,7 +29,7 @@ import GlassPanel from '@/components/ui/GlassPanel';
 import LiveChart from '@/components/dashboard/LiveChart';
 import { getAllDevices, getDeviceById, deleteDevice } from '@/services/deviceService';
 import { getDeviceReadings } from '@/services/devices/readingsService';
-import { getDeviceCount } from '@/services/devices/deviceStats';
+import { getDeviceCount } from '@/services/devices/queries/getDeviceCount';
 import { EnergyDevice, DeviceType, DeviceStatus } from '@/types/energy';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
