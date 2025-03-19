@@ -16,21 +16,29 @@ import { useToast } from '@/hooks/use-toast';
 // Define interfaces for components that are missing them
 interface StatusOverviewProps {
   animationDelay?: string;
+  className?: string;
 }
 
-interface LiveChartProps {
-  animationDelay?: string;
-}
+// We don't need to redefine these interfaces as they're now properly defined in their respective files
+// LiveChartProps, EnergyForecastCardProps, EnergyFlowChartProps are already defined in their components
 
+// Ensure PowerQualityCard has animationDelay prop
 interface PowerQualityCardProps {
+  frequency?: number;
+  voltage?: number;
+  powerFactor?: number;
+  thd?: number;
+  className?: string;
   animationDelay?: string;
 }
 
-interface EnergyFlowChartProps {
-  animationDelay?: string;
-}
-
+// Ensure AdvancedBatteryCard has animationDelay prop
 interface AdvancedBatteryCardProps {
+  stateOfCharge?: number;
+  stateOfHealth?: number;
+  temperature?: number;
+  cycleCount?: number;
+  className?: string;
   animationDelay?: string;
 }
 

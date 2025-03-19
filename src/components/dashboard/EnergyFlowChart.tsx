@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
@@ -16,6 +15,11 @@ interface EnergyConnection {
   to: string;
   value: number; // in kW
   active: boolean;
+}
+
+interface EnergyFlowChartProps {
+  className?: string;
+  animationDelay?: string;
 }
 
 const INITIAL_NODES: EnergyNode[] = [
@@ -36,7 +40,7 @@ const INITIAL_CONNECTIONS: EnergyConnection[] = [
   { from: 'battery', to: 'ev', value: 48.3, active: true },
 ];
 
-const EnergyFlowChart = () => {
+const EnergyFlowChart = ({ className, animationDelay }: EnergyFlowChartProps = {}) => {
   const [nodes, setNodes] = useState(INITIAL_NODES);
   const [connections, setConnections] = useState(INITIAL_CONNECTIONS);
   
@@ -62,7 +66,7 @@ const EnergyFlowChart = () => {
   }, []);
   
   return (
-    <div className="w-full h-full min-h-[300px]">
+    <div className={cn("w-full h-full min-h-[300px]", className)}>
       <div className="relative w-full h-[260px] overflow-hidden rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50">
         {/* Energy Sources */}
         <div className="absolute left-6 top-0 w-[120px] h-full flex flex-col justify-around">

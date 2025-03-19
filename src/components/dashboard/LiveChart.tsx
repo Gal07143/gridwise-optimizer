@@ -19,7 +19,7 @@ interface DataPoint {
 }
 
 interface LiveChartProps {
-  data: DataPoint[];
+  data?: DataPoint[];
   title?: string;
   color?: string;
   type?: 'line' | 'area';
@@ -32,10 +32,25 @@ interface LiveChartProps {
   gradientTo?: string;
   animated?: boolean;
   className?: string;
+  animationDelay?: string;
 }
 
 const LiveChart = ({
-  data,
+  data = [
+    { time: '00:00', value: 45 },
+    { time: '01:00', value: 42 },
+    { time: '02:00', value: 40 },
+    { time: '03:00', value: 38 },
+    { time: '04:00', value: 35 },
+    { time: '05:00', value: 37 },
+    { time: '06:00', value: 42 },
+    { time: '07:00', value: 48 },
+    { time: '08:00', value: 55 },
+    { time: '09:00', value: 60 },
+    { time: '10:00', value: 64 },
+    { time: '11:00', value: 68 },
+    { time: '12:00', value: 70 },
+  ],
   title,
   color = 'var(--color-primary)',
   type = 'line',
@@ -47,7 +62,8 @@ const LiveChart = ({
   gradientFrom,
   gradientTo,
   animated = true,
-  className
+  className,
+  animationDelay
 }: LiveChartProps) => {
   const [chartData, setChartData] = useState([...data]);
   

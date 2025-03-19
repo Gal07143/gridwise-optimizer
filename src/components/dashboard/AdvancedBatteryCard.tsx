@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Battery, Clock, Thermometer, Zap } from 'lucide-react';
 import DashboardCard from './DashboardCard';
@@ -10,6 +9,7 @@ interface AdvancedBatteryCardProps {
   temperature?: number;
   cycleCount?: number;
   className?: string;
+  animationDelay?: string;
 }
 
 const AdvancedBatteryCard = ({
@@ -17,7 +17,8 @@ const AdvancedBatteryCard = ({
   stateOfHealth = 94,
   temperature = 25.3,
   cycleCount = 342,
-  className
+  className,
+  animationDelay
 }: AdvancedBatteryCardProps) => {
   // Calculate remaining cycles (assuming 3000 cycle lifetime)
   const totalCycles = 3000;
@@ -52,6 +53,7 @@ const AdvancedBatteryCard = ({
       title="Advanced Battery Management"
       icon={<Battery size={18} />}
       className={className}
+      style={animationDelay ? { animationDelay } : undefined}
     >
       <div className="grid grid-cols-2 gap-3 mt-2">
         <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-200 dark:border-slate-700/50">

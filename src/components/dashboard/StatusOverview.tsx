@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Shield, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -8,6 +7,11 @@ interface SystemStatus {
   status: 'operational' | 'maintenance' | 'issue' | 'critical';
   lastUpdated: string;
   details?: string;
+}
+
+interface StatusOverviewProps {
+  className?: string;
+  animationDelay?: string;
 }
 
 // Mock system status data
@@ -50,7 +54,7 @@ const initialStatuses: SystemStatus[] = [
   },
 ];
 
-const StatusOverview = () => {
+const StatusOverview = ({ className, animationDelay }: StatusOverviewProps = {}) => {
   const [statuses, setStatuses] = useState(initialStatuses);
   
   // Simulate occasional status changes
@@ -106,7 +110,7 @@ const StatusOverview = () => {
   };
   
   return (
-    <div className="w-full">
+    <div className={cn("w-full", className)} style={animationDelay ? { animationDelay } : undefined}>
       <div className="flex items-center mb-4">
         <Shield size={18} className="mr-2 text-primary" />
         <h3 className="font-medium">System Status</h3>

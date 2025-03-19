@@ -10,6 +10,7 @@ interface PowerQualityCardProps {
   powerFactor?: number;
   thd?: number;
   className?: string;
+  animationDelay?: string;
 }
 
 const PowerQualityCard = ({
@@ -17,7 +18,8 @@ const PowerQualityCard = ({
   voltage = 239.8,
   powerFactor = 0.97,
   thd = 2.7,
-  className
+  className,
+  animationDelay
 }: PowerQualityCardProps) => {
   const getFrequencyStatus = () => {
     if (frequency >= 59.95 && frequency <= 60.05) return 'normal';
@@ -58,6 +60,7 @@ const PowerQualityCard = ({
       title="Power Quality Metrics"
       icon={<Activity size={18} />}
       className={className}
+      style={animationDelay ? { animationDelay } : undefined}
     >
       <div className="grid grid-cols-2 gap-3 mt-2">
         <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-200 dark:border-slate-700/50">
