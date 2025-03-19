@@ -58,7 +58,7 @@ export const useEditDeviceForm = () => {
     setIsSaving(true);
     
     try {
-      const updatedDevice = await updateDevice(deviceId, deviceData);
+      const updatedDevice = await updateDevice(deviceId!, deviceData);
       
       if (updatedDevice) {
         toast.success('Device updated successfully');

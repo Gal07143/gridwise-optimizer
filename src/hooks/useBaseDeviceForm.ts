@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -12,6 +11,7 @@ export interface DeviceFormState {
   capacity: number;
   firmware: string;
   description: string;
+  site_id?: string; // Added site_id as optional property
 }
 
 export interface UseBaseDeviceFormProps {
@@ -36,6 +36,7 @@ export const useBaseDeviceForm = ({
     capacity: initialDevice?.capacity || 0,
     firmware: initialDevice?.firmware || '',
     description: initialDevice?.description || '',
+    site_id: initialDevice?.site_id || '',
   });
 
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
@@ -164,6 +165,7 @@ export const useBaseDeviceForm = ({
         capacity: 0,
         firmware: '',
         description: '',
+        site_id: '',
       });
       setValidationErrors({});
     },

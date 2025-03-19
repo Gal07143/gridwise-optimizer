@@ -22,7 +22,7 @@ const DeviceControls: React.FC<DeviceControlsProps> = ({ deviceId, deviceType, d
   if (!isDeviceOnline) {
     return (
       <div className="space-y-4">
-        <Alert variant="warning">
+        <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Device Offline</AlertTitle>
           <AlertDescription>
