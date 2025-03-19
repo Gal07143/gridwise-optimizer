@@ -1,25 +1,27 @@
 
 // Export all device-related functions from this index file
-// Note: We're carefully managing exports to avoid duplicates
 
-// Export everything from deviceQueries except getDeviceCount since it's duplicated
+// Export from queries module
 export { 
   getAllDevices,
   getDeviceById,
   getDeviceStatistics
-} from './deviceQueries';
+} from './queries';
 
-// Re-export everything from deviceMutations
+// We don't export getDeviceCount from queries to avoid name conflicts with stats
+
+// Export from mutations module
 export { 
   updateDevice,
   createDevice,
   deleteDevice,
   batchUpdateDevices
-} from './deviceMutations';
+} from './mutations';
 
-// Export everything from deviceStats including its getDeviceCount
-export * from './deviceStats';
+// Export from stats module (including its getDeviceCount)
+export * from './stats';
+
+// Export remaining services
 export * from './readingsService';
 export * from './maintenanceService';
 export * from './seedService';
-

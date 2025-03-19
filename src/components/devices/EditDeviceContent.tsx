@@ -2,18 +2,17 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { AlertTriangle, ChevronLeft } from 'lucide-react';
 import { getDeviceById } from '@/services/devices';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertTriangle, BarChart, Settings, History, Wrench, ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import DeviceForm from './DeviceForm';
 import DeviceControls from './DeviceControls';
 import DeviceLogger from './DeviceLogger';
 import DevicePageHeader from './DevicePageHeader';
 import DeviceMaintenance from './DeviceMaintenance';
+import DeviceDetailTab from './tabs/DeviceDetailTab';
 
 const EditDeviceContent = () => {
   const { deviceId } = useParams<{ deviceId: string }>();
@@ -78,7 +77,7 @@ const EditDeviceContent = () => {
         </TabsList>
         
         <TabsContent value="details">
-          <DeviceForm 
+          <DeviceDetailTab 
             device={{
               name: device.name,
               location: device.location || '',
@@ -88,8 +87,6 @@ const EditDeviceContent = () => {
               firmware: device.firmware || '',
               description: device.description || '',
             }}
-            handleInputChange={() => {}}
-            handleSelectChange={() => {}}
           />
         </TabsContent>
         
