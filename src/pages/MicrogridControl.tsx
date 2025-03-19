@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -24,7 +23,7 @@ import {
 } from 'lucide-react';
 
 import { useSite } from '@/contexts/SiteContext';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -35,7 +34,6 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { toast } from 'sonner';
 
 import WindControls from '@/components/devices/controls/WindControls';
 import { 
@@ -78,7 +76,6 @@ interface ControlSettings {
 
 const MicrogridControl = () => {
   const { currentSite } = useSite();
-  const { toast } = useToast();
   const navigate = useNavigate();
   
   // State for microgrid status and controls
@@ -150,13 +147,12 @@ const MicrogridControl = () => {
   // Check if site is selected
   useEffect(() => {
     if (!currentSite) {
-      toast({
-        title: "No site selected",
-        description: "Please select a site to control the microgrid",
+      toast.error("No site selected", {
+        description: "Please select a site to control the microgrid"
       });
       navigate("/settings/sites");
     }
-  }, [currentSite, navigate, toast]);
+  }, [currentSite, navigate]);
   
   // Simulate fetching real-time data
   useEffect(() => {
@@ -957,3 +953,4 @@ const MicrogridControl = () => {
 };
 
 export default MicrogridControl;
+
