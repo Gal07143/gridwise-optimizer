@@ -46,6 +46,7 @@ import ExternalServices from "./pages/settings/ExternalServices";
 import NotificationServices from "./pages/settings/NotificationServices";
 import AddSite from "./pages/settings/AddSite";
 import EditSite from "./pages/settings/EditSite";
+import SiteSettings from "./pages/settings/SiteSettings";
 import OperationalThresholds from "./pages/settings/OperationalThresholds";
 import OptimizationAlgorithms from "./pages/settings/OptimizationAlgorithms";
 import ApiKeyManagement from "./pages/settings/ApiKeyManagement";
@@ -134,6 +135,7 @@ const App = () => (
                 <Route path="/microgrid" element={<ProtectedRoute><MicrogridControl /></ProtectedRoute>} />
                 
                 {/* Site Management */}
+                <Route path="/settings/sites" element={<ProtectedRoute><SiteSettings /></ProtectedRoute>} />
                 <Route path="/settings/sites/add" element={<ProtectedRoute><AddSite /></ProtectedRoute>} />
                 <Route path="/settings/sites/edit/:id" element={<ProtectedRoute><EditSite /></ProtectedRoute>} />
                 
