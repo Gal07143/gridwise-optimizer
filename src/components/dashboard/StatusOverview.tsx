@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { Shield, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
+import { Shield, AlertTriangle, CheckCircle, Clock, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface SystemStatus {
@@ -56,6 +57,7 @@ const initialStatuses: SystemStatus[] = [
 
 const StatusOverview = ({ className, animationDelay }: StatusOverviewProps = {}) => {
   const [statuses, setStatuses] = useState(initialStatuses);
+  const [refreshing, setRefreshing] = useState(false);
   
   // Simulate occasional status changes
   useEffect(() => {
@@ -109,16 +111,38 @@ const StatusOverview = ({ className, animationDelay }: StatusOverviewProps = {})
     }
   };
   
+  const handleRefresh = () => {
+    setRefreshing(true);
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1000);
+  };
+  
   return (
-    <div className={cn("w-full", className)} style={animationDelay ? { animationDelay } : undefined}>
-      <div className="flex items-center mb-4">
-        <Shield size={18} className="mr-2 text-primary" />
-        <h3 className="font-medium">System Status</h3>
+    <div 
+      className={cn("w-full", className)} 
+      style={animationDelay ? { animationDelay } : undefined}
+    >
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center">
+          <Shield size={18} className="mr-2 text-primary" />
+          <h3 className="font-medium">System Status</h3>
+        </div>
+        <button 
+          onClick={handleRefresh}
+          className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+          disabled={refreshing}
+        >
+          <RefreshCw size={16} className={`text-slate-500 ${refreshing ? 'animate-spin' : ''}`} />
+        </button>
       </div>
       
       <div className="space-y-3 staggered-fade-in">
         {statuses.map((item, index) => (
-          <div key={index} className="glass-panel p-3 rounded-lg flex items-center justify-between group transition-all hover:bg-white/15">
+          <div 
+            key={index} 
+            className="bg-gradient-to-br from-white/80 to-slate-50/80 dark:from-slate-800/50 dark:to-slate-900/50 p-3 rounded-lg border border-slate-200/50 dark:border-slate-700/30 backdrop-blur-sm flex items-center justify-between transition-all hover:shadow-md group"
+          >
             <div className="flex-1">
               <div className="text-sm font-medium">{item.category}</div>
               <div className="text-xs text-muted-foreground mt-1">{item.details}</div>
