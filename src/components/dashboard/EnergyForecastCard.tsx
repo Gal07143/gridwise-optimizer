@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { CloudSun, LineChart, Zap } from 'lucide-react';
 import DashboardCard from './DashboardCard';
@@ -24,6 +25,7 @@ interface EnergyForecastCardProps {
 const EnergyForecastCard = ({ className, animationDelay }: EnergyForecastCardProps) => {
   const { currentSite: selectedSite } = useSite();
   const [hasForecastData, setHasForecastData] = useState(false);
+  const [localForecasts, setLocalForecasts] = useState<EnergyForecast[]>([]);
 
   // Fetch forecasts for the selected site
   const { 
@@ -58,26 +60,51 @@ const EnergyForecastCard = ({ className, animationDelay }: EnergyForecastCardPro
   // Generate sample forecasts if needed
   useEffect(() => {
     const checkAndGenerateSampleData = async () => {
-      if (!selectedSite?.id || isLoading || hasForecastData) return;
+      if (!selectedSite?.id || isLoading) return;
       
+      // If we have data from the database, use that
+      if (Array.isArray(forecasts) && forecasts.length > 0) {
+        setLocalForecasts(forecasts);
+        return;
+      }
+      
+      // If we don't have data, generate sample data
       if (Array.isArray(forecasts) && forecasts.length === 0) {
         toast.info('Generating sample forecast data for demonstration');
         const sampleForecasts = generateSampleForecasts(selectedSite.id);
+        
+        // First try to insert into database
         const success = await insertEnergyForecasts(sampleForecasts);
+        
         if (success) {
+          // If successful database insertion, refetch to get the data with IDs
           refetch();
+        } else {
+          // If database insertion failed, use the sample data locally
+          const nowTimestamp = new Date().toISOString();
+          const localData = sampleForecasts.map((forecast, index) => ({
+            ...forecast,
+            id: `local-${index}`,
+            created_at: nowTimestamp,
+            timestamp: nowTimestamp
+          })) as EnergyForecast[];
+          
+          setLocalForecasts(localData);
         }
       }
     };
 
     checkAndGenerateSampleData();
-  }, [selectedSite?.id, forecasts, isLoading, hasForecastData, refetch]);
+  }, [selectedSite?.id, forecasts, isLoading, refetch]);
+
+  // Get the effective forecasts (either from DB or local)
+  const effectiveForecasts = (forecasts && forecasts.length > 0) ? forecasts : localForecasts;
 
   // Process forecast data for the chart
   const processedData = React.useMemo(() => {
-    if (!forecasts) return [];
+    if (!effectiveForecasts || effectiveForecasts.length === 0) return [];
     
-    return forecasts.map(forecast => ({
+    return effectiveForecasts.map(forecast => ({
       hour: format(new Date(forecast.forecast_time), 'HH:00'),
       generation: forecast.generation_forecast,
       consumption: forecast.consumption_forecast,
@@ -86,7 +113,7 @@ const EnergyForecastCard = ({ className, animationDelay }: EnergyForecastCardPro
       temp: forecast.temperature,
       windSpeed: forecast.wind_speed
     }));
-  }, [forecasts]);
+  }, [effectiveForecasts]);
   
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -114,7 +141,7 @@ const EnergyForecastCard = ({ className, animationDelay }: EnergyForecastCardPro
   };
 
   // Handle loading and error states
-  if (isLoading || isLoadingMetrics) {
+  if (isLoading && localForecasts.length === 0) {
     return (
       <DashboardCard 
         title="24-Hour Energy Forecast" 
@@ -129,7 +156,7 @@ const EnergyForecastCard = ({ className, animationDelay }: EnergyForecastCardPro
     );
   }
 
-  if (error) {
+  if (error && localForecasts.length === 0) {
     return (
       <DashboardCard 
         title="24-Hour Energy Forecast" 
@@ -146,12 +173,13 @@ const EnergyForecastCard = ({ className, animationDelay }: EnergyForecastCardPro
 
   // Calculate metrics or use the ones from the query
   const forecastMetrics = metrics || {
-    totalGeneration: 0,
-    totalConsumption: 0,
-    netEnergy: 0,
-    peakGeneration: 0,
-    peakConsumption: 0,
-    confidence: 0
+    totalGeneration: localForecasts.reduce((sum, item) => sum + item.generation_forecast, 0),
+    totalConsumption: localForecasts.reduce((sum, item) => sum + item.consumption_forecast, 0),
+    netEnergy: localForecasts.reduce((sum, item) => sum + item.generation_forecast - item.consumption_forecast, 0),
+    peakGeneration: Math.max(...localForecasts.map(item => item.generation_forecast || 0), 0),
+    peakConsumption: Math.max(...localForecasts.map(item => item.consumption_forecast || 0), 0),
+    confidence: localForecasts.reduce((sum, item) => sum + (item.confidence || 0), 0) / 
+                (localForecasts.length || 1)
   };
 
   return (
