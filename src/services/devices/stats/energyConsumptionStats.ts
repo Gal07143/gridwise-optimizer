@@ -7,16 +7,16 @@ import { supabase } from '@/integrations/supabase/client';
 export const getEnergyConsumptionStats = async (siteId?: string, period: 'day' | 'week' | 'month' = 'day') => {
   try {
     let query = supabase
-      .from('device_readings')
-      .select('device_id, timestamp, energy_consumed')
+      .from('energy_readings')
+      .select('device_id, timestamp, energy')
       .order('timestamp', { ascending: true });
     
     // Filter by site if provided
     if (siteId) {
       // Join with devices table to filter by site
       query = supabase
-        .from('device_readings')
-        .select('device_id, timestamp, energy_consumed, devices!inner(site_id)')
+        .from('energy_readings')
+        .select('device_id, timestamp, energy, devices!inner(site_id)')
         .eq('devices.site_id', siteId)
         .order('timestamp', { ascending: true });
     }
@@ -61,7 +61,7 @@ export const getTotalEnergyConsumption = async (siteId?: string, period: 'day' |
   const stats = await getEnergyConsumptionStats(siteId, period);
   
   const total = stats.reduce((sum, record) => {
-    return sum + (record.energy_consumed || 0);
+    return sum + (record.energy || 0);
   }, 0);
   
   return total;

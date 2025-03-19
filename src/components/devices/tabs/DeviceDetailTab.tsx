@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import DeviceForm from '../DeviceForm';
 import { DeviceType, DeviceStatus } from '@/types/energy';
@@ -45,7 +44,6 @@ const DeviceDetailTab = ({ device }: DeviceDetailTabProps) => {
       setEditableDevice(prev => ({ ...prev, [name]: value }));
     }
     
-    // Clear validation error for this field
     if (validationErrors[name]) {
       setValidationErrors(prev => {
         const updated = { ...prev };
@@ -58,7 +56,6 @@ const DeviceDetailTab = ({ device }: DeviceDetailTabProps) => {
   const handleSelectChange = (field: string, value: string) => {
     setEditableDevice(prev => ({ ...prev, [field]: value }));
     
-    // Clear validation error for this field
     if (validationErrors[field]) {
       setValidationErrors(prev => {
         const updated = { ...prev };
@@ -71,7 +68,6 @@ const DeviceDetailTab = ({ device }: DeviceDetailTabProps) => {
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
     
-    // Basic validation
     if (!editableDevice.name.trim()) {
       errors.name = "Device name is required";
     }
@@ -102,7 +98,6 @@ const DeviceDetailTab = ({ device }: DeviceDetailTabProps) => {
         toast.success('Device updated successfully');
         setIsEditing(false);
         
-        // Invalidate and refetch queries
         queryClient.invalidateQueries({ queryKey: ['device', device.id] });
         queryClient.invalidateQueries({ queryKey: ['devices'] });
       } else {

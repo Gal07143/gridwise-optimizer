@@ -79,6 +79,7 @@ const EditDeviceContent = () => {
         <TabsContent value="details">
           <DeviceDetailTab 
             device={{
+              id: device.id, // Add the missing id property
               name: device.name,
               location: device.location || '',
               type: device.type,

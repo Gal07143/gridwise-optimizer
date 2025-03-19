@@ -8,8 +8,6 @@ export {
   getDeviceStatistics
 } from './queries';
 
-// We don't export getDeviceCount from queries to avoid name conflicts with stats
-
 // Export from mutations module
 export { 
   updateDevice,
@@ -18,8 +16,14 @@ export {
   batchUpdateDevices
 } from './mutations';
 
-// Export from stats module (including its getDeviceCount)
-export * from './stats';
+// Export from stats module
+export {
+  getDeviceCount,
+  getDeviceTypeStats,
+  getDeviceStatusStats,
+  getEnergyConsumptionStats,
+  getTotalEnergyConsumption
+} from './stats';
 
 // Export remaining services
 export * from './readingsService';
