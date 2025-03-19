@@ -26,6 +26,7 @@ const EnergyForecastCard = ({ className, animationDelay }: EnergyForecastCardPro
   const { currentSite: selectedSite } = useSite();
   const [hasForecastData, setHasForecastData] = useState(false);
   const [localForecasts, setLocalForecasts] = useState<EnergyForecast[]>([]);
+  const [isUsingLocalData, setIsUsingLocalData] = useState(false);
 
   // Fetch forecasts for the selected site
   const { 
@@ -65,6 +66,7 @@ const EnergyForecastCard = ({ className, animationDelay }: EnergyForecastCardPro
       // If we have data from the database, use that
       if (Array.isArray(forecasts) && forecasts.length > 0) {
         setLocalForecasts(forecasts);
+        setIsUsingLocalData(false);
         return;
       }
       
@@ -74,13 +76,13 @@ const EnergyForecastCard = ({ className, animationDelay }: EnergyForecastCardPro
         const sampleForecasts = generateSampleForecasts(selectedSite.id);
         
         // First try to insert into database
-        const success = await insertEnergyForecasts(sampleForecasts);
+        const { success, localMode } = await insertEnergyForecasts(sampleForecasts);
         
-        if (success) {
+        if (success && !localMode) {
           // If successful database insertion, refetch to get the data with IDs
           refetch();
         } else {
-          // If database insertion failed, use the sample data locally
+          // If database insertion failed or we're in local mode, use the sample data locally
           const nowTimestamp = new Date().toISOString();
           const localData = sampleForecasts.map((forecast, index) => ({
             ...forecast,
@@ -90,6 +92,7 @@ const EnergyForecastCard = ({ className, animationDelay }: EnergyForecastCardPro
           })) as EnergyForecast[];
           
           setLocalForecasts(localData);
+          setIsUsingLocalData(true);
         }
       }
     };
@@ -173,13 +176,13 @@ const EnergyForecastCard = ({ className, animationDelay }: EnergyForecastCardPro
 
   // Calculate metrics or use the ones from the query
   const forecastMetrics = metrics || {
-    totalGeneration: localForecasts.reduce((sum, item) => sum + item.generation_forecast, 0),
-    totalConsumption: localForecasts.reduce((sum, item) => sum + item.consumption_forecast, 0),
-    netEnergy: localForecasts.reduce((sum, item) => sum + item.generation_forecast - item.consumption_forecast, 0),
-    peakGeneration: Math.max(...localForecasts.map(item => item.generation_forecast || 0), 0),
-    peakConsumption: Math.max(...localForecasts.map(item => item.consumption_forecast || 0), 0),
-    confidence: localForecasts.reduce((sum, item) => sum + (item.confidence || 0), 0) / 
-                (localForecasts.length || 1)
+    totalGeneration: effectiveForecasts.reduce((sum, item) => sum + item.generation_forecast, 0),
+    totalConsumption: effectiveForecasts.reduce((sum, item) => sum + item.consumption_forecast, 0),
+    netEnergy: effectiveForecasts.reduce((sum, item) => sum + item.generation_forecast - item.consumption_forecast, 0),
+    peakGeneration: Math.max(...effectiveForecasts.map(item => item.generation_forecast || 0), 0),
+    peakConsumption: Math.max(...effectiveForecasts.map(item => item.consumption_forecast || 0), 0),
+    confidence: effectiveForecasts.reduce((sum, item) => sum + (item.confidence || 0), 0) / 
+                (effectiveForecasts.length || 1)
   };
 
   return (
@@ -189,6 +192,12 @@ const EnergyForecastCard = ({ className, animationDelay }: EnergyForecastCardPro
       className={className}
       style={animationDelay ? { animationDelay } : undefined}
     >
+      {isUsingLocalData && (
+        <div className="mb-2 text-xs rounded bg-blue-50 dark:bg-blue-950 p-2 text-blue-600 dark:text-blue-300">
+          Using demo forecast data. No database write permissions.
+        </div>
+      )}
+      
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 mt-2 mb-4">
         <div className="glass-panel p-2 rounded-lg">
           <div className="text-xs text-muted-foreground">Forecast Production</div>

@@ -16,14 +16,16 @@ export const getSiteForecasts = async (siteId: string, hours = 24): Promise<Ener
       .order('forecast_time', { ascending: true })
       .limit(hours);
     
-    if (error) throw error;
+    if (error) {
+      console.error(`Error fetching forecasts for site ${siteId}:`, error);
+      return [];
+    }
     
     // Cast data to the correct type
     return (data || []) as EnergyForecast[];
     
   } catch (error) {
     console.error(`Error fetching forecasts for site ${siteId}:`, error);
-    toast.error("Failed to fetch energy forecasts");
     return [];
   }
 };
@@ -71,7 +73,7 @@ export const getSiteForecastMetrics = async (siteId: string) => {
  * Insert energy forecasts for a site
  * Note: Only users with proper permissions can insert forecasts
  */
-export const insertEnergyForecasts = async (forecasts: Omit<EnergyForecast, 'id' | 'created_at' | 'timestamp'>[]): Promise<boolean> => {
+export const insertEnergyForecasts = async (forecasts: Omit<EnergyForecast, 'id' | 'created_at' | 'timestamp'>[]): Promise<{ success: boolean; localMode: boolean }> => {
   try {
     // Add timestamp field to each forecast
     const forecastsWithTimestamp = forecasts.map(forecast => ({
@@ -85,19 +87,19 @@ export const insertEnergyForecasts = async (forecasts: Omit<EnergyForecast, 'id'
     
     if (error) {
       // If there's a row-level security policy error, we'll handle it gracefully
-      if (error.code === '42501') {
+      if (error.code === '42501' || error.message.includes('row-level security')) {
         console.warn('Permission denied: Unable to insert energy forecasts due to security policy');
-        toast.warning("Using local forecast data (no database write permission)");
-        return true; // Return true to allow the app to continue with mock data
+        toast.info("Using local forecast data (demo mode)");
+        return { success: true, localMode: true }; // Return true with localMode flag
       }
       throw error;
     }
     
-    return true;
+    return { success: true, localMode: false };
   } catch (error) {
     console.error('Error inserting energy forecasts:', error);
     toast.error("Failed to insert energy forecasts");
-    return false;
+    return { success: false, localMode: true };
   }
 };
 
