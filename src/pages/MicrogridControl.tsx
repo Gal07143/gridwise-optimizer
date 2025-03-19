@@ -1,10 +1,12 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Grid, Power } from 'lucide-react';
+import { Grid, Power, Bolt, Chip, LineChart } from 'lucide-react';
 import { useSite } from '@/contexts/SiteContext';
 import { toast } from 'sonner';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AppLayout from '@/components/layout/AppLayout';
 
 // Import the refactored components
@@ -15,6 +17,8 @@ import MicrogridControls from '@/components/microgrid/MicrogridControls';
 import AdvancedControlSettings from '@/components/microgrid/AdvancedControlSettings';
 import DeviceControlsPanel from '@/components/microgrid/DeviceControlsPanel';
 import CommandHistory from '@/components/microgrid/CommandHistory';
+import MicrogridSystemInsights from '@/components/microgrid/MicrogridSystemInsights';
+import EnergyFlowVisualization from '@/components/microgrid/EnergyFlowVisualization';
 
 // Import the shared types
 import { 
@@ -82,6 +86,9 @@ const MicrogridControl = () => {
       acknowledged: false
     }
   ]);
+
+  // State for active tab
+  const [activeTab, setActiveTab] = useState('overview');
   
   // Check if site is selected
   useEffect(() => {
@@ -97,18 +104,71 @@ const MicrogridControl = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       // In a real app, we'd fetch this data from the database or API
-      setMicrogridState(prev => ({
-        ...prev,
-        solarProduction: Math.max(0, prev.solarProduction + (Math.random() * 0.6 - 0.3)),
-        windProduction: Math.max(0, prev.windProduction + (Math.random() * 0.4 - 0.2)),
-        batteryCharge: Math.min(100, Math.max(0, prev.batteryCharge + (Math.random() * 0.6 - 0.3))),
-        loadConsumption: Math.max(0, prev.loadConsumption + (Math.random() * 0.5 - 0.25)),
-        gridExport: prev.gridConnection ? Math.max(0, (prev.solarProduction + prev.windProduction) - prev.loadConsumption) : 0,
-        gridImport: prev.gridConnection ? Math.max(0, prev.loadConsumption - (prev.solarProduction + prev.windProduction)) : 0,
-        frequency: prev.gridConnection ? 50 + (Math.random() * 0.1 - 0.05) : 49.8 + (Math.random() * 0.4 - 0.2),
-        voltage: 230 + (Math.random() * 4 - 2),
-        lastUpdated: new Date().toISOString()
-      }));
+      setMicrogridState(prev => {
+        const timeOfDay = new Date().getHours();
+        const isDaytime = timeOfDay >= 7 && timeOfDay <= 19;
+        const isPeakSolar = timeOfDay >= 10 && timeOfDay <= 15;
+        
+        // Adjust solar production based on time of day
+        let newSolarProduction = isDaytime 
+          ? isPeakSolar 
+            ? prev.solarProduction + (Math.random() * 0.6 - 0.2) 
+            : Math.max(0, prev.solarProduction + (Math.random() * 0.4 - 0.3))
+          : Math.max(0, prev.solarProduction - 0.5);
+        
+        if (!isDaytime && newSolarProduction < 1) newSolarProduction = 0;
+        
+        // Wind fluctuates less predictably
+        const newWindProduction = Math.max(0, prev.windProduction + (Math.random() * 0.8 - 0.4));
+        
+        // Load consumption variations
+        const newLoadConsumption = Math.max(0, prev.loadConsumption + (Math.random() * 0.7 - 0.35));
+        
+        // Total generation
+        const totalGeneration = newSolarProduction + newWindProduction;
+        
+        // Battery charge changes based on net energy
+        const netEnergy = totalGeneration - newLoadConsumption;
+        const batteryChargeChange = prev.batteryDischargeEnabled 
+          ? netEnergy > 0 ? Math.min(0.2, netEnergy * 0.1) : -Math.min(0.3, Math.abs(netEnergy) * 0.15)
+          : netEnergy > 0 ? Math.min(0.2, netEnergy * 0.1) : 0;
+        
+        const newBatteryCharge = Math.min(100, Math.max(0, prev.batteryCharge + batteryChargeChange));
+        
+        // Grid import/export
+        let newGridExport = 0;
+        let newGridImport = 0;
+        
+        if (prev.gridConnection) {
+          if (netEnergy > 0) {
+            newGridExport = netEnergy;
+            newGridImport = 0;
+          } else {
+            newGridExport = 0;
+            newGridImport = Math.abs(netEnergy);
+          }
+        }
+        
+        // Frequency and voltage variations
+        const newFrequency = prev.gridConnection 
+          ? 50 + (Math.random() * 0.1 - 0.05) 
+          : 49.8 + (Math.random() * 0.4 - 0.2);
+        
+        const newVoltage = 230 + (Math.random() * 4 - 2);
+        
+        return {
+          ...prev,
+          solarProduction: Number(newSolarProduction.toFixed(1)),
+          windProduction: Number(newWindProduction.toFixed(1)),
+          batteryCharge: Number(newBatteryCharge.toFixed(1)),
+          loadConsumption: Number(newLoadConsumption.toFixed(1)),
+          gridExport: prev.gridConnection ? Number(newGridExport.toFixed(1)) : 0,
+          gridImport: prev.gridConnection ? Number(newGridImport.toFixed(1)) : 0,
+          frequency: Number(newFrequency.toFixed(2)),
+          voltage: Number(newVoltage.toFixed(1)),
+          lastUpdated: new Date().toISOString()
+        };
+      });
     }, 3000);
     
     return () => clearInterval(interval);
@@ -219,19 +279,24 @@ const MicrogridControl = () => {
   return (
     <AppLayout>
       <div className="animate-in fade-in duration-500">
-        <Card className="p-6 mb-8 bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 shadow-md">
+        <Card className="p-6 mb-8 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 border-slate-200/60 dark:border-slate-800/60 shadow-lg">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold">Microgrid Control</h1>
-              <p className="text-muted-foreground mt-1">
+              <h1 className="text-3xl font-bold flex items-center">
+                <Power className="mr-3 h-8 w-8 text-primary" />
+                Microgrid Control
+              </h1>
+              <p className="text-muted-foreground mt-2">
                 Advanced monitoring and management of your microgrid system
               </p>
             </div>
-            <div className="flex items-center gap-2">
-              <Badge className={`${microgridState.gridConnection ? 'bg-green-500' : 'bg-orange-500'} text-white px-3 py-1.5`}>
+            <div className="flex items-center gap-3">
+              <Badge className={`${microgridState.gridConnection ? 'bg-green-500 hover:bg-green-600' : 'bg-yellow-500 hover:bg-yellow-600'} text-white px-3 py-1.5 flex items-center gap-1`}>
+                <div className="h-1.5 w-1.5 rounded-full bg-white animate-pulse"></div>
                 {microgridState.gridConnection ? 'Grid Connected' : 'Island Mode'}
               </Badge>
-              <Badge className="bg-primary px-3 py-1.5">
+              <Badge className="bg-primary hover:bg-primary/90 px-3 py-1.5 flex items-center gap-1">
+                <Chip className="h-3 w-3" />
                 {microgridState.operatingMode.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
               </Badge>
             </div>
@@ -242,43 +307,75 @@ const MicrogridControl = () => {
           <MicrogridNavMenu />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8" id="status">
-          <div className="lg:col-span-2 space-y-6">
-            <StatusOverview microgridState={microgridState} />
-          </div>
+        <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="w-full mb-8">
+          <TabsList className="grid grid-cols-4 w-full mb-6">
+            <TabsTrigger value="overview" className="text-sm">
+              <Bolt className="h-4 w-4 mr-2" />
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value="control" className="text-sm">
+              <Power className="h-4 w-4 mr-2" />
+              Controls
+            </TabsTrigger>
+            <TabsTrigger value="flow" className="text-sm">
+              <Grid className="h-4 w-4 mr-2" />
+              Energy Flow
+            </TabsTrigger>
+            <TabsTrigger value="insights" className="text-sm">
+              <LineChart className="h-4 w-4 mr-2" />
+              Insights
+            </TabsTrigger>
+          </TabsList>
           
-          <div>
-            <AlertsPanel 
-              alerts={alerts}
-              onAcknowledge={handleAcknowledgeAlert}
-            />
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8" id="controls">
-          <MicrogridControls
-            microgridState={microgridState}
-            minBatteryReserve={settings.minBatteryReserve}
-            onModeChange={handleModeChange}
-            onGridConnectionToggle={handleGridConnectionToggle}
-            onBatteryDischargeToggle={handleBatteryDischargeToggle}
-            onBatteryReserveChange={(value) => handleSettingsChange('minBatteryReserve', value)}
-          />
+          <TabsContent value="overview" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6" id="status">
+              <div className="lg:col-span-2 space-y-6">
+                <StatusOverview microgridState={microgridState} />
+              </div>
+              
+              <div>
+                <AlertsPanel 
+                  alerts={alerts}
+                  onAcknowledge={handleAcknowledgeAlert}
+                />
+              </div>
+            </div>
+            
+            <CommandHistory commandHistory={commandHistory} />
+          </TabsContent>
           
-          <AdvancedControlSettings
-            settings={settings}
-            onSettingsChange={handleSettingsChange}
-            onSaveSettings={handleSaveSettings}
-          />
-        </div>
+          <TabsContent value="control" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" id="controls">
+              <MicrogridControls
+                microgridState={microgridState}
+                minBatteryReserve={settings.minBatteryReserve}
+                onModeChange={handleModeChange}
+                onGridConnectionToggle={handleGridConnectionToggle}
+                onBatteryDischargeToggle={handleBatteryDischargeToggle}
+                onBatteryReserveChange={(value) => handleSettingsChange('minBatteryReserve', value)}
+              />
+              
+              <AdvancedControlSettings
+                settings={settings}
+                onSettingsChange={handleSettingsChange}
+                onSaveSettings={handleSaveSettings}
+              />
+            </div>
 
-        <div className="mb-8" id="devices">
-          <DeviceControlsPanel />
-        </div>
-        
-        <div className="mb-8" id="history">
-          <CommandHistory commandHistory={commandHistory} />
-        </div>
+            <DeviceControlsPanel />
+          </TabsContent>
+          
+          <TabsContent value="flow" className="space-y-6">
+            <EnergyFlowVisualization microgridState={microgridState} />
+          </TabsContent>
+          
+          <TabsContent value="insights" className="space-y-6">
+            <MicrogridSystemInsights 
+              microgridState={microgridState}
+              minBatteryReserve={settings.minBatteryReserve}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
     </AppLayout>
   );
