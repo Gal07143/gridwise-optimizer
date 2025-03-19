@@ -2,8 +2,23 @@
 import React from 'react';
 import { Activity, BarChart, BarChart3 } from 'lucide-react';
 import DashboardCard from '@/components/dashboard/DashboardCard';
+import PredictionsCard from '@/components/analytics/PredictionsCard';
+import SystemRecommendationsCard from '@/components/analytics/SystemRecommendationsCard';
+import usePredictions from '@/hooks/usePredictions';
 
-const InsightsTab = () => {
+interface InsightsTabProps {
+  timeframe?: string;
+  customData?: any[];
+}
+
+const InsightsTab = ({ timeframe = 'week', customData }: InsightsTabProps) => {
+  const { 
+    predictions, 
+    recommendations,
+    isLoading, 
+    refetch 
+  } = usePredictions(timeframe, customData);
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -46,33 +61,17 @@ const InsightsTab = () => {
           </div>
         </DashboardCard>
         
-        <DashboardCard
-          title="System Insights"
-          icon={<BarChart3 size={18} />}
-        >
-          <div className="space-y-4 p-2">
-            <div className="p-3 rounded-lg border border-amber-100 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-900/30">
-              <div className="text-sm font-medium text-amber-800 dark:text-amber-300 mb-1">Peak Usage Alert</div>
-              <div className="text-xs">Your energy consumption peaks between 5-7PM, which coincides with the highest electricity rates. Consider shifting some usage to off-peak hours.</div>
-            </div>
-            
-            <div className="p-3 rounded-lg border border-green-100 bg-green-50 dark:bg-green-950/20 dark:border-green-900/30">
-              <div className="text-sm font-medium text-green-800 dark:text-green-300 mb-1">Efficiency Improvement</div>
-              <div className="text-xs">Your solar panel efficiency has increased by 5% compared to last month, possibly due to recent cleaning or favorable weather conditions.</div>
-            </div>
-            
-            <div className="p-3 rounded-lg border border-blue-100 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-900/30">
-              <div className="text-sm font-medium text-blue-800 dark:text-blue-300 mb-1">Battery Optimization</div>
-              <div className="text-xs">Your battery storage is only utilized at 65% capacity. Optimizing charge/discharge cycles could improve your energy independence by up to 15%.</div>
-            </div>
-            
-            <div className="p-3 rounded-lg border border-purple-100 bg-purple-50 dark:bg-purple-950/20 dark:border-purple-900/30">
-              <div className="text-sm font-medium text-purple-800 dark:text-purple-300 mb-1">Seasonal Pattern</div>
-              <div className="text-xs">Energy production has increased 18% month-over-month, following the expected seasonal pattern as we move toward summer months.</div>
-            </div>
-          </div>
-        </DashboardCard>
+        <PredictionsCard 
+          timeframe={timeframe}
+          customData={customData}
+        />
       </div>
+      
+      <SystemRecommendationsCard
+        recommendations={recommendations}
+        isLoading={isLoading}
+        onRefresh={refetch}
+      />
       
       <DashboardCard
         title="Comparative Analysis"
