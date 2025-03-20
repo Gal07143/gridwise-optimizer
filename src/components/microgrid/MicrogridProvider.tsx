@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { toast } from 'sonner';
 import { 
@@ -41,9 +40,19 @@ const MicrogridProvider: React.FC<MicrogridProviderProps> = ({ children }) => {
     operatingMode: 'automatic',
     gridConnection: true,
     batteryDischargeEnabled: true,
+    batteryChargeEnabled: true,
+    gridImportEnabled: false,
+    gridExportEnabled: false,
     solarProduction: 15.2,
     windProduction: 8.4,
     batteryCharge: 72,
+    batteryLevel: 72,
+    batteryChargeRate: 60,
+    batterySelfConsumptionMode: true,
+    systemMode: 'automatic',
+    economicMode: true,
+    peakShavingEnabled: true,
+    demandResponseEnabled: false,
     loadConsumption: 10.8,
     gridImport: 0,
     gridExport: 12.8,

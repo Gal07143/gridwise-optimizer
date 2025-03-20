@@ -39,12 +39,15 @@ import EnergyFlowVisualization from '@/components/microgrid/EnergyFlowVisualizat
 import { MicrogridState } from '@/components/microgrid/types';
 
 const initialMicrogridState: MicrogridState = {
+  operatingMode: 'automatic',
+  gridConnection: true,
   batteryChargeEnabled: true,
   batteryDischargeEnabled: true,
   gridImportEnabled: false,
   gridExportEnabled: false,
   solarProduction: 16.4,
   windProduction: 8.2,
+  batteryCharge: 73.6,
   batteryLevel: 73.6,
   batteryChargeRate: 60,
   batterySelfConsumptionMode: true,
@@ -52,6 +55,11 @@ const initialMicrogridState: MicrogridState = {
   economicMode: false,
   peakShavingEnabled: true,
   demandResponseEnabled: false,
+  loadConsumption: 10.8,
+  gridImport: 0,
+  gridExport: 12.8,
+  frequency: 50.02,
+  voltage: 232.1,
   lastUpdated: new Date().toISOString()
 };
 
