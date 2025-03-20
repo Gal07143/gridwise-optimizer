@@ -31,7 +31,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isExpanded, toggleSidebar, className 
           {isExpanded && <span className="font-semibold text-lg">Energy EMS</span>}
         </div>
         
-        <SidebarToggleButton isExpanded={isExpanded} toggleSidebar={toggleSidebar} />
+        <SidebarToggleButton expanded={isExpanded} toggleSidebar={toggleSidebar} />
       </div>
       
       {currentSite && (
@@ -43,27 +43,27 @@ const Sidebar: React.FC<SidebarProps> = ({ isExpanded, toggleSidebar, className 
       <div className="flex-1 overflow-y-auto py-2">
         <SidebarNavSection 
           items={mainNavItemsWithLabeledSections} 
-          isExpanded={isExpanded} 
+          expanded={isExpanded} 
           sectionTitle="Main" 
         />
 
         <SidebarNavSection 
           items={systemControlItems} 
-          isExpanded={isExpanded} 
+          expanded={isExpanded} 
           sectionTitle="System Control"
           icon={<Cpu size={14} />}
         />
         
         <SidebarNavSection 
           items={integrationItems} 
-          isExpanded={isExpanded} 
+          expanded={isExpanded} 
           sectionTitle="Device Integrations"
           icon={<Cpu size={14} />}
         />
         
         <SidebarNavSection 
           items={adminItems} 
-          isExpanded={isExpanded} 
+          expanded={isExpanded} 
           sectionTitle="Administration"
           icon={<Settings size={14} />}
         />

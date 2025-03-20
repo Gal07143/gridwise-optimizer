@@ -1,37 +1,23 @@
 
 import React from 'react';
-import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-interface SidebarToggleButtonProps {
-  expanded: boolean;
-  onClick: () => void;
-  isMobile?: boolean;
-  className?: string;
+export interface SidebarToggleButtonProps {
+  expanded: boolean; // Changed from isExpanded to expanded
+  toggleSidebar: () => void;
 }
 
-const SidebarToggleButton = ({ 
-  expanded, 
-  onClick, 
-  isMobile, 
-  className 
-}: SidebarToggleButtonProps) => {
+const SidebarToggleButton: React.FC<SidebarToggleButtonProps> = ({ expanded, toggleSidebar }) => {
   return (
-    <Button 
-      variant={isMobile ? "outline" : "ghost"}
-      size={expanded && !isMobile ? "default" : "icon"} 
-      onClick={onClick}
-      className={cn("w-full", className)}
+    <Button
+      variant="ghost"
+      size="icon"
+      className="h-8 w-8 rounded-full"
+      onClick={toggleSidebar}
+      aria-label={expanded ? 'Collapse Sidebar' : 'Expand Sidebar'}
     >
-      {expanded && !isMobile ? (
-        <>
-          <Menu size={16} className="mr-2" />
-          Collapse
-        </>
-      ) : (
-        <Menu size={16} />
-      )}
+      {expanded ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
     </Button>
   );
 };

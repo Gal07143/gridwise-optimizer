@@ -2,576 +2,569 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/layout/AppLayout';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
-} from '@/components/ui/tabs';
-import { 
-  Battery, 
-  FileText, 
-  Code, 
-  Settings, 
-  Cpu, 
-  History,
-  Download,
-  BarChart,
-  EditIcon,
-  Trash2,
-  ExternalLink,
-  AlertCircle,
-  CheckCircle,
-  ArrowLeft
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { ArrowLeft, Battery, Zap, FileText, AlertCircle, Package, ChevronRight, Download, Settings, Code, FileCode, CheckCircle2, XCircle, Info } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
-// Mock data for device model details
-const mockDeviceModels = {
-  'b1': {
-    id: 'b1',
-    manufacturer: 'Tesla',
-    model: 'Powerwall 2',
-    deviceType: 'batteries',
-    protocol: 'Modbus TCP',
-    firmware: 'v1.45.2',
-    supported: true,
-    hasManual: true,
-    hasRegisterMap: true,
-    description: 'The Powerwall 2 is a rechargeable lithium-ion battery stationary energy storage product manufactured by Tesla Energy. The 14 kWh Powerwall 2 was unveiled in October 2016.',
-    tecSpecs: {
-      capacity: '13.5 kWh',
-      power: '7 kW peak / 5 kW continuous',
-      efficiency: '90%',
-      dimensions: '1150 x 753 x 147 mm',
-      weight: '125 kg',
-      voltage: '380-480V AC (3-phase)',
-      operating_temp: '-20°C to 50°C',
-    },
-    integrationNotes: 'Tesla Powerwall 2 can be integrated via the Tesla Energy API or Modbus TCP. It requires firmware 1.45.0 or higher for full functionality.',
-    compatibleInverters: ['SolarEdge StorEdge', 'Tesla Backup Gateway', 'Fronius Symo Hybrid'],
-    knownIssues: [
-      'May disconnect during firmware updates',
-      'API rate limiting can cause temporary unavailability',
-      'Power readings may fluctuate under very low load conditions'
-    ],
-    configOptions: [
-      {name: 'Reserve Percentage', description: 'Minimum battery level to maintain (0-100%)', default: '20%'},
-      {name: 'Storm Watch', description: 'Automatically charge from grid before storms', default: 'Enabled'},
-      {name: 'Time-Based Control', description: 'Charge/discharge based on time schedule', default: 'Disabled'}
-    ]
-  },
-  'i1': {
-    id: 'i1',
-    manufacturer: 'SMA',
-    model: 'Sunny Boy 5.0',
-    deviceType: 'inverters',
-    protocol: 'Modbus TCP',
-    firmware: 'v3.20.13.R',
-    supported: true,
-    hasManual: true,
-    hasRegisterMap: true,
-    description: 'The Sunny Boy 5.0 is a transformerless string inverter for residential solar installations. It features SMA Smart Connected service for automatic monitoring and diagnostics.',
-    tecSpecs: {
-      max_power: '5000W',
-      efficiency: '97.2%',
-      max_input_voltage: '600V DC',
-      dimensions: '435 x 470 x 176 mm',
-      weight: '16 kg',
-      mppt_channels: '2',
-      grid_voltage: '230V / 240V',
-    },
-    integrationNotes: 'SMA Sunny Boy can be integrated via Modbus TCP or the proprietary SMA Speedwire protocol. It requires a data connection through either Ethernet or RS485.',
-    compatibleBatteries: ['None - grid-tie only'],
-    knownIssues: [
-      'Web interface may become unresponsive under high network load',
-      'Modbus register documentation may differ between firmware versions'
-    ],
-    configOptions: [
-      {name: 'Grid Guard', description: 'Grid protection settings (country-specific)', default: 'As per region'},
-      {name: 'Power Limitation', description: 'Maximum export power', default: '100%'},
-      {name: 'Reactive Power Control', description: 'Power factor adjustment', default: '1.0 (disabled)'}
-    ]
-  }
-};
+interface DeviceModel {
+  id: string;
+  manufacturer: string;
+  model: string;
+  deviceType: string;
+  protocol: string;
+  firmware: string;
+  supported: boolean;
+  hasManual: boolean;
+  hasRegisterMap: boolean;
+  description: string;
+  technicalSpecs: {
+    [key: string]: string | number;
+  };
+  knownIssues: string[];
+  integrationNotes: string;
+  configOptions: {
+    name: string;
+    description: string;
+    defaultValue: string;
+    options?: string[];
+  }[];
+  compatibleDevices?: {
+    type: string;
+    models: {
+      id: string;
+      manufacturer: string;
+      model: string;
+    }[];
+  }[];
+}
 
-const DeviceModelDetailPage = () => {
+interface Document {
+  id: string;
+  documentType: string;
+  documentName: string;
+  filePath: string;
+  fileType: string;
+  fileSize: number;
+  description: string;
+  uploadedAt: string;
+}
+
+const DeviceModelDetailPage: React.FC = () => {
   const { deviceId } = useParams<{ deviceId: string }>();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('overview');
-  
-  // In a real app, this would be fetched from the database
-  const deviceModel = mockDeviceModels[deviceId as keyof typeof mockDeviceModels];
-  
-  if (!deviceModel) {
+  const [deviceModel, setDeviceModel] = useState<DeviceModel | null>(null);
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDeviceModel = async () => {
+      try {
+        if (!deviceId) return;
+
+        // Fetch device model
+        const { data: modelData, error: modelError } = await supabase
+          .from('device_models')
+          .select(`
+            id,
+            model_name,
+            device_type,
+            protocol,
+            firmware_version,
+            description,
+            supported,
+            has_manual,
+            has_register_map,
+            technical_specs,
+            config_options,
+            known_issues,
+            integration_notes,
+            compatible_devices,
+            manufacturers(name, website)
+          `)
+          .eq('id', deviceId)
+          .single();
+
+        if (modelError) throw modelError;
+        
+        if (!modelData) {
+          toast.error('Device model not found');
+          navigate('/integrations');
+          return;
+        }
+
+        // Fetch documents
+        const { data: docsData, error: docsError } = await supabase
+          .from('device_documentation')
+          .select('*')
+          .eq('device_model_id', deviceId);
+
+        if (docsError) throw docsError;
+
+        // Format the device model data
+        const formattedModel: DeviceModel = {
+          id: modelData.id,
+          manufacturer: modelData.manufacturers?.name || 'Unknown',
+          model: modelData.model_name,
+          deviceType: modelData.device_type,
+          protocol: modelData.protocol,
+          firmware: modelData.firmware_version || '',
+          supported: modelData.supported,
+          hasManual: modelData.has_manual,
+          hasRegisterMap: modelData.has_register_map,
+          description: modelData.description || '',
+          technicalSpecs: modelData.technical_specs || {},
+          knownIssues: modelData.known_issues || [],
+          integrationNotes: modelData.integration_notes || '',
+          configOptions: modelData.config_options || [],
+          compatibleDevices: modelData.compatible_devices || []
+        };
+
+        // Format the documents data
+        const formattedDocs = (docsData || []).map(doc => ({
+          id: doc.id,
+          documentType: doc.document_type,
+          documentName: doc.document_name,
+          filePath: doc.file_path,
+          fileType: doc.file_type,
+          fileSize: doc.file_size || 0,
+          description: doc.description || '',
+          uploadedAt: doc.uploaded_at
+        }));
+
+        setDeviceModel(formattedModel);
+        setDocuments(formattedDocs);
+      } catch (error) {
+        console.error('Error fetching device model:', error);
+        toast.error('Failed to fetch device model details');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDeviceModel();
+  }, [deviceId, navigate]);
+
+  const getDeviceTypeIcon = (type: string) => {
+    switch (type) {
+      case 'batteries':
+        return <Battery size={18} />;
+      case 'inverters':
+        return <Zap size={18} />;
+      case 'ev-chargers':
+        return <Zap size={18} />;
+      case 'meters':
+        return <Activity size={18} />;
+      case 'controllers':
+        return <Package size={18} />;
+      default:
+        return <Package size={18} />;
+    }
+  };
+
+  const getDeviceTypeName = (type: string) => {
+    switch (type) {
+      case 'batteries':
+        return 'Battery System';
+      case 'inverters':
+        return 'Inverter';
+      case 'ev-chargers':
+        return 'EV Charger';
+      case 'meters':
+        return 'Energy Meter';
+      case 'controllers':
+        return 'Controller';
+      default:
+        return type;
+    }
+  };
+
+  const getDocumentIcon = (type: string) => {
+    switch (type) {
+      case 'manual':
+        return <FileText size={16} />;
+      case 'register_map':
+        return <FileCode size={16} />;
+      case 'datasheet':
+        return <FileText size={16} />;
+      default:
+        return <FileText size={16} />;
+    }
+  };
+
+  if (loading) {
     return (
       <AppLayout>
-        <div className="flex flex-col items-center justify-center h-[70vh]">
-          <AlertCircle className="h-16 w-16 text-muted-foreground mb-4" />
-          <h2 className="text-2xl font-bold mb-2">Device Not Found</h2>
-          <p className="text-muted-foreground mb-6">The device model you're looking for doesn't exist.</p>
-          <Button asChild>
-            <Link to="/integrations">Back to Integrations</Link>
-          </Button>
+        <div className="flex items-center justify-center h-screen">
+          <div className="animate-spin h-8 w-8 border-t-2 border-primary rounded-full" />
         </div>
       </AppLayout>
     );
   }
-  
-  const handleDownloadManual = () => {
-    toast.info('Downloading device manual...');
-  };
-  
-  const handleDownloadRegisterMap = () => {
-    toast.info('Downloading register map...');
-  };
-  
-  const handleDelete = () => {
-    toast.success('Device model deleted successfully');
-    setTimeout(() => {
-      navigate('/integrations');
-    }, 1500);
-  };
-  
-  const getDeviceTypeIcon = (type: string) => {
-    switch (type) {
-      case 'batteries':
-        return <Battery className="h-5 w-5" />;
-      case 'inverters':
-        return <Cpu className="h-5 w-5" />;
-      case 'ev-chargers':
-        return <Battery className="h-5 w-5" />;
-      case 'meters':
-        return <BarChart className="h-5 w-5" />;
-      case 'controllers':
-        return <Settings className="h-5 w-5" />;
-      default:
-        return <Settings className="h-5 w-5" />;
-    }
-  };
-  
-  const deviceTypeLabels = {
-    'batteries': 'Battery System',
-    'inverters': 'Inverter',
-    'ev-chargers': 'EV Charger',
-    'meters': 'Energy Meter',
-    'controllers': 'Microgrid Controller'
-  };
-  
-  return (
-    <AppLayout>
-      <div className="flex flex-col gap-6 p-6 animate-in fade-in duration-500">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <div>
-              <h1 className="text-2xl font-semibold mb-1">{deviceModel.manufacturer} {deviceModel.model}</h1>
-              <div className="flex items-center gap-2">
-                <Badge className="bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200 flex items-center gap-1">
-                  {getDeviceTypeIcon(deviceModel.deviceType)}
-                  <span>{deviceTypeLabels[deviceModel.deviceType as keyof typeof deviceTypeLabels]}</span>
-                </Badge>
-                
-                {deviceModel.supported ? (
-                  <Badge className="bg-green-500">Supported</Badge>
-                ) : (
-                  <Badge variant="outline" className="border-amber-500 text-amber-500">
-                    <AlertCircle className="h-3 w-3 mr-1" />
-                    Not Supported
-                  </Badge>
-                )}
-              </div>
-            </div>
-          </div>
-          
-          <div className="flex gap-2">
-            <Button variant="outline" asChild>
-              <Link to={`/integrations/edit-device/${deviceId}`}>
-                <EditIcon className="h-4 w-4 mr-2" />
-                Edit
+
+  if (!deviceModel) {
+    return (
+      <AppLayout>
+        <div className="p-6">
+          <div className="flex items-center mb-6">
+            <Button variant="outline" size="sm" asChild className="mr-4">
+              <Link to="/integrations">
+                <ArrowLeft size={16} className="mr-2" /> Back to Integrations
               </Link>
             </Button>
-            
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive">
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete
+          </div>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-center p-8 flex-col">
+                <AlertCircle size={48} className="text-muted-foreground mb-4" />
+                <h2 className="text-xl font-semibold mb-2">Device Model Not Found</h2>
+                <p className="text-muted-foreground mb-4">The device model you're looking for does not exist or has been removed.</p>
+                <Button asChild>
+                  <Link to="/integrations">Return to Integrations</Link>
                 </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This will permanently delete the {deviceModel.manufacturer} {deviceModel.model} device model and all associated data.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  return (
+    <AppLayout>
+      <div className="p-6">
+        <div className="flex items-center mb-6">
+          <Button variant="outline" size="sm" asChild className="mr-4">
+            <Link to="/integrations">
+              <ArrowLeft size={16} className="mr-2" /> Back to Integrations
+            </Link>
+          </Button>
+          <div className="flex items-center gap-2">
+            <Link to={`/integrations/${deviceModel.deviceType}`} className="text-muted-foreground hover:text-foreground text-sm">
+              {getDeviceTypeName(deviceModel.deviceType)}
+            </Link>
+            <ChevronRight size={14} className="text-muted-foreground" />
+            <span className="text-sm font-medium">{deviceModel.model}</span>
           </div>
         </div>
-        
-        <Tabs defaultValue="overview" className="w-full" onValueChange={setActiveTab}>
-          <TabsList className="grid grid-cols-4 mb-6">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="technical">Technical Details</TabsTrigger>
-            <TabsTrigger value="integration">Integration</TabsTrigger>
-            <TabsTrigger value="documentation">Documentation</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="overview" className="space-y-6">
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
             <Card>
               <CardHeader>
-                <CardTitle>Device Overview</CardTitle>
-                <CardDescription>Basic information about this device model</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-lg font-medium mb-4">Device Information</h3>
-                    <div className="space-y-4">
-                      <div className="flex justify-between border-b pb-2">
-                        <span className="text-muted-foreground">Manufacturer</span>
-                        <span className="font-medium">{deviceModel.manufacturer}</span>
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="p-1.5 rounded-full bg-primary/10">
+                        {getDeviceTypeIcon(deviceModel.deviceType)}
                       </div>
-                      <div className="flex justify-between border-b pb-2">
-                        <span className="text-muted-foreground">Model</span>
-                        <span className="font-medium">{deviceModel.model}</span>
-                      </div>
-                      <div className="flex justify-between border-b pb-2">
-                        <span className="text-muted-foreground">Type</span>
-                        <span className="font-medium">{deviceTypeLabels[deviceModel.deviceType as keyof typeof deviceTypeLabels]}</span>
-                      </div>
-                      <div className="flex justify-between border-b pb-2">
-                        <span className="text-muted-foreground">Protocol</span>
-                        <span className="font-medium">{deviceModel.protocol}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Firmware</span>
-                        <span className="font-medium">{deviceModel.firmware}</span>
-                      </div>
+                      <Badge variant={deviceModel.supported ? 'default' : 'secondary'}>
+                        {deviceModel.supported ? 'Supported' : 'Deprecated'}
+                      </Badge>
                     </div>
+                    <CardTitle className="text-2xl">{deviceModel.model}</CardTitle>
+                    <CardDescription className="text-base">
+                      Manufactured by <a href={`https://${deviceModel.manufacturer.toLowerCase().replace(/\s+/g, '')}.com`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{deviceModel.manufacturer}</a>
+                    </CardDescription>
                   </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm">
+                      <Settings size={14} className="mr-1" /> Configure
+                    </Button>
+                    <Button size="sm">
+                      Add Device
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <Tabs defaultValue="overview" className="mt-2">
+                  <TabsList>
+                    <TabsTrigger value="overview">Overview</TabsTrigger>
+                    <TabsTrigger value="technical">Technical Specs</TabsTrigger>
+                    <TabsTrigger value="documentation">Documentation</TabsTrigger>
+                    <TabsTrigger value="configuration">Configuration</TabsTrigger>
+                  </TabsList>
                   
-                  <div>
-                    <h3 className="text-lg font-medium mb-4">Description</h3>
-                    <p className="text-muted-foreground">{deviceModel.description}</p>
-                    
-                    <div className="mt-6">
-                      <h4 className="font-medium mb-2">Support Status</h4>
-                      <div className="flex items-center gap-2 p-3 rounded-md bg-muted">
-                        {deviceModel.supported ? (
-                          <>
-                            <CheckCircle className="h-5 w-5 text-green-500" />
-                            <div>
-                              <p className="font-medium">Fully Supported</p>
-                              <p className="text-sm text-muted-foreground">This device is fully supported and tested with our system.</p>
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            <AlertCircle className="h-5 w-5 text-amber-500" />
-                            <div>
-                              <p className="font-medium">Limited Support</p>
-                              <p className="text-sm text-muted-foreground">This device has limited support or is under testing.</p>
-                            </div>
-                          </>
-                        )}
-                      </div>
+                  <TabsContent value="overview" className="space-y-6 pt-4">
+                    <div>
+                      <h3 className="text-lg font-medium mb-2">Description</h3>
+                      <p className="text-muted-foreground">{deviceModel.description || 'No description available.'}</p>
                     </div>
-                  </div>
-                </div>
-                
-                <div>
-                  <h3 className="text-lg font-medium mb-4">Available Documentation</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {deviceModel.hasManual && (
-                      <div className="flex items-center gap-3 p-4 border rounded-md">
-                        <FileText className="h-8 w-8 text-blue-500" />
-                        <div className="flex-1">
-                          <h4 className="font-medium">User Manual</h4>
-                          <p className="text-sm text-muted-foreground">Complete documentation and installation guide</p>
-                        </div>
-                        <Button variant="outline" size="sm" onClick={handleDownloadManual}>
-                          <Download className="h-4 w-4 mr-1" />
-                          Download
-                        </Button>
-                      </div>
-                    )}
                     
-                    {deviceModel.hasRegisterMap && (
-                      <div className="flex items-center gap-3 p-4 border rounded-md">
-                        <Code className="h-8 w-8 text-purple-500" />
-                        <div className="flex-1">
-                          <h4 className="font-medium">Register Map</h4>
-                          <p className="text-sm text-muted-foreground">Modbus registers for device integration</p>
-                        </div>
-                        <Button variant="outline" size="sm" onClick={handleDownloadRegisterMap}>
-                          <Download className="h-4 w-4 mr-1" />
-                          Download
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="technical" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Technical Specifications</CardTitle>
-                <CardDescription>Detailed technical information about this device</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="overflow-hidden border rounded-md">
-                  <table className="w-full">
-                    <tbody>
-                      {deviceModel.tecSpecs && Object.entries(deviceModel.tecSpecs).map(([key, value]) => (
-                        <tr key={key} className="border-b last:border-0">
-                          <td className="px-4 py-3 bg-muted font-medium capitalize">{key.replace('_', ' ')}</td>
-                          <td className="px-4 py-3">{value}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                
-                <div>
-                  <h3 className="text-lg font-medium mb-3">Configuration Options</h3>
-                  <div className="overflow-hidden border rounded-md">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b bg-muted">
-                          <th className="px-4 py-3 text-left font-medium">Setting</th>
-                          <th className="px-4 py-3 text-left font-medium">Description</th>
-                          <th className="px-4 py-3 text-left font-medium">Default</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {deviceModel.configOptions && deviceModel.configOptions.map((option, index) => (
-                          <tr key={index} className="border-b last:border-0">
-                            <td className="px-4 py-3 font-medium">{option.name}</td>
-                            <td className="px-4 py-3">{option.description}</td>
-                            <td className="px-4 py-3">{option.default}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-                
-                {deviceModel.knownIssues && deviceModel.knownIssues.length > 0 && (
-                  <div>
-                    <h3 className="text-lg font-medium mb-3">Known Issues</h3>
-                    <ul className="space-y-2 list-disc pl-5">
-                      {deviceModel.knownIssues.map((issue, index) => (
-                        <li key={index} className="text-muted-foreground">{issue}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="integration" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Integration Information</CardTitle>
-                <CardDescription>Details for integrating this device with your system</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-medium mb-3">Integration Notes</h3>
-                  <p className="text-muted-foreground">{deviceModel.integrationNotes}</p>
-                </div>
-                
-                <div>
-                  <h3 className="text-lg font-medium mb-3">Compatible Devices</h3>
-                  <div className="overflow-hidden border rounded-md">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b bg-muted">
-                          <th className="px-4 py-3 text-left font-medium">Device Type</th>
-                          <th className="px-4 py-3 text-left font-medium">Compatible Models</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {deviceModel.compatibleInverters && (
-                          <tr className="border-b">
-                            <td className="px-4 py-3 font-medium">Inverters</td>
-                            <td className="px-4 py-3">
-                              <ul className="list-disc pl-5">
-                                {deviceModel.compatibleInverters.map((item, index) => (
-                                  <li key={index}>{item}</li>
+                    <div>
+                      <h3 className="text-lg font-medium mb-2">Integration Notes</h3>
+                      <p className="text-muted-foreground">{deviceModel.integrationNotes || 'No integration notes available.'}</p>
+                    </div>
+                    
+                    <div>
+                      <h3 className="text-lg font-medium mb-2">Known Issues</h3>
+                      {deviceModel.knownIssues && deviceModel.knownIssues.length > 0 ? (
+                        <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                          {deviceModel.knownIssues.map((issue, index) => (
+                            <li key={index}>{issue}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-muted-foreground">No known issues reported.</p>
+                      )}
+                    </div>
+                    
+                    <div>
+                      <h3 className="text-lg font-medium mb-2">Compatible Devices</h3>
+                      {deviceModel.compatibleDevices && deviceModel.compatibleDevices.length > 0 ? (
+                        <div className="space-y-4">
+                          {deviceModel.compatibleDevices.map((deviceCategory, index) => (
+                            <div key={index}>
+                              <h4 className="font-medium mb-1">Compatible {getDeviceTypeName(deviceCategory.type)}s</h4>
+                              <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                                {deviceCategory.models.map((model, i) => (
+                                  <li key={i}>
+                                    <Link to={`/integrations/device/${model.id}`} className="text-primary hover:underline">
+                                      {model.manufacturer} {model.model}
+                                    </Link>
+                                  </li>
                                 ))}
                               </ul>
-                            </td>
-                          </tr>
-                        )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-muted-foreground">No compatible devices listed.</p>
+                      )}
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="technical" className="pt-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <h3 className="text-lg font-medium mb-3">Basic Information</h3>
+                        <dl className="space-y-2">
+                          <div className="flex justify-between">
+                            <dt className="text-muted-foreground">Protocol</dt>
+                            <dd className="font-medium">{deviceModel.protocol}</dd>
+                          </div>
+                          <div className="flex justify-between">
+                            <dt className="text-muted-foreground">Firmware Version</dt>
+                            <dd className="font-medium">{deviceModel.firmware || 'N/A'}</dd>
+                          </div>
+                          <div className="flex justify-between">
+                            <dt className="text-muted-foreground">Register Map Available</dt>
+                            <dd className="font-medium flex items-center">
+                              {deviceModel.hasRegisterMap ? 
+                                <><CheckCircle2 size={16} className="text-green-500 mr-1" /> Yes</> : 
+                                <><XCircle size={16} className="text-red-500 mr-1" /> No</>
+                              }
+                            </dd>
+                          </div>
+                        </dl>
+                      </div>
+                      
+                      <div>
+                        <h3 className="text-lg font-medium mb-3">Technical Specifications</h3>
+                        <dl className="space-y-2">
+                          {Object.entries(deviceModel.technicalSpecs).map(([key, value]) => (
+                            <div key={key} className="flex justify-between">
+                              <dt className="text-muted-foreground">{key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</dt>
+                              <dd className="font-medium">{value}</dd>
+                            </div>
+                          ))}
+                          
+                          {Object.keys(deviceModel.technicalSpecs).length === 0 && (
+                            <p className="text-muted-foreground">No technical specifications available.</p>
+                          )}
+                        </dl>
+                      </div>
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="documentation" className="pt-4">
+                    <div className="space-y-6">
+                      <div>
+                        <h3 className="text-lg font-medium mb-3">Available Documentation</h3>
                         
-                        {deviceModel.compatibleBatteries && (
-                          <tr className="border-b">
-                            <td className="px-4 py-3 font-medium">Batteries</td>
-                            <td className="px-4 py-3">
-                              <ul className="list-disc pl-5">
-                                {deviceModel.compatibleBatteries.map((item, index) => (
-                                  <li key={index}>{item}</li>
-                                ))}
-                              </ul>
-                            </td>
-                          </tr>
+                        {documents.length > 0 ? (
+                          <div className="grid gap-4">
+                            {documents.map(doc => (
+                              <Card key={doc.id}>
+                                <CardContent className="p-4 flex items-center justify-between">
+                                  <div className="flex items-center gap-3">
+                                    <div className="p-2 rounded-md bg-primary/10">
+                                      {getDocumentIcon(doc.documentType)}
+                                    </div>
+                                    <div>
+                                      <h4 className="font-medium">{doc.documentName}</h4>
+                                      <p className="text-xs text-muted-foreground">{doc.documentType.replace(/_/g, ' ')} • {doc.fileType.toUpperCase()} • {(doc.fileSize / 1024).toFixed(0)} KB</p>
+                                    </div>
+                                  </div>
+                                  <Button variant="outline" size="sm" className="gap-1">
+                                    <Download size={14} />
+                                    Download
+                                  </Button>
+                                </CardContent>
+                              </Card>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-center p-8 border rounded-md">
+                            <div className="text-center">
+                              <Info size={24} className="mx-auto text-muted-foreground mb-2" />
+                              <h4 className="font-medium mb-1">No documents available</h4>
+                              <p className="text-muted-foreground text-sm">Documentation for this device model has not been uploaded yet.</p>
+                            </div>
+                          </div>
                         )}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-                
-                <div>
-                  <h3 className="text-lg font-medium mb-3">Integration Requirements</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="p-4 border rounded-md">
-                      <h4 className="font-medium flex items-center gap-2 mb-2">
-                        <Code className="h-4 w-4" />
-                        Communication Protocol
-                      </h4>
-                      <p className="text-sm text-muted-foreground">{deviceModel.protocol}</p>
+                      </div>
+                      
+                      {deviceModel.hasRegisterMap && (
+                        <div>
+                          <h3 className="text-lg font-medium mb-3">Register Map</h3>
+                          <Card>
+                            <CardContent className="p-4">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <div className="p-2 rounded-md bg-primary/10">
+                                    <Code size={16} />
+                                  </div>
+                                  <div>
+                                    <h4 className="font-medium">{deviceModel.model} Register Map</h4>
+                                    <p className="text-xs text-muted-foreground">Modbus register definitions for direct integration</p>
+                                  </div>
+                                </div>
+                                <div className="flex gap-2">
+                                  <Button variant="outline" size="sm">
+                                    <Download size={14} className="mr-1" /> Download CSV
+                                  </Button>
+                                  <Button size="sm">
+                                    View Map
+                                  </Button>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </div>
+                      )}
                     </div>
-                    
-                    <div className="p-4 border rounded-md">
-                      <h4 className="font-medium flex items-center gap-2 mb-2">
-                        <Settings className="h-4 w-4" />
-                        Firmware Requirements
-                      </h4>
-                      <p className="text-sm text-muted-foreground">Minimum version: {deviceModel.firmware}</p>
+                  </TabsContent>
+                  
+                  <TabsContent value="configuration" className="pt-4">
+                    <div>
+                      <h3 className="text-lg font-medium mb-3">Configuration Options</h3>
+                      
+                      {deviceModel.configOptions && deviceModel.configOptions.length > 0 ? (
+                        <div className="space-y-4">
+                          {deviceModel.configOptions.map((option, index) => (
+                            <Card key={index}>
+                              <CardContent className="p-4">
+                                <h4 className="font-medium">{option.name}</h4>
+                                <p className="text-sm text-muted-foreground mt-1">{option.description}</p>
+                                <div className="mt-2 flex items-center">
+                                  <span className="text-xs font-medium">Default: </span>
+                                  <Badge variant="outline" className="ml-2">{option.defaultValue}</Badge>
+                                </div>
+                                {option.options && (
+                                  <div className="mt-2">
+                                    <span className="text-xs font-medium">Available options:</span>
+                                    <div className="flex flex-wrap gap-1 mt-1">
+                                      {option.options.map((opt, i) => (
+                                        <Badge key={i} variant="outline" className="text-xs">{opt}</Badge>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center p-8 border rounded-md">
+                          <div className="text-center">
+                            <Settings size={24} className="mx-auto text-muted-foreground mb-2" />
+                            <h4 className="font-medium mb-1">No configuration options</h4>
+                            <p className="text-muted-foreground text-sm">This device model doesn't have specific configuration options defined.</p>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                </div>
+                  </TabsContent>
+                </Tabs>
               </CardContent>
             </Card>
-          </TabsContent>
+          </div>
           
-          <TabsContent value="documentation" className="space-y-6">
+          <div>
             <Card>
               <CardHeader>
-                <CardTitle>Documentation</CardTitle>
-                <CardDescription>User manuals, technical documents, and guides</CardDescription>
+                <CardTitle className="text-lg">Quick Information</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {deviceModel.hasManual && (
-                    <div className="border p-6 rounded-md">
-                      <div className="flex items-center gap-3 mb-4">
-                        <FileText className="h-10 w-10 text-blue-500" />
-                        <div>
-                          <h3 className="font-medium">User Manual</h3>
-                          <p className="text-sm text-muted-foreground">Installation, operation and maintenance guide</p>
-                        </div>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground">PDF Document</span>
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm" asChild>
-                            <a href="#" target="_blank" rel="noopener noreferrer">
-                              <ExternalLink className="h-4 w-4 mr-1" />
-                              View
-                            </a>
-                          </Button>
-                          <Button size="sm" onClick={handleDownloadManual}>
-                            <Download className="h-4 w-4 mr-1" />
-                            Download
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {deviceModel.hasRegisterMap && (
-                    <div className="border p-6 rounded-md">
-                      <div className="flex items-center gap-3 mb-4">
-                        <Code className="h-10 w-10 text-purple-500" />
-                        <div>
-                          <h3 className="font-medium">Register Map</h3>
-                          <p className="text-sm text-muted-foreground">Complete Modbus register definitions</p>
-                        </div>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground">PDF/Excel Document</span>
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm" asChild>
-                            <a href="#" target="_blank" rel="noopener noreferrer">
-                              <ExternalLink className="h-4 w-4 mr-1" />
-                              View
-                            </a>
-                          </Button>
-                          <Button size="sm" onClick={handleDownloadRegisterMap}>
-                            <Download className="h-4 w-4 mr-1" />
-                            Download
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                
-                <div>
-                  <h3 className="text-lg font-medium mb-3">Additional Resources</h3>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between border-b pb-3">
-                      <div className="flex items-center gap-3">
-                        <ExternalLink className="h-5 w-5 text-muted-foreground" />
-                        <span>Manufacturer Website</span>
-                      </div>
-                      <Button variant="link" asChild>
-                        <a href="#" target="_blank" rel="noopener noreferrer">Visit Website</a>
-                      </Button>
-                    </div>
-                    
-                    <div className="flex items-center justify-between border-b pb-3">
-                      <div className="flex items-center gap-3">
-                        <History className="h-5 w-5 text-muted-foreground" />
-                        <span>Release Notes</span>
-                      </div>
-                      <Button variant="link" asChild>
-                        <a href="#" target="_blank" rel="noopener noreferrer">View</a>
-                      </Button>
-                    </div>
+              <CardContent>
+                <dl className="space-y-4">
+                  <div>
+                    <dt className="text-sm font-medium text-muted-foreground">Device Type</dt>
+                    <dd className="mt-1 flex items-center gap-1">
+                      {getDeviceTypeIcon(deviceModel.deviceType)}
+                      <span>{getDeviceTypeName(deviceModel.deviceType)}</span>
+                    </dd>
                   </div>
-                </div>
+                  <Separator />
+                  <div>
+                    <dt className="text-sm font-medium text-muted-foreground">Status</dt>
+                    <dd className="mt-1">
+                      {deviceModel.supported ? (
+                        <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Supported</Badge>
+                      ) : (
+                        <Badge variant="secondary">Deprecated</Badge>
+                      )}
+                    </dd>
+                  </div>
+                  <Separator />
+                  <div>
+                    <dt className="text-sm font-medium text-muted-foreground">Protocol</dt>
+                    <dd className="mt-1">{deviceModel.protocol}</dd>
+                  </div>
+                  <Separator />
+                  <div>
+                    <dt className="text-sm font-medium text-muted-foreground">Documentation</dt>
+                    <dd className="mt-1 space-y-1">
+                      <div className="flex items-center gap-2">
+                        {deviceModel.hasManual ? (
+                          <CheckCircle2 size={14} className="text-green-500" />
+                        ) : (
+                          <XCircle size={14} className="text-muted-foreground" />
+                        )}
+                        <span className={!deviceModel.hasManual ? "text-muted-foreground" : ""}>User Manual</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {deviceModel.hasRegisterMap ? (
+                          <CheckCircle2 size={14} className="text-green-500" />
+                        ) : (
+                          <XCircle size={14} className="text-muted-foreground" />
+                        )}
+                        <span className={!deviceModel.hasRegisterMap ? "text-muted-foreground" : ""}>Register Map</span>
+                      </div>
+                    </dd>
+                  </div>
+                  <Separator />
+                  <div>
+                    <dt className="text-sm font-medium text-muted-foreground">Actions</dt>
+                    <dd className="mt-2 space-y-2">
+                      <Button className="w-full" size="sm">
+                        Add Device
+                      </Button>
+                      <Button variant="outline" className="w-full" size="sm">
+                        View Documentation
+                      </Button>
+                    </dd>
+                  </div>
+                </dl>
               </CardContent>
             </Card>
-          </TabsContent>
-        </Tabs>
+          </div>
+        </div>
       </div>
     </AppLayout>
   );

@@ -1,38 +1,42 @@
 
 import React from 'react';
-import { cn } from '@/lib/utils';
 import NavItem from './NavItem';
-import { Separator } from '@/components/ui/separator';
 
-interface NavSectionProps {
-  title?: string;
+export interface NavSectionProps {
   items: Array<{
     href: string;
     icon: React.ReactNode;
     label: string;
+    isLabelledSection?: boolean;
   }>;
-  expanded: boolean;
+  expanded: boolean; // Changed from isExpanded to expanded
+  sectionTitle: string;
+  icon?: React.ReactNode;
 }
 
-const SidebarNavSection = ({ title, items, expanded }: NavSectionProps) => {
+const SidebarNavSection: React.FC<NavSectionProps> = ({ 
+  items, 
+  expanded, // Changed from isExpanded to expanded
+  sectionTitle,
+  icon
+}) => {
   return (
-    <div className="px-3 space-y-1">
-      {title && (
-        <div className={cn("px-3 text-xs text-slate-500 dark:text-slate-400 font-medium mb-2", !expanded && "hidden")}>
-          {title}
+    <div className="px-2 py-2">
+      {expanded && (
+        <div className="px-3 py-2 text-xs text-muted-foreground uppercase font-medium flex items-center gap-1.5">
+          {icon && icon}
+          <span>{sectionTitle}</span>
         </div>
       )}
-      
-      {items.map((item) => (
-        <NavItem 
-          key={item.href} 
-          href={item.href} 
-          icon={item.icon}
-          expanded={expanded}
-        >
-          {item.label}
-        </NavItem>
-      ))}
+      <div className="space-y-1">
+        {items.map((item, i) => (
+          <NavItem 
+            key={`${item.href}-${i}`} 
+            {...item} 
+            expanded={expanded} // Changed from isExpanded to expanded
+          />
+        ))}
+      </div>
     </div>
   );
 };
