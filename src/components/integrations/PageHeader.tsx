@@ -1,128 +1,119 @@
 
 import React from 'react';
+import { ChevronLeft, Download, Upload, HelpCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Filter, PlusCircle, Download, Upload, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Badge } from '@/components/ui/badge';
+import { 
+  Tooltip, 
+  TooltipContent, 
+  TooltipProvider, 
+  TooltipTrigger 
+} from '@/components/ui/tooltip';
+import { toast } from 'sonner';
 
 interface PageHeaderProps {
   categoryName: string;
   categoryId?: string;
-  hiddenFeatures?: string[];
-  actionRoute?: string;
-  additionalButtons?: React.ReactNode;
 }
 
-const PageHeader: React.FC<PageHeaderProps> = ({ 
-  categoryName, 
-  categoryId, 
-  hiddenFeatures = [], 
-  actionRoute,
-  additionalButtons 
-}) => {
-  const shouldShowFeature = (feature: string) => !hiddenFeatures.includes(feature);
-  
+const PageHeader: React.FC<PageHeaderProps> = ({ categoryName, categoryId }) => {
+  const handleImportDevices = () => {
+    toast.info("Import devices dialog would open here");
+  };
+
+  const handleExportCatalog = () => {
+    toast.success("Exporting device catalog...");
+    setTimeout(() => {
+      toast.info("Device catalog exported successfully");
+    }, 1500);
+  };
+
+  const handleShowHelp = () => {
+    toast.info("Device Integration Help", {
+      description: "This page shows all compatible device models for the selected category. You can filter, sort, and view details for each model.",
+      duration: 5000,
+    });
+  };
+
+  const getCategoryIcon = () => {
+    switch(categoryId) {
+      case 'batteries':
+        return "🔋";
+      case 'inverters':
+        return "⚡";
+      case 'ev-chargers':
+        return "🚗";
+      case 'meters':
+        return "📊";
+      case 'controllers':
+        return "🎮";
+      default:
+        return "📱";
+    }
+  };
+
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-      <div className="space-y-1">
+    <div className="flex flex-col gap-2">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-semibold">{categoryName}</h1>
-          {categoryId && (
-            <Badge variant="outline" className="font-normal">
-              {categoryId || 'All'}
-            </Badge>
-          )}
+          <Button variant="ghost" size="icon" asChild>
+            <Link to="/integrations">
+              <ChevronLeft className="h-5 w-5" />
+            </Link>
+          </Button>
+          <h1 className="text-2xl font-semibold flex items-center">
+            <span className="mr-2">{getCategoryIcon()}</span>
+            {categoryName}
+          </h1>
         </div>
-        <p className="text-muted-foreground text-sm">
-          Browse and manage {categoryName.toLowerCase()}
-        </p>
-      </div>
-      
-      <div className="flex flex-wrap gap-2">
-        {shouldShowFeature('filter') && (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Filter className="h-4 w-4 mr-2" />
-                  Filter
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Filter by criteria</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )}
         
-        {shouldShowFeature('export') && (
+        <div className="flex gap-2">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Download className="h-4 w-4 mr-2" />
-                  Export
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Export data</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )}
-        
-        {shouldShowFeature('import') && (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" onClick={handleImportDevices}>
                   <Upload className="h-4 w-4 mr-2" />
                   Import
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Import data</p>
+                <p>Import device models from file</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-        )}
-        
-        {shouldShowFeature('add') && (
+          
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button asChild variant="default" size="sm">
-                  <Link to={actionRoute || (categoryId ? `/integrations/add-device-model?type=${categoryId}` : '/integrations/add-device-model')}>
-                    <PlusCircle className="h-4 w-4 mr-2" />
-                    Add {categoryName.endsWith('s') ? categoryName.slice(0, -1) : categoryName}
-                  </Link>
+                <Button variant="outline" size="sm" onClick={handleExportCatalog}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Export
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Add a new {categoryName.toLowerCase().endsWith('s') ? categoryName.toLowerCase().slice(0, -1) : categoryName.toLowerCase()}</p>
+                <p>Export full device catalog</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-        )}
-        
-        {additionalButtons}
-        
-        {shouldShowFeature('help') && (
+          
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full">
-                  <HelpCircle className="h-4 w-4" />
+                <Button variant="ghost" size="icon" onClick={handleShowHelp}>
+                  <HelpCircle className="h-5 w-5" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>View help documentation</p>
+                <p>Help and information</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-        )}
+        </div>
       </div>
+      
+      <p className="text-muted-foreground">
+        Browse and manage {categoryName.toLowerCase()} device models compatible with your energy management system.
+      </p>
     </div>
   );
 };

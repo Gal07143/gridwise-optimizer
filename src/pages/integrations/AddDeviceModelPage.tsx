@@ -1,348 +1,227 @@
 
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/layout/AppLayout';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { ChevronLeft, Save, Upload } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { 
+  Card, 
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardFooter
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { UploadCloud, Save, ArrowLeft, HelpCircle } from 'lucide-react';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import * as z from 'zod';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Textarea } from '@/components/ui/textarea';
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { Separator } from '@/components/ui/separator';
+import { categoryNames } from '@/hooks/useDeviceModels';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
-
-// Form validation schema
-const deviceModelSchema = z.object({
-  manufacturer: z.string().min(2, { message: "Manufacturer name is required" }),
-  model: z.string().min(2, { message: "Model name is required" }),
-  deviceType: z.enum(['batteries', 'inverters', 'ev-chargers', 'meters', 'controllers']),
-  protocol: z.string().min(2, { message: "Communication protocol is required" }),
-  firmware: z.string().optional(),
-  description: z.string().optional(),
-  supported: z.boolean().default(true),
-  hasRegisterMap: z.boolean().default(false),
-  notes: z.string().optional()
-});
-
-type DeviceModelFormValues = z.infer<typeof deviceModelSchema>;
 
 const AddDeviceModelPage = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const queryParams = new URLSearchParams(location.search);
-  const deviceType = queryParams.get('type') || 'batteries';
-  
-  const [manualFile, setManualFile] = useState<File | null>(null);
-  const [registerMapFile, setRegisterMapFile] = useState<File | null>(null);
-  
-  // Initialize form with default values
-  const form = useForm<DeviceModelFormValues>({
-    resolver: zodResolver(deviceModelSchema),
-    defaultValues: {
-      manufacturer: '',
-      model: '',
-      deviceType: deviceType as any,
-      protocol: '',
-      firmware: '',
-      description: '',
-      supported: true,
-      hasRegisterMap: false,
-      notes: ''
-    }
+  const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    manufacturer: '',
+    model: '',
+    category: '',
+    protocol: '',
+    firmware: '',
+    supported: true,
+    description: ''
   });
   
-  const onSubmit = async (data: DeviceModelFormValues) => {
-    console.log('Form data submitted:', data);
-    console.log('Manual file:', manualFile);
-    console.log('Register map file:', registerMapFile);
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+  
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+  
+  const handleSwitchChange = (name: string, checked: boolean) => {
+    setFormData(prev => ({ ...prev, [name]: checked }));
+  };
+  
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
     
-    // In a real app, you would upload the files to storage and save the data to the database
+    // Validate form
+    if (!formData.manufacturer || !formData.model || !formData.category) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
     
-    toast.success('Device model added successfully');
+    setIsLoading(true);
     
-    // Navigate back to the device category page
+    // Simulate API call
     setTimeout(() => {
-      navigate(`/integrations/${data.deviceType}`);
+      toast.success('Device model added successfully');
+      navigate('/integrations');
     }, 1500);
   };
   
-  const handleManualFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setManualFile(e.target.files[0]);
-    }
-  };
-  
-  const handleRegisterMapFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setRegisterMapFile(e.target.files[0]);
-    }
-  };
-  
-  const deviceTypeLabels = {
-    'batteries': 'Battery Systems',
-    'inverters': 'Inverters',
-    'ev-chargers': 'EV Chargers',
-    'meters': 'Energy Meters',
-    'controllers': 'Microgrid Controllers'
+  const handleUploadSpecs = () => {
+    toast.info('Upload specifications dialog would open here');
   };
   
   return (
     <AppLayout>
       <div className="flex flex-col gap-6 p-6 animate-in fade-in duration-500">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold mb-1">Add New Device Model</h1>
-            <p className="text-muted-foreground">
-              Register a new device model with technical specifications
-            </p>
-          </div>
-          
-          <Button variant="outline" onClick={() => navigate(-1)}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" asChild>
+            <Link to="/integrations">
+              <ChevronLeft className="h-5 w-5" />
+            </Link>
           </Button>
+          <h1 className="text-2xl font-semibold">Add Device Model</h1>
         </div>
         
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Basic Information</CardTitle>
-                <CardDescription>Enter the device model details</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FormField
-                    control={form.control}
+        <p className="text-muted-foreground">
+          Add a new device model to the integration catalog. This will make the device available for users to add to their systems.
+        </p>
+        
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Basic Information</CardTitle>
+              <CardDescription>
+                Enter the basic details about the device model
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="manufacturer">Manufacturer <span className="text-red-500">*</span></Label>
+                  <Input 
+                    id="manufacturer" 
                     name="manufacturer"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Manufacturer</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g., Tesla, SolarEdge, Schneider Electric" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    placeholder="e.g., Tesla, SMA, Enphase" 
+                    value={formData.manufacturer}
+                    onChange={handleInputChange}
+                    required
                   />
-                  
-                  <FormField
-                    control={form.control}
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="model">Model <span className="text-red-500">*</span></Label>
+                  <Input 
+                    id="model" 
                     name="model"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Model Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g., Powerwall 2, SE10K, PM5560" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    placeholder="e.g., Powerwall 2, Sunny Boy" 
+                    value={formData.model}
+                    onChange={handleInputChange}
+                    required
                   />
-                  
-                  <FormField
-                    control={form.control}
-                    name="deviceType"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Device Type</FormLabel>
-                        <Select 
-                          onValueChange={field.onChange} 
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select device type" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {Object.entries(deviceTypeLabels).map(([value, label]) => (
-                              <SelectItem key={value} value={value}>{label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="category">Category <span className="text-red-500">*</span></Label>
+                  <Select 
+                    value={formData.category} 
+                    onValueChange={(value) => handleSelectChange('category', value)}
+                  >
+                    <SelectTrigger id="category">
+                      <SelectValue placeholder="Select a category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(categoryNames).map(([id, name]) => (
+                        <SelectItem key={id} value={id}>{name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="protocol">Communication Protocol</Label>
+                  <Input 
+                    id="protocol" 
                     name="protocol"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Communication Protocol</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g., Modbus TCP, REST API, CAN bus" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    placeholder="e.g., Modbus TCP, REST API" 
+                    value={formData.protocol}
+                    onChange={handleInputChange}
                   />
-                  
-                  <FormField
-                    control={form.control}
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="firmware">Latest Firmware Version</Label>
+                  <Input 
+                    id="firmware" 
                     name="firmware"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Latest Firmware Version</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g., v1.2.3" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="supported"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-base">Supported</FormLabel>
-                          <FormDescription>
-                            Is this device fully supported by your system?
-                          </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
+                    placeholder="e.g., v1.45.2" 
+                    value={formData.firmware}
+                    onChange={handleInputChange}
                   />
                 </div>
                 
-                <FormField
-                  control={form.control}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="supported">Supported Device</Label>
+                    <Switch 
+                      id="supported" 
+                      checked={formData.supported}
+                      onCheckedChange={(checked) => handleSwitchChange('supported', checked)}
+                    />
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Is this device officially supported by the system?
+                  </p>
+                </div>
+              </div>
+              
+              <Separator />
+              
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea 
+                  id="description" 
                   name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Description</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Brief description of the device and its capabilities..." 
-                          className="min-h-[100px]"
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  placeholder="Enter a description of the device" 
+                  rows={4}
+                  value={formData.description}
+                  onChange={handleInputChange}
                 />
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Documentation & Technical Details</CardTitle>
-                <CardDescription>Upload technical documentation for the device</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <Label htmlFor="manual">User Manual (PDF)</Label>
-                    <div className="mt-2 flex items-center gap-4">
-                      <div className="border rounded-md p-6 w-full h-32 flex flex-col items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors">
-                        <input
-                          id="manual"
-                          type="file"
-                          accept=".pdf"
-                          className="hidden"
-                          onChange={handleManualFileChange}
-                        />
-                        <label htmlFor="manual" className="cursor-pointer flex flex-col items-center">
-                          <UploadCloud className="h-8 w-8 mb-2 text-muted-foreground" />
-                          <span className="text-sm text-muted-foreground">
-                            {manualFile ? manualFile.name : 'Upload user manual'}
-                          </span>
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="registerMap">Register Map (PDF/CSV/XLS)</Label>
-                      <FormField
-                        control={form.control}
-                        name="hasRegisterMap"
-                        render={({ field }) => (
-                          <FormItem className="flex items-center space-x-2">
-                            <FormLabel className="text-xs text-muted-foreground">Has register map</FormLabel>
-                            <FormControl>
-                              <Switch
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    <div className="mt-2 flex items-center gap-4">
-                      <div className="border rounded-md p-6 w-full h-32 flex flex-col items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors">
-                        <input
-                          id="registerMap"
-                          type="file"
-                          accept=".pdf,.csv,.xls,.xlsx"
-                          className="hidden"
-                          onChange={handleRegisterMapFileChange}
-                          disabled={!form.watch('hasRegisterMap')}
-                        />
-                        <label 
-                          htmlFor="registerMap" 
-                          className={`cursor-pointer flex flex-col items-center ${!form.watch('hasRegisterMap') ? 'opacity-50' : ''}`}
-                        >
-                          <UploadCloud className="h-8 w-8 mb-2 text-muted-foreground" />
-                          <span className="text-sm text-muted-foreground">
-                            {registerMapFile ? registerMapFile.name : 'Upload register map'}
-                          </span>
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <FormField
-                  control={form.control}
-                  name="notes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Additional Notes</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Any additional notes, special requirements, or known issues..." 
-                          className="min-h-[100px]"
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-              <CardFooter className="flex justify-between">
-                <Button variant="outline" type="button" onClick={() => navigate(-1)}>
-                  Cancel
+              </div>
+              
+              <div className="pt-2">
+                <Button type="button" variant="outline" onClick={handleUploadSpecs}>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload Specifications
                 </Button>
-                <Button type="submit">
+              </div>
+            </CardContent>
+          </Card>
+          
+          <div className="flex justify-end gap-4">
+            <Button 
+              variant="outline" 
+              type="button" 
+              onClick={() => navigate('/integrations')}
+              disabled={isLoading}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? 'Saving...' : (
+                <>
                   <Save className="h-4 w-4 mr-2" />
                   Save Device Model
-                </Button>
-              </CardFooter>
-            </Card>
-          </form>
-        </Form>
+                </>
+              )}
+            </Button>
+          </div>
+        </form>
       </div>
     </AppLayout>
   );

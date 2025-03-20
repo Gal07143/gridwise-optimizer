@@ -39,6 +39,7 @@ import Permissions from './pages/settings/Permissions';
 import ApiKeyManagement from './pages/settings/ApiKeyManagement';
 import UserAccounts from './pages/settings/UserAccounts';
 import Alerts from './pages/Alerts';
+import ExternalServices from './pages/settings/ExternalServices';
 
 // Create a client
 const queryClient = new QueryClient();
@@ -58,8 +59,8 @@ function App() {
               <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/devices" element={<ProtectedRoute><Devices /></ProtectedRoute>} />
-              <Route path="/devices/add" element={<ProtectedRoute><AddDevice /></ProtectedRoute>} />
-              <Route path="/devices/edit/:id" element={<ProtectedRoute><EditDevice /></ProtectedRoute>} />
+              <Route path="/add-device" element={<ProtectedRoute><AddDevice /></ProtectedRoute>} />
+              <Route path="/edit-device/:deviceId" element={<ProtectedRoute><EditDevice /></ProtectedRoute>} />
               <Route path="/energy-flow" element={<ProtectedRoute><EnergyFlow /></ProtectedRoute>} />
               <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
               <Route path="/reports" element={<ProtectedRoute><ReportsPage /></ProtectedRoute>} />
@@ -82,11 +83,12 @@ function App() {
               <Route path="/settings/permissions" element={<ProtectedRoute><Permissions /></ProtectedRoute>} />
               <Route path="/settings/api-keys" element={<ProtectedRoute><ApiKeyManagement /></ProtectedRoute>} />
               <Route path="/settings/user-accounts" element={<ProtectedRoute><UserAccounts /></ProtectedRoute>} />
+              <Route path="/settings/external-services" element={<ProtectedRoute><ExternalServices /></ProtectedRoute>} />
               
               {/* Integration Pages */}
               <Route path="/integrations" element={<ProtectedRoute><IntegrationsHome /></ProtectedRoute>} />
-              <Route path="/integrations/category/:categoryId" element={<ProtectedRoute><IntegrationCategoryPage /></ProtectedRoute>} />
-              <Route path="/integrations/device-model/:id" element={<ProtectedRoute><DeviceModelDetailPage /></ProtectedRoute>} />
+              <Route path="/integrations/:categoryId" element={<ProtectedRoute><IntegrationCategoryPage /></ProtectedRoute>} />
+              <Route path="/integrations/device-models/:id" element={<ProtectedRoute><DeviceModelDetailPage /></ProtectedRoute>} />
               <Route path="/integrations/add-device-model" element={<ProtectedRoute><AddDeviceModelPage /></ProtectedRoute>} />
               
               {/* Catch-all route for 404 */}

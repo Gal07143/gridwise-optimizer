@@ -28,6 +28,8 @@
     --energy-green: #2dd36f;
     --energy-red: #eb445a;
     --energy-purple: #7a5af8;
+    --success: 142.1 70.6% 45.3%;
+    --success-foreground: 210 20% 98%;
   }
  
   .dark {
@@ -50,6 +52,8 @@
     --border: 215 27.9% 16.9%;
     --input: 215 27.9% 16.9%;
     --ring: 263.4 70% 50.4%;
+    --success: 142.1 70.6% 45.3%;
+    --success-foreground: 210 20% 98%;
   }
 }
  
