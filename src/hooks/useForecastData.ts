@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -39,7 +40,7 @@ export interface Prediction {
   cloudCover?: number;
   windSpeed?: number;
   weatherCondition?: string;
-  confidence: number; // Required property that fixes the TypeScript error
+  confidence: number; // Added the confidence property that was missing
 }
 
 export function useForecastData() {
