@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -15,9 +14,10 @@ import {
   Edit,
   Trash,
   BarChart2,
-  Clock
+  Clock,
+  Calendar
 } from 'lucide-react';
-import { getDeviceById } from '@/services/devices';
+import { getDeviceById } from '@/services/devices/queries';
 import AppLayout from '@/components/layout/AppLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -34,7 +34,6 @@ const DeviceView = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   
-  // Fetch device data
   const { data: device, isLoading, error } = useQuery({
     queryKey: ['device', deviceId],
     queryFn: () => getDeviceById(deviceId as string),
@@ -56,6 +55,10 @@ const DeviceView = () => {
         return <Activity className="h-6 w-6 text-red-500" />;
       case 'ev_charger':
         return <BatteryCharging className="h-6 w-6 text-green-500" />;
+      case 'inverter':
+        return <Settings className="h-6 w-6 text-indigo-500" />;
+      case 'meter':
+        return <BarChart2 className="h-6 w-6 text-orange-500" />;
       default:
         return <Settings className="h-6 w-6 text-gray-500" />;
     }
@@ -155,7 +158,7 @@ const DeviceView = () => {
               </Link>
             </Button>
             <div className="flex items-center">
-              {getDeviceIcon(device.type)}
+              {getDeviceIcon(device.type as DeviceType)}
               <div className="ml-3">
                 <h1 className="text-2xl font-semibold">{device.name}</h1>
                 <div className="flex items-center text-muted-foreground">
@@ -194,7 +197,7 @@ const DeviceView = () => {
             <CardContent>
               <div className="flex justify-between items-center">
                 <span className="text-2xl font-bold">
-                  {getStatusBadge(device.status)}
+                  {getStatusBadge(device.status as DeviceStatus)}
                 </span>
                 <Clock className="h-5 w-5 text-muted-foreground" />
               </div>
@@ -276,8 +279,8 @@ const DeviceView = () => {
                   id: device.id,
                   name: device.name,
                   location: device.location || '',
-                  type: device.type,
-                  status: device.status,
+                  type: device.type as DeviceType,
+                  status: device.status as DeviceStatus,
                   capacity: device.capacity,
                   firmware: device.firmware || '',
                   description: device.description || '',

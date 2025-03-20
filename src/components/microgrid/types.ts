@@ -31,7 +31,7 @@ export interface MicrogridState {
   frequency: number;
   voltage: number;
   lastUpdated: string;
-  operatingMode: 'automatic' | 'manual' | 'eco' | 'backup';
+  operatingMode: 'auto' | 'manual' | 'eco' | 'backup';
   batteryChargeRate: number;
   gridImportEnabled: boolean;
   gridExportEnabled: boolean;
@@ -108,13 +108,14 @@ export interface MicrogridAlert {
   device_id: string;
   type: string;
   message: string;
+  title: string;
   timestamp: string;
   acknowledged: boolean;
-  severity: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
 }
 
 export interface MicrogridSystemState {
-  mode: string;
+  mode: 'auto' | 'manual' | 'eco' | 'backup';
   status: string;
   gridConnected: boolean;
   lastModeChange: string;
@@ -143,4 +144,8 @@ export interface AlertItem {
   severity: 'low' | 'medium' | 'high' | 'critical';
   deviceId?: string;
   acknowledged: boolean;
+}
+
+export interface CommandHistoryProps {
+  commandHistory: CommandHistoryItem[];
 }

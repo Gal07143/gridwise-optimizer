@@ -1,434 +1,402 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
+import { MicrogridContext } from '@/components/microgrid/MicrogridProvider';
 import AppLayout from '@/components/layout/AppLayout';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
-} from '@/components/ui/tabs';
+import MicrogridHeader from '@/components/microgrid/MicrogridHeader';
+import MicrogridNavMenu from '@/components/microgrid/MicrogridNavMenu';
+import { MicrogridTabContent } from '@/components/microgrid/MicrogridTabContent';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
+import { Battery, BatteryCharging, Workflow, Wind, ZapOff, Zap, Sun, GitBranch, BarChart3 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { 
-  Battery,
-  Bolt,
-  Zap,
-  Sun,
-  Wind,
-  Home,
-  Settings,
-  Save,
-  RefreshCw,
-  AlertTriangle,
-  Shield,
-  ArrowLeftRight
-} from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
-import EnergyFlowVisualization from '@/components/microgrid/EnergyFlowVisualization';
-import { MicrogridState } from '@/components/microgrid/types';
 
-const initialMicrogridState: MicrogridState = {
-  operatingMode: 'automatic',
-  gridConnection: true,
-  batteryChargeEnabled: true,
-  batteryDischargeEnabled: true,
-  gridImportEnabled: false,
-  gridExportEnabled: false,
-  solarProduction: 16.4,
-  windProduction: 8.2,
-  batteryCharge: 73.6,
-  batteryLevel: 73.6,
-  batteryChargeRate: 60,
-  batterySelfConsumptionMode: true,
-  systemMode: 'automatic',
-  economicMode: false,
-  peakShavingEnabled: true,
-  demandResponseEnabled: false,
-  loadConsumption: 10.8,
-  gridImport: 0,
-  gridExport: 12.8,
-  frequency: 50.02,
-  voltage: 232.1,
-  lastUpdated: new Date().toISOString()
-};
+interface ModeOption {
+  id: string;
+  name: string;
+  description: string;
+  icon: React.ReactNode;
+}
 
-const MicrogridControl = () => {
-  const [microgridState, setMicrogridState] = useState<MicrogridState>(initialMicrogridState);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+export const MicrogridControl = () => {
+  const { state, dispatch } = useContext(MicrogridContext);
+  const [activeTab, setActiveTab] = useState('overview');
+  const [batteryChargeRate, setBatteryChargeRate] = useState(state.batteryChargeRate);
   
-  const handleSettingChange = (key: keyof MicrogridState, value: any) => {
-    setMicrogridState(prev => ({
-      ...prev,
-      [key]: value,
-      lastUpdated: new Date().toISOString()
-    }));
+  const modeOptions: ModeOption[] = [
+    {
+      id: 'auto',  // Changed from 'automatic' to 'auto'
+      name: 'Automatic',
+      description: 'System optimizes energy flow automatically based on current conditions',
+      icon: <Workflow className="h-6 w-6" />
+    },
+    {
+      id: 'manual',
+      name: 'Manual',
+      description: 'Full control over energy flow between components',
+      icon: <GitBranch className="h-6 w-6" />
+    },
+    {
+      id: 'eco',
+      name: 'Economy',
+      description: 'Prioritizes cost savings and grid arbitrage',
+      icon: <BarChart3 className="h-6 w-6" />
+    },
+    {
+      id: 'backup',
+      name: 'Backup',
+      description: 'Focuses on maintaining battery charge for backup power',
+      icon: <BatteryCharging className="h-6 w-6" />
+    }
+  ];
+  
+  useEffect(() => {
+    const timerID = setInterval(() => {
+      // Simulate real-time data updates for the demo
+      dispatch({ type: 'UPDATE_TIME', payload: new Date() });
+      
+      // Simulating random fluctuations in values
+      const randomFluctuation = (min: number, max: number) => {
+        return Math.random() * (max - min) + min;
+      };
+      
+      // Update production values
+      dispatch({ 
+        type: 'UPDATE_PRODUCTION', 
+        payload: {
+          solarProduction: state.solarOutput * randomFluctuation(0.95, 1.05),
+          windProduction: state.windOutput * randomFluctuation(0.9, 1.1),
+          batteryLevel: Math.min(Math.max(state.batteryLevel + randomFluctuation(-0.5, 0.8), 0), 100),
+        }
+      });
+    }, 5000);
+    
+    return () => clearInterval(timerID);
+  }, [dispatch, state.batteryLevel, state.solarOutput, state.windOutput]);
+  
+  const handleModeChange = (mode: 'auto' | 'manual' | 'eco' | 'backup') => {
+    dispatch({ type: 'SET_SYSTEM_MODE', payload: mode });
+    toast.success(`System mode changed to ${mode}`);
+    
+    // Log this action to command history
+    logCommand(`Set system mode to ${mode}`);
   };
   
-  const handleSaveSettings = () => {
-    setIsSubmitting(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      toast.success('Microgrid control settings saved successfully');
-      setIsSubmitting(false);
-    }, 1500);
-  };
-  
-  const handleRefresh = () => {
-    // Simulate fetching fresh data
-    toast.info('Refreshing microgrid state...');
-    
-    setTimeout(() => {
-      // Update with some slight variations to simulate real data changes
-      setMicrogridState(prev => ({
-        ...prev,
-        solarProduction: Math.round((prev.solarProduction + (Math.random() * 2 - 1)) * 10) / 10,
-        windProduction: Math.round((prev.windProduction + (Math.random() * 1.5 - 0.75)) * 10) / 10,
-        batteryLevel: Math.min(100, Math.max(0, Math.round((prev.batteryLevel + (Math.random() * 2 - 1)) * 10) / 10)),
-        lastUpdated: new Date().toISOString()
-      }));
-      toast.success('Microgrid state updated');
-    }, 1000);
+  const logCommand = (command: string) => {
+    dispatch({
+      type: 'LOG_COMMAND',
+      payload: {
+        id: Date.now().toString(),
+        timestamp: new Date().toISOString(),
+        command,
+        success: true,
+        user: 'Admin'
+      }
+    });
   };
   
   return (
     <AppLayout>
-      <div className="animate-in fade-in duration-500 p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
-          <div>
-            <h1 className="text-2xl font-semibold mb-1">Microgrid Control</h1>
-            <p className="text-muted-foreground">
-              Configure and optimize your energy system in real-time
-            </p>
+      <div className="p-6 space-y-6">
+        <MicrogridHeader />
+        
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <div className="lg:col-span-1">
+            <MicrogridNavMenu activeTab={activeTab} setActiveTab={setActiveTab} />
+            
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle className="text-lg">Solar Production</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <div className="flex items-center">
+                      <Sun className="h-5 w-5 text-yellow-500 mr-2" />
+                      <span className="text-2xl font-bold">{state.solarProduction.toFixed(1)} kW</span>
+                    </div>
+                    <p className="text-muted-foreground text-sm mt-1">
+                      {state.solarConnected ? 'Connected' : 'Disconnected'}
+                    </p>
+                  </div>
+                  <Badge variant={state.solarConnected ? "success" : "destructive"}>
+                    {state.solarConnected ? 'Online' : 'Offline'}
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle className="text-lg">Wind Production</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <div className="flex items-center">
+                      <Wind className="h-5 w-5 text-blue-500 mr-2" />
+                      <span className="text-2xl font-bold">{state.windProduction.toFixed(1)} kW</span>
+                    </div>
+                    <p className="text-muted-foreground text-sm mt-1">
+                      Wind speed: {state.windSpeed.toFixed(1)} m/s
+                    </p>
+                  </div>
+                  <Badge variant={state.windConnected ? "success" : "destructive"}>
+                    {state.windConnected ? 'Online' : 'Offline'}
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle className="text-lg">Battery Status</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex justify-between items-center mb-2">
+                  <div>
+                    <div className="flex items-center">
+                      <Battery className="h-5 w-5 text-green-500 mr-2" />
+                      <span className="text-2xl font-bold">{state.batteryLevel.toFixed(0)}%</span>
+                    </div>
+                    <p className="text-muted-foreground text-sm mt-1">
+                      {state.batteryChargeEnabled ? 'Charging enabled' : 'Charging disabled'}
+                    </p>
+                  </div>
+                  <div className="flex flex-col items-end">
+                    <span className="text-sm font-medium">{(state.batteryLevel * state.batteryCapacity / 100).toFixed(1)} kWh</span>
+                    <span className="text-xs text-muted-foreground">of {state.batteryCapacity} kWh</span>
+                  </div>
+                </div>
+                <div className="w-full bg-muted rounded-full h-2 mt-2">
+                  <div 
+                    className="bg-green-500 h-2 rounded-full" 
+                    style={{ width: `${state.batteryLevel}%` }}
+                  ></div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
           
-          <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
-              onClick={handleRefresh}
-              className="h-9"
-            >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh
-            </Button>
-            <Button 
-              onClick={handleSaveSettings}
-              disabled={isSubmitting}
-              className="h-9"
-            >
-              {isSubmitting ? (
-                <>
-                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4 mr-2" />
-                  Save Changes
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <EnergyFlowVisualization microgridState={microgridState} />
+          <div className="lg:col-span-3">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+              <TabsList className="grid grid-cols-4">
+                <TabsTrigger value="overview">Overview</TabsTrigger>
+                <TabsTrigger value="control">Control</TabsTrigger>
+                <TabsTrigger value="alerts">Alerts</TabsTrigger>
+                <TabsTrigger value="history">History</TabsTrigger>
+              </TabsList>
+              
+              <MicrogridTabContent activeTab={activeTab} />
+            </Tabs>
             
-            <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card className="shadow-sm">
-                <CardHeader className="pb-2">
-                  <div className="flex items-center gap-2">
-                    <Sun className="h-5 w-5 text-yellow-500" />
-                    <CardTitle className="text-base">Solar Production</CardTitle>
-                  </div>
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mt-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Battery Controls</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold">{microgridState.solarProduction.toFixed(1)} kW</div>
-                  <p className="text-sm text-muted-foreground">Currently operating at 94% efficiency</p>
+                <CardContent className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="battery-charge">Charging</Label>
+                      <p className="text-sm text-muted-foreground">
+                        {state.batteryChargeEnabled ? 'Enabled' : 'Disabled'}
+                      </p>
+                    </div>
+                    <Switch 
+                      id="battery-charge"
+                      checked={state.batteryChargeEnabled}
+                      onCheckedChange={(checked) => {
+                        dispatch({ type: 'SET_BATTERY_CHARGE_ENABLED', payload: checked });
+                        logCommand(`${checked ? 'Enabled' : 'Disabled'} battery charging`);
+                      }}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="battery-discharge">Discharging</Label>
+                      <p className="text-sm text-muted-foreground">
+                        {state.batteryDischargeEnabled ? 'Enabled' : 'Disabled'}
+                      </p>
+                    </div>
+                    <Switch 
+                      id="battery-discharge"
+                      checked={state.batteryDischargeEnabled}
+                      onCheckedChange={(checked) => {
+                        dispatch({ type: 'SET_BATTERY_DISCHARGE_ENABLED', payload: checked });
+                        logCommand(`${checked ? 'Enabled' : 'Disabled'} battery discharging`);
+                      }}
+                    />
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <Label htmlFor="charge-rate">Charge Rate: {state.batteryChargeRate.toFixed(1)} kW</Label>
+                      <span className="text-sm text-muted-foreground">{state.batteryChargeRate.toFixed(1)} kW</span>
+                    </div>
+                    <Slider 
+                      id="charge-rate" 
+                      min={0} 
+                      max={10} 
+                      step={0.1}
+                      value={[batteryChargeRate]}
+                      onValueChange={(value) => setBatteryChargeRate(value[0])}
+                      onValueCommit={(value) => {
+                        dispatch({ type: 'SET_BATTERY_CHARGE_RATE', payload: value[0] });
+                        logCommand(`Set battery charge rate to ${value[0].toFixed(1)} kW`);
+                      }}
+                    />
+                  </div>
                 </CardContent>
               </Card>
               
-              <Card className="shadow-sm">
-                <CardHeader className="pb-2">
-                  <div className="flex items-center gap-2">
-                    <Wind className="h-5 w-5 text-blue-500" />
-                    <CardTitle className="text-base">Wind Production</CardTitle>
-                  </div>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Grid Controls</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold">{microgridState.windProduction.toFixed(1)} kW</div>
-                  <p className="text-sm text-muted-foreground">Stable wind conditions (10-12 mph)</p>
-                </CardContent>
-              </Card>
-              
-              <Card className="shadow-sm">
-                <CardHeader className="pb-2">
-                  <div className="flex items-center gap-2">
-                    <Battery className="h-5 w-5 text-purple-500" />
-                    <CardTitle className="text-base">Battery Status</CardTitle>
+                <CardContent className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="grid-import">Grid Import</Label>
+                      <p className="text-sm text-muted-foreground">
+                        {state.gridImportEnabled ? 'Enabled' : 'Disabled'}
+                      </p>
+                    </div>
+                    <Switch 
+                      id="grid-import"
+                      checked={state.gridImportEnabled}
+                      onCheckedChange={(checked) => {
+                        dispatch({ type: 'SET_GRID_IMPORT_ENABLED', payload: checked });
+                        logCommand(`${checked ? 'Enabled' : 'Disabled'} grid import`);
+                      }}
+                    />
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center gap-2">
-                    <div className="text-3xl font-bold">{microgridState.batteryLevel.toFixed(1)}%</div>
-                    {microgridState.batteryChargeEnabled && (
-                      <div className="text-xs bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 px-2 py-1 rounded-full">
-                        Charging
-                      </div>
-                    )}
-                  </div>
-                  <div className="mt-1 h-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full">
-                    <div 
-                      className="h-2 bg-purple-500 rounded-full"
-                      style={{ width: `${microgridState.batteryLevel}%` }}
-                    ></div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="grid-export">Grid Export</Label>
+                      <p className="text-sm text-muted-foreground">
+                        {state.gridExportEnabled ? 'Enabled' : 'Disabled'}
+                      </p>
+                    </div>
+                    <Switch 
+                      id="grid-export"
+                      checked={state.gridExportEnabled}
+                      onCheckedChange={(checked) => {
+                        dispatch({ type: 'SET_GRID_EXPORT_ENABLED', payload: checked });
+                        logCommand(`${checked ? 'Enabled' : 'Disabled'} grid export`);
+                      }}
+                    />
                   </div>
                 </CardContent>
               </Card>
             </div>
-          </div>
-          
-          <div className="lg:col-span-1">
-            <Tabs defaultValue="controls">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="controls">
-                  <Settings className="h-4 w-4 mr-2" />
-                  Controls
-                </TabsTrigger>
-                <TabsTrigger value="modes">
-                  <Bolt className="h-4 w-4 mr-2" />
-                  Modes
-                </TabsTrigger>
-                <TabsTrigger value="advanced">
-                  <Shield className="h-4 w-4 mr-2" />
-                  Advanced
-                </TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="controls" className="space-y-4 mt-4">
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base">Battery Controls</CardTitle>
-                    <CardDescription>Configure battery charging and discharging</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label>Battery Charging</Label>
-                        <p className="text-sm text-muted-foreground">Allow system to charge battery</p>
-                      </div>
-                      <Switch 
-                        checked={microgridState.batteryChargeEnabled}
-                        onCheckedChange={(checked) => handleSettingChange('batteryChargeEnabled', checked)}
-                      />
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label>Battery Discharging</Label>
-                        <p className="text-sm text-muted-foreground">Allow battery to power loads</p>
-                      </div>
-                      <Switch 
-                        checked={microgridState.batteryDischargeEnabled}
-                        onCheckedChange={(checked) => handleSettingChange('batteryDischargeEnabled', checked)}
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <Label>Charge Rate Limit ({microgridState.batteryChargeRate}%)</Label>
-                      </div>
-                      <Slider 
-                        value={[microgridState.batteryChargeRate]} 
-                        min={10} 
-                        max={100} 
-                        step={5}
-                        onValueChange={(value) => handleSettingChange('batteryChargeRate', value[0])}
-                      />
-                      <p className="text-xs text-muted-foreground">Limit battery charging rate to extend battery life</p>
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base">Grid Connection</CardTitle>
-                    <CardDescription>Configure grid import and export</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label>Grid Import</Label>
-                        <p className="text-sm text-muted-foreground">Allow power from the grid</p>
-                      </div>
-                      <Switch 
-                        checked={microgridState.gridImportEnabled}
-                        onCheckedChange={(checked) => handleSettingChange('gridImportEnabled', checked)}
-                      />
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label>Grid Export</Label>
-                        <p className="text-sm text-muted-foreground">Allow selling power to the grid</p>
-                      </div>
-                      <Switch 
-                        checked={microgridState.gridExportEnabled}
-                        onCheckedChange={(checked) => handleSettingChange('gridExportEnabled', checked)}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              
-              <TabsContent value="modes" className="space-y-4 mt-4">
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base">System Operation Mode</CardTitle>
-                    <CardDescription>Configure how your system operates</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-2">
-                      <Button
-                        variant={microgridState.systemMode === 'automatic' ? 'default' : 'outline'}
-                        onClick={() => handleSettingChange('systemMode', 'automatic')}
-                        className="justify-start"
-                      >
-                        <RefreshCw className="h-4 w-4 mr-2" />
-                        Automatic
-                      </Button>
-                      <Button
-                        variant={microgridState.systemMode === 'manual' ? 'default' : 'outline'}
-                        onClick={() => handleSettingChange('systemMode', 'manual')}
-                        className="justify-start"
-                      >
-                        <Settings className="h-4 w-4 mr-2" />
-                        Manual
-                      </Button>
-                      <Button
-                        variant={microgridState.systemMode === 'eco' ? 'default' : 'outline'}
-                        onClick={() => handleSettingChange('systemMode', 'eco')}
-                        className="justify-start"
-                      >
-                        <Zap className="h-4 w-4 mr-2" />
-                        Eco
-                      </Button>
-                      <Button
-                        variant={microgridState.systemMode === 'backup' ? 'default' : 'outline'}
-                        onClick={() => handleSettingChange('systemMode', 'backup')}
-                        className="justify-start"
-                      >
-                        <Shield className="h-4 w-4 mr-2" />
-                        Backup
-                      </Button>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label>Self-Consumption Mode</Label>
-                        <p className="text-sm text-muted-foreground">Prioritize using your own energy</p>
-                      </div>
-                      <Switch 
-                        checked={microgridState.batterySelfConsumptionMode}
-                        onCheckedChange={(checked) => handleSettingChange('batterySelfConsumptionMode', checked)}
-                      />
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label>Economic Mode</Label>
-                        <p className="text-sm text-muted-foreground">Optimize for cost savings</p>
-                      </div>
-                      <Switch 
-                        checked={microgridState.economicMode}
-                        onCheckedChange={(checked) => handleSettingChange('economicMode', checked)}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              
-              <TabsContent value="advanced" className="space-y-4 mt-4">
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base">Advanced Settings</CardTitle>
-                    <CardDescription>Configure advanced power management features</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label>Peak Shaving</Label>
-                        <p className="text-sm text-muted-foreground">Reduce peak demand charges</p>
-                      </div>
-                      <Switch 
-                        checked={microgridState.peakShavingEnabled}
-                        onCheckedChange={(checked) => handleSettingChange('peakShavingEnabled', checked)}
-                      />
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label>Demand Response</Label>
-                        <p className="text-sm text-muted-foreground">Participate in utility demand response programs</p>
-                      </div>
-                      <Switch 
-                        checked={microgridState.demandResponseEnabled}
-                        onCheckedChange={(checked) => handleSettingChange('demandResponseEnabled', checked)}
-                      />
-                    </div>
-                    
-                    <div className="pt-2">
-                      <Button 
-                        variant="destructive" 
-                        className="w-full justify-center items-center"
-                        onClick={() => toast.info('System would reset to defaults')}
-                      >
-                        <AlertTriangle className="h-4 w-4 mr-2" />
-                        Reset to Default Settings
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base">Maintenance</CardTitle>
-                    <CardDescription>System maintenance options</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
+            
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle>System Mode</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {modeOptions.map((mode) => (
                     <Button 
-                      variant="outline" 
-                      className="w-full justify-center items-center"
-                      onClick={() => toast.info('Diagnostic test would start')}
+                      key={mode.id}
+                      variant={state.systemMode === mode.id ? "default" : "outline"}
+                      className="flex flex-col items-center justify-center h-32 p-4"
+                      onClick={() => handleModeChange(mode.id as 'auto' | 'manual' | 'eco' | 'backup')}
                     >
-                      <RefreshCw className="h-4 w-4 mr-2" />
-                      Run System Diagnostic
+                      <div className={`${state.systemMode === mode.id ? "text-primary-foreground" : "text-primary"} mb-2`}>
+                        {mode.icon}
+                      </div>
+                      <div className={state.systemMode === mode.id ? "text-primary-foreground" : ""}>
+                        <h3 className="font-medium">{mode.name}</h3>
+                        <p className="text-xs mt-1 line-clamp-2">
+                          {mode.description}
+                        </p>
+                      </div>
                     </Button>
-                    
-                    <Button 
-                      variant="outline" 
-                      className="w-full justify-center items-center"
-                      onClick={() => toast.info('Firmware update check would start')}
-                    >
-                      <ArrowLeftRight className="h-4 w-4 mr-2" />
-                      Check for Firmware Updates
-                    </Button>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle>Advanced Settings</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="space-y-0.5">
+                      <Label>Self Consumption</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Prioritize using generated energy on-site
+                      </p>
+                    </div>
+                    <Switch 
+                      checked={state.batterySelfConsumptionMode}
+                      onCheckedChange={(checked) => {
+                        dispatch({ type: 'SET_BATTERY_SELF_CONSUMPTION', payload: checked });
+                        logCommand(`${checked ? 'Enabled' : 'Disabled'} self consumption mode`);
+                      }}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="space-y-0.5">
+                      <Label>Economic Mode</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Optimize for electricity price variations
+                      </p>
+                    </div>
+                    <Switch 
+                      checked={state.economicMode}
+                      onCheckedChange={(checked) => {
+                        dispatch({ type: 'SET_ECONOMIC_MODE', payload: checked });
+                        logCommand(`${checked ? 'Enabled' : 'Disabled'} economic mode`);
+                      }}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="space-y-0.5">
+                      <Label>Peak Shaving</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Reduce peak load demand from the grid
+                      </p>
+                    </div>
+                    <Switch 
+                      checked={state.peakShavingEnabled}
+                      onCheckedChange={(checked) => {
+                        dispatch({ type: 'SET_PEAK_SHAVING', payload: checked });
+                        logCommand(`${checked ? 'Enabled' : 'Disabled'} peak shaving`);
+                      }}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="space-y-0.5">
+                      <Label>Demand Response</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Participate in grid demand response events
+                      </p>
+                    </div>
+                    <Switch 
+                      checked={state.demandResponseEnabled}
+                      onCheckedChange={(checked) => {
+                        dispatch({ type: 'SET_DEMAND_RESPONSE', payload: checked });
+                        logCommand(`${checked ? 'Enabled' : 'Disabled'} demand response`);
+                      }}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>

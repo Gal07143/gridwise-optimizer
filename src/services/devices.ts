@@ -1,4 +1,3 @@
-
 import { DeviceModel } from "@/hooks/useDeviceModels";
 
 export interface Device {
@@ -15,6 +14,7 @@ export interface Device {
   manufacturer?: string;
   model?: string;
   serial_number?: string;
+  last_updated?: string;
 }
 
 // Mock data
@@ -32,7 +32,8 @@ const devices: Device[] = [
     description: 'Primary energy storage system',
     manufacturer: 'Tesla',
     model: 'Powerwall 2',
-    serial_number: 'TPS-12345-678'
+    serial_number: 'TPS-12345-678',
+    last_updated: '2023-11-10T15:30:00Z'
   },
   {
     id: 'dev-002',
@@ -47,7 +48,8 @@ const devices: Device[] = [
     description: 'South-facing solar panel array',
     manufacturer: 'SunPower',
     model: 'X-Series',
-    serial_number: 'SP-78901-234'
+    serial_number: 'SP-78901-234',
+    last_updated: '2023-11-10T15:30:00Z'
   },
   {
     id: 'dev-003',
@@ -62,7 +64,8 @@ const devices: Device[] = [
     description: 'Electric vehicle charging station',
     manufacturer: 'ChargePoint',
     model: 'Home Flex',
-    serial_number: 'CP-34567-890'
+    serial_number: 'CP-34567-890',
+    last_updated: '2023-11-10T15:30:00Z'
   },
   {
     id: 'dev-004',
@@ -77,7 +80,8 @@ const devices: Device[] = [
     description: 'Small wind turbine for supplemental power',
     manufacturer: 'Bergey',
     model: 'Excel 10',
-    serial_number: 'BW-56789-012'
+    serial_number: 'BW-56789-012',
+    last_updated: '2023-11-10T15:30:00Z'
   },
   {
     id: 'dev-005',
@@ -91,7 +95,8 @@ const devices: Device[] = [
     description: 'Main power consumption meter',
     manufacturer: 'Landis+Gyr',
     model: 'E650',
-    serial_number: 'LG-90123-456'
+    serial_number: 'LG-90123-456',
+    last_updated: '2023-11-10T15:30:00Z'
   },
   {
     id: 'dev-006',
@@ -105,7 +110,8 @@ const devices: Device[] = [
     description: 'Smart HVAC control system',
     manufacturer: 'Nest',
     model: 'Learning Thermostat',
-    serial_number: 'NT-23456-789'
+    serial_number: 'NT-23456-789',
+    last_updated: '2023-11-10T15:30:00Z'
   }
 ];
 
@@ -115,95 +121,96 @@ const deviceModels: DeviceModel[] = [
     id: 'mod-001',
     name: 'Powerwall 2',
     manufacturer: 'Tesla',
+    type: 'battery',
     category: 'batteries',
     capacity: 13.5,
-    releaseDate: '2020-06-15',
-    connectivity: ['Wi-Fi', 'Ethernet'],
-    certifications: ['UL', 'IEC', 'CE'],
+    release_date: '2020-06-15',
     dimensions: '1150 x 755 x 155 mm',
-    weight: '125 kg',
-    powerRating: '7 kW peak / 5 kW continuous',
-    voltage: '220-240V',
+    weight: 125,
+    power_rating: 7,
     description: 'Home battery system that stores energy from solar or the grid.',
-    imageUrl: 'https://www.tesla.com/sites/default/files/powerwall/PW2_Standalone_V03_Desktop.jpg'
+    datasheet_url: 'https://www.tesla.com/sites/default/files/powerwall/PW2_Standalone_V03_Desktop.jpg',
+    created_at: '2023-10-01T00:00:00Z',
+    last_updated: '2023-10-01T00:00:00Z'
   },
   {
     id: 'mod-002',
     name: 'X-Series SPR-X22-370',
     manufacturer: 'SunPower',
+    type: 'solar',
     category: 'inverters',
     capacity: 0.37,
-    releaseDate: '2021-03-20',
-    connectivity: ['Modbus', 'RS485'],
-    certifications: ['IEC', 'CE'],
+    release_date: '2021-03-20',
     dimensions: '1046 x 1690 x 40 mm',
-    weight: '19 kg',
-    powerRating: '370W',
-    voltage: '65.8V',
+    weight: 19,
+    power_rating: 0.37,
     description: 'High-efficiency solar panel with industry-leading power output.',
-    imageUrl: 'https://us.sunpower.com/sites/default/files/2019-05/x-series-residential-solar-panels.png'
+    datasheet_url: 'https://us.sunpower.com/sites/default/files/2019-05/x-series-residential-solar-panels.png',
+    created_at: '2023-10-01T00:00:00Z',
+    last_updated: '2023-10-01T00:00:00Z'
   },
   {
     id: 'mod-003',
     name: 'Home Flex',
     manufacturer: 'ChargePoint',
+    type: 'ev_charger',
     category: 'ev-chargers',
     capacity: 50,
-    releaseDate: '2022-01-10',
-    connectivity: ['Wi-Fi', 'Bluetooth', 'Cellular'],
-    certifications: ['UL', 'Energy Star'],
+    release_date: '2022-01-10',
     dimensions: '413 x 176 x 188 mm',
-    weight: '8.5 kg',
-    powerRating: '50A/12kW',
-    voltage: '240V',
+    weight: 8.5,
+    power_rating: 12,
     description: 'Flexible home EV charging station with adjustable amperage.',
-    imageUrl: 'https://www.chargepoint.com/sites/default/files/inline-images/cp-home-product-photo.png'
+    datasheet_url: 'https://www.chargepoint.com/sites/default/files/inline-images/cp-home-product-photo.png',
+    created_at: '2023-10-01T00:00:00Z',
+    last_updated: '2023-10-01T00:00:00Z'
   },
   {
     id: 'mod-004',
     name: 'Sunny Boy 7.7-US',
     manufacturer: 'SMA',
+    type: 'inverter',
     category: 'inverters',
     capacity: 7.7,
-    releaseDate: '2021-09-05',
-    connectivity: ['Ethernet', 'Speedwire'],
-    certifications: ['UL 1741', 'IEEE 1547'],
+    release_date: '2021-09-05',
     dimensions: '490 x 665 x 195 mm',
-    weight: '26 kg',
-    powerRating: '7700W',
-    voltage: '600V',
+    weight: 26,
+    power_rating: 7.7,
     description: 'Residential string inverter with SMA Smart Connected service.',
-    imageUrl: 'https://www.sma-america.com/fileadmin/content/global/Products/Images/Residential/Sunny_Boy_US/SMA_Sunny_Boy_Residential_Inverter_Product_Image.jpg'
+    datasheet_url: 'https://www.sma-america.com/fileadmin/content/global/Products/Images/Residential/Sunny_Boy_US/SMA_Sunny_Boy_Residential_Inverter_Product_Image.jpg',
+    created_at: '2023-10-01T00:00:00Z',
+    last_updated: '2023-10-01T00:00:00Z'
   },
   {
     id: 'mod-005',
     name: 'Excel 10',
     manufacturer: 'Bergey',
+    type: 'wind',
     category: 'controllers',
     capacity: 10,
-    releaseDate: '2022-05-15',
-    connectivity: ['RS485'],
-    certifications: ['AWEA', 'IEC 61400-2'],
+    release_date: '2022-05-15',
     dimensions: '7m rotor diameter',
-    weight: '545 kg',
-    powerRating: '10 kW',
-    voltage: '240V',
+    weight: 545,
+    power_rating: 10,
     description: 'Small wind turbine for residential and small business applications.',
-    imageUrl: 'https://bergey.com/wp-content/uploads/Excel-10-Install-Colorado.jpg'
+    datasheet_url: 'https://bergey.com/wp-content/uploads/Excel-10-Install-Colorado.jpg',
+    created_at: '2023-10-01T00:00:00Z',
+    last_updated: '2023-10-01T00:00:00Z'
   },
   {
     id: 'mod-006',
     name: 'E650 S4x',
     manufacturer: 'Landis+Gyr',
+    type: 'meter',
     category: 'meters',
-    releaseDate: '2021-11-01',
-    connectivity: ['Cellular', 'RF Mesh'],
-    certifications: ['ANSI C12.20', 'UL'],
+    release_date: '2021-11-01',
     dimensions: '178 x 244 x 66 mm',
-    weight: '1.5 kg',
-    voltage: '120-480V',
+    weight: 1.5,
+    power_rating: 0.01,
     description: 'Advanced grid meter with powerful computing platform.',
-    imageUrl: 'https://www.landisgyr.com/webfoo/wp-content/uploads/2015/12/E650-S4x-1024x1024.jpg'
+    datasheet_url: 'https://www.landisgyr.com/webfoo/wp-content/uploads/2015/12/E650-S4x-1024x1024.jpg',
+    created_at: '2023-10-01T00:00:00Z',
+    last_updated: '2023-10-01T00:00:00Z'
   }
 ];
 

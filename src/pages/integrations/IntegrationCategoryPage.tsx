@@ -9,6 +9,28 @@ import DeviceModelsCard from '@/components/integrations/DeviceModelsCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 
+// Create interface types for component props to resolve typescript errors
+interface PageHeaderProps {
+  title?: string;
+  description?: string;
+  categoryId?: string;
+}
+
+interface SearchFilterBarProps {
+  searchQuery?: string;
+  onSearchChange?: (value: string) => void;
+  activeTab?: string;
+  onTabChange?: (value: string) => void;
+  deviceCount?: number;
+}
+
+interface DeviceModelsCardProps {
+  deviceModels?: any[];
+  sortField?: string;
+  sortDirection?: 'asc' | 'desc';
+  onSort?: (field: string) => void;
+}
+
 const IntegrationCategoryPage = () => {
   const { categoryId } = useParams<{ categoryId: string }>();
   const navigate = useNavigate();
@@ -75,7 +97,7 @@ const IntegrationCategoryPage = () => {
           </div>
         ) : (
           <DeviceModelsCard 
-            devices={filteredDevices} 
+            deviceModels={filteredDevices} 
             sortField={sortField}
             sortDirection={sortDirection}
             onSort={handleSort}

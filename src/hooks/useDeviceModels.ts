@@ -9,6 +9,7 @@ export interface DeviceModel {
   manufacturer: string;
   model_number?: string;
   type: string;
+  category?: string;
   capacity?: number;
   power_rating?: number;
   efficiency?: number;
@@ -61,39 +62,53 @@ export const useDeviceModels = (categoryId?: string) => {
           ORDER BY name ASC
         `;
         
-        const { data, error } = await supabase.rpc('execute_sql', { sql_query: query });
+        // Use custom RPC function to execute SQL query
+        const { data, error } = await supabase.rpc('execute_sql', { query_text: query });
         
         if (error) throw error;
         
         if (data) {
-          const mappedData = data.map((item: any) => ({
-            id: item.id,
-            name: item.name,
-            manufacturer: item.manufacturer,
-            model_number: item.model_number,
-            type: item.type,
-            capacity: item.capacity,
-            power_rating: item.power_rating,
-            efficiency: item.efficiency,
-            dimensions: item.dimensions,
-            weight: item.weight,
-            warranty_period: item.warranty_period,
-            release_date: item.release_date,
-            description: item.description,
-            technical_specs: item.technical_specs,
-            datasheet_url: item.datasheet_url,
-            created_at: item.created_at,
-            last_updated: item.last_updated
-          })) as DeviceModel[];
+          // Parse the JSON string result
+          const parsedData = typeof data === 'string' ? JSON.parse(data) : data;
           
-          setDevices(mappedData);
-          setFilteredDevices(mappedData);
-          setDeviceCount(mappedData.length);
+          if (Array.isArray(parsedData)) {
+            const mappedData = parsedData.map((item: any) => ({
+              id: item.id,
+              name: item.name,
+              manufacturer: item.manufacturer,
+              model_number: item.model_number,
+              type: item.type,
+              category: mapTypeToCategory(item.type),
+              capacity: item.capacity,
+              power_rating: item.power_rating,
+              efficiency: item.efficiency,
+              dimensions: item.dimensions,
+              weight: item.weight,
+              warranty_period: item.warranty_period,
+              release_date: item.release_date,
+              description: item.description,
+              technical_specs: item.technical_specs,
+              datasheet_url: item.datasheet_url,
+              created_at: item.created_at,
+              last_updated: item.last_updated
+            })) as DeviceModel[];
+            
+            setDevices(mappedData);
+            setFilteredDevices(mappedData);
+            setDeviceCount(mappedData.length);
+          } else {
+            console.error('Unexpected data format:', parsedData);
+            setDevices([]);
+            setFilteredDevices([]);
+            setDeviceCount(0);
+          }
         }
       } catch (err) {
         console.error('Error fetching device models:', err);
         setError(err as Error);
         toast.error('Failed to fetch device models');
+        setDevices([]);
+        setFilteredDevices([]);
       } finally {
         setIsLoading(false);
       }
@@ -165,8 +180,24 @@ export const useDeviceModels = (categoryId?: string) => {
     return categoryMap[categoryId] || '';
   }
   
+  // Helper function to map device types to category IDs
+  function mapTypeToCategory(type: string): string {
+    const typeMap: Record<string, string> = {
+      'battery': 'batteries',
+      'inverter': 'inverters',
+      'solar': 'solar-panels',
+      'wind': 'wind-turbines',
+      'ev_charger': 'ev-chargers',
+      'meter': 'meters',
+      'load': 'loads',
+      'grid': 'grid-connections'
+    };
+    
+    return typeMap[type] || '';
+  }
+  
   return {
-    devices: filteredDevices,
+    devices,
     filteredDevices,
     isLoading,
     error,

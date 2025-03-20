@@ -14,6 +14,7 @@ const mockAlerts: AlertItem[] = [
   {
     id: '1',
     timestamp: new Date(Date.now() - 3600000).toISOString(),
+    title: 'Battery Level Low',
     message: 'Battery storage capacity below 20%',
     severity: 'high',
     acknowledged: false
@@ -21,6 +22,7 @@ const mockAlerts: AlertItem[] = [
   {
     id: '2',
     timestamp: new Date(Date.now() - 7200000).toISOString(),
+    title: 'Solar Efficiency Drop',
     message: 'Solar panel efficiency dropped below threshold',
     severity: 'medium',
     acknowledged: false
@@ -28,6 +30,7 @@ const mockAlerts: AlertItem[] = [
   {
     id: '3',
     timestamp: new Date(Date.now() - 86400000).toISOString(),
+    title: 'System Update',
     message: 'System update available',
     severity: 'low',
     acknowledged: true
@@ -35,6 +38,7 @@ const mockAlerts: AlertItem[] = [
   {
     id: '4',
     timestamp: new Date(Date.now() - 172800000).toISOString(),
+    title: 'Grid Status Change',
     message: 'Grid connection status changed',
     severity: 'medium',
     acknowledged: true
@@ -134,8 +138,9 @@ const Alerts: React.FC = () => {
     return true;
   });
 
-  const getSeverityColor = (severity: 'high' | 'medium' | 'low') => {
+  const getSeverityColor = (severity: 'low' | 'medium' | 'high' | 'critical') => {
     switch (severity) {
+      case 'critical':
       case 'high': return 'bg-red-500';
       case 'medium': return 'bg-amber-500';
       case 'low': return 'bg-blue-500';
@@ -214,7 +219,8 @@ const Alerts: React.FC = () => {
                     <div className="flex items-start gap-3">
                       <div className={`${getSeverityColor(alert.severity)} h-3 w-3 rounded-full mt-1.5`} />
                       <div>
-                        <p className="font-medium">{alert.message}</p>
+                        <p className="font-medium">{alert.title}</p>
+                        <p>{alert.message}</p>
                         <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
                           <Clock className="h-3 w-3" />
                           <span>{formatDate(alert.timestamp)}</span>
