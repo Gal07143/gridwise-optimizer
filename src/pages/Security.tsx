@@ -1,7 +1,5 @@
-
 import React, { useState } from 'react';
-import Header from '@/components/layout/Header';
-import Sidebar from '@/components/layout/Sidebar';
+import AppLayout from '@/components/layout/AppLayout';
 import GlassPanel from '@/components/ui/GlassPanel';
 import { Shield, Lock, UserCheck, AlertTriangle, Key, Fingerprint, Eye, EyeOff, HistoryIcon, Clock, Calendar, RefreshCw, CheckCircle2, XCircle, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -257,423 +255,417 @@ const Security = () => {
   };
   
   return (
-    <div className="flex h-screen overflow-hidden">
-      <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Header />
-        <div className="flex-1 overflow-y-auto p-6 animate-fade-in">
-          <div className="flex justify-between items-center mb-6">
-            <div>
-              <h1 className="text-2xl font-semibold mb-1">Security Dashboard</h1>
-              <p className="text-muted-foreground">
-                Monitor system security, access control, and threat detection
-              </p>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <Select
-                defaultValue={timeRange}
-                onValueChange={setTimeRange}
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select time range" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1h">Last Hour</SelectItem>
-                  <SelectItem value="24h">Last 24 Hours</SelectItem>
-                  <SelectItem value="7d">Last 7 Days</SelectItem>
-                  <SelectItem value="30d">Last 30 Days</SelectItem>
-                </SelectContent>
-              </Select>
-              
-              <Button variant="outline">Export Report</Button>
-            </div>
-          </div>
+    <AppLayout>
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-semibold mb-1">Security Dashboard</h1>
+          <p className="text-muted-foreground">
+            Monitor system security, access control, and threat detection
+          </p>
+        </div>
+        
+        <div className="flex items-center space-x-2">
+          <Select
+            defaultValue={timeRange}
+            onValueChange={setTimeRange}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Select time range" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1h">Last Hour</SelectItem>
+              <SelectItem value="24h">Last 24 Hours</SelectItem>
+              <SelectItem value="7d">Last 7 Days</SelectItem>
+              <SelectItem value="30d">Last 30 Days</SelectItem>
+            </SelectContent>
+          </Select>
           
-          <div className="grid gap-6 grid-cols-1 md:grid-cols-4 mb-6">
-            <SecurityStat 
-              icon={Shield} 
-              title="Security Level" 
-              value="High" 
-              status="good"
-              detail="All systems secure"
-            />
-            
-            <SecurityStat 
-              icon={AlertTriangle} 
-              title="Active Threats" 
-              value={securityThreats.filter(t => t.status !== 'mitigated').length} 
-              status={securityThreats.filter(t => t.status !== 'mitigated').length > 0 ? 'warning' : 'good'}
-              detail="Under investigation"
-            />
-            
-            <SecurityStat 
-              icon={UserCheck} 
-              title="Active Sessions" 
-              value={activeSessions.length} 
-              status="good"
-            />
-            
-            <SecurityStat 
-              icon={Lock} 
-              title="Failed Logins" 
-              value="2" 
-              status="warning"
-              detail="Last 24 hours"
-            />
-          </div>
-          
-          <Tabs defaultValue="events" className="space-y-6">
-            <TabsList>
-              <TabsTrigger value="events" className="flex items-center gap-2">
-                <HistoryIcon className="h-4 w-4" />
-                Security Events
-              </TabsTrigger>
-              <TabsTrigger value="sessions" className="flex items-center gap-2">
-                <UserCheck className="h-4 w-4" />
-                Active Sessions
-              </TabsTrigger>
-              <TabsTrigger value="threats" className="flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4" />
-                Threats
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="events">
-              <GlassPanel>
-                <div className="p-4 border-b border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                  <div className="flex items-center">
-                    <HistoryIcon className="h-5 w-5 text-primary mr-2" />
-                    <h2 className="font-medium">Security Event Log</h2>
-                  </div>
-                  <div className="relative w-full sm:w-64">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search events..."
-                      className="pl-8"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                  </div>
-                </div>
-                
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Time</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Action</TableHead>
-                        <TableHead>User</TableHead>
-                        <TableHead>Source</TableHead>
-                        <TableHead>Details</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {securityEvents.map((event) => (
-                        <TableRow key={event.id}>
-                          <TableCell>
-                            <div className="font-medium">{timeSince(event.timestamp)}</div>
-                            <div className="text-xs text-muted-foreground">{formatDate(event.timestamp)}</div>
-                          </TableCell>
-                          <TableCell>
-                            <EventTypeBadge type={event.type} />
-                          </TableCell>
-                          <TableCell>
-                            <ActionBadge action={event.action} />
-                          </TableCell>
-                          <TableCell>{event.user}</TableCell>
-                          <TableCell>
-                            <code className="text-xs bg-muted p-1 rounded">{event.source}</code>
-                          </TableCell>
-                          <TableCell>{event.details}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </GlassPanel>
-            </TabsContent>
-            
-            <TabsContent value="sessions">
-              <GlassPanel>
-                <div className="p-4 border-b border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                  <div className="flex items-center">
-                    <UserCheck className="h-5 w-5 text-primary mr-2" />
-                    <h2 className="font-medium">Active User Sessions</h2>
-                  </div>
-                  <Button variant="outline" size="sm">
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    Refresh
-                  </Button>
-                </div>
-                
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>User</TableHead>
-                        <TableHead>Device</TableHead>
-                        <TableHead>Location</TableHead>
-                        <TableHead>Login Time</TableHead>
-                        <TableHead>Last Activity</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {activeSessions.map((session) => (
-                        <TableRow key={session.id}>
-                          <TableCell>
-                            <div className="font-medium">{session.user}</div>
-                            <div className="text-xs text-muted-foreground">IP: {session.ip}</div>
-                          </TableCell>
-                          <TableCell>
-                            <div>{session.device}</div>
-                            <div className="text-xs text-muted-foreground">{session.browser}</div>
-                          </TableCell>
-                          <TableCell>{session.location}</TableCell>
-                          <TableCell>
-                            <div>{timeSince(session.loginTime)}</div>
-                            <div className="text-xs text-muted-foreground">{formatDate(session.loginTime)}</div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center">
-                              <div className="h-2 w-2 rounded-full bg-green-500 mr-2"></div>
-                              <span>{timeSince(session.lastActive)}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button variant="ghost" size="sm" className="text-destructive">Terminate</Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </GlassPanel>
-            </TabsContent>
-            
-            <TabsContent value="threats">
-              <GlassPanel>
-                <div className="p-4 border-b border-border">
-                  <div className="flex items-center">
-                    <AlertTriangle className="h-5 w-5 text-primary mr-2" />
-                    <h2 className="font-medium">Detected Security Threats</h2>
-                  </div>
-                </div>
-                
-                {securityThreats.length > 0 ? (
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Time</TableHead>
-                          <TableHead>Severity</TableHead>
-                          <TableHead>Type</TableHead>
-                          <TableHead>Source</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Details</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {securityThreats.map((threat) => (
-                          <TableRow key={threat.id}>
-                            <TableCell>
-                              <div>{timeSince(threat.timestamp)}</div>
-                              <div className="text-xs text-muted-foreground">{formatDate(threat.timestamp)}</div>
-                            </TableCell>
-                            <TableCell>
-                              <SeverityBadge severity={threat.severity} />
-                            </TableCell>
-                            <TableCell className="font-medium capitalize">{threat.type.replace('_', ' ')}</TableCell>
-                            <TableCell>
-                              <code className="text-xs bg-muted p-1 rounded">{threat.source}</code>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center">
-                                {threat.status === 'mitigated' ? (
-                                  <CheckCircle2 className="h-4 w-4 text-green-500 mr-1.5" />
-                                ) : (
-                                  <Clock className="h-4 w-4 text-amber-500 mr-1.5" />
-                                )}
-                                <span className="capitalize">{threat.status}</span>
-                              </div>
-                            </TableCell>
-                            <TableCell>{threat.details}</TableCell>
-                            <TableCell className="text-right">
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                disabled={threat.status === 'mitigated'}
-                              >
-                                {threat.status === 'mitigated' ? 'Resolved' : 'Resolve'}
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                ) : (
-                  <div className="text-center p-8">
-                    <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium">No Active Threats</h3>
-                    <p className="text-muted-foreground mt-2">
-                      Your system is secure. No security threats detected.
-                    </p>
-                  </div>
-                )}
-              </GlassPanel>
-            </TabsContent>
-          </Tabs>
-          
-          <div className="grid gap-6 md:grid-cols-3 mt-6">
-            <GlassPanel>
-              <div className="p-4 border-b border-border">
-                <div className="flex items-center">
-                  <Lock className="h-5 w-5 text-primary mr-2" />
-                  <h2 className="font-medium">Authentication Settings</h2>
-                </div>
-              </div>
-              <div className="p-4 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-medium">Two-Factor Authentication</div>
-                    <div className="text-xs text-muted-foreground">Require 2FA for all admin users</div>
-                  </div>
-                  <div className="flex h-5 items-center space-x-2">
-                    <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                    <span className="text-xs">Enforced</span>
-                  </div>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-medium">Password Complexity</div>
-                    <div className="text-xs text-muted-foreground">Minimum 12 characters with mixed types</div>
-                  </div>
-                  <div className="flex h-5 items-center space-x-2">
-                    <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                    <span className="text-xs">High</span>
-                  </div>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-medium">Session Timeout</div>
-                    <div className="text-xs text-muted-foreground">Inactive sessions auto-logout</div>
-                  </div>
-                  <div className="flex h-5 items-center space-x-2">
-                    <span className="text-xs">30 minutes</span>
-                  </div>
-                </div>
-                
-                <Button variant="outline" size="sm" className="w-full mt-2">
-                  <Settings className="h-4 w-4 mr-2" />
-                  Manage Authentication
-                </Button>
-              </div>
-            </GlassPanel>
-            
-            <GlassPanel>
-              <div className="p-4 border-b border-border">
-                <div className="flex items-center">
-                  <Key className="h-5 w-5 text-primary mr-2" />
-                  <h2 className="font-medium">API Security</h2>
-                </div>
-              </div>
-              <div className="p-4 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-medium">API Rate Limiting</div>
-                    <div className="text-xs text-muted-foreground">Prevent API abuse</div>
-                  </div>
-                  <div className="flex h-5 items-center space-x-2">
-                    <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                    <span className="text-xs">Enabled</span>
-                  </div>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-medium">Token Expiration</div>
-                    <div className="text-xs text-muted-foreground">API tokens auto-expire</div>
-                  </div>
-                  <div className="flex h-5 items-center space-x-2">
-                    <span className="text-xs">24 hours</span>
-                  </div>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-medium">API Audit Logging</div>
-                    <div className="text-xs text-muted-foreground">Log all API access</div>
-                  </div>
-                  <div className="flex h-5 items-center space-x-2">
-                    <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                    <span className="text-xs">Verbose</span>
-                  </div>
-                </div>
-                
-                <Button variant="outline" size="sm" className="w-full mt-2">
-                  <Settings className="h-4 w-4 mr-2" />
-                  Manage API Security
-                </Button>
-              </div>
-            </GlassPanel>
-            
-            <GlassPanel>
-              <div className="p-4 border-b border-border">
-                <div className="flex items-center">
-                  <Fingerprint className="h-5 w-5 text-primary mr-2" />
-                  <h2 className="font-medium">Access Control</h2>
-                </div>
-              </div>
-              <div className="p-4 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-medium">Role-Based Access</div>
-                    <div className="text-xs text-muted-foreground">Granular permission control</div>
-                  </div>
-                  <div className="flex h-5 items-center space-x-2">
-                    <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                    <span className="text-xs">Enabled</span>
-                  </div>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-medium">IP Restrictions</div>
-                    <div className="text-xs text-muted-foreground">Limit access by IP address</div>
-                  </div>
-                  <div className="flex h-5 items-center space-x-2">
-                    <div className="h-2 w-2 rounded-full bg-amber-500"></div>
-                    <span className="text-xs">Partial</span>
-                  </div>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-medium">Device Authorization</div>
-                    <div className="text-xs text-muted-foreground">Verify new device logins</div>
-                  </div>
-                  <div className="flex h-5 items-center space-x-2">
-                    <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                    <span className="text-xs">Enabled</span>
-                  </div>
-                </div>
-                
-                <Button variant="outline" size="sm" className="w-full mt-2">
-                  <Settings className="h-4 w-4 mr-2" />
-                  Manage Access Control
-                </Button>
-              </div>
-            </GlassPanel>
-          </div>
+          <Button variant="outline">Export Report</Button>
         </div>
       </div>
-    </div>
+      
+      <div className="grid gap-6 grid-cols-1 md:grid-cols-4 mb-6">
+        <SecurityStat 
+          icon={Shield} 
+          title="Security Level" 
+          value="High" 
+          status="good"
+          detail="All systems secure"
+        />
+        
+        <SecurityStat 
+          icon={AlertTriangle} 
+          title="Active Threats" 
+          value={securityThreats.filter(t => t.status !== 'mitigated').length} 
+          status={securityThreats.filter(t => t.status !== 'mitigated').length > 0 ? 'warning' : 'good'}
+          detail="Under investigation"
+        />
+        
+        <SecurityStat 
+          icon={UserCheck} 
+          title="Active Sessions" 
+          value={activeSessions.length} 
+          status="good"
+        />
+        
+        <SecurityStat 
+          icon={Lock} 
+          title="Failed Logins" 
+          value="2" 
+          status="warning"
+          detail="Last 24 hours"
+        />
+      </div>
+      
+      <Tabs defaultValue="events" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="events" className="flex items-center gap-2">
+            <HistoryIcon className="h-4 w-4" />
+            Security Events
+          </TabsTrigger>
+          <TabsTrigger value="sessions" className="flex items-center gap-2">
+            <UserCheck className="h-4 w-4" />
+            Active Sessions
+          </TabsTrigger>
+          <TabsTrigger value="threats" className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4" />
+            Threats
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="events">
+          <GlassPanel>
+            <div className="p-4 border-b border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="flex items-center">
+                <HistoryIcon className="h-5 w-5 text-primary mr-2" />
+                <h2 className="font-medium">Security Event Log</h2>
+              </div>
+              <div className="relative w-full sm:w-64">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search events..."
+                  className="pl-8"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+            </div>
+            
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Time</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Action</TableHead>
+                    <TableHead>User</TableHead>
+                    <TableHead>Source</TableHead>
+                    <TableHead>Details</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {securityEvents.map((event) => (
+                    <TableRow key={event.id}>
+                      <TableCell>
+                        <div className="font-medium">{timeSince(event.timestamp)}</div>
+                        <div className="text-xs text-muted-foreground">{formatDate(event.timestamp)}</div>
+                      </TableCell>
+                      <TableCell>
+                        <EventTypeBadge type={event.type} />
+                      </TableCell>
+                      <TableCell>
+                        <ActionBadge action={event.action} />
+                      </TableCell>
+                      <TableCell>{event.user}</TableCell>
+                      <TableCell>
+                        <code className="text-xs bg-muted p-1 rounded">{event.source}</code>
+                      </TableCell>
+                      <TableCell>{event.details}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </GlassPanel>
+        </TabsContent>
+        
+        <TabsContent value="sessions">
+          <GlassPanel>
+            <div className="p-4 border-b border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="flex items-center">
+                <UserCheck className="h-5 w-5 text-primary mr-2" />
+                <h2 className="font-medium">Active User Sessions</h2>
+              </div>
+              <Button variant="outline" size="sm">
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Refresh
+              </Button>
+            </div>
+            
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>User</TableHead>
+                    <TableHead>Device</TableHead>
+                    <TableHead>Location</TableHead>
+                    <TableHead>Login Time</TableHead>
+                    <TableHead>Last Activity</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {activeSessions.map((session) => (
+                    <TableRow key={session.id}>
+                      <TableCell>
+                        <div className="font-medium">{session.user}</div>
+                        <div className="text-xs text-muted-foreground">IP: {session.ip}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div>{session.device}</div>
+                        <div className="text-xs text-muted-foreground">{session.browser}</div>
+                      </TableCell>
+                      <TableCell>{session.location}</TableCell>
+                      <TableCell>
+                        <div>{timeSince(session.loginTime)}</div>
+                        <div className="text-xs text-muted-foreground">{formatDate(session.loginTime)}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center">
+                          <div className="h-2 w-2 rounded-full bg-green-500 mr-2"></div>
+                          <span>{timeSince(session.lastActive)}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="sm" className="text-destructive">Terminate</Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </GlassPanel>
+        </TabsContent>
+        
+        <TabsContent value="threats">
+          <GlassPanel>
+            <div className="p-4 border-b border-border">
+              <div className="flex items-center">
+                <AlertTriangle className="h-5 w-5 text-primary mr-2" />
+                <h2 className="font-medium">Detected Security Threats</h2>
+              </div>
+            </div>
+            
+            {securityThreats.length > 0 ? (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Time</TableHead>
+                      <TableHead>Severity</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Source</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Details</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {securityThreats.map((threat) => (
+                      <TableRow key={threat.id}>
+                        <TableCell>
+                          <div>{timeSince(threat.timestamp)}</div>
+                          <div className="text-xs text-muted-foreground">{formatDate(threat.timestamp)}</div>
+                        </TableCell>
+                        <TableCell>
+                          <SeverityBadge severity={threat.severity} />
+                        </TableCell>
+                        <TableCell className="font-medium capitalize">{threat.type.replace('_', ' ')}</TableCell>
+                        <TableCell>
+                          <code className="text-xs bg-muted p-1 rounded">{threat.source}</code>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center">
+                            {threat.status === 'mitigated' ? (
+                              <CheckCircle2 className="h-4 w-4 text-green-500 mr-1.5" />
+                            ) : (
+                              <Clock className="h-4 w-4 text-amber-500 mr-1.5" />
+                            )}
+                            <span className="capitalize">{threat.status}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>{threat.details}</TableCell>
+                        <TableCell className="text-right">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            disabled={threat.status === 'mitigated'}
+                          >
+                            {threat.status === 'mitigated' ? 'Resolved' : 'Resolve'}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <div className="text-center p-8">
+                <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-4" />
+                <h3 className="text-lg font-medium">No Active Threats</h3>
+                <p className="text-muted-foreground mt-2">
+                  Your system is secure. No security threats detected.
+                </p>
+              </div>
+            )}
+          </GlassPanel>
+        </TabsContent>
+      </Tabs>
+      
+      <div className="grid gap-6 md:grid-cols-3 mt-6">
+        <GlassPanel>
+          <div className="p-4 border-b border-border">
+            <div className="flex items-center">
+              <Lock className="h-5 w-5 text-primary mr-2" />
+              <h2 className="font-medium">Authentication Settings</h2>
+            </div>
+          </div>
+          <div className="p-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="font-medium">Two-Factor Authentication</div>
+                <div className="text-xs text-muted-foreground">Require 2FA for all admin users</div>
+              </div>
+              <div className="flex h-5 items-center space-x-2">
+                <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                <span className="text-xs">Enforced</span>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="font-medium">Password Complexity</div>
+                <div className="text-xs text-muted-foreground">Minimum 12 characters with mixed types</div>
+              </div>
+              <div className="flex h-5 items-center space-x-2">
+                <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                <span className="text-xs">High</span>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="font-medium">Session Timeout</div>
+                <div className="text-xs text-muted-foreground">Inactive sessions auto-logout</div>
+              </div>
+              <div className="flex h-5 items-center space-x-2">
+                <span className="text-xs">30 minutes</span>
+              </div>
+            </div>
+            
+            <Button variant="outline" size="sm" className="w-full mt-2">
+              <Settings className="h-4 w-4 mr-2" />
+              Manage Authentication
+            </Button>
+          </div>
+        </GlassPanel>
+        
+        <GlassPanel>
+          <div className="p-4 border-b border-border">
+            <div className="flex items-center">
+              <Key className="h-5 w-5 text-primary mr-2" />
+              <h2 className="font-medium">API Security</h2>
+            </div>
+          </div>
+          <div className="p-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="font-medium">API Rate Limiting</div>
+                <div className="text-xs text-muted-foreground">Prevent API abuse</div>
+              </div>
+              <div className="flex h-5 items-center space-x-2">
+                <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                <span className="text-xs">Enabled</span>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="font-medium">Token Expiration</div>
+                <div className="text-xs text-muted-foreground">API tokens auto-expire</div>
+              </div>
+              <div className="flex h-5 items-center space-x-2">
+                <span className="text-xs">24 hours</span>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="font-medium">API Audit Logging</div>
+                <div className="text-xs text-muted-foreground">Log all API access</div>
+              </div>
+              <div className="flex h-5 items-center space-x-2">
+                <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                <span className="text-xs">Verbose</span>
+              </div>
+            </div>
+            
+            <Button variant="outline" size="sm" className="w-full mt-2">
+              <Settings className="h-4 w-4 mr-2" />
+              Manage API Security
+            </Button>
+          </div>
+        </GlassPanel>
+        
+        <GlassPanel>
+          <div className="p-4 border-b border-border">
+            <div className="flex items-center">
+              <Fingerprint className="h-5 w-5 text-primary mr-2" />
+              <h2 className="font-medium">Access Control</h2>
+            </div>
+          </div>
+          <div className="p-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="font-medium">Role-Based Access</div>
+                <div className="text-xs text-muted-foreground">Granular permission control</div>
+              </div>
+              <div className="flex h-5 items-center space-x-2">
+                <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                <span className="text-xs">Enabled</span>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="font-medium">IP Restrictions</div>
+                <div className="text-xs text-muted-foreground">Limit access by IP address</div>
+              </div>
+              <div className="flex h-5 items-center space-x-2">
+                <div className="h-2 w-2 rounded-full bg-amber-500"></div>
+                <span className="text-xs">Partial</span>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="font-medium">Device Authorization</div>
+                <div className="text-xs text-muted-foreground">Verify new device logins</div>
+              </div>
+              <div className="flex h-5 items-center space-x-2">
+                <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                <span className="text-xs">Enabled</span>
+              </div>
+            </div>
+            
+            <Button variant="outline" size="sm" className="w-full mt-2">
+              <Settings className="h-4 w-4 mr-2" />
+              Manage Access Control
+            </Button>
+          </div>
+        </GlassPanel>
+      </div>
+    </AppLayout>
   );
 };
 

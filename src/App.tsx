@@ -30,6 +30,7 @@ import EnergyFlow from "@/pages/EnergyFlow";
 import MicrogridControl from "@/pages/MicrogridControl";
 import SystemStatus from "@/pages/SystemStatus";
 import Reports from "@/pages/Reports";
+import Security from "@/pages/Security";
 
 // Create the routes configuration
 const routes: RouteObject[] = [
@@ -92,6 +93,10 @@ const routes: RouteObject[] = [
       {
         path: "system-status",
         element: <SystemStatus />
+      },
+      {
+        path: "security",
+        element: <Security />
       },
       {
         path: "settings",

@@ -13,7 +13,8 @@ import {
   MonitorCheck,
   Book,
   FileBarChart,
-  Wind
+  Wind,
+  ShieldAlert
 } from 'lucide-react';
 
 export const mainNavItems = [
@@ -41,6 +42,11 @@ export const mainNavItems = [
     href: "/reports",
     icon: <FileBarChart size={18} />,
     label: "Reports"
+  },
+  {
+    href: "/security",
+    icon: <ShieldAlert size={18} />,
+    label: "Security"
   }
 ];
 
