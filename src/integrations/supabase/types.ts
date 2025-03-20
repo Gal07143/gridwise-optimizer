@@ -9,6 +9,92 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      ai_models: {
+        Row: {
+          accuracy: number | null
+          created_at: string
+          id: string
+          last_trained: string
+          name: string
+          parameters: Json | null
+          type: string
+          version: string
+        }
+        Insert: {
+          accuracy?: number | null
+          created_at?: string
+          id?: string
+          last_trained?: string
+          name: string
+          parameters?: Json | null
+          type: string
+          version: string
+        }
+        Update: {
+          accuracy?: number | null
+          created_at?: string
+          id?: string
+          last_trained?: string
+          name?: string
+          parameters?: Json | null
+          type?: string
+          version?: string
+        }
+        Relationships: []
+      }
+      ai_recommendations: {
+        Row: {
+          applied: boolean | null
+          applied_at: string | null
+          applied_by: string | null
+          confidence: number | null
+          created_at: string
+          description: string
+          id: string
+          potential_savings: string | null
+          priority: string
+          site_id: string | null
+          title: string
+          type: string
+        }
+        Insert: {
+          applied?: boolean | null
+          applied_at?: string | null
+          applied_by?: string | null
+          confidence?: number | null
+          created_at?: string
+          description: string
+          id?: string
+          potential_savings?: string | null
+          priority: string
+          site_id?: string | null
+          title: string
+          type: string
+        }
+        Update: {
+          applied?: boolean | null
+          applied_at?: string | null
+          applied_by?: string | null
+          confidence?: number | null
+          created_at?: string
+          description?: string
+          id?: string
+          potential_savings?: string | null
+          priority?: string
+          site_id?: string | null
+          title?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_recommendations_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alerts: {
         Row: {
           acknowledged: boolean
@@ -52,6 +138,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      api_keys: {
+        Row: {
+          api_key: string
+          created_at: string
+          id: string
+          is_active: boolean
+          last_used: string | null
+          service: string
+          usage_count: number | null
+        }
+        Insert: {
+          api_key: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_used?: string | null
+          service: string
+          usage_count?: number | null
+        }
+        Update: {
+          api_key?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_used?: string | null
+          service?: string
+          usage_count?: number | null
+        }
+        Relationships: []
       }
       devices: {
         Row: {
@@ -531,6 +647,12 @@ export type Database = {
       }
     }
     Enums: {
+      ai_recommendation_priority: "low" | "medium" | "high"
+      ai_recommendation_type:
+        | "optimization"
+        | "system"
+        | "behavioral"
+        | "maintenance"
       alert_type: "warning" | "critical" | "info"
       device_status: "online" | "offline" | "maintenance" | "error"
       device_type: "solar" | "wind" | "battery" | "grid" | "load" | "ev_charger"
