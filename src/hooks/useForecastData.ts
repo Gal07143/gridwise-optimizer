@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -151,7 +150,7 @@ export function useForecastData() {
         totalConsumption: Number(totalConsumption.toFixed(1)),
         peakGeneration: Number(peakGeneration.toFixed(1)),
         peakConsumption: Number(peakConsumption.toFixed(1)),
-        confidence: Math.round((forecastData[0]?.confidence || 85)),
+        confidence: Math.round(forecastData[0]?.confidence || 85),
         netEnergy: Number(netEnergy.toFixed(1))
       });
 
