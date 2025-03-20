@@ -4,7 +4,7 @@ import React from 'react';
 interface ForecastMetrics {
   totalGeneration: number;
   totalConsumption: number;
-  netEnergy: number;
+  netEnergy: number; // Required here
   peakGeneration: number;
   peakConsumption: number;
   confidence?: number;

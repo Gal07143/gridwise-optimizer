@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -29,7 +28,7 @@ export interface ForecastMetrics {
   peakGeneration: number;
   peakConsumption: number;
   confidence: number;
-  netEnergy?: number; // Add this missing property
+  netEnergy: number; // Ensure this is always required
 }
 
 export interface Prediction {
@@ -40,7 +39,7 @@ export interface Prediction {
   cloudCover?: number;
   windSpeed?: number;
   weatherCondition?: string;
-  confidence?: number; // Add this missing property
+  confidence: number; // Added as a required property
 }
 
 export function useForecastData() {

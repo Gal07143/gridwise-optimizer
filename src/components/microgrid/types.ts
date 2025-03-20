@@ -52,7 +52,17 @@ export interface AlertItem {
   acknowledged: boolean;
 }
 
-// Additional types needed for MicrogridProvider
+// Add severity field to MicrogridAlert to make it compatible with AlertItem
+export interface MicrogridAlert {
+  id: string;
+  device_id: string;
+  type: string;
+  message: string;
+  timestamp: string;
+  acknowledged: boolean;
+  severity: 'low' | 'medium' | 'high'; // Added this field to match AlertItem
+}
+
 export interface MicrogridDevice {
   id: string;
   name: string;
@@ -63,15 +73,6 @@ export interface MicrogridDevice {
   site_id: string;
   last_updated: string;
   created_at: string;
-}
-
-export interface MicrogridAlert {
-  id: string;
-  device_id: string;
-  type: string;
-  message: string;
-  timestamp: string;
-  acknowledged: boolean;
 }
 
 export interface MicrogridSystemState {

@@ -98,6 +98,7 @@ const fetchAlerts = async (siteId: string): Promise<MicrogridAlert[]> => {
           message: 'Battery SOC low',
           timestamp: new Date().toISOString(),
           acknowledged: false,
+          severity: 'medium', // Add severity to match the AlertItem interface
         },
       ];
       resolve(mockAlerts);
