@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Report, ReportResult } from "@/types/energy";
 import { toast } from "sonner";
@@ -32,12 +31,14 @@ export const getAllReports = async (options?: {
     
     const { data, error } = await query;
     
-    if (error) throw error;
+    if (error) {
+      console.error("Error fetching reports:", error);
+      throw error;
+    }
     return data || [];
     
   } catch (error) {
     console.error("Error fetching reports:", error);
-    toast.error("Failed to fetch reports");
     return [];
   }
 };
@@ -53,12 +54,14 @@ export const getReportById = async (id: string): Promise<Report | null> => {
       .eq('id', id)
       .single();
     
-    if (error) throw error;
+    if (error) {
+      console.error(`Error fetching report ${id}:`, error);
+      throw error;
+    }
     return data;
     
   } catch (error) {
     console.error(`Error fetching report ${id}:`, error);
-    toast.error("Failed to fetch report details");
     return null;
   }
 };
@@ -68,20 +71,23 @@ export const getReportById = async (id: string): Promise<Report | null> => {
  */
 export const createReport = async (report: Omit<Report, 'id' | 'created_at' | 'last_run_at'>): Promise<Report | null> => {
   try {
+    console.log('Creating report with data:', report);
+    
     const { data, error } = await supabase
       .from('reports')
       .insert([report])
-      .select()
-      .single();
+      .select();
     
-    if (error) throw error;
+    if (error) {
+      console.error("Error creating report:", error);
+      throw error;
+    }
     
-    toast.success("Report created successfully");
-    return data;
+    console.log('Report created successfully:', data);
+    return data[0] || null;
     
   } catch (error) {
     console.error("Error creating report:", error);
-    toast.error("Failed to create report");
     return null;
   }
 };
@@ -101,14 +107,15 @@ export const updateReport = async (id: string, updates: Partial<Report>): Promis
       .select()
       .single();
     
-    if (error) throw error;
+    if (error) {
+      console.error(`Error updating report ${id}:`, error);
+      throw error;
+    }
     
-    toast.success("Report updated successfully");
     return data;
     
   } catch (error) {
     console.error(`Error updating report ${id}:`, error);
-    toast.error("Failed to update report");
     return null;
   }
 };
@@ -123,14 +130,15 @@ export const deleteReport = async (id: string): Promise<boolean> => {
       .delete()
       .eq('id', id);
     
-    if (error) throw error;
+    if (error) {
+      console.error(`Error deleting report ${id}:`, error);
+      throw error;
+    }
     
-    toast.success("Report deleted successfully");
     return true;
     
   } catch (error) {
     console.error(`Error deleting report ${id}:`, error);
-    toast.error("Failed to delete report");
     return false;
   }
 };
@@ -176,17 +184,17 @@ export const runReport = async (reportId: string): Promise<ReportResult | null> 
         report_id: reportId,
         result_data: resultData
       }])
-      .select()
-      .single();
+      .select();
     
-    if (error) throw error;
+    if (error) {
+      console.error(`Error saving report results:`, error);
+      throw error;
+    }
     
-    toast.success("Report generated successfully");
-    return data;
+    return data[0] || null;
     
   } catch (error) {
     console.error(`Error running report ${reportId}:`, error);
-    toast.error("Failed to generate report");
     return null;
   }
 };
@@ -203,12 +211,14 @@ export const getReportResults = async (reportId: string, limit = 10): Promise<Re
       .order('created_at', { ascending: false })
       .limit(limit);
     
-    if (error) throw error;
+    if (error) {
+      console.error(`Error fetching results for report ${reportId}:`, error);
+      throw error;
+    }
     return data || [];
     
   } catch (error) {
     console.error(`Error fetching results for report ${reportId}:`, error);
-    toast.error("Failed to fetch report results");
     return [];
   }
 };

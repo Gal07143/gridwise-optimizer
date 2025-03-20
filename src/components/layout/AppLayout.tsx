@@ -18,7 +18,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           {children}
         </div>
       </div>
-      <Toaster position="top-right" />
+      <Toaster position="top-right" richColors />
     </div>
   );
 };

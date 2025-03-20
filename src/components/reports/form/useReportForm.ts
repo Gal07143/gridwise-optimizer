@@ -14,6 +14,7 @@ interface UseReportFormProps {
 export const useReportForm = ({ onSuccess }: UseReportFormProps) => {
   const { currentSite } = useSite();
   const [isScheduled, setIsScheduled] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const form = useForm<ReportFormValues>({
     resolver: zodResolver(reportSchema),
@@ -22,15 +23,18 @@ export const useReportForm = ({ onSuccess }: UseReportFormProps) => {
   });
 
   const handleSubmit = async (data: ReportFormValues) => {
+    if (!currentSite?.id) {
+      toast.error('No site selected');
+      return;
+    }
+    
+    // If not scheduled, remove the schedule value
     if (!isScheduled) {
       data.schedule = undefined;
     }
     
     try {
-      if (!currentSite?.id) {
-        toast.error('No site selected');
-        return;
-      }
+      setIsSubmitting(true);
       
       const reportData = {
         site_id: currentSite.id,
@@ -43,12 +47,19 @@ export const useReportForm = ({ onSuccess }: UseReportFormProps) => {
         parameters: data.parameters || {},
       };
       
-      await createReport(reportData);
-      toast.success('Report created successfully');
-      onSuccess();
+      const result = await createReport(reportData);
+      
+      if (result) {
+        toast.success('Report created successfully');
+        onSuccess();
+      } else {
+        throw new Error('Failed to create report');
+      }
     } catch (error) {
       console.error('Error creating report:', error);
       toast.error('Failed to create report');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -56,6 +67,7 @@ export const useReportForm = ({ onSuccess }: UseReportFormProps) => {
     form,
     isScheduled,
     setIsScheduled,
+    isSubmitting,
     onSubmit: form.handleSubmit(handleSubmit)
   };
 };

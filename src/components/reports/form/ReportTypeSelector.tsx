@@ -16,7 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, TrendingDown, Zap, DollarSign, PieChart } from 'lucide-react';
 
 const reportTypeOptions = [
@@ -31,46 +30,43 @@ const ReportTypeSelector = () => {
   const form = useFormContext();
   
   return (
-    <Card className="mb-6">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-center">
-          <BarChart className="mr-2 h-5 w-5 text-primary" />
-          Report Type
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <FormField
-          control={form.control}
-          name="type"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Select Report Type</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a report type" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {reportTypeOptions.map(option => (
-                    <SelectItem key={option.value} value={option.value}>
-                      <div className="flex items-center">
-                        <span className="mr-2">{option.icon}</span>
-                        {option.label}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormDescription>
-                Different report types provide specialized insights
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </CardContent>
-    </Card>
+    <div className="space-y-4">
+      <div className="flex items-center gap-2 font-medium">
+        <BarChart className="h-5 w-5" />
+        <h3>Report Type</h3>
+      </div>
+      
+      <FormField
+        control={form.control}
+        name="type"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Select Report Type</FormLabel>
+            <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a report type" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                {reportTypeOptions.map(option => (
+                  <SelectItem key={option.value} value={option.value}>
+                    <div className="flex items-center">
+                      <span className="mr-2">{option.icon}</span>
+                      {option.label}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FormDescription>
+              Different report types provide specialized insights
+            </FormDescription>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    </div>
   );
 };
 

@@ -13,6 +13,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { BarChart3, Zap, LineChart, ArrowDownToLine } from 'lucide-react';
 import EnergyFlowChart from '@/components/dashboard/EnergyFlowChart';
+import { EnergyFlowProvider } from '@/components/dashboard/energy-flow/EnergyFlowContext';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -66,11 +67,13 @@ const Dashboard = () => {
             </TabsContent>
             
             <TabsContent value="energy-flow">
-              <Card>
-                <CardContent className="pt-6">
-                  <EnergyFlowChart />
-                </CardContent>
-              </Card>
+              <EnergyFlowProvider>
+                <Card>
+                  <CardContent className="pt-6">
+                    <EnergyFlowChart />
+                  </CardContent>
+                </Card>
+              </EnergyFlowProvider>
             </TabsContent>
             
             <TabsContent value="consumption">
