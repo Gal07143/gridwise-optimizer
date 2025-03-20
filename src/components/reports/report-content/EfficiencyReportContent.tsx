@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { 
@@ -172,7 +173,7 @@ const EfficiencyReportContent: React.FC<EfficiencyReportContentProps> = ({ data 
                     outerRadius={80}
                     fill="#8884d8"
                     dataKey="value"
-                    label={({ name, percent }) => `${String(name).replace(/_/g, ' ')} ${(percent * 100).toFixed(0)}%`}
+                    label={({ name, percent }) => `${name && String(name).replace(/_/g, ' ')} ${percent && (percent * 100).toFixed(0)}%`}
                   >
                     {componentPieData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -214,7 +215,7 @@ const EfficiencyReportContent: React.FC<EfficiencyReportContentProps> = ({ data 
                     outerRadius={80}
                     fill="#FF8042"
                     dataKey="value"
-                    label={({ name, percent }) => `${String(name)} ${(percent * 100).toFixed(0)}%`}
+                    label={({ name, percent }) => `${name && String(name)} ${percent && (percent * 100).toFixed(0)}%`}
                   >
                     {lossData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

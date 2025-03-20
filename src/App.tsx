@@ -4,7 +4,6 @@ import {
   createBrowserRouter,
   RouterProvider,
   RouteObject,
-  useNavigate,
 } from "react-router-dom";
 import { useAuth } from '@/contexts/AuthContext';
 import { useSite } from '@/contexts/SiteContext';
@@ -29,7 +28,7 @@ import MicrogridControl from "@/pages/MicrogridControl";
 import SystemStatus from "@/pages/SystemStatus";
 import Reports from "@/pages/Reports";
 
-// Add the Reports route to the RouteObject array
+// Create the routes configuration
 const routes: RouteObject[] = [
   {
     path: "/",
@@ -42,6 +41,7 @@ const routes: RouteObject[] = [
   {
     element: <ProtectedRoute>
       {/* Protected routes will be rendered as children */}
+      <></>
     </ProtectedRoute>,
     children: [
       {
@@ -109,12 +109,12 @@ const routes: RouteObject[] = [
 ];
 
 const App = () => {
-  const { user, checkAuth } = useAuth();
+  const { user, session } = useAuth();
   const { currentSite, setCurrentSite } = useSite();
   
   useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+    // No need to call checkAuth here as it's handled in AuthContext already
+  }, []);
   
   useEffect(() => {
     const storedSiteId = localStorage.getItem('currentSiteId');
