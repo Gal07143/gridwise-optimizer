@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import {
   createBrowserRouter,
   RouterProvider,
@@ -109,24 +109,6 @@ const routes: RouteObject[] = [
 ];
 
 const App = () => {
-  const { user, session } = useAuth();
-  const { currentSite, setCurrentSite } = useSite();
-  
-  useEffect(() => {
-    // No need to call checkAuth here as it's handled in AuthContext already
-  }, []);
-  
-  useEffect(() => {
-    const storedSiteId = localStorage.getItem('currentSiteId');
-    if (storedSiteId && currentSite) {
-      // Optimistically set the site, it will be validated in SiteContext
-      setCurrentSite({
-        ...currentSite,
-        id: storedSiteId
-      });
-    }
-  }, [setCurrentSite, currentSite]);
-  
   const router = createBrowserRouter(routes);
   
   return (
