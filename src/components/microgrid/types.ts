@@ -1,87 +1,70 @@
 
 export interface MicrogridState {
-  batteryChargeEnabled: boolean;
-  batteryDischargeEnabled: boolean;
-  gridImportEnabled: boolean;
-  gridExportEnabled: boolean;
-  solarProduction: number;
-  windProduction: number;
-  batteryLevel: number;
-  batteryChargeRate: number;
-  batterySelfConsumptionMode: boolean;
-  systemMode: 'automatic' | 'manual' | 'eco' | 'backup';
-  economicMode: boolean;
-  peakShavingEnabled: boolean;
-  demandResponseEnabled: boolean;
-  lastUpdated: string;
-  
-  // Adding missing properties that are used in the codebase
-  operatingMode: 'automatic' | 'manual' | 'island' | 'grid-connected';
-  gridConnection: boolean;
   batteryCharge: number;
-  loadConsumption: number;
-  gridImport: number;
-  gridExport: number;
-  frequency: number;
-  voltage: number;
+  batteryCharging: boolean;
+  batteryCurrent: number;
+  batteryCapacity: number;
+  solarOutput: number;
+  solarConnected: boolean;
+  solarEfficiency: number;
+  windOutput: number;
+  windConnected: boolean;
+  windSpeed: number;
+  gridPower: number;
+  gridConnection: boolean;
+  gridConnected?: boolean; // Legacy field, use gridConnection instead
+  loadDemand: number;
+  loadConnected: boolean;
+  buildingEfficiency: number;
+  timestamp: Date;
+  systemMode: 'auto' | 'manual' | 'eco' | 'backup';
 }
 
-export interface ControlSettings {
-  prioritizeSelfConsumption: boolean;
-  gridExportLimit: number;
-  minBatteryReserve: number;
-  peakShavingEnabled: boolean;
-  peakShavingThreshold: number;
-  demandResponseEnabled: boolean;
-  economicOptimizationEnabled: boolean;
-  weatherPredictiveControlEnabled: boolean;
+export interface MicrogridAction {
+  type: string;
+  payload?: any;
+}
+
+export interface MicrogridContextType {
+  state: MicrogridState;
+  dispatch: React.Dispatch<MicrogridAction>;
+}
+
+export interface DeviceStatus {
+  id: string;
+  name: string;
+  type: 'solar' | 'battery' | 'wind' | 'grid' | 'load';
+  status: 'online' | 'offline' | 'error' | 'maintenance';
+  output: number;
+  details: {
+    [key: string]: string | number;
+  };
+}
+
+export interface SystemAlert {
+  id: string;
+  timestamp: Date;
+  severity: 'info' | 'warning' | 'error' | 'critical';
+  message: string;
+  source: string;
+  acknowledged: boolean;
 }
 
 export interface CommandHistoryItem {
-  timestamp: string;
-  command: string;
-  success: boolean;
+  id: string;
+  timestamp: Date;
   user: string;
+  command: string;
+  status: 'success' | 'failed' | 'pending';
+  details?: string;
 }
 
-export interface AlertItem {
+export interface MicrogridInsight {
   id: string;
-  timestamp: string;
-  message: string;
-  severity: 'low' | 'medium' | 'high';
-  acknowledged: boolean;
-}
-
-// Add severity field to MicrogridAlert to make it compatible with AlertItem
-export interface MicrogridAlert {
-  id: string;
-  device_id: string;
-  type: string;
-  message: string;
-  timestamp: string;
-  acknowledged: boolean;
-  severity: 'low' | 'medium' | 'high'; // Added this field to match AlertItem
-}
-
-export interface MicrogridDevice {
-  id: string;
-  name: string;
-  type: string;
-  status: string;
-  location: string;
-  capacity: number;
-  site_id: string;
-  last_updated: string;
-  created_at: string;
-}
-
-export interface MicrogridSystemState {
-  mode: string;
-  status: string;
-  gridConnected: boolean;
-  lastModeChange: string;
-  batteryReserve: number;
-  prioritizeRenewables: boolean;
-  energyExport: boolean;
-  safetyProtocols: boolean;
+  title: string;
+  description: string;
+  impact: 'positive' | 'negative' | 'neutral';
+  category: 'efficiency' | 'performance' | 'savings' | 'reliability';
+  value?: number;
+  unit?: string;
 }

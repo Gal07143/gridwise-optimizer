@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from '@/contexts/AuthContext'; 
@@ -27,6 +28,7 @@ import IntegrationsHome from './pages/integrations/IntegrationsHome';
 import IntegrationCategoryPage from './pages/integrations/IntegrationCategoryPage';
 import DeviceModelDetailPage from './pages/integrations/DeviceModelDetailPage';
 import AddDeviceModelPage from './pages/integrations/AddDeviceModelPage';
+import EditDeviceModelPage from './pages/integrations/EditDeviceModelPage';
 import ApiSettings from './pages/settings/ApiSettings';
 import UserSettings from './pages/settings/UserSettings';
 import RoleManagement from './pages/settings/RoleManagement';
@@ -49,6 +51,8 @@ import DataExport from './pages/settings/DataExport';
 import AuditLogging from './pages/settings/AuditLogging';
 import OptimizationAlgorithms from './pages/settings/OptimizationAlgorithms';
 import OperationalThresholds from './pages/settings/OperationalThresholds';
+import SystemUpdates from './pages/settings/SystemUpdates';
+import StorageConfiguration from './pages/settings/StorageConfiguration';
 
 const queryClient = new QueryClient();
 

@@ -35,10 +35,35 @@ const DeviceModelsCard: React.FC<DeviceModelsCardProps> = ({
 }) => {
   const handleExportList = () => {
     toast.success("Exporting device list...");
-    // Simulate file download
+    
+    // Create CSV content
+    const headers = ['Name', 'Manufacturer', 'Power Rating', 'Capacity', 'Release Date'];
+    const csvContent = [
+      headers.join(','),
+      ...filteredDevices.map(device => [
+        device.name,
+        device.manufacturer,
+        device.powerRating || 'N/A',
+        device.capacity || 'N/A',
+        device.releaseDate || 'N/A'
+      ].join(','))
+    ].join('\n');
+    
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const filename = `${categoryName.toLowerCase()}-list-${timestamp}.csv`;
+    link.setAttribute('download', filename);
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
     setTimeout(() => {
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const filename = `${categoryName.toLowerCase()}-list-${timestamp}.csv`;
       toast.info(`Device list exported as ${filename}`);
     }, 1500);
   };
@@ -58,10 +83,21 @@ const DeviceModelsCard: React.FC<DeviceModelsCardProps> = ({
 
   const handleDownloadCatalog = () => {
     toast.success(`Downloading ${categoryName} catalog...`);
-    // Simulate file download
+    
+    // Create a simulated PDF download
     setTimeout(() => {
       const timestamp = new Date().toISOString().slice(0, 10);
       const filename = `${categoryName.toLowerCase()}-catalog-${timestamp}.pdf`;
+      
+      // Create a temporary anchor element to simulate the download
+      const link = document.createElement('a');
+      // In a real app, this would be a URL to the actual PDF
+      link.setAttribute('href', 'data:application/pdf;charset=utf-8,');
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
       toast.info(`Catalog downloaded as ${filename}`);
     }, 2000);
   };

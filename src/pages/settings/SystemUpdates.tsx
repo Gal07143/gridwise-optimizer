@@ -1,189 +1,190 @@
 
 import React, { useState } from 'react';
 import SettingsPageTemplate from '@/components/settings/SettingsPageTemplate';
-import { RefreshCw, Download, ArrowUpCircle, Clock, Shield } from 'lucide-react';
+import { Download, RefreshCw, AlertTriangle, CheckCircle2, Box, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
-import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const SystemUpdates = () => {
-  const [isChecking, setIsChecking] = useState(false);
-  const [isInstalling, setIsInstalling] = useState(false);
+  const [checkingUpdates, setCheckingUpdates] = useState(false);
+  const [installingUpdate, setInstallingUpdate] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [autoUpdates, setAutoUpdates] = useState(true);
-
-  const handleCheckForUpdates = () => {
-    setIsChecking(true);
-    toast.info("Checking for updates...");
+  
+  const handleCheckUpdates = () => {
+    setCheckingUpdates(true);
+    toast.info("Checking for system updates...");
     
-    // Simulate checking for updates
+    // Simulate API call
     setTimeout(() => {
-      setIsChecking(false);
-      toast.success("System is up to date!");
+      setCheckingUpdates(false);
+      toast.success("System is up to date");
     }, 2000);
   };
-
+  
   const handleInstallUpdate = () => {
-    setIsInstalling(true);
+    setInstallingUpdate(true);
     setProgress(0);
     toast.info("Installing system update...");
     
-    // Simulate installation progress
+    // Simulate progress
     const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
+      setProgress(prev => {
+        const newProgress = prev + 10;
+        if (newProgress >= 100) {
           clearInterval(interval);
-          setIsInstalling(false);
-          toast.success("Update installed successfully!");
+          setTimeout(() => {
+            setInstallingUpdate(false);
+            toast.success("System update installed successfully");
+          }, 500);
           return 100;
         }
-        return prev + 10;
+        return newProgress;
       });
     }, 500);
   };
-
-  const toggleAutoUpdates = () => {
-    setAutoUpdates(!autoUpdates);
-    toast.success(`Automatic updates ${!autoUpdates ? 'enabled' : 'disabled'}`);
-  };
-
+  
   return (
     <SettingsPageTemplate 
       title="System Updates" 
-      description="Manage system updates and version control"
+      description="Check for and install system updates"
       headerIcon={<RefreshCw size={20} />}
+      actions={
+        <Button 
+          onClick={handleCheckUpdates} 
+          disabled={checkingUpdates || installingUpdate}
+          className="gap-2"
+        >
+          {checkingUpdates ? (
+            <RefreshCw className="h-4 w-4 animate-spin" />
+          ) : (
+            <RefreshCw size={16} />
+          )}
+          Check for Updates
+        </Button>
+      }
     >
       <div className="space-y-6">
-        <div className="flex items-center justify-between p-4 bg-primary/5 rounded-lg">
-          <div>
-            <h3 className="text-lg font-medium">Current System Version</h3>
-            <p className="text-sm text-muted-foreground">EMS v4.2.1 (Released: June 15, 2023)</p>
-          </div>
-          <Button 
-            variant="outline" 
-            onClick={handleCheckForUpdates}
-            disabled={isChecking}
-            className="gap-2"
-          >
-            <RefreshCw size={16} className={isChecking ? "animate-spin" : ""} />
-            {isChecking ? "Checking..." : "Check for Updates"}
-          </Button>
+        <div className="bg-primary/5 p-4 rounded-lg">
+          <h3 className="text-lg font-medium flex items-center gap-2">
+            <Box size={18} />
+            <span>System Status</span>
+          </h3>
+          <p className="text-sm text-muted-foreground">Current system version and update status</p>
         </div>
-
-        <Card className="p-5">
-          <div className="flex items-start justify-between">
+        
+        <Card className="p-6">
+          <div className="flex justify-between items-start mb-6">
             <div>
-              <h3 className="text-lg font-medium flex items-center gap-2">
-                <ArrowUpCircle size={18} className="text-green-500" />
-                <span>Update Available: EMS v4.3.0</span>
-              </h3>
-              <p className="text-sm text-muted-foreground mt-1">Released: July 28, 2023</p>
+              <h3 className="text-lg font-medium">GridWise Energy Management System</h3>
+              <p className="text-sm text-muted-foreground">Version 4.2.1</p>
             </div>
-            <Button 
-              onClick={handleInstallUpdate}
-              disabled={isInstalling}
-              className="gap-2"
-            >
-              <Download size={16} />
-              {isInstalling ? "Installing..." : "Install Update"}
-            </Button>
+            <Badge variant="outline" className="font-normal">
+              <CheckCircle2 className="h-3.5 w-3.5 mr-1 text-green-500" />
+              Up to Date
+            </Badge>
           </div>
           
-          {isInstalling && (
-            <div className="mt-4">
-              <Progress value={progress} className="h-2" />
-              <p className="text-xs text-muted-foreground mt-1 text-right">{progress}% complete</p>
+          <div className="space-y-6">
+            <div>
+              <div className="flex justify-between text-sm mb-2">
+                <span className="font-medium">Last checked:</span>
+                <span className="text-muted-foreground">Today at 09:45 AM</span>
+              </div>
+              <div className="flex justify-between text-sm mb-2">
+                <span className="font-medium">Last update:</span>
+                <span className="text-muted-foreground">May 15, 2023</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="font-medium">Update channel:</span>
+                <span className="text-muted-foreground">Stable</span>
+              </div>
             </div>
-          )}
-          
-          <div className="mt-4">
-            <h4 className="text-sm font-medium">Release Notes:</h4>
-            <ul className="list-disc list-inside text-sm text-muted-foreground mt-2 space-y-1">
-              <li>Improved battery optimization algorithms</li>
-              <li>Fixed issue with solar panel drift calculations</li>
-              <li>Enhanced security for API authentication</li>
-              <li>Added support for new inverter models</li>
-              <li>Performance improvements for data processing</li>
-            </ul>
+            
+            {installingUpdate && (
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium">Installing update...</span>
+                  <span className="text-sm text-muted-foreground">{progress}%</span>
+                </div>
+                <Progress value={progress} className="h-2" />
+              </div>
+            )}
           </div>
         </Card>
-
-        <Separator />
-
+        
+        <Alert>
+          <Clock className="h-4 w-4" />
+          <AlertTitle>Scheduled Maintenance</AlertTitle>
+          <AlertDescription>
+            Automatic system updates are scheduled for every Sunday at 2:00 AM.
+          </AlertDescription>
+        </Alert>
+        
         <div className="space-y-4">
-          <h3 className="text-lg font-medium">Update Settings</h3>
+          <h3 className="text-lg font-medium">Available Updates</h3>
           
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="text-base font-medium">Automatic Updates</h4>
-              <p className="text-sm text-muted-foreground">Allow the system to install updates automatically during off-peak hours</p>
+          <Card className="p-4">
+            <div className="flex items-start justify-between">
+              <div>
+                <h4 className="text-base font-medium">Security Update</h4>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Critical security patches for system components
+                </p>
+                <div className="flex items-center gap-1 mt-2">
+                  <Badge className="bg-amber-500 hover:bg-amber-600">Security</Badge>
+                  <Badge variant="outline">2.5 MB</Badge>
+                </div>
+              </div>
+              <Button 
+                size="sm" 
+                className="gap-2"
+                onClick={handleInstallUpdate}
+                disabled={installingUpdate}
+              >
+                <Download size={14} />
+                Install
+              </Button>
             </div>
-            <Switch checked={autoUpdates} onCheckedChange={toggleAutoUpdates} />
-          </div>
+          </Card>
           
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="text-base font-medium">Schedule Updates</h4>
-              <p className="text-sm text-muted-foreground">Set a schedule for automatic update installation</p>
+          <Card className="p-4">
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="flex items-center">
+                  <h4 className="text-base font-medium">GridWise EMS v4.3.0</h4>
+                  <Badge className="ml-2" variant="outline">Coming Soon</Badge>
+                </div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  New features and performance improvements
+                </p>
+                <div className="flex items-center gap-1 mt-2">
+                  <Badge>Feature</Badge>
+                  <Badge variant="outline">156 MB</Badge>
+                </div>
+              </div>
+              <Button 
+                size="sm" 
+                className="gap-2"
+                disabled
+              >
+                <Clock size={14} />
+                Pre-register
+              </Button>
             </div>
-            <Button variant="outline" size="sm" className="gap-2">
-              <Clock size={14} />
-              Configure
-            </Button>
-          </div>
-          
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="text-base font-medium">Critical Updates Only</h4>
-              <p className="text-sm text-muted-foreground">Only install security and critical fixes automatically</p>
-            </div>
-            <Switch />
-          </div>
+          </Card>
         </div>
-
-        <Separator />
-
-        <div className="space-y-4">
-          <h3 className="text-lg font-medium">Update History</h3>
-          
-          <div className="space-y-3">
-            <div className="flex items-start justify-between p-3 bg-muted/30 rounded-md">
-              <div>
-                <div className="flex items-center gap-2">
-                  <Shield size={16} className="text-green-500" />
-                  <span className="font-medium">EMS v4.2.1 (Security Patch)</span>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">Installed on: June 15, 2023</p>
-              </div>
-              <Button variant="ghost" size="sm">View Details</Button>
-            </div>
-            
-            <div className="flex items-start justify-between p-3 bg-muted/30 rounded-md">
-              <div>
-                <div className="flex items-center gap-2">
-                  <ArrowUpCircle size={16} className="text-blue-500" />
-                  <span className="font-medium">EMS v4.2.0 (Feature Update)</span>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">Installed on: May 30, 2023</p>
-              </div>
-              <Button variant="ghost" size="sm">View Details</Button>
-            </div>
-            
-            <div className="flex items-start justify-between p-3 bg-muted/30 rounded-md">
-              <div>
-                <div className="flex items-center gap-2">
-                  <Shield size={16} className="text-green-500" />
-                  <span className="font-medium">EMS v4.1.3 (Security Patch)</span>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">Installed on: April 12, 2023</p>
-              </div>
-              <Button variant="ghost" size="sm">View Details</Button>
-            </div>
-          </div>
-        </div>
+        
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Important Notice</AlertTitle>
+          <AlertDescription>
+            Always ensure your system has a backup before installing major updates.
+          </AlertDescription>
+        </Alert>
       </div>
     </SettingsPageTemplate>
   );
