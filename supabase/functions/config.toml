@@ -1,0 +1,8 @@
+
+project_id = "xullgeycueouyxeirrqs"
+
+[energy-ai-predictions]
+verify_jwt = false
+
+[weather-api]
+verify_jwt = false

@@ -11,74 +11,51 @@ import SystemStatus from './pages/SystemStatus';
 import EditDevice from './pages/EditDevice';
 import AddDevice from './pages/AddDevice';
 import Devices from './pages/Devices';
+import NotFound from './pages/NotFound';
+// Import the settings pages
+import ProcessingSettings from './pages/settings/ProcessingSettings';
+import TariffSettings from './pages/settings/TariffSettings';
+import ThresholdsSettings from './pages/settings/ThresholdsSettings';
+import AlgorithmsSettings from './pages/settings/AlgorithmsSettings';
+// Import integration pages
 import IntegrationsHome from './pages/integrations/IntegrationsHome';
 import IntegrationCategoryPage from './pages/integrations/IntegrationCategoryPage';
 import DeviceModelDetailPage from './pages/integrations/DeviceModelDetailPage';
 import AddDeviceModelPage from './pages/integrations/AddDeviceModelPage';
-import NotFound from './pages/NotFound';
-import { SiteProvider } from './contexts/SiteContext';
-import { AuthProvider } from './contexts/AuthContext';
-import ProtectedRoute from './components/auth/ProtectedRoute';
-import Auth from './pages/Auth';
-import { Toaster } from 'sonner';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import SiteSettings from './pages/settings/SiteSettings';
-import Security from './pages/Security';
-import Alerts from './pages/Alerts';
-import Encryption from './pages/settings/Encryption';
-import Permissions from './pages/settings/Permissions';
-import ExternalServices from './pages/settings/ExternalServices';
-import Index from './pages/Index';
-
-// Create a client
-const queryClient = new QueryClient();
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <SiteProvider>
-          <Router>
-            <Routes>
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-              <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-              <Route path="/settings/sites" element={<ProtectedRoute><SiteSettings /></ProtectedRoute>} />
-              <Route path="/settings/encryption" element={<ProtectedRoute><Encryption /></ProtectedRoute>} />
-              <Route path="/settings/permissions" element={<ProtectedRoute><Permissions /></ProtectedRoute>} />
-              <Route path="/settings/external-services" element={<ProtectedRoute><ExternalServices /></ProtectedRoute>} />
-              <Route path="/settings/profile" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-              <Route path="/settings/preferences" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-              <Route path="/settings/general" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-              <Route path="/settings/users" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-              <Route path="/settings/api" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-              <Route path="/reports" element={<ProtectedRoute><ReportsPage /></ProtectedRoute>} />
-              <Route path="/energy-flow" element={<ProtectedRoute><EnergyFlow /></ProtectedRoute>} />
-              <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
-              <Route path="/microgrid-control" element={<ProtectedRoute><MicrogridControl /></ProtectedRoute>} />
-              <Route path="/system-status" element={<ProtectedRoute><SystemStatus /></ProtectedRoute>} />
-              <Route path="/edit-device/:id" element={<ProtectedRoute><EditDevice /></ProtectedRoute>} />
-              <Route path="/add-device" element={<ProtectedRoute><AddDevice /></ProtectedRoute>} />
-              <Route path="/devices" element={<ProtectedRoute><Devices /></ProtectedRoute>} />
-              <Route path="/devices/scan" element={<ProtectedRoute><Devices /></ProtectedRoute>} />
-              <Route path="/security" element={<ProtectedRoute><Security /></ProtectedRoute>} />
-              <Route path="/alerts" element={<ProtectedRoute><Alerts /></ProtectedRoute>} />
-              
-              {/* Integration Routes */}
-              <Route path="/integrations" element={<ProtectedRoute><IntegrationsHome /></ProtectedRoute>} />
-              <Route path="/integrations/:categoryId" element={<ProtectedRoute><IntegrationCategoryPage /></ProtectedRoute>} />
-              <Route path="/integrations/device/:deviceId" element={<ProtectedRoute><DeviceModelDetailPage /></ProtectedRoute>} />
-              <Route path="/integrations/add-device-model" element={<ProtectedRoute><AddDeviceModelPage /></ProtectedRoute>} />
-              
-              {/* 404 Not Found Route */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-            <Toaster position="top-right" />
-          </Router>
-        </SiteProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+    <Router>
+      <Routes>
+        {/* Main Routes */}
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/devices" element={<Devices />} />
+        <Route path="/devices/add" element={<AddDevice />} />
+        <Route path="/devices/edit/:id" element={<EditDevice />} />
+        <Route path="/energy-flow" element={<EnergyFlow />} />
+        <Route path="/analytics" element={<Analytics />} />
+        <Route path="/reports" element={<ReportsPage />} />
+        <Route path="/microgrid-control" element={<MicrogridControl />} />
+        <Route path="/system-status" element={<SystemStatus />} />
+        <Route path="/settings" element={<Settings />} />
+        
+        {/* Settings Pages */}
+        <Route path="/settings/processing" element={<ProcessingSettings />} />
+        <Route path="/settings/tariffs" element={<TariffSettings />} />
+        <Route path="/settings/thresholds" element={<ThresholdsSettings />} />
+        <Route path="/settings/algorithms" element={<AlgorithmsSettings />} />
+        
+        {/* Integration Pages */}
+        <Route path="/integrations" element={<IntegrationsHome />} />
+        <Route path="/integrations/category/:categoryId" element={<IntegrationCategoryPage />} />
+        <Route path="/integrations/device-model/:id" element={<DeviceModelDetailPage />} />
+        <Route path="/integrations/add-device-model" element={<AddDeviceModelPage />} />
+        
+        {/* Catch-all route for 404 */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Router>
   );
 }
 
