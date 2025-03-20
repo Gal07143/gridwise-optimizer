@@ -5,8 +5,8 @@ import {
   RouterProvider,
   RouteObject,
 } from "react-router-dom";
-import { useAuth } from '@/contexts/AuthContext';
-import { useSite } from '@/contexts/SiteContext';
+import { AuthProvider } from '@/contexts/AuthContext';
+import { SiteProvider } from '@/contexts/SiteContext';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 // Import pages
@@ -129,7 +129,13 @@ const App = () => {
   
   const router = createBrowserRouter(routes);
   
-  return <RouterProvider router={router} />;
+  return (
+    <AuthProvider>
+      <SiteProvider>
+        <RouterProvider router={router} />
+      </SiteProvider>
+    </AuthProvider>
+  );
 };
 
 export default App;
