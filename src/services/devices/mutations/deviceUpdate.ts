@@ -13,7 +13,10 @@ export const updateDevice = async (id: string, updates: Partial<EnergyDevice>): 
     const { id: _id, created_at, ...updateData } = updates as any;
     
     // Validate device data
-    validateDeviceData(updateData);
+    const validationErrors = validateDeviceData(updateData);
+    if (validationErrors.length > 0) {
+      throw new Error(`Validation errors: ${validationErrors.map(err => `${err.field}: ${err.message}`).join(', ')}`);
+    }
     
     console.log("Updating device with data:", updateData);
     

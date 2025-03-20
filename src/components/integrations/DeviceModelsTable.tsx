@@ -7,7 +7,8 @@ import {
   Edit, 
   Eye, 
   Trash2,
-  AlertTriangle
+  AlertTriangle,
+  Download
 } from 'lucide-react';
 import { 
   Table, 
@@ -66,6 +67,28 @@ const DeviceModelsTable: React.FC<DeviceModelsTableProps> = ({
       }
     });
   };
+  
+  const handleDownloadDatasheet = (deviceName: string) => {
+    toast.success(`Downloading datasheet for ${deviceName}...`);
+    
+    // Create a sample PDF blob (in a real app, this would be actual PDF content)
+    setTimeout(() => {
+      const pdfContent = `This is a sample datasheet for ${deviceName}`;
+      const blob = new Blob([pdfContent], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      
+      // Create a temporary anchor element to download the file
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${deviceName.replace(/\s+/g, '-').toLowerCase()}-datasheet.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      toast.info(`Datasheet for ${deviceName} downloaded successfully`);
+    }, 1500);
+  };
 
   return (
     <div className="overflow-x-auto border rounded-md">
@@ -92,11 +115,11 @@ const DeviceModelsTable: React.FC<DeviceModelsTableProps> = ({
             </TableHead>
             <TableHead 
               className="cursor-pointer hidden md:table-cell"
-              onClick={() => onSort('powerRating')}
+              onClick={() => onSort('power_rating')}
             >
               <div className="flex items-center space-x-1">
                 <span>Power Rating</span>
-                {getSortIcon('powerRating')}
+                {getSortIcon('power_rating')}
               </div>
             </TableHead>
             <TableHead 
@@ -110,11 +133,11 @@ const DeviceModelsTable: React.FC<DeviceModelsTableProps> = ({
             </TableHead>
             <TableHead 
               className="cursor-pointer hidden lg:table-cell"
-              onClick={() => onSort('releaseDate')}
+              onClick={() => onSort('release_date')}
             >
               <div className="flex items-center space-x-1">
                 <span>Release Date</span>
-                {getSortIcon('releaseDate')}
+                {getSortIcon('release_date')}
               </div>
             </TableHead>
             <TableHead className="text-right">Actions</TableHead>
@@ -135,9 +158,9 @@ const DeviceModelsTable: React.FC<DeviceModelsTableProps> = ({
               <TableRow key={device.id} className="cursor-pointer hover:bg-muted/50" onClick={() => handleViewDevice(device.id)}>
                 <TableCell className="font-medium">{device.name}</TableCell>
                 <TableCell>{device.manufacturer}</TableCell>
-                <TableCell className="hidden md:table-cell">{device.powerRating || "N/A"}</TableCell>
+                <TableCell className="hidden md:table-cell">{device.power_rating ? `${device.power_rating} kW` : "N/A"}</TableCell>
                 <TableCell className="hidden lg:table-cell">{device.capacity ? `${device.capacity} kW` : "N/A"}</TableCell>
-                <TableCell className="hidden lg:table-cell">{device.releaseDate || "N/A"}</TableCell>
+                <TableCell className="hidden lg:table-cell">{device.release_date || "N/A"}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end">
                     <Button 
@@ -152,6 +175,20 @@ const DeviceModelsTable: React.FC<DeviceModelsTableProps> = ({
                       <span className="sr-only">View</span>
                       <Eye className="h-4 w-4" />
                     </Button>
+                    
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
+                      className="h-8 w-8 p-0" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDownloadDatasheet(device.name);
+                      }}
+                    >
+                      <span className="sr-only">Download</span>
+                      <Download className="h-4 w-4" />
+                    </Button>
+                    
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                         <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
@@ -190,6 +227,15 @@ const DeviceModelsTable: React.FC<DeviceModelsTableProps> = ({
                         >
                           <Edit className="mr-2 h-4 w-4" />
                           <span>Edit</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDownloadDatasheet(device.name);
+                          }}
+                        >
+                          <Download className="mr-2 h-4 w-4" />
+                          <span>Download Datasheet</span>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem

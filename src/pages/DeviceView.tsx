@@ -1,566 +1,348 @@
 
-import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { 
+  Battery, 
+  BatteryCharging, 
+  Wind, 
+  Sun, 
+  Zap, 
+  Activity,
+  Settings, 
+  ChevronLeft, 
+  Download,
+  Edit,
+  Trash,
+  BarChart2,
+  Clock
+} from 'lucide-react';
 import { getDeviceById } from '@/services/devices';
 import AppLayout from '@/components/layout/AppLayout';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Separator } from '@/components/ui/separator';
-import { 
-  AlertTriangle, 
-  ArrowLeft, 
-  Battery, 
-  BatteryCharging,
-  Download, 
-  Eye, 
-  FileText,
-  Cpu, 
-  Settings, 
-  Zap,
-  Activity,
-  Lightbulb,
-  Wind,
-  ExternalLink
-} from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Link } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import DeviceDetailTab from '@/components/devices/tabs/DeviceDetailTab';
+import { DeviceStatus, DeviceType } from '@/types/energy';
 
 const DeviceView = () => {
   const { deviceId } = useParams<{ deviceId: string }>();
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('overview');
   
+  // Fetch device data
   const { data: device, isLoading, error } = useQuery({
     queryKey: ['device', deviceId],
     queryFn: () => getDeviceById(deviceId as string),
-    enabled: !!deviceId
+    enabled: !!deviceId,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
-
-  const [activeTab, setActiveTab] = useState('overview');
   
-  // Mock data for the charts
-  const energyData = [
-    { time: '00:00', value: 12 },
-    { time: '04:00', value: 8 },
-    { time: '08:00', value: 15 },
-    { time: '12:00', value: 22 },
-    { time: '16:00', value: 18 },
-    { time: '20:00', value: 14 },
-    { time: '24:00', value: 10 },
-  ];
-  
-  const temperatureData = [
-    { time: '00:00', value: 32 },
-    { time: '04:00', value: 30 },
-    { time: '08:00', value: 34 },
-    { time: '12:00', value: 38 },
-    { time: '16:00', value: 40 },
-    { time: '20:00', value: 36 },
-    { time: '24:00', value: 33 },
-  ];
-
-  // Get device icon based on type
-  const getDeviceIcon = (type: string | undefined) => {
-    if (!type) return <Settings className="h-8 w-8 text-gray-500" />;
-    
+  const getDeviceIcon = (type: DeviceType) => {
     switch (type) {
       case 'battery':
-        return <Battery className="h-8 w-8 text-blue-500" />;
-      case 'inverter':
-        return <Zap className="h-8 w-8 text-green-500" />;
-      case 'ev-charger':
-        return <BatteryCharging className="h-8 w-8 text-purple-500" />;
-      case 'meter':
-        return <Activity className="h-8 w-8 text-orange-500" />;
-      case 'light':
-        return <Lightbulb className="h-8 w-8 text-yellow-500" />;
+        return <Battery className="h-6 w-6 text-blue-500" />;
+      case 'solar':
+        return <Sun className="h-6 w-6 text-yellow-500" />;
       case 'wind':
-        return <Wind className="h-8 w-8 text-teal-500" />;
+        return <Wind className="h-6 w-6 text-teal-500" />;
+      case 'grid':
+        return <Zap className="h-6 w-6 text-purple-500" />;
+      case 'load':
+        return <Activity className="h-6 w-6 text-red-500" />;
+      case 'ev_charger':
+        return <BatteryCharging className="h-6 w-6 text-green-500" />;
       default:
-        return <Settings className="h-8 w-8 text-gray-500" />;
+        return <Settings className="h-6 w-6 text-gray-500" />;
     }
   };
-
-  // Get status badge based on status
-  const getStatusBadge = (status: string | undefined) => {
-    if (!status) return <Badge variant="secondary">Unknown</Badge>;
-    
+  
+  const getStatusBadge = (status: DeviceStatus) => {
     switch (status) {
       case 'online':
         return <Badge className="bg-green-500">Online</Badge>;
       case 'offline':
         return <Badge variant="outline" className="text-gray-500 border-gray-300">Offline</Badge>;
-      case 'warning':
-        return <Badge className="bg-amber-500">Warning</Badge>;
+      case 'maintenance':
+        return <Badge className="bg-blue-500">Maintenance</Badge>;
       case 'error':
         return <Badge variant="destructive">Error</Badge>;
+      case 'warning':
+        return <Badge className="bg-amber-500">Warning</Badge>;
       default:
         return <Badge variant="secondary">Unknown</Badge>;
     }
   };
-
-  // Handler for download buttons
-  const handleDownload = (type: string) => {
-    if (!device) return;
-    
-    switch (type) {
-      case 'specs':
-        toast.success(`Downloading specifications for ${device.name}...`);
-        setTimeout(() => {
-          toast.info(`${device.name} specifications downloaded successfully`);
-        }, 1500);
-        break;
-      case 'manual':
-        toast.success(`Downloading user manual for ${device.name}...`);
-        setTimeout(() => {
-          toast.info(`${device.name} user manual downloaded successfully`);
-        }, 1500);
-        break;
-      case 'data':
-        toast.success(`Exporting data for ${device.name}...`);
-        setTimeout(() => {
-          toast.info(`${device.name} data exported successfully as CSV`);
-        }, 1500);
-        break;
-      default:
-        break;
-    }
+  
+  const handleDeleteDevice = () => {
+    toast.error("Delete functionality is not fully implemented");
+    // In a real application, this would show a confirmation dialog and then delete the device
   };
-
+  
+  const handleDownloadSpecs = () => {
+    toast.success(`Downloading specifications for ${device?.name}...`);
+    setTimeout(() => {
+      toast.info(`${device?.name} specifications downloaded successfully`);
+    }, 1500);
+  };
+  
+  const handleDownloadManual = () => {
+    toast.success(`Downloading user manual for ${device?.name}...`);
+    setTimeout(() => {
+      toast.info(`${device?.name} user manual downloaded successfully`);
+    }, 1500);
+  };
+  
+  const handleExportData = () => {
+    toast.success(`Exporting data for ${device?.name}...`);
+    setTimeout(() => {
+      toast.info(`${device?.name} data exported successfully as CSV`);
+    }, 1500);
+  };
+  
   if (isLoading) {
     return (
       <AppLayout>
-        <div className="container p-6">
-          <Skeleton className="h-8 w-48 mb-4" />
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
-              <Skeleton className="h-[400px] w-full" />
-            </div>
-            <div>
-              <Skeleton className="h-[200px] w-full mb-4" />
-              <Skeleton className="h-[200px] w-full" />
-            </div>
-          </div>
+        <div className="flex items-center justify-center h-screen">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
         </div>
       </AppLayout>
     );
   }
-
+  
   if (error || !device) {
     return (
       <AppLayout>
-        <div className="container p-6">
-          <Button 
-            variant="outline" 
-            className="mb-4" 
-            onClick={() => navigate('/devices')}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Devices
-          </Button>
+        <div className="p-6">
+          <div className="flex items-center mb-6">
+            <Button variant="ghost" size="icon" asChild className="mr-2">
+              <Link to="/devices">
+                <ChevronLeft className="h-5 w-5" />
+              </Link>
+            </Button>
+            <h1 className="text-2xl font-semibold">Device Not Found</h1>
+          </div>
           
-          <Alert variant="destructive">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Error</AlertTitle>
-            <AlertDescription>
-              Failed to load device details. The device may not exist or there was a network error.
-            </AlertDescription>
-          </Alert>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center py-8">
+                <p className="text-muted-foreground mb-4">
+                  The device you are looking for could not be found or you don't have permission to view it.
+                </p>
+                <Button asChild>
+                  <Link to="/devices">Back to Devices</Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </AppLayout>
     );
   }
-
+  
   return (
     <AppLayout>
-      <div className="container p-6 animate-in fade-in duration-300">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-          <div className="flex items-center gap-3">
-            <Button 
-              variant="outline" 
-              size="icon" 
-              onClick={() => navigate('/devices')}
-            >
-              <ArrowLeft className="h-4 w-4" />
+      <div className="p-6 animate-in fade-in duration-500">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+          <div className="flex items-center">
+            <Button variant="ghost" size="icon" asChild className="mr-2">
+              <Link to="/devices">
+                <ChevronLeft className="h-5 w-5" />
+              </Link>
             </Button>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center">
               {getDeviceIcon(device.type)}
-              <div>
+              <div className="ml-3">
                 <h1 className="text-2xl font-semibold">{device.name}</h1>
-                <div className="flex items-center gap-2">
-                  <p className="text-sm text-muted-foreground">{device.location || 'No location'}</p>
-                  {getStatusBadge(device.status)}
+                <div className="flex items-center text-muted-foreground">
+                  <span className="capitalize">{device.type}</span>
+                  <span className="mx-2">•</span>
+                  <span>{device.location}</span>
                 </div>
               </div>
             </div>
           </div>
           
-          <div className="flex gap-2 mt-4 sm:mt-0">
-            <Button variant="outline" size="sm" asChild>
-              <Link to={`/edit-device/${device.id}`}>
-                <Settings className="mr-2 h-4 w-4" />
-                Edit Device
-              </Link>
+          <div className="flex mt-4 md:mt-0 gap-2">
+            <Button 
+              variant="outline" 
+              onClick={handleExportData}
+              className="flex items-center gap-2"
+            >
+              <Download className="h-4 w-4" />
+              Export Data
             </Button>
             
-            <Button size="sm">
-              <Eye className="mr-2 h-4 w-4" />
-              Live View
+            <Button asChild>
+              <Link to={`/edit-device/${device.id}`} className="flex items-center gap-2">
+                <Edit className="h-4 w-4" />
+                Edit Device
+              </Link>
             </Button>
           </div>
         </div>
         
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Status</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex justify-between items-center">
+                <span className="text-2xl font-bold">
+                  {getStatusBadge(device.status)}
+                </span>
+                <Clock className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                Last updated: {new Date(device.last_updated).toLocaleString()}
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Capacity</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex justify-between items-center">
+                <span className="text-2xl font-bold">
+                  {device.capacity} {device.type === 'battery' ? 'kWh' : 'kW'}
+                </span>
+                <BarChart2 className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                Nominal capacity
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Firmware</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex justify-between items-center">
+                <span className="text-2xl font-bold">
+                  {device.firmware || "N/A"}
+                </span>
+                <Settings className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                {device.firmware ? "Current version" : "No firmware information"}
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Installation Date</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex justify-between items-center">
+                <span className="text-2xl font-bold">
+                  {device.installation_date 
+                    ? new Date(device.installation_date).toLocaleDateString() 
+                    : "N/A"}
+                </span>
+                <Calendar className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                {device.installation_date ? "Date installed" : "Not recorded"}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+        
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+          <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="performance">Performance</TabsTrigger>
-            <TabsTrigger value="specifications">Specifications</TabsTrigger>
             <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
+            <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
           
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
-              <TabsContent value="overview">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Device Overview</CardTitle>
-                    <CardDescription>
-                      Key information and current status of {device.name}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <h3 className="text-sm font-medium text-muted-foreground mb-2">Basic Information</h3>
-                        <div className="grid grid-cols-3 gap-2 mb-4">
-                          <div className="col-span-1 text-sm">Type:</div>
-                          <div className="col-span-2 text-sm font-medium capitalize">{device.type}</div>
-                          
-                          <div className="col-span-1 text-sm">Status:</div>
-                          <div className="col-span-2 text-sm font-medium capitalize">{device.status}</div>
-                          
-                          <div className="col-span-1 text-sm">Capacity:</div>
-                          <div className="col-span-2 text-sm font-medium">{device.capacity} {device.type === 'battery' ? 'kWh' : 'kW'}</div>
-                          
-                          <div className="col-span-1 text-sm">Firmware:</div>
-                          <div className="col-span-2 text-sm font-medium">{device.firmware || 'Unknown'}</div>
-                          
-                          <div className="col-span-1 text-sm">ID:</div>
-                          <div className="col-span-2 text-sm font-medium overflow-hidden text-ellipsis">{device.id}</div>
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <h3 className="text-sm font-medium text-muted-foreground mb-2">Current Metrics</h3>
-                        {device.metrics ? (
-                          <div className="grid grid-cols-3 gap-2">
-                            {Object.entries(device.metrics).map(([key, value]) => (
-                              <React.Fragment key={key}>
-                                <div className="col-span-1 text-sm">{key}:</div>
-                                <div className="col-span-2 text-sm font-medium">{value}</div>
-                              </React.Fragment>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="text-sm text-muted-foreground">No metrics available</p>
-                        )}
-                      </div>
-                    </div>
+          <TabsContent value="overview" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Device Details</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <DeviceDetailTab device={{
+                  id: device.id,
+                  name: device.name,
+                  location: device.location || '',
+                  type: device.type,
+                  status: device.status,
+                  capacity: device.capacity,
+                  firmware: device.firmware || '',
+                  description: device.description || '',
+                }} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="performance" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Performance Metrics</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">This tab will display performance metrics and charts for the device.</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="maintenance" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Maintenance History</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">This tab will display maintenance records and schedule for the device.</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="settings" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Device Settings</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-lg font-medium mb-2">Danger Zone</h3>
+                    <p className="text-muted-foreground mb-4">These actions cannot be undone.</p>
                     
-                    <Separator className="my-6" />
-                    
-                    <div>
-                      <h3 className="text-sm font-medium text-muted-foreground mb-4">Energy Output (24h)</h3>
-                      <ResponsiveContainer width="100%" height={200}>
-                        <AreaChart data={energyData}>
-                          <defs>
-                            <linearGradient id="colorEnergy" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#0284c7" stopOpacity={0.8}/>
-                              <stop offset="95%" stopColor="#0284c7" stopOpacity={0.1}/>
-                            </linearGradient>
-                          </defs>
-                          <XAxis dataKey="time" />
-                          <YAxis />
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <Tooltip />
-                          <Area type="monotone" dataKey="value" stroke="#0284c7" fillOpacity={1} fill="url(#colorEnergy)" />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              
-              <TabsContent value="performance">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Performance Metrics</CardTitle>
-                    <CardDescription>
-                      Detailed performance data for {device.name}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 gap-6">
-                      <div>
-                        <h3 className="text-sm font-medium text-muted-foreground mb-4">Energy Output (24h)</h3>
-                        <ResponsiveContainer width="100%" height={200}>
-                          <AreaChart data={energyData}>
-                            <defs>
-                              <linearGradient id="colorEnergy2" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#0284c7" stopOpacity={0.8}/>
-                                <stop offset="95%" stopColor="#0284c7" stopOpacity={0.1}/>
-                              </linearGradient>
-                            </defs>
-                            <XAxis dataKey="time" />
-                            <YAxis />
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <Tooltip />
-                            <Area type="monotone" dataKey="value" stroke="#0284c7" fillOpacity={1} fill="url(#colorEnergy2)" />
-                          </AreaChart>
-                        </ResponsiveContainer>
-                      </div>
-                      
-                      <div>
-                        <h3 className="text-sm font-medium text-muted-foreground mb-4">Temperature (24h)</h3>
-                        <ResponsiveContainer width="100%" height={200}>
-                          <AreaChart data={temperatureData}>
-                            <defs>
-                              <linearGradient id="colorTemp" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#ef4444" stopOpacity={0.8}/>
-                                <stop offset="95%" stopColor="#ef4444" stopOpacity={0.1}/>
-                              </linearGradient>
-                            </defs>
-                            <XAxis dataKey="time" />
-                            <YAxis />
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <Tooltip />
-                            <Area type="monotone" dataKey="value" stroke="#ef4444" fillOpacity={1} fill="url(#colorTemp)" />
-                          </AreaChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              
-              <TabsContent value="specifications">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Technical Specifications</CardTitle>
-                    <CardDescription>
-                      Detailed technical information about {device.name}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-6">
-                      <div>
-                        <h3 className="text-sm font-medium text-muted-foreground mb-2">General Specifications</h3>
-                        <div className="grid grid-cols-3 gap-2">
-                          <div className="col-span-1 text-sm">Model:</div>
-                          <div className="col-span-2 text-sm font-medium">{device.name}</div>
-                          
-                          <div className="col-span-1 text-sm">Type:</div>
-                          <div className="col-span-2 text-sm font-medium capitalize">{device.type}</div>
-                          
-                          <div className="col-span-1 text-sm">Firmware:</div>
-                          <div className="col-span-2 text-sm font-medium">{device.firmware || 'Unknown'}</div>
-                          
-                          <div className="col-span-1 text-sm">Nominal Capacity:</div>
-                          <div className="col-span-2 text-sm font-medium">{device.capacity} {device.type === 'battery' ? 'kWh' : 'kW'}</div>
-                          
-                          <div className="col-span-1 text-sm">Installation Date:</div>
-                          <div className="col-span-2 text-sm font-medium">{device.installation_date || 'Unknown'}</div>
-                        </div>
-                      </div>
-                      
-                      <Separator />
-                      
-                      <div>
-                        <h3 className="text-sm font-medium text-muted-foreground mb-2">Technical Details</h3>
-                        <div className="grid grid-cols-3 gap-2">
-                          <div className="col-span-1 text-sm">Operating Voltage:</div>
-                          <div className="col-span-2 text-sm font-medium">230V AC</div>
-                          
-                          <div className="col-span-1 text-sm">Max Current:</div>
-                          <div className="col-span-2 text-sm font-medium">32A</div>
-                          
-                          <div className="col-span-1 text-sm">Communication:</div>
-                          <div className="col-span-2 text-sm font-medium">Modbus TCP, MQTT</div>
-                          
-                          <div className="col-span-1 text-sm">Efficiency:</div>
-                          <div className="col-span-2 text-sm font-medium">94%</div>
-                          
-                          <div className="col-span-1 text-sm">Dimensions:</div>
-                          <div className="col-span-2 text-sm font-medium">600 x 400 x 200 mm</div>
-                          
-                          <div className="col-span-1 text-sm">Weight:</div>
-                          <div className="col-span-2 text-sm font-medium">45 kg</div>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                  <CardFooter>
-                    <div className="flex flex-wrap gap-2">
-                      <Button variant="outline" size="sm" onClick={() => handleDownload('specs')}>
-                        <FileText className="mr-2 h-4 w-4" />
-                        Download Full Specifications
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => handleDownload('manual')}>
+                    <div className="flex flex-col sm:flex-row gap-4">
+                      <Button variant="outline" onClick={handleDownloadManual}>
                         <Download className="mr-2 h-4 w-4" />
-                        Download User Manual
+                        Download Manual
                       </Button>
-                    </div>
-                  </CardFooter>
-                </Card>
-              </TabsContent>
-              
-              <TabsContent value="maintenance">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Maintenance History</CardTitle>
-                    <CardDescription>
-                      Service and maintenance records for {device.name}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-6">
-                      <div className="border rounded-md p-4">
-                        <div className="flex justify-between mb-2">
-                          <h3 className="font-medium">Routine Maintenance</h3>
-                          <span className="text-sm text-muted-foreground">April 15, 2023</span>
-                        </div>
-                        <p className="text-sm text-muted-foreground mb-2">Regular inspection and cleaning</p>
-                        <div className="text-sm">
-                          <span className="font-medium">Technician:</span> John Smith
-                        </div>
-                      </div>
                       
-                      <div className="border rounded-md p-4">
-                        <div className="flex justify-between mb-2">
-                          <h3 className="font-medium">Firmware Update</h3>
-                          <span className="text-sm text-muted-foreground">February 22, 2023</span>
-                        </div>
-                        <p className="text-sm text-muted-foreground mb-2">Updated firmware from v1.2.3 to v1.3.0</p>
-                        <div className="text-sm">
-                          <span className="font-medium">Technician:</span> Remote Update
-                        </div>
-                      </div>
-                      
-                      <div className="border rounded-md p-4">
-                        <div className="flex justify-between mb-2">
-                          <h3 className="font-medium">Installation</h3>
-                          <span className="text-sm text-muted-foreground">January 10, 2023</span>
-                        </div>
-                        <p className="text-sm text-muted-foreground mb-2">Initial device installation and setup</p>
-                        <div className="text-sm">
-                          <span className="font-medium">Technician:</span> Installation Team
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                  <CardFooter>
-                    <div className="flex flex-wrap gap-2">
-                      <Button variant="outline" size="sm" onClick={() => handleDownload('data')}>
+                      <Button variant="outline" onClick={handleDownloadSpecs}>
                         <Download className="mr-2 h-4 w-4" />
-                        Export Maintenance Records
+                        Download Specifications
                       </Button>
-                      <Button asChild size="sm">
-                        <Link to={`/edit-device/${device.id}?tab=maintenance`}>
-                          <Cpu className="mr-2 h-4 w-4" />
-                          Schedule Maintenance
-                        </Link>
+                      
+                      <Button 
+                        variant="destructive"
+                        onClick={handleDeleteDevice}
+                      >
+                        <Trash className="mr-2 h-4 w-4" />
+                        Delete Device
                       </Button>
-                    </div>
-                  </CardFooter>
-                </Card>
-              </TabsContent>
-            </div>
-            
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Quick Actions</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <Button className="w-full" asChild>
-                    <Link to={`/edit-device/${device.id}`}>
-                      <Settings className="mr-2 h-4 w-4" />
-                      Edit Device
-                    </Link>
-                  </Button>
-                  <Button variant="outline" className="w-full" onClick={() => handleDownload('manual')}>
-                    <FileText className="mr-2 h-4 w-4" />
-                    Download Manual
-                  </Button>
-                  <Button variant="outline" className="w-full" onClick={() => handleDownload('specs')}>
-                    <Download className="mr-2 h-4 w-4" />
-                    Download Specs
-                  </Button>
-                  <Button variant="outline" className="w-full">
-                    <ExternalLink className="mr-2 h-4 w-4" />
-                    Manufacturer Website
-                  </Button>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader>
-                  <CardTitle>Device Health</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <div className="flex justify-between mb-1">
-                        <span className="text-sm">System Health</span>
-                        <span className="text-sm font-medium">90%</span>
-                      </div>
-                      <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
-                        <div className="h-2 bg-green-500 rounded-full" style={{ width: '90%' }}></div>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <div className="flex justify-between mb-1">
-                        <span className="text-sm">Efficiency</span>
-                        <span className="text-sm font-medium">85%</span>
-                      </div>
-                      <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
-                        <div className="h-2 bg-blue-500 rounded-full" style={{ width: '85%' }}></div>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <div className="flex justify-between mb-1">
-                        <span className="text-sm">Connectivity</span>
-                        <span className="text-sm font-medium">100%</span>
-                      </div>
-                      <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
-                        <div className="h-2 bg-green-500 rounded-full" style={{ width: '100%' }}></div>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <h3 className="text-sm font-medium mb-2">Next Maintenance</h3>
-                      <div className="text-sm">
-                        <span className="text-muted-foreground">Scheduled for:</span>
-                        <span className="font-medium ml-2">June 15, 2023</span>
-                      </div>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
       </div>
     </AppLayout>

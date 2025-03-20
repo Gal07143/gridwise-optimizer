@@ -43,9 +43,9 @@ const DeviceModelsCard: React.FC<DeviceModelsCardProps> = ({
       ...filteredDevices.map(device => [
         device.name,
         device.manufacturer,
-        device.powerRating || 'N/A',
+        device.power_rating || 'N/A',
         device.capacity || 'N/A',
-        device.releaseDate || 'N/A'
+        device.release_date || 'N/A'
       ].join(','))
     ].join('\n');
     
@@ -62,6 +62,7 @@ const DeviceModelsCard: React.FC<DeviceModelsCardProps> = ({
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
     
     setTimeout(() => {
       toast.info(`Device list exported as ${filename}`);
@@ -89,14 +90,19 @@ const DeviceModelsCard: React.FC<DeviceModelsCardProps> = ({
       const timestamp = new Date().toISOString().slice(0, 10);
       const filename = `${categoryName.toLowerCase()}-catalog-${timestamp}.pdf`;
       
-      // Create a temporary anchor element to simulate the download
+      // Create a sample PDF blob (in a real app, this would be actual PDF content)
+      const pdfContent = `This is a sample PDF catalog for ${categoryName}`;
+      const blob = new Blob([pdfContent], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      
+      // Create a temporary anchor element to download the file
       const link = document.createElement('a');
-      // In a real app, this would be a URL to the actual PDF
-      link.setAttribute('href', 'data:application/pdf;charset=utf-8,');
-      link.setAttribute('download', filename);
+      link.href = url;
+      link.download = filename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      URL.revokeObjectURL(url);
       
       toast.info(`Catalog downloaded as ${filename}`);
     }, 2000);
