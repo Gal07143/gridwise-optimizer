@@ -24,7 +24,7 @@ const ReportCreationForm: React.FC<ReportCreationFormProps> = ({ onClose, onSucc
   const { form, isScheduled, setIsScheduled, onSubmit } = useReportForm({ onSuccess });
 
   return (
-    <DialogContent className="sm:max-w-[600px]">
+    <DialogContent className="sm:max-w-[650px]">
       <DialogHeader>
         <DialogTitle>Create New Report</DialogTitle>
         <DialogDescription>
@@ -32,19 +32,21 @@ const ReportCreationForm: React.FC<ReportCreationFormProps> = ({ onClose, onSucc
         </DialogDescription>
       </DialogHeader>
       
-      <Form {...form}>
-        <form onSubmit={onSubmit} className="space-y-6">
-          <ReportBasicInfoFields />
-          <ReportTypeSelector />
-          <ReportConfigOptions isScheduled={isScheduled} setIsScheduled={setIsScheduled} />
-          <ScheduleSelector isScheduled={isScheduled} />
-          
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-            <Button type="submit">Create Report</Button>
-          </DialogFooter>
-        </form>
-      </Form>
+      <div className="max-h-[70vh] overflow-y-auto pr-1 -mr-1">
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <ReportBasicInfoFields />
+            <ReportTypeSelector />
+            <ReportConfigOptions isScheduled={isScheduled} setIsScheduled={setIsScheduled} />
+            <ScheduleSelector isScheduled={isScheduled} />
+            
+            <DialogFooter className="mt-6">
+              <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+              <Button type="submit">Create Report</Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </div>
     </DialogContent>
   );
 };

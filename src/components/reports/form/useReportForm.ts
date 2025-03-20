@@ -18,15 +18,15 @@ export const useReportForm = ({ onSuccess }: UseReportFormProps) => {
   const form = useForm<ReportFormValues>({
     resolver: zodResolver(reportSchema),
     defaultValues: getDefaultValues(),
+    mode: 'onChange',
   });
 
-  const onSubmit = async (data: ReportFormValues) => {
+  const handleSubmit = async (data: ReportFormValues) => {
     if (!isScheduled) {
       data.schedule = undefined;
     }
     
     try {
-      // Add site_id and current user to report data
       if (!currentSite?.id) {
         toast.error('No site selected');
         return;
@@ -56,6 +56,6 @@ export const useReportForm = ({ onSuccess }: UseReportFormProps) => {
     form,
     isScheduled,
     setIsScheduled,
-    onSubmit: form.handleSubmit(onSubmit)
+    onSubmit: form.handleSubmit(handleSubmit)
   };
 };
