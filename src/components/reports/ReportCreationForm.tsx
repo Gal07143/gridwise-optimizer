@@ -74,10 +74,18 @@ const ReportCreationForm: React.FC<ReportCreationFormProps> = ({ onClose, onSucc
     
     try {
       // Add site_id and current user to report data
+      if (!currentSite?.id) {
+        toast.error('No site selected');
+        return;
+      }
+      
       const reportData = {
         ...data,
-        site_id: currentSite?.id,
+        site_id: currentSite.id,
         created_by: 'current-user', // In a real app, this would be the actual user ID
+        // Ensure required fields are present
+        type: data.type || 'energy_consumption',  
+        title: data.title,
       };
       
       await createReport(reportData);

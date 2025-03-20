@@ -8,8 +8,7 @@ import {
 } from "react-router-dom";
 import { useAuth } from '@/contexts/AuthContext';
 import { useSite } from '@/contexts/SiteContext';
-import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
-import { toast } from 'sonner';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 // Import pages
 import Index from "@/pages/Index";
@@ -108,20 +107,23 @@ const routes: RouteObject[] = [
 ];
 
 const App = () => {
-  const { isLoggedIn, checkAuth } = useAuth();
+  const { user, checkAuthentication } = useAuth();
   const { currentSite, setCurrentSite } = useSite();
   
   useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+    checkAuthentication();
+  }, [checkAuthentication]);
   
   useEffect(() => {
     const storedSiteId = localStorage.getItem('currentSiteId');
-    if (storedSiteId) {
+    if (storedSiteId && currentSite) {
       // Optimistically set the site, it will be validated in SiteContext
-      setCurrentSite({ id: storedSiteId });
+      setCurrentSite({
+        ...currentSite,
+        id: storedSiteId
+      });
     }
-  }, [setCurrentSite]);
+  }, [setCurrentSite, currentSite]);
   
   const router = createBrowserRouter(routes);
   

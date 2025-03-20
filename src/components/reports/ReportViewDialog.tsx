@@ -28,11 +28,14 @@ import { getReportResults } from '@/services/reports/reportService';
 import { useQuery } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import GeneralReportContent from './report-content/GeneralReportContent';
-import ConsumptionReportContent from './report-content/ConsumptionReportContent';
-import CostReportContent from './report-content/CostReportContent';
-import ProductionReportContent from './report-content/ProductionReportContent';
-import PerformanceReportContent from './report-content/PerformanceReportContent';
+import { 
+  GeneralReportContent, 
+  ConsumptionReportContent, 
+  CostReportContent, 
+  ProductionReportContent, 
+  PerformanceReportContent,
+  EfficiencyReportContent 
+} from './report-content';
 
 interface ReportViewDialogProps {
   report: any; // Report object
@@ -149,6 +152,8 @@ const ReportViewDialog: React.FC<ReportViewDialogProps> = ({
         return <CostReportContent data={latestResult} />;
       case 'device_performance':
         return <PerformanceReportContent data={latestResult} />;
+      case 'efficiency_analysis':
+        return <EfficiencyReportContent data={latestResult} />;
       default:
         return <GeneralReportContent data={latestResult} />;
     }
