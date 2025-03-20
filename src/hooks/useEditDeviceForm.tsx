@@ -24,14 +24,18 @@ export const useEditDeviceForm = () => {
     queryKey: ['device', deviceId],
     queryFn: () => deviceId ? getDeviceById(deviceId) : null,
     enabled: !!deviceId,
-    retry: 1,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000), // Exponential backoff
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
   
-  // Handle errors outside the query config
+  // Handle errors
   useEffect(() => {
     if (fetchError) {
+      console.error("Error fetching device data:", fetchError);
       toast.error(`Failed to fetch device: ${fetchError instanceof Error ? fetchError.message : 'Unknown error'}`);
+      
+      // Only navigate away after a short delay so user can see the error
       setTimeout(() => navigate('/devices'), 2000);
     }
   }, [fetchError, navigate]);
@@ -58,7 +62,8 @@ export const useEditDeviceForm = () => {
     setIsSaving(true);
     
     try {
-      const updatedDevice = await updateDevice(deviceId!, deviceData);
+      console.log("Updating device with data:", deviceData);
+      const updatedDevice = await updateDevice(deviceId, deviceData);
       
       if (updatedDevice) {
         toast.success('Device updated successfully');
@@ -71,6 +76,7 @@ export const useEditDeviceForm = () => {
         return null;
       }
     } catch (error: any) {
+      console.error("Error updating device:", error);
       toast.error(`Failed to update device: ${error?.message || 'Unknown error'}`);
       return null;
     } finally {
@@ -85,6 +91,7 @@ export const useEditDeviceForm = () => {
 
   useEffect(() => {
     if (deviceData) {
+      console.log("Setting form data with device:", deviceData);
       baseFormHook.setDevice({
         name: deviceData.name,
         location: deviceData.location || '',
@@ -96,7 +103,7 @@ export const useEditDeviceForm = () => {
         site_id: deviceData.site_id || '',
       });
     }
-  }, [deviceData]);
+  }, [deviceData, baseFormHook.setDevice]);
 
   return {
     ...baseFormHook,

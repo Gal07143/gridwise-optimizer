@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { AlertTriangle, ChevronLeft } from 'lucide-react';
-import { getDeviceById } from '@/services/devices'; // Fixed import
+import { getDeviceById } from '@/services/devices'; 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ import DeviceLogger from './DeviceLogger';
 import DevicePageHeader from './DevicePageHeader';
 import DeviceMaintenance from './DeviceMaintenance';
 import DeviceDetailTab from './tabs/DeviceDetailTab';
+import { toast } from 'sonner';
 
 const EditDeviceContent = () => {
   const { deviceId } = useParams<{ deviceId: string }>();
@@ -23,6 +24,12 @@ const EditDeviceContent = () => {
     queryKey: ['device', deviceId],
     queryFn: () => getDeviceById(deviceId as string),
     enabled: !!deviceId,
+    retry: 3, // Increase retry attempts
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000), // Exponential backoff
+    onError: (err) => {
+      console.error('Error fetching device:', err);
+      toast.error('Failed to load device details. Please try again later.');
+    }
   });
   
   if (isLoading) {

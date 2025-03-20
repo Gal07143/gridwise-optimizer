@@ -7,6 +7,7 @@ import PageHeader from '@/components/integrations/PageHeader';
 import SearchFilterBar from '@/components/integrations/SearchFilterBar';
 import DeviceModelsCard from '@/components/integrations/DeviceModelsCard';
 import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from 'sonner';
 
 const IntegrationCategoryPage = () => {
   const { categoryId } = useParams<{ categoryId: string }>();
@@ -37,6 +38,7 @@ const IntegrationCategoryPage = () => {
   // Redirect if category doesn't exist
   useEffect(() => {
     if (categoryId && !categoryNames[categoryId as keyof typeof categoryNames]) {
+      toast.error("Invalid device category");
       navigate('/integrations', { replace: true });
     }
   }, [categoryId, navigate]);

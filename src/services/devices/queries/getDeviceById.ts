@@ -7,16 +7,31 @@ import { toast } from "sonner";
  * Get a single device by ID
  */
 export const getDeviceById = async (id: string): Promise<EnergyDevice | null> => {
+  if (!id) {
+    console.error("Invalid device ID provided");
+    return null;
+  }
+
   try {
+    console.log(`Fetching device with ID: ${id}`);
+    
     const { data, error } = await supabase
       .from('devices')
       .select('*')
       .eq('id', id)
-      .single();
+      .maybeSingle(); // Using maybeSingle instead of single to handle case when no record is found
     
-    if (error) throw error;
+    if (error) {
+      console.error(`Supabase error fetching device ${id}:`, error);
+      throw error;
+    }
     
-    if (!data) return null;
+    if (!data) {
+      console.log(`No device found with ID: ${id}`);
+      return null;
+    }
+    
+    console.log(`Device data retrieved:`, data);
     
     // Convert the database response to match our TypeScript interface
     const device: EnergyDevice = {
@@ -28,9 +43,9 @@ export const getDeviceById = async (id: string): Promise<EnergyDevice | null> =>
     
     return device;
     
-  } catch (error) {
+  } catch (error: any) {
     console.error(`Error fetching device ${id}:`, error);
-    toast.error("Failed to fetch device details");
+    toast.error(`Failed to fetch device details: ${error?.message || 'Unknown error'}`);
     return null;
   }
 };

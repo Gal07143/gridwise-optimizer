@@ -45,6 +45,11 @@ const DeviceModelsCard: React.FC<DeviceModelsCardProps> = ({
     // In a real application, this would trigger a refetch
   };
 
+  const handleClearFilters = () => {
+    // This would be implemented to clear all active filters
+    toast.info("Filters cleared");
+  };
+
   return (
     <Card>
       <CardHeader className="pb-0">
@@ -78,7 +83,7 @@ const DeviceModelsCard: React.FC<DeviceModelsCardProps> = ({
         {filteredDevices.length === 0 && (
           <div className="text-center py-8 bg-slate-50 dark:bg-slate-800/50 rounded-lg mt-4">
             <p className="text-muted-foreground">No device models found matching your criteria.</p>
-            <Button variant="outline" size="sm" className="mt-4">Clear Filters</Button>
+            <Button variant="outline" size="sm" className="mt-4" onClick={handleClearFilters}>Clear Filters</Button>
           </div>
         )}
       </CardContent>
