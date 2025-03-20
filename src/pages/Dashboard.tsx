@@ -3,11 +3,12 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSite } from '@/contexts/SiteContext';
 import { useToast } from '@/hooks/use-toast';
-import Sidebar from '@/components/layout/Sidebar';
+import AppLayout from '@/components/layout/AppLayout';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import DashboardSummary from '@/components/dashboard/DashboardSummary';
 import DashboardCharts from '@/components/dashboard/DashboardCharts';
 import DashboardLoading from '@/components/dashboard/DashboardLoading';
+import ErrorBoundary from '@/components/ui/ErrorBoundary';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -30,16 +31,15 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="flex min-h-screen">
-      <Sidebar />
-      <div className="flex-1 p-4 ml-0 lg:ml-64 transition-all duration-300">
-        <div className="container mx-auto animate-in fade-in duration-500">
+    <AppLayout>
+      <ErrorBoundary>
+        <div className="animate-in fade-in duration-500">
           <DashboardHeader siteName={currentSite.name} />
           <DashboardSummary />
           <DashboardCharts />
         </div>
-      </div>
-    </div>
+      </ErrorBoundary>
+    </AppLayout>
   );
 };
 

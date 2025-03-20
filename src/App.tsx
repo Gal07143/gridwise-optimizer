@@ -4,11 +4,13 @@ import {
   createBrowserRouter,
   RouterProvider,
   RouteObject,
+  Outlet
 } from "react-router-dom";
 import { AuthProvider } from '@/contexts/AuthContext';
 import { SiteProvider } from '@/contexts/SiteContext';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import ErrorBoundary from '@/components/ui/ErrorBoundary';
 
 // Import pages
 import Index from "@/pages/Index";
@@ -40,65 +42,71 @@ const routes: RouteObject[] = [
     element: <Auth />
   },
   {
-    element: <ProtectedRoute>
-      {/* Protected routes will be rendered as children */}
-      <></>
-    </ProtectedRoute>,
+    path: "/auth",
+    element: <Auth />
+  },
+  {
+    path: "/",
+    element: (
+      <ProtectedRoute>
+        <Outlet />
+      </ProtectedRoute>
+    ),
     children: [
       {
-        path: "/dashboard",
+        path: "dashboard",
         element: <Dashboard />
       },
       {
-        path: "/analytics",
+        path: "analytics",
         element: <Analytics />
       },
       {
-        path: "/devices",
+        path: "devices",
         element: <Devices />
       },
       {
-        path: "/devices/add",
+        path: "devices/add",
         element: <AddDevice />
       },
       {
-        path: "/devices/:id",
+        path: "devices/:id",
         element: <EditDevice />
       },
       {
-        path: "/alerts",
+        path: "alerts",
         element: <Alerts />
       },
       {
-        path: "/reports",
+        path: "reports",
         element: <Reports />
       },
       {
-        path: "/energy-flow",
+        path: "energy-flow",
         element: <EnergyFlow />
       },
       {
-        path: "/microgrid",
+        path: "microgrid",
         element: <MicrogridControl />
       },
       {
-        path: "/system-status",
+        path: "system-status",
         element: <SystemStatus />
       },
       {
-        path: "/settings",
+        path: "settings",
         element: <Settings />
       },
       {
-        path: "/settings/sites",
+        path: "settings/sites",
         element: <SiteSettings />
       },
       {
-        path: "/settings/sites/add",
+        path: "settings/sites/add",
         element: <AddSite />
       },
       {
-        path: "/settings/sites/:id",
+        path: "settings/sites/:id",
         element: <EditSite />
       },
     ],
@@ -116,13 +124,15 @@ const App = () => {
   const router = createBrowserRouter(routes);
   
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <SiteProvider>
-          <RouterProvider router={router} />
-        </SiteProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <SiteProvider>
+            <RouterProvider router={router} />
+          </SiteProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 };
 
