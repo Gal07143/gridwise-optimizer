@@ -14,7 +14,11 @@ import {
   Book,
   FileBarChart,
   Wind,
-  ShieldAlert
+  ShieldAlert,
+  Battery,
+  Workflow,
+  Zap,
+  Package
 } from 'lucide-react';
 
 export const mainNavItems = [
@@ -57,7 +61,7 @@ export const systemControlItems = [
     label: "Energy Flow"
   },
   {
-    href: "/microgrid",
+    href: "/microgrid-control",
     icon: <Cpu size={18} />,
     label: "Microgrid Control"
   },
@@ -65,6 +69,39 @@ export const systemControlItems = [
     href: "/system-status",
     icon: <MonitorCheck size={18} />,
     label: "System Status"
+  },
+  {
+    href: "/integrations",
+    icon: <Workflow size={18} />,
+    label: "Integrations"
+  }
+];
+
+export const integrationItems = [
+  {
+    href: "/integrations/batteries",
+    icon: <Battery size={18} />,
+    label: "Battery Systems"
+  },
+  {
+    href: "/integrations/inverters",
+    icon: <Zap size={18} />,
+    label: "Inverters"
+  },
+  {
+    href: "/integrations/ev-chargers",
+    icon: <Zap size={18} />,
+    label: "EV Chargers"
+  },
+  {
+    href: "/integrations/meters",
+    icon: <Activity size={18} />,
+    label: "Energy Meters"
+  },
+  {
+    href: "/integrations/controllers",
+    icon: <Package size={18} />,
+    label: "Controllers"
   }
 ];
 
