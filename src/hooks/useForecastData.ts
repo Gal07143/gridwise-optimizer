@@ -40,7 +40,7 @@ export interface Prediction {
   cloudCover?: number;
   windSpeed?: number;
   weatherCondition?: string;
-  confidence: number; // Adding this as a required property
+  confidence: number; // Required property that fixes the TypeScript error
 }
 
 export function useForecastData() {
