@@ -3,7 +3,7 @@ import React from 'react';
 import { LineChart } from 'lucide-react';
 import DashboardCard from './DashboardCard';
 import { Skeleton } from '@/components/ui/skeleton';
-import useForecastData from '@/hooks/useForecastData';
+import { useForecastData } from '@/hooks/useForecastData';
 import ForecastMetricsPanel from './forecasts/ForecastMetricsPanel';
 import ForecastChart from './forecasts/ForecastChart';
 import ForecastFooter from './forecasts/ForecastFooter';
