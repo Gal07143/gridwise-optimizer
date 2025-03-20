@@ -7,119 +7,100 @@ interface EnergyFlowConnectionsProps {
 }
 
 const EnergyFlowConnections: React.FC<EnergyFlowConnectionsProps> = ({ connections }) => {
+  // Get path coordinates based on connection points
+  const getConnectionPath = (from: string, to: string): string => {
+    // Define connection paths based on the source and target node IDs
+    switch (`${from}-${to}`) {
+      case 'solar-battery':
+        return "M110,80 C160,80 160,160 210,160";
+      case 'solar-building':
+        return "M110,80 C200,50 350,50 410,120";
+      case 'wind-battery':
+        return "M110,240 C135,240 185,200 210,180";
+      case 'wind-building':
+        return "M110,240 C180,240 270,200 410,160";
+      case 'battery-building':
+        return "M290,160 C320,160 390,140 410,140";
+      case 'battery-devices':
+        return "M290,160 C320,170 350,220 410,220";
+      default:
+        return "";
+    }
+  };
+
+  // Calculate stroke width based on energy value
+  const getStrokeWidth = (value: number): number => {
+    const baseWidth = 2;
+    const maxValue = 20;
+    // Scale width between baseWidth and 8 based on value
+    return Math.max(baseWidth, Math.min(8, baseWidth + (value / maxValue) * 6));
+  };
+
+  // Get the color for the connection based on the source
+  const getConnectionColor = (from: string): string => {
+    switch (from) {
+      case 'solar':
+        return "var(--energy-solar, rgba(234, 179, 8, 0.6))";
+      case 'wind':
+        return "var(--energy-wind, rgba(59, 130, 246, 0.6))";
+      case 'battery':
+        return "var(--energy-battery, rgba(168, 85, 247, 0.6))";
+      default:
+        return "rgba(100, 116, 139, 0.6)";
+    }
+  };
+
   return (
-    <svg className="absolute inset-0 w-full h-full" style={{ zIndex: 0 }}>
-      <defs>
-        {/* Source to Storage gradient (green to blue) */}
-        <linearGradient id="sourceToStorageGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="rgba(45, 211, 111, 0.7)" />
-          <stop offset="100%" stopColor="rgba(14, 165, 233, 0.7)" />
-        </linearGradient>
-        
-        {/* Source to Consumption gradient (green to purple) */}
-        <linearGradient id="sourceToConsumptionGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="rgba(45, 211, 111, 0.7)" />
-          <stop offset="100%" stopColor="rgba(168, 85, 247, 0.7)" />
-        </linearGradient>
-        
-        {/* Storage to Consumption gradient (blue to purple) */}
-        <linearGradient id="storageToConsumptionGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="rgba(14, 165, 233, 0.7)" />
-          <stop offset="100%" stopColor="rgba(168, 85, 247, 0.7)" />
-        </linearGradient>
-        
-        {/* Grid to Consumption gradient (gray to purple) */}
-        <linearGradient id="gridToConsumptionGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="rgba(100, 116, 139, 0.7)" />
-          <stop offset="100%" stopColor="rgba(168, 85, 247, 0.7)" />
-        </linearGradient>
-        
-        {/* Flow animation */}
-        <pattern id="flowPattern" width="30" height="10" patternUnits="userSpaceOnUse">
-          <rect width="20" height="10" fill="rgba(255, 255, 255, 0.3)">
-            <animate attributeName="x" from="-20" to="30" dur="2s" repeatCount="indefinite" />
-          </rect>
-        </pattern>
-      </defs>
-      
+    <svg className="absolute inset-0 w-full h-full" style={{ overflow: 'visible' }}>
       {connections.map((connection, index) => {
-        // Determine connection path and gradient
-        let path = '';
-        let gradient = 'url(#sourceToConsumptionGradient)';
+        const path = getConnectionPath(connection.from, connection.to);
+        const strokeWidth = getStrokeWidth(connection.value);
+        const color = getConnectionColor(connection.from);
         
-        if (connection.from === 'solar' && connection.to === 'battery') {
-          path = "M145,70 C200,70 200,150 260,150";
-          gradient = 'url(#sourceToStorageGradient)';
-        } else if (connection.from === 'solar' && connection.to === 'building') {
-          path = "M145,70 C250,70 350,70 450,70";
-          gradient = 'url(#sourceToConsumptionGradient)';
-        } else if (connection.from === 'wind' && connection.to === 'building') {
-          path = "M145,150 C250,150 350,150 450,150";
-          gradient = 'url(#sourceToConsumptionGradient)';
-        } else if (connection.from === 'wind' && connection.to === 'battery') {
-          path = "M145,150 C180,150 220,150 260,150";
-          gradient = 'url(#sourceToStorageGradient)';
-        } else if (connection.from === 'grid' && connection.to === 'building') {
-          path = "M145,230 C250,230 350,230 450,230";
-          gradient = 'url(#gridToConsumptionGradient)';
-        } else if (connection.from === 'battery' && connection.to === 'ev') {
-          path = "M330,180 C380,200 420,230 450,230";
-          gradient = 'url(#storageToConsumptionGradient)';
-        } else if (connection.from === 'battery' && connection.to === 'export') {
-          path = "M330,120 C380,100 420,50 450,50";
-          gradient = 'url(#storageToConsumptionGradient)';
-        }
-        
-        // Skip if no path defined
-        if (!path) return null;
-        
-        // Scale stroke width based on energy value
-        const baseWidth = 2;
-        const maxValue = 50;
-        const strokeWidth = Math.max(baseWidth, Math.min(8, baseWidth + (connection.value / maxValue) * 6));
+        if (!path || !connection.active) return null;
         
         return (
-          <g key={`connection-${index}`}>
-            {/* Base connection line */}
-            <path 
-              d={path} 
-              fill="none" 
-              stroke={gradient}
-              strokeWidth={strokeWidth} 
-              opacity={connection.active ? 1 : 0.3}
+          <g key={`${connection.from}-${connection.to}`}>
+            {/* Background connection line */}
+            <path
+              d={path}
+              fill="none"
+              stroke={color}
+              strokeWidth={strokeWidth}
+              opacity={0.7}
             />
             
             {/* Animated flow pattern */}
-            <path 
-              d={path} 
-              fill="none" 
-              stroke="url(#flowPattern)"
-              strokeWidth={strokeWidth} 
-              opacity={connection.active ? 1 : 0}
+            <path
+              d={path}
+              fill="none"
+              stroke="white"
+              strokeWidth={strokeWidth * 0.6}
+              strokeDasharray="10,15"
+              opacity={0.7}
+              className="animate-flow"
             />
             
             {/* Energy value indicator */}
-            {connection.active && connection.value > 0 && (
-              <text>
-                <textPath 
-                  href={`#connection-path-${index}`} 
-                  startOffset="50%" 
-                  className="text-[10px] fill-white font-medium text-center"
-                  dominantBaseline="middle"
-                  textAnchor="middle"
-                >
-                  {connection.value.toFixed(1)} kW
-                </textPath>
-              </text>
+            {connection.value > 0.5 && (
+              <>
+                <path
+                  id={`flow-path-${connection.from}-${connection.to}`}
+                  d={path}
+                  fill="none"
+                  stroke="none"
+                />
+                <text dy={-5} className="text-[10px] font-medium fill-slate-700 dark:fill-slate-200">
+                  <textPath
+                    href={`#flow-path-${connection.from}-${connection.to}`}
+                    startOffset="50%"
+                    textAnchor="middle"
+                  >
+                    {connection.value.toFixed(1)} kW
+                  </textPath>
+                </text>
+              </>
             )}
-            
-            {/* Hidden path for text */}
-            <path 
-              id={`connection-path-${index}`}
-              d={path} 
-              fill="none" 
-              stroke="none"
-            />
           </g>
         );
       })}

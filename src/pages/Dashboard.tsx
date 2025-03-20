@@ -11,9 +11,11 @@ import DashboardLoading from '@/components/dashboard/DashboardLoading';
 import ErrorBoundary from '@/components/ui/ErrorBoundary';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { BarChart3, Zap, LineChart, ArrowDownToLine } from 'lucide-react';
-import EnergyFlowChart from '@/components/dashboard/EnergyFlowChart';
+import { BarChart3, Zap, LineChart, ArrowDownToLine, Activity } from 'lucide-react';
 import { EnergyFlowProvider } from '@/components/dashboard/energy-flow/EnergyFlowContext';
+import EnergyFlowChart from '@/components/dashboard/EnergyFlowChart';
+import ConsumptionTab from '@/components/dashboard/tabs/ConsumptionTab';
+import ForecastTab from '@/components/dashboard/tabs/ForecastTab';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -42,7 +44,7 @@ const Dashboard = () => {
           <DashboardHeader siteName={currentSite.name} />
           
           <Tabs defaultValue="overview" className="mt-6">
-            <TabsList className="grid w-full grid-cols-4 mb-6">
+            <TabsList className="grid w-full grid-cols-5 mb-6">
               <TabsTrigger value="overview">
                 <BarChart3 className="h-4 w-4 mr-2" />
                 Overview
@@ -52,12 +54,16 @@ const Dashboard = () => {
                 Energy Flow
               </TabsTrigger>
               <TabsTrigger value="consumption">
-                <LineChart className="h-4 w-4 mr-2" />
+                <Activity className="h-4 w-4 mr-2" />
                 Consumption
               </TabsTrigger>
-              <TabsTrigger value="forecasts">
+              <TabsTrigger value="forecast">
                 <ArrowDownToLine className="h-4 w-4 mr-2" />
-                Forecasts
+                Forecast
+              </TabsTrigger>
+              <TabsTrigger value="details">
+                <LineChart className="h-4 w-4 mr-2" />
+                Details
               </TabsTrigger>
             </TabsList>
             
@@ -77,14 +83,16 @@ const Dashboard = () => {
             </TabsContent>
             
             <TabsContent value="consumption">
-              <div className="text-center p-12 text-muted-foreground">
-                Consumption details will be displayed here
-              </div>
+              <ConsumptionTab siteId={currentSite.id} />
             </TabsContent>
             
-            <TabsContent value="forecasts">
+            <TabsContent value="forecast">
+              <ForecastTab siteId={currentSite.id} />
+            </TabsContent>
+            
+            <TabsContent value="details">
               <div className="text-center p-12 text-muted-foreground">
-                Energy forecasts will be displayed here
+                Detailed energy metrics and system information will be displayed here
               </div>
             </TabsContent>
           </Tabs>
