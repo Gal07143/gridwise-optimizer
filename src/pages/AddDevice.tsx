@@ -1,38 +1,21 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/layout/AppLayout';
 import DeviceForm from '@/components/devices/DeviceForm';
-import { toast } from 'sonner';
+import { useDeviceForm } from '@/hooks/useDeviceForm';
+import { Button } from '@/components/ui/button';
 
 const AddDevice = () => {
   const navigate = useNavigate();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleAddDevice = async (formData: any) => {
-    try {
-      setIsSubmitting(true);
-      
-      // Here you would handle the actual form submission to create a device
-      console.log('Adding device:', formData);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      toast.success('Device added successfully');
-      navigate('/devices');
-    } catch (error) {
-      console.error('Error adding device:', error);
-      toast.error('Failed to add device. Please try again.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // Since DeviceForm expects a different set of props, we need to pass what it expects
-  // Looking at the error, it seems DeviceForm doesn't have onSubmit as a prop
-  // We need to check how DeviceForm is actually used
-  // For now, let's pass isSubmitting as that seems to be a valid prop
+  const {
+    device,
+    handleInputChange,
+    handleSelectChange,
+    handleSubmit,
+    validationErrors,
+    isSubmitting
+  } = useDeviceForm();
 
   return (
     <AppLayout>
@@ -43,8 +26,28 @@ const AddDevice = () => {
         </div>
         
         <div className="max-w-4xl mx-auto">
-          {/* Pass props that DeviceForm actually accepts */}
-          <DeviceForm isSubmitting={isSubmitting} />
+          <DeviceForm
+            device={device}
+            handleInputChange={handleInputChange}
+            handleSelectChange={handleSelectChange}
+            validationErrors={validationErrors}
+          />
+          
+          <div className="flex justify-end mt-8 space-x-4">
+            <Button
+              variant="outline"
+              onClick={() => navigate('/devices')}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={() => handleSubmit()} 
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Adding...' : 'Add Device'}
+            </Button>
+          </div>
         </div>
       </div>
     </AppLayout>

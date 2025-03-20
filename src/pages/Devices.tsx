@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -34,7 +35,30 @@ import { toast } from 'sonner';
 const Devices = () => {
   return (
     <AppLayout>
-      {/* ... keep existing code */}
+      <div className="p-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+          <div>
+            <h1 className="text-2xl font-semibold mb-1">Devices</h1>
+            <p className="text-muted-foreground">Manage your energy devices and equipment</p>
+          </div>
+          <div className="mt-4 md:mt-0 flex flex-col sm:flex-row gap-2">
+            <Button asChild variant="outline">
+              <Link to="/devices/scan">
+                <Search className="mr-2 h-4 w-4" />
+                Scan Network
+              </Link>
+            </Button>
+            <Button asChild>
+              <Link to="/add-device">
+                <Plus className="mr-2 h-4 w-4" />
+                Add Device
+              </Link>
+            </Button>
+          </div>
+        </div>
+
+        {/* Rest of your Devices page content */}
+      </div>
     </AppLayout>
   );
 };
