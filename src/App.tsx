@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import {
   createBrowserRouter,
@@ -20,9 +21,9 @@ import AddDevice from "@/pages/AddDevice";
 import EditDevice from "@/pages/EditDevice";
 import Alerts from "@/pages/Alerts";
 import Settings from "@/pages/Settings";
-import SiteSettings from "@/pages/SiteSettings";
-import AddSite from "@/pages/AddSite";
-import EditSite from "@/pages/EditSite";
+import SiteSettings from "@/pages/settings/SiteSettings";
+import AddSite from "@/pages/settings/AddSite";
+import EditSite from "@/pages/settings/EditSite";
 import NotFound from "@/pages/NotFound";
 import EnergyFlow from "@/pages/EnergyFlow";
 import MicrogridControl from "@/pages/MicrogridControl";
