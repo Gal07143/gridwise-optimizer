@@ -8,6 +8,7 @@ import {
 import { AuthProvider } from '@/contexts/AuthContext';
 import { SiteProvider } from '@/contexts/SiteContext';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Import pages
 import Index from "@/pages/Index";
@@ -108,15 +109,20 @@ const routes: RouteObject[] = [
   }
 ];
 
+// Create a client
+const queryClient = new QueryClient();
+
 const App = () => {
   const router = createBrowserRouter(routes);
   
   return (
-    <AuthProvider>
-      <SiteProvider>
-        <RouterProvider router={router} />
-      </SiteProvider>
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <SiteProvider>
+          <RouterProvider router={router} />
+        </SiteProvider>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 };
 
