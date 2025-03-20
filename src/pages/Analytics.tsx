@@ -1,111 +1,127 @@
 
 import React, { useState } from 'react';
-import { Zap, Activity, BarChart } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import Header from '@/components/layout/Header';
-import Sidebar from '@/components/layout/Sidebar';
-import MetricsCard from '@/components/dashboard/MetricsCard';
+import AppLayout from '@/components/layout/AppLayout';
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardHeader, 
+  CardTitle 
+} from '@/components/ui/card';
+import { 
+  Tabs, 
+  TabsContent, 
+  TabsList, 
+  TabsTrigger 
+} from '@/components/ui/tabs';
 import AnalyticsHeader from '@/components/analytics/AnalyticsHeader';
-import ConsumptionTab from '@/components/analytics/tabs/ConsumptionTab';
+import TimeframeSelector from '@/components/analytics/TimeframeSelector';
 import GenerationTab from '@/components/analytics/tabs/GenerationTab';
+import ConsumptionTab from '@/components/analytics/tabs/ConsumptionTab';
 import CostTab from '@/components/analytics/tabs/CostTab';
 import InsightsTab from '@/components/analytics/tabs/InsightsTab';
-import {
-  weeklyEnergyData,
-  monthlyGenerationData,
-  peakDemandData,
-  energySourcesData,
-  topConsumersData,
-  costBreakdownData
-} from '@/components/analytics/data/sampleData';
+import { useSite } from '@/contexts/SiteContext';
+import ComparisonToggle from '@/components/analytics/ComparisonToggle';
+import { LineChart, BarChart, DollarSign, Lightbulb, FileBarChart } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 const Analytics = () => {
+  const { currentSite } = useSite();
+  const navigate = useNavigate();
   const [timeframe, setTimeframe] = useState('week');
-  const [dataComparisonEnabled, setDataComparisonEnabled] = useState(true);
-
+  const [showComparison, setShowComparison] = useState(false);
+  
+  const handleCreateReport = () => {
+    navigate('/reports');
+    setTimeout(() => {
+      toast.info('Create a new custom report to analyze your energy data in detail.');
+    }, 300);
+  };
+  
   return (
-    <div className="flex h-screen overflow-hidden">
-      <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Header />
-        <div className="flex-1 overflow-y-auto p-6 bg-slate-50 dark:bg-slate-900 animate-fade-in">
-          <AnalyticsHeader 
-            timeframe={timeframe}
-            setTimeframe={setTimeframe}
-            dataComparisonEnabled={dataComparisonEnabled}
-            setDataComparisonEnabled={setDataComparisonEnabled}
-          />
+    <AppLayout>
+      <div className="animate-in fade-in duration-500 p-6">
+        <AnalyticsHeader 
+          siteName={currentSite?.name || 'Loading...'}
+          siteLastUpdated={new Date().toISOString()}
+        />
+        
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-2">
+          <TimeframeSelector value={timeframe} onChange={setTimeframe} />
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <MetricsCard 
-              title="Total Energy Consumption" 
-              value={2483} 
-              unit="kWh"
-              changeValue={8.2}
-              changeType="increase"
-              description="Last 30 days"
-              icon={<Zap className="h-5 w-5" />}
+          <div className="flex items-center gap-2">
+            <ComparisonToggle
+              checked={showComparison}
+              onCheckedChange={setShowComparison}
             />
-            <MetricsCard 
-              title="Energy Cost" 
-              value={403} 
-              unit="$"
-              changeValue={5.7}
-              changeType="increase"
-              description="Last 30 days"
-              icon={<Activity className="h-5 w-5" />}
-            />
-            <MetricsCard 
-              title="Carbon Footprint" 
-              value={628} 
-              unit="kg"
-              changeValue={12.4}
-              changeType="decrease"
-              description="Last 30 days"
-              icon={<BarChart className="h-5 w-5" />}
-            />
+            
+            <Button
+              variant="outline"
+              size="sm"
+              className="ml-2"
+              onClick={handleCreateReport}
+            >
+              <FileBarChart className="h-4 w-4 mr-2" />
+              Create Report
+            </Button>
           </div>
-          
-          <Tabs defaultValue="consumption" className="mb-6">
-            <TabsList className="mb-4">
-              <TabsTrigger value="consumption">Consumption</TabsTrigger>
-              <TabsTrigger value="generation">Generation</TabsTrigger>
-              <TabsTrigger value="cost">Cost Analysis</TabsTrigger>
-              <TabsTrigger value="insights">Key Insights</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="consumption">
-              <ConsumptionTab 
-                weeklyEnergyData={weeklyEnergyData}
-                peakDemandData={peakDemandData}
-                energySourcesData={energySourcesData}
-                topConsumersData={topConsumersData}
-                costBreakdownData={costBreakdownData}
-                dataComparisonEnabled={dataComparisonEnabled}
-              />
-            </TabsContent>
-            
-            <TabsContent value="generation">
-              <GenerationTab 
-                monthlyGenerationData={monthlyGenerationData}
-                dataComparisonEnabled={dataComparisonEnabled}
-              />
-            </TabsContent>
-            
-            <TabsContent value="cost">
-              <CostTab 
-                costBreakdownData={costBreakdownData}
-                monthlyGenerationData={monthlyGenerationData}
-              />
-            </TabsContent>
-            
-            <TabsContent value="insights">
-              <InsightsTab />
-            </TabsContent>
-          </Tabs>
         </div>
+        
+        <Tabs defaultValue="generation" className="space-y-4">
+          <TabsList className="grid grid-cols-4">
+            <TabsTrigger value="generation">
+              <LineChart className="h-4 w-4 mr-2" />
+              Generation
+            </TabsTrigger>
+            <TabsTrigger value="consumption">
+              <BarChart className="h-4 w-4 mr-2" />
+              Consumption
+            </TabsTrigger>
+            <TabsTrigger value="cost">
+              <DollarSign className="h-4 w-4 mr-2" />
+              Cost
+            </TabsTrigger>
+            <TabsTrigger value="insights">
+              <Lightbulb className="h-4 w-4 mr-2" />
+              Insights
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="generation" className="space-y-4">
+            <GenerationTab 
+              timeframe={timeframe}
+              showComparison={showComparison}
+              siteId={currentSite?.id || ''}
+            />
+          </TabsContent>
+          
+          <TabsContent value="consumption" className="space-y-4">
+            <ConsumptionTab 
+              timeframe={timeframe}
+              showComparison={showComparison}
+              siteId={currentSite?.id || ''}
+            />
+          </TabsContent>
+          
+          <TabsContent value="cost" className="space-y-4">
+            <CostTab 
+              timeframe={timeframe}
+              showComparison={showComparison}
+              siteId={currentSite?.id || ''}
+            />
+          </TabsContent>
+          
+          <TabsContent value="insights" className="space-y-4">
+            <InsightsTab 
+              timeframe={timeframe}
+              siteId={currentSite?.id || ''}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
-    </div>
+    </AppLayout>
   );
 };
 

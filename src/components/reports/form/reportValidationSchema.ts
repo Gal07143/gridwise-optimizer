@@ -1,41 +1,22 @@
 
-import * as z from 'zod';
+import { z } from 'zod';
 
-// Basic info validation schema
-export const reportBasicInfoSchema = z.object({
-  title: z.string().min(3, { message: 'Title must be at least 3 characters long' }),
+export const reportSchema = z.object({
+  title: z.string().min(3, "Title must be at least 3 characters").max(100, "Title must be less than 100 characters"),
   description: z.string().optional(),
-});
-
-// Report configuration validation schema
-export const reportConfigSchema = z.object({
-  type: z.string(),
+  type: z.enum(["energy_consumption", "energy_production", "cost_analysis", "device_performance", "efficiency_analysis"]),
   is_template: z.boolean().default(false),
-});
-
-// Schedule validation schema
-export const scheduleSchema = z.object({
   schedule: z.string().optional(),
-});
-
-// Parameters validation schema
-export const parametersSchema = z.object({
   parameters: z.record(z.any()).optional(),
+  template_id: z.string().optional()
 });
-
-// Combined report schema
-export const reportSchema = reportBasicInfoSchema
-  .merge(reportConfigSchema)
-  .merge(scheduleSchema)
-  .merge(parametersSchema);
 
 export type ReportFormValues = z.infer<typeof reportSchema>;
 
-export const getDefaultValues = () => ({
+export const getDefaultValues = (): ReportFormValues => ({
   title: '',
   description: '',
   type: 'energy_consumption',
   is_template: false,
-  schedule: '',
-  parameters: {},
+  parameters: {}
 });

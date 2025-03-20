@@ -51,8 +51,8 @@ const EnergyNode: React.FC<EnergyNodeProps> = ({ node, showDetails = true }) => 
   // Get extra content for specific node types
   const getNodeExtraContent = () => {
     if (node.type === 'storage') {
-      // Calculate battery percentage
-      const batteryPercentage = node.stateOfCharge || 73.6;
+      // Calculate battery percentage (now correctly using the batteryLevel or defaulting to 73.6)
+      const batteryPercentage = node.batteryLevel || 73.6;
       
       return (
         <>

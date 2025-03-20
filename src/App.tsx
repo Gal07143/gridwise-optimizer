@@ -1,144 +1,30 @@
-
 import React from 'react';
-import {
-  createBrowserRouter,
-  RouterProvider,
-  RouteObject,
-  Outlet
-} from "react-router-dom";
-import { AuthProvider } from '@/contexts/AuthContext';
-import { SiteProvider } from '@/contexts/SiteContext';
-import ProtectedRoute from '@/components/auth/ProtectedRoute';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import ErrorBoundary from '@/components/ui/ErrorBoundary';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import Dashboard from './pages/Dashboard';
+import Settings from './pages/Settings';
+import Sites from './pages/settings/Sites';
+import Users from './pages/settings/Users';
+import ReportsPage from './pages/Reports';
+import EnergyFlow from './pages/EnergyFlow';
+import Analytics from './pages/Analytics';
+import MicrogridControl from './pages/MicrogridControl';
 
-// Import pages
-import Index from "@/pages/Index";
-import Auth from "@/pages/Auth";
-import Dashboard from "@/pages/Dashboard";
-import Analytics from "@/pages/Analytics";
-import Devices from "@/pages/Devices";
-import AddDevice from "@/pages/AddDevice";
-import EditDevice from "@/pages/EditDevice";
-import Alerts from "@/pages/Alerts";
-import Settings from "@/pages/Settings";
-import SiteSettings from "@/pages/settings/SiteSettings";
-import AddSite from "@/pages/settings/AddSite";
-import EditSite from "@/pages/settings/EditSite";
-import NotFound from "@/pages/NotFound";
-import EnergyFlow from "@/pages/EnergyFlow";
-import MicrogridControl from "@/pages/MicrogridControl";
-import SystemStatus from "@/pages/SystemStatus";
-import Reports from "@/pages/Reports";
-import Security from "@/pages/Security";
-
-// Create the routes configuration
-const routes: RouteObject[] = [
-  {
-    path: "/",
-    element: <Index />
-  },
-  {
-    path: "/login",
-    element: <Auth />
-  },
-  {
-    path: "/auth",
-    element: <Auth />
-  },
-  {
-    path: "/",
-    element: (
-      <ProtectedRoute>
-        <Outlet />
-      </ProtectedRoute>
-    ),
-    children: [
-      {
-        path: "dashboard",
-        element: <Dashboard />
-      },
-      {
-        path: "analytics",
-        element: <Analytics />
-      },
-      {
-        path: "devices",
-        element: <Devices />
-      },
-      {
-        path: "devices/add",
-        element: <AddDevice />
-      },
-      {
-        path: "devices/:id",
-        element: <EditDevice />
-      },
-      {
-        path: "alerts",
-        element: <Alerts />
-      },
-      {
-        path: "reports",
-        element: <Reports />
-      },
-      {
-        path: "energy-flow",
-        element: <EnergyFlow />
-      },
-      {
-        path: "microgrid",
-        element: <MicrogridControl />
-      },
-      {
-        path: "system-status",
-        element: <SystemStatus />
-      },
-      {
-        path: "security",
-        element: <Security />
-      },
-      {
-        path: "settings",
-        element: <Settings />
-      },
-      {
-        path: "settings/sites",
-        element: <SiteSettings />
-      },
-      {
-        path: "settings/sites/add",
-        element: <AddSite />
-      },
-      {
-        path: "settings/sites/:id",
-        element: <EditSite />
-      },
-    ],
-  },
-  {
-    path: "*",
-    element: <NotFound />
-  }
-];
-
-// Create a client
-const queryClient = new QueryClient();
-
-const App = () => {
-  const router = createBrowserRouter(routes);
-  
+function App() {
   return (
-    <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <SiteProvider>
-            <RouterProvider router={router} />
-          </SiteProvider>
-        </AuthProvider>
-      </QueryClientProvider>
-    </ErrorBoundary>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/settings" element={<Settings />} />
+        <Route path="/settings/sites" element={<Sites />} />
+        <Route path="/settings/users" element={<Users />} />
+        <Route path="/reports" element={<ReportsPage />} />
+        <Route path="/energy-flow" element={<EnergyFlow />} />
+        <Route path="/analytics" element={<Analytics />} />
+        <Route path="/microgrid-control" element={<MicrogridControl />} />
+      </Routes>
+    </Router>
   );
-};
+}
 
 export default App;

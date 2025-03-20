@@ -6,7 +6,7 @@ import EnergyFlowChart from '@/components/dashboard/EnergyFlowChart';
 import { useSite } from '@/contexts/SiteContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const EnergyFlow = () => {
   const { currentSite } = useSite();
@@ -26,6 +26,8 @@ const EnergyFlow = () => {
               variant="outline"
               className="h-9"
               onClick={() => navigate('/analytics')}
+              as={Link}
+              to="/analytics"
             >
               View Analytics
             </Button>
@@ -33,6 +35,8 @@ const EnergyFlow = () => {
               variant="default"
               className="h-9"
               onClick={() => navigate('/microgrid-control')}
+              as={Link}
+              to="/microgrid-control"
             >
               Control System
             </Button>
