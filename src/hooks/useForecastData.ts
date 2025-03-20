@@ -1,203 +1,172 @@
 
-import { useState, useEffect } from 'react';
-import { useSite } from '@/contexts/SiteContext';
-import { getEnergyForecasts, generateEnergyPredictions } from '@/services/energyAIPredictionService';
-import { getWeatherForecast } from '@/services/weatherService';
+import { useState, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { EnergyForecast } from '@/types/energy';
+import { generateEnergyPredictions } from '@/services/energyAIPredictionService';
+import { getWeatherForecast } from '@/services/weatherService';
+import { useSiteContext } from '@/contexts/SiteContext';
+import { generateSampleForecasts } from '@/services/forecasts/sampleGenerator';
 
-export function useForecastData(days = 7) {
-  const { currentSite } = useSite();
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [processedData, setProcessedData] = useState<any[]>([]);
-  const [forecastMetrics, setForecastMetrics] = useState({
+const REFRESH_INTERVAL = 15000; // 15 seconds
+
+export interface ForecastDataPoint {
+  time: string;
+  generation: number;
+  consumption: number;
+  netEnergy: number;
+  weather?: {
+    condition?: string;
+    temperature?: number;
+    cloudCover?: number;
+    windSpeed?: number;
+  };
+}
+
+export interface ForecastMetrics {
+  totalGeneration: number;
+  totalConsumption: number;
+  peakGeneration: number;
+  peakConsumption: number;
+  confidence: number;
+}
+
+export function useForecastData() {
+  const { activeSite } = useSiteContext();
+  const [isUsingLocalData, setIsUsingLocalData] = useState(false);
+  const [processedData, setProcessedData] = useState<ForecastDataPoint[]>([]);
+  const [forecastMetrics, setForecastMetrics] = useState<ForecastMetrics>({
     totalGeneration: 0,
     totalConsumption: 0,
-    netEnergy: 0,
     peakGeneration: 0,
     peakConsumption: 0,
-    confidence: 0.85,
+    confidence: 85,
   });
-  const [isUsingLocalData, setIsUsingLocalData] = useState(false);
+  const [currentWeather, setCurrentWeather] = useState<{
+    condition: string;
+    temperature: number;
+    cloudCover: number;
+    windSpeed: number;
+  } | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
 
-  // Get existing forecasts from the database
+  // Fetch energy forecasts
   const {
-    data: forecasts = [],
-    isLoading: forecastsLoading,
-    error: forecastsError,
-    refetch: refetchForecasts
+    data: forecastData,
+    isLoading,
+    error,
+    refetch
   } = useQuery({
-    queryKey: ['energy-forecasts', currentSite?.id],
-    queryFn: () => getEnergyForecasts(currentSite?.id || ''),
-    enabled: !!currentSite?.id,
-    refetchInterval: 15 * 1000, // Refetch every 15 seconds
-  });
-
-  // Check if we need to generate new forecasts
-  const shouldGenerateNewForecasts = () => {
-    if (forecasts.length === 0) return true;
-    
-    // Check if the latest forecast is older than 24 hours
-    const latestForecast = forecasts[0];
-    if (!latestForecast) return true;
-    
-    const forecastTime = new Date(latestForecast.timestamp);
-    const now = new Date();
-    const hoursDiff = (now.getTime() - forecastTime.getTime()) / (1000 * 60 * 60);
-    
-    return hoursDiff >= 24;
-  };
-
-  // Regenerate forecasts if needed
-  useEffect(() => {
-    const generateIfNeeded = async () => {
-      if (currentSite?.id && shouldGenerateNewForecasts() && !isRefreshing) {
-        setIsRefreshing(true);
-        try {
-          await generateEnergyPredictions(currentSite.id, days);
-          await refetchForecasts();
-        } catch (error) {
-          console.error("Error generating forecasts:", error);
-        } finally {
-          setIsRefreshing(false);
-        }
+    queryKey: ['energyForecasts', activeSite?.id],
+    queryFn: async () => {
+      try {
+        const data = await generateEnergyPredictions(activeSite?.id || 'default', 1, true);
+        setIsUsingLocalData(false);
+        return data;
+      } catch (err) {
+        console.error('Error fetching energy predictions:', err);
+        
+        // Fallback to sample data
+        setIsUsingLocalData(true);
+        const sampleData = generateSampleForecasts(activeSite?.id || 'default');
+        return sampleData.map(forecast => ({
+          date: forecast.forecast_time,
+          generation: forecast.generation_forecast,
+          consumption: forecast.consumption_forecast,
+          temperature: forecast.temperature,
+          cloudCover: forecast.cloud_cover,
+          windSpeed: forecast.wind_speed,
+          weatherCondition: forecast.weather_condition,
+        }));
       }
-    };
-    
-    generateIfNeeded();
-  }, [currentSite, forecasts, days, refetchForecasts]);
-
-  // Get weather data
-  const {
-    data: weatherData = [],
-    isLoading: weatherLoading
-  } = useQuery({
-    queryKey: ['weather-forecast', currentSite?.id],
-    queryFn: () => getWeatherForecast(currentSite?.id || '', days),
-    enabled: !!currentSite?.id,
-    refetchInterval: 15 * 1000, // Refetch every 15 seconds
+    },
+    refetchInterval: REFRESH_INTERVAL,
+    refetchOnWindowFocus: false,
   });
 
-  // Process the forecast data for display
+  // Fetch weather data
+  const { data: weatherData } = useQuery({
+    queryKey: ['weatherForecast', activeSite?.id],
+    queryFn: async () => {
+      try {
+        return await getWeatherForecast(activeSite?.id || 'default', 1);
+      } catch (err) {
+        console.error('Error fetching weather forecast:', err);
+        return [];
+      }
+    },
+    refetchInterval: REFRESH_INTERVAL,
+    refetchOnWindowFocus: false,
+  });
+
+  // Process forecasts data when it changes
   useEffect(() => {
-    if (forecasts.length > 0) {
-      // Map the database forecasts to the format needed for the chart
-      const chartData = forecasts.map(forecast => ({
-        time: new Date(forecast.forecast_time).toISOString(),
-        generation: forecast.generation_forecast,
-        consumption: forecast.consumption_forecast,
-        temperature: forecast.temperature,
-        cloudCover: forecast.cloud_cover,
-        wind: forecast.wind_speed
-      }));
-      
-      setProcessedData(chartData);
-      
-      // Calculate metrics
-      const totalGeneration = forecasts.reduce((sum, f) => sum + f.generation_forecast, 0);
-      const totalConsumption = forecasts.reduce((sum, f) => sum + f.consumption_forecast, 0);
-      const peakGeneration = Math.max(...forecasts.map(f => f.generation_forecast));
-      const peakConsumption = Math.max(...forecasts.map(f => f.consumption_forecast));
-      const avgConfidence = forecasts.reduce((sum, f) => sum + (f.confidence || 0.85), 0) / forecasts.length;
-      
-      setForecastMetrics({
-        totalGeneration,
-        totalConsumption,
-        netEnergy: totalGeneration - totalConsumption,
-        peakGeneration,
-        peakConsumption,
-        confidence: avgConfidence || 0.85
-      });
-      
-      setIsUsingLocalData(false);
-    } else if (!forecastsLoading && !isRefreshing) {
-      // Generate sample data if no forecasts available
-      const now = new Date();
-      const sampleData = Array.from({ length: 24 }).map((_, i) => {
-        const time = new Date(now);
-        time.setHours(now.getHours() + i);
-        
-        // Create realistic patterns based on time of day
-        const hour = time.getHours();
-        const isDaytime = hour >= 6 && hour <= 18;
-        
-        let generation = 0;
-        if (isDaytime) {
-          generation = 5 + Math.sin((hour - 6) * Math.PI / 12) * 15; // Peak at noon
-        }
-        
-        // Consumption has morning and evening peaks
-        let consumption = 5;
-        if (hour >= 6 && hour <= 9) { // Morning peak
-          consumption = 10 + (hour - 6) * 2;
-        } else if (hour >= 17 && hour <= 21) { // Evening peak
-          consumption = 10 + (5 - Math.abs(hour - 19)) * 3;
-        }
-        
-        // Add some randomness
-        generation += (Math.random() * 2) - 1;
-        consumption += (Math.random() * 2) - 1;
-        
+    if (forecastData && forecastData.length > 0) {
+      // Transform forecast data into the format needed for charts and metrics
+      const transformed: ForecastDataPoint[] = forecastData.map(forecast => {
+        const time = new Date(forecast.date);
         return {
           time: time.toISOString(),
-          generation: Math.max(0, generation),
-          consumption: Math.max(0, consumption),
-          temperature: isDaytime ? 20 + Math.random() * 5 : 15 + Math.random() * 3,
-          cloudCover: Math.random(),
-          wind: 5 + Math.random() * 10
+          generation: Number(forecast.generation),
+          consumption: Number(forecast.consumption),
+          netEnergy: Number(forecast.generation) - Number(forecast.consumption),
+          weather: {
+            condition: forecast.weatherCondition,
+            temperature: forecast.temperature,
+            cloudCover: forecast.cloudCover,
+            windSpeed: forecast.windSpeed,
+          },
         };
       });
+
+      // Sort by time
+      transformed.sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
       
-      setProcessedData(sampleData);
+      // Set processed data for display
+      setProcessedData(transformed);
       
-      // Calculate metrics from sample data
-      const totalGeneration = sampleData.reduce((sum, d) => sum + d.generation, 0);
-      const totalConsumption = sampleData.reduce((sum, d) => sum + d.consumption, 0);
-      const peakGeneration = Math.max(...sampleData.map(d => d.generation));
-      const peakConsumption = Math.max(...sampleData.map(d => d.consumption));
+      // Calculate metrics
+      const totalGeneration = transformed.reduce((sum, item) => sum + item.generation, 0);
+      const totalConsumption = transformed.reduce((sum, item) => sum + item.consumption, 0);
+      const peakGeneration = Math.max(...transformed.map(item => item.generation));
+      const peakConsumption = Math.max(...transformed.map(item => item.consumption));
       
       setForecastMetrics({
-        totalGeneration,
-        totalConsumption,
-        netEnergy: totalGeneration - totalConsumption,
-        peakGeneration,
-        peakConsumption,
-        confidence: 0.7 // Lower confidence for sample data
+        totalGeneration: Number(totalGeneration.toFixed(1)),
+        totalConsumption: Number(totalConsumption.toFixed(1)),
+        peakGeneration: Number(peakGeneration.toFixed(1)),
+        peakConsumption: Number(peakConsumption.toFixed(1)),
+        confidence: Math.round((forecastData[0]?.confidence || 85)),
       });
-      
-      setIsUsingLocalData(true);
-    }
-  }, [forecasts, forecastsLoading, isRefreshing]);
 
-  // Refresh forecasts manually
-  const refreshForecasts = async () => {
-    if (!currentSite?.id || isRefreshing) return;
-    
-    setIsRefreshing(true);
-    try {
-      // Get fresh weather forecast first
-      await getWeatherForecast(currentSite.id, days);
-      
-      // Then generate new energy predictions
-      await generateEnergyPredictions(currentSite.id, days);
-      
-      // Refetch the data
-      await refetchForecasts();
-    } catch (error) {
-      console.error("Error refreshing forecasts:", error);
-    } finally {
-      setIsRefreshing(false);
+      // Set current weather from the first forecast item
+      if (transformed[0]?.weather) {
+        setCurrentWeather({
+          condition: transformed[0].weather.condition || 'Unknown',
+          temperature: transformed[0].weather.temperature || 0,
+          cloudCover: transformed[0].weather.cloudCover || 0,
+          windSpeed: transformed[0].weather.windSpeed || 0,
+        });
+      }
+
+      setLastUpdated(new Date().toISOString());
     }
-  };
+  }, [forecastData]);
+
+  // Function to manually refresh the data
+  const refreshData = useCallback(() => {
+    refetch();
+    toast.success('Forecast data refreshed');
+  }, [refetch]);
 
   return {
-    forecasts,
     processedData,
     forecastMetrics,
-    isLoading: forecastsLoading || weatherLoading,
-    isRefreshing,
-    error: forecastsError,
-    refreshForecasts,
-    weatherData,
-    isUsingLocalData
+    isLoading,
+    error,
+    refreshData,
+    isUsingLocalData,
+    currentWeather,
+    lastUpdated
   };
 }

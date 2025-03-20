@@ -1,23 +1,22 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
+import { MicrogridDevice, MicrogridAlert, MicrogridSystemState } from './types';
+import { useSiteContext } from '@/contexts/SiteContext';
 import { toast } from 'sonner';
-import { 
-  MicrogridState, 
-  ControlSettings, 
-  CommandHistoryItem, 
-  AlertItem 
-} from './types';
+
+// Refresh interval in milliseconds (15 seconds)
+const REFRESH_INTERVAL = 15000;
 
 interface MicrogridContextType {
-  microgridState: MicrogridState;
-  settings: ControlSettings;
-  commandHistory: CommandHistoryItem[];
-  alerts: AlertItem[];
-  handleModeChange: (mode: 'automatic' | 'manual' | 'island' | 'grid-connected') => void;
-  handleGridConnectionToggle: (enabled: boolean) => void;
-  handleBatteryDischargeToggle: (enabled: boolean) => void;
-  handleSettingsChange: (setting: keyof ControlSettings, value: any) => void;
-  handleSaveSettings: () => void;
-  handleAcknowledgeAlert: (alertId: string) => void;
+  devices: MicrogridDevice[];
+  alerts: MicrogridAlert[];
+  systemState: MicrogridSystemState;
+  isLoading: boolean;
+  selectedDeviceId: string | null;
+  setSelectedDeviceId: (id: string | null) => void;
+  refreshData: () => void;
+  sendCommand: (deviceId: string, command: string, params?: any) => Promise<boolean>;
+  dismissAlert: (alertId: string) => void;
+  loadCommandHistory: (deviceId: string) => Promise<any[]>;
 }
 
 const MicrogridContext = createContext<MicrogridContextType | undefined>(undefined);
@@ -30,270 +29,220 @@ export const useMicrogrid = () => {
   return context;
 };
 
-interface MicrogridProviderProps {
-  children: ReactNode;
-}
-
-const MicrogridProvider: React.FC<MicrogridProviderProps> = ({ children }) => {
-  // State for microgrid status and controls
-  const [microgridState, setMicrogridState] = useState<MicrogridState>({
-    operatingMode: 'automatic',
-    gridConnection: true,
-    batteryDischargeEnabled: true,
-    batteryChargeEnabled: true,
-    gridImportEnabled: false,
-    gridExportEnabled: false,
-    solarProduction: 15.2,
-    windProduction: 8.4,
-    batteryCharge: 72,
-    batteryLevel: 72,
-    batteryChargeRate: 60,
-    batterySelfConsumptionMode: true,
-    systemMode: 'automatic',
-    economicMode: true,
-    peakShavingEnabled: true,
-    demandResponseEnabled: false,
-    loadConsumption: 10.8,
-    gridImport: 0,
-    gridExport: 12.8,
-    frequency: 50.02,
-    voltage: 232.1,
-    lastUpdated: new Date().toISOString()
+// Mock data and functions for development - will be replaced with real API calls
+const fetchDevices = async (siteId: string): Promise<MicrogridDevice[]> => {
+  // Simulate fetching devices from a database or API
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const mockDevices: MicrogridDevice[] = [
+        {
+          id: 'solar-panel-1',
+          name: 'Solar Panel 1',
+          type: 'solar',
+          status: 'online',
+          location: 'Roof',
+          capacity: 10,
+          site_id: siteId,
+          last_updated: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+        },
+        {
+          id: 'battery-1',
+          name: 'Battery 1',
+          type: 'battery',
+          status: 'online',
+          location: 'Basement',
+          capacity: 20,
+          site_id: siteId,
+          last_updated: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+        },
+        {
+          id: 'grid-connection',
+          name: 'Grid Connection',
+          type: 'grid',
+          status: 'online',
+          location: 'Utility Room',
+          capacity: 100,
+          site_id: siteId,
+          last_updated: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+        },
+      ];
+      resolve(mockDevices);
+    }, 500);
   });
-  
-  // State for control settings
-  const [settings, setSettings] = useState<ControlSettings>({
-    prioritizeSelfConsumption: true,
-    gridExportLimit: 15,
-    minBatteryReserve: 20,
-    peakShavingEnabled: true,
-    peakShavingThreshold: 12,
-    demandResponseEnabled: false,
-    economicOptimizationEnabled: true,
-    weatherPredictiveControlEnabled: true
-  });
-  
-  // State for commands history
-  const [commandHistory, setCommandHistory] = useState<CommandHistoryItem[]>([
-    {
-      timestamp: new Date(Date.now() - 3600000).toISOString(),
-      command: "Changed operating mode to automatic",
-      success: true,
-      user: "System"
-    },
-    {
-      timestamp: new Date(Date.now() - 7200000).toISOString(),
-      command: "Battery discharge enabled",
-      success: true,
-      user: "Admin"
-    }
-  ]);
-  
-  // State for active alerts
-  const [alerts, setAlerts] = useState<AlertItem[]>([
-    {
-      id: "1",
-      timestamp: new Date(Date.now() - 1800000).toISOString(),
-      message: "Grid voltage fluctuation detected",
-      severity: 'medium',
-      acknowledged: false
-    }
-  ]);
+};
 
-  // Simulate fetching real-time data
+const fetchAlerts = async (siteId: string): Promise<MicrogridAlert[]> => {
+  // Simulate fetching alerts from a database or API
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const mockAlerts: MicrogridAlert[] = [
+        {
+          id: 'alert-1',
+          device_id: 'battery-1',
+          type: 'warning',
+          message: 'Battery SOC low',
+          timestamp: new Date().toISOString(),
+          acknowledged: false,
+        },
+      ];
+      resolve(mockAlerts);
+    }, 300);
+  });
+};
+
+const fetchSystemState = async (siteId: string): Promise<MicrogridSystemState> => {
+  // Simulate fetching system state from a database or API
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const mockSystemState: MicrogridSystemState = {
+        mode: 'automatic',
+        status: 'normal',
+        gridConnected: true,
+        lastModeChange: new Date().toISOString(),
+        batteryReserve: 20,
+        prioritizeRenewables: true,
+        energyExport: true,
+        safetyProtocols: true,
+      };
+      resolve(mockSystemState);
+    }, 400);
+  });
+};
+
+export const MicrogridProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { activeSite } = useSiteContext();
+  const [devices, setDevices] = useState<MicrogridDevice[]>([]);
+  const [alerts, setAlerts] = useState<MicrogridAlert[]>([]);
+  const [systemState, setSystemState] = useState<MicrogridSystemState>({
+    mode: 'automatic',
+    status: 'normal',
+    gridConnected: true,
+    lastModeChange: new Date().toISOString(),
+    batteryReserve: 20,
+    prioritizeRenewables: true,
+    energyExport: true,
+    safetyProtocols: true,
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
+
+  const loadData = useCallback(async () => {
+    if (!activeSite) return;
+    
+    setIsLoading(true);
+    try {
+      const [fetchedDevices, fetchedAlerts, fetchedSystemState] = await Promise.all([
+        fetchDevices(activeSite.id),
+        fetchAlerts(activeSite.id),
+        fetchSystemState(activeSite.id)
+      ]);
+      
+      setDevices(fetchedDevices);
+      setAlerts(fetchedAlerts);
+      setSystemState(fetchedSystemState);
+    } catch (error) {
+      console.error('Error loading microgrid data:', error);
+      toast.error('Failed to load microgrid data');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [activeSite]);
+
   useEffect(() => {
-    const interval = setInterval(() => {
-      // In a real app, we'd fetch this data from the database or API
-      setMicrogridState(prev => {
-        const timeOfDay = new Date().getHours();
-        const isDaytime = timeOfDay >= 7 && timeOfDay <= 19;
-        const isPeakSolar = timeOfDay >= 10 && timeOfDay <= 15;
-        
-        // Adjust solar production based on time of day
-        let newSolarProduction = isDaytime 
-          ? isPeakSolar 
-            ? prev.solarProduction + (Math.random() * 0.6 - 0.2) 
-            : Math.max(0, prev.solarProduction + (Math.random() * 0.4 - 0.3))
-          : Math.max(0, prev.solarProduction - 0.5);
-        
-        if (!isDaytime && newSolarProduction < 1) newSolarProduction = 0;
-        
-        // Wind fluctuates less predictably
-        const newWindProduction = Math.max(0, prev.windProduction + (Math.random() * 0.8 - 0.4));
-        
-        // Load consumption variations
-        const newLoadConsumption = Math.max(0, prev.loadConsumption + (Math.random() * 0.7 - 0.35));
-        
-        // Total generation
-        const totalGeneration = newSolarProduction + newWindProduction;
-        
-        // Battery charge changes based on net energy
-        const netEnergy = totalGeneration - newLoadConsumption;
-        const batteryChargeChange = prev.batteryDischargeEnabled 
-          ? netEnergy > 0 ? Math.min(0.2, netEnergy * 0.1) : -Math.min(0.3, Math.abs(netEnergy) * 0.15)
-          : netEnergy > 0 ? Math.min(0.2, netEnergy * 0.1) : 0;
-        
-        const newBatteryCharge = Math.min(100, Math.max(0, prev.batteryCharge + batteryChargeChange));
-        
-        // Grid import/export
-        let newGridExport = 0;
-        let newGridImport = 0;
-        
-        if (prev.gridConnection) {
-          if (netEnergy > 0) {
-            newGridExport = netEnergy;
-            newGridImport = 0;
-          } else {
-            newGridExport = 0;
-            newGridImport = Math.abs(netEnergy);
-          }
+    if (activeSite) {
+      loadData();
+      
+      // Set up periodic refresh
+      const intervalId = setInterval(() => {
+        loadData();
+      }, REFRESH_INTERVAL);
+      
+      return () => clearInterval(intervalId);
+    }
+  }, [activeSite, loadData]);
+
+  const refreshData = useCallback(() => {
+    loadData();
+    toast.success('Microgrid data refreshed');
+  }, [loadData]);
+
+  const sendCommand = useCallback(async (deviceId: string, command: string, params?: any): Promise<boolean> => {
+    // Simulate sending a command to a device
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        // Find the device
+        const device = devices.find((d) => d.id === deviceId);
+        if (!device) {
+          toast.error('Device not found');
+          resolve(false);
+          return;
         }
-        
-        // Frequency and voltage variations
-        const newFrequency = prev.gridConnection 
-          ? 50 + (Math.random() * 0.1 - 0.05) 
-          : 49.8 + (Math.random() * 0.4 - 0.2);
-        
-        const newVoltage = 230 + (Math.random() * 4 - 2);
-        
-        return {
-          ...prev,
-          solarProduction: Number(newSolarProduction.toFixed(1)),
-          windProduction: Number(newWindProduction.toFixed(1)),
-          batteryCharge: Number(newBatteryCharge.toFixed(1)),
-          loadConsumption: Number(newLoadConsumption.toFixed(1)),
-          gridExport: prev.gridConnection ? Number(newGridExport.toFixed(1)) : 0,
-          gridImport: prev.gridConnection ? Number(newGridImport.toFixed(1)) : 0,
-          frequency: Number(newFrequency.toFixed(2)),
-          voltage: Number(newVoltage.toFixed(1)),
-          lastUpdated: new Date().toISOString()
-        };
-      });
-    }, 15000); // Changed from 3000 to 15000 (15 seconds)
-    
-    return () => clearInterval(interval);
+
+        // Simulate command execution
+        toast.success(`Command "${command}" sent to ${device.name}`);
+
+        // Update device status or other properties based on the command
+        const updatedDevices = devices.map((d) => {
+          if (d.id === deviceId) {
+            return { ...d, status: 'online' }; // Simulate device status change
+          }
+          return d;
+        });
+        setDevices(updatedDevices);
+
+        resolve(true);
+      }, 500);
+    });
+  }, [devices, setDevices]);
+
+  const dismissAlert = useCallback((alertId: string) => {
+    // Simulate dismissing an alert
+    setAlerts((prevAlerts) => prevAlerts.filter((alert) => alert.id !== alertId));
+    toast.success('Alert dismissed');
+  }, [alerts, setAlerts]);
+
+  const loadCommandHistory = useCallback(async (deviceId: string): Promise<any[]> => {
+    // Simulate fetching command history for a device
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const mockCommandHistory = [
+          {
+            id: 'command-1',
+            device_id: deviceId,
+            command: 'start',
+            timestamp: new Date().toISOString(),
+          },
+          {
+            id: 'command-2',
+            device_id: deviceId,
+            command: 'stop',
+            timestamp: new Date().toISOString(),
+          },
+        ];
+        resolve(mockCommandHistory);
+      }, 300);
+    });
   }, []);
-  
-  // Handle mode change
-  const handleModeChange = (mode: 'automatic' | 'manual' | 'island' | 'grid-connected') => {
-    setMicrogridState(prev => ({
-      ...prev,
-      operatingMode: mode
-    }));
-    
-    // Add to command history
-    setCommandHistory(prev => ([
-      {
-        timestamp: new Date().toISOString(),
-        command: `Changed operating mode to ${mode}`,
-        success: true,
-        user: "User"
-      },
-      ...prev
-    ]));
-    
-    toast.success(`Microgrid operating mode changed to ${mode}`);
-  };
-  
-  // Handle grid connection toggle
-  const handleGridConnectionToggle = (enabled: boolean) => {
-    setMicrogridState(prev => ({
-      ...prev,
-      gridConnection: enabled,
-      operatingMode: enabled ? 'grid-connected' : 'island'
-    }));
-    
-    // Add to command history
-    setCommandHistory(prev => ([
-      {
-        timestamp: new Date().toISOString(),
-        command: enabled ? "Connected to grid" : "Disconnected from grid (island mode)",
-        success: true,
-        user: "User"
-      },
-      ...prev
-    ]));
-    
-    toast.success(enabled ? "Connected to grid" : "Disconnected from grid (island mode)");
-  };
-  
-  // Handle battery discharge toggle
-  const handleBatteryDischargeToggle = (enabled: boolean) => {
-    setMicrogridState(prev => ({
-      ...prev,
-      batteryDischargeEnabled: enabled
-    }));
-    
-    // Add to command history
-    setCommandHistory(prev => ([
-      {
-        timestamp: new Date().toISOString(),
-        command: enabled ? "Battery discharge enabled" : "Battery discharge disabled",
-        success: true,
-        user: "User"
-      },
-      ...prev
-    ]));
-    
-    toast.success(enabled ? "Battery discharge enabled" : "Battery discharge disabled");
-  };
-  
-  // Handle settings change
-  const handleSettingsChange = (setting: keyof ControlSettings, value: any) => {
-    setSettings(prev => ({
-      ...prev,
-      [setting]: value
-    }));
-  };
-  
-  // Handle saving settings
-  const handleSaveSettings = () => {
-    // In a real app, we'd save these to the database
-    toast.success("Control settings saved successfully");
-    
-    // Add to command history
-    setCommandHistory(prev => ([
-      {
-        timestamp: new Date().toISOString(),
-        command: "Updated control settings",
-        success: true,
-        user: "User"
-      },
-      ...prev
-    ]));
-  };
-  
-  // Handle acknowledging an alert
-  const handleAcknowledgeAlert = (alertId: string) => {
-    setAlerts(prev => 
-      prev.map(alert => 
-        alert.id === alertId 
-          ? { ...alert, acknowledged: true }
-          : alert
-      )
-    );
-    
-    toast.success("Alert acknowledged");
-  };
-  
-  const contextValue: MicrogridContextType = {
-    microgridState,
-    settings,
-    commandHistory,
+
+  const value = {
+    devices,
     alerts,
-    handleModeChange,
-    handleGridConnectionToggle,
-    handleBatteryDischargeToggle,
-    handleSettingsChange,
-    handleSaveSettings,
-    handleAcknowledgeAlert
+    systemState,
+    isLoading,
+    selectedDeviceId,
+    setSelectedDeviceId,
+    refreshData,
+    sendCommand,
+    dismissAlert,
+    loadCommandHistory,
   };
 
   return (
-    <MicrogridContext.Provider value={contextValue}>
+    <MicrogridContext.Provider value={value}>
       {children}
     </MicrogridContext.Provider>
   );
 };
-
-export default MicrogridProvider;
