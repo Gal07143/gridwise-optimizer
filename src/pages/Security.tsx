@@ -1,11 +1,13 @@
+
 import React, { useState } from 'react';
 import AppLayout from '@/components/layout/AppLayout';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Shield, Lock, Users, Activity, FileText, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Shield, Lock, Users, Activity, FileText, AlertTriangle, CheckCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 
 // Mock security audit data
 const securityAudits = [
@@ -62,6 +64,7 @@ const securityScores = [
 
 const Security = () => {
   const [activeTab, setActiveTab] = useState('overview');
+  const [isLoading, setIsLoading] = useState(false);
   
   // Calculate overall security score
   const overallScore = Math.round(
@@ -80,17 +83,41 @@ const Security = () => {
     return "bg-red-500";
   };
 
+  const handleRunScan = () => {
+    setIsLoading(true);
+    toast.info("Security scan started. This may take a few minutes.");
+    
+    // Simulate scan completion
+    setTimeout(() => {
+      setIsLoading(false);
+      toast.success("Security scan completed successfully.");
+    }, 3000);
+  };
+
   return (
     <AppLayout>
-      <div className="p-6">
-        <div className="flex justify-between items-center mb-6">
+      <div className="p-6 animate-in">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
           <div>
             <h1 className="text-2xl font-semibold mb-1">Security Center</h1>
             <p className="text-muted-foreground">Manage and monitor system security</p>
           </div>
-          <Button>
-            <Shield className="mr-2 h-4 w-4" />
-            Run Security Scan
+          <Button 
+            onClick={handleRunScan} 
+            disabled={isLoading}
+            className="mt-4 sm:mt-0"
+          >
+            {isLoading ? (
+              <>
+                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                Running Scan...
+              </>
+            ) : (
+              <>
+                <Shield className="mr-2 h-4 w-4" />
+                Run Security Scan
+              </>
+            )}
           </Button>
         </div>
 
@@ -104,7 +131,7 @@ const Security = () => {
 
           <TabsContent value="overview" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card className="md:col-span-2">
+              <Card className="md:col-span-2 hover-card">
                 <CardHeader>
                   <CardTitle className="text-lg">Security Status</CardTitle>
                 </CardHeader>
@@ -160,7 +187,7 @@ const Security = () => {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="hover-card">
                 <CardHeader>
                   <CardTitle className="text-lg">Quick Actions</CardTitle>
                 </CardHeader>
@@ -187,7 +214,7 @@ const Security = () => {
               </Card>
             </div>
 
-            <Card>
+            <Card className="hover-card">
               <CardHeader>
                 <CardTitle className="text-lg">Recent Activity</CardTitle>
                 <CardDescription>Recent security events from the system</CardDescription>
@@ -195,7 +222,7 @@ const Security = () => {
               <CardContent>
                 <div className="space-y-4">
                   {securityAudits.slice(0, 3).map(audit => (
-                    <div key={audit.id} className="flex items-start space-x-3 p-3 border rounded-md">
+                    <div key={audit.id} className="flex items-start space-x-3 p-3 border rounded-md animate-scale">
                       {audit.status === "success" ? (
                         <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
                       ) : (
@@ -226,9 +253,47 @@ const Security = () => {
                 <CardDescription>Configure authentication and access policies</CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-center py-12 text-muted-foreground">
-                  Access control content will be implemented here
-                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Card className="bg-slate-50 dark:bg-slate-800">
+                    <CardHeader>
+                      <CardTitle className="text-base">Multi-Factor Authentication</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm mb-4">Require secondary verification when users log in</p>
+                      <Button>Configure MFA</Button>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="bg-slate-50 dark:bg-slate-800">
+                    <CardHeader>
+                      <CardTitle className="text-base">Login Policies</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm mb-4">Set password requirements and login restrictions</p>
+                      <Button>Manage Policies</Button>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="bg-slate-50 dark:bg-slate-800">
+                    <CardHeader>
+                      <CardTitle className="text-base">IP Restrictions</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm mb-4">Control which IP addresses can access the system</p>
+                      <Button>Configure IP Rules</Button>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="bg-slate-50 dark:bg-slate-800">
+                    <CardHeader>
+                      <CardTitle className="text-base">Session Management</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm mb-4">Configure timeout and session handling</p>
+                      <Button>Manage Sessions</Button>
+                    </CardContent>
+                  </Card>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -240,30 +305,73 @@ const Security = () => {
                 <CardDescription>Manage data encryption and security protocols</CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-center py-12 text-muted-foreground">
-                  Encryption settings content will be implemented here
-                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Card className="bg-slate-50 dark:bg-slate-800">
+                    <CardHeader>
+                      <CardTitle className="text-base">Data at Rest</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm mb-4">Configure encryption for stored data</p>
+                      <Button>Manage Encryption</Button>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="bg-slate-50 dark:bg-slate-800">
+                    <CardHeader>
+                      <CardTitle className="text-base">Data in Transit</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm mb-4">Configure TLS and connection security</p>
+                      <Button>Configure TLS</Button>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="bg-slate-50 dark:bg-slate-800">
+                    <CardHeader>
+                      <CardTitle className="text-base">Key Management</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm mb-4">Manage encryption keys and certificates</p>
+                      <Button>Manage Keys</Button>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="bg-slate-50 dark:bg-slate-800">
+                    <CardHeader>
+                      <CardTitle className="text-base">Secure Communication</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm mb-4">Configure secure API and device communication</p>
+                      <Button>Configure Settings</Button>
+                    </CardContent>
+                  </Card>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
 
           <TabsContent value="audit" className="space-y-6">
             <Card>
-              <CardHeader>
-                <CardTitle>Security Audit Log</CardTitle>
-                <CardDescription>Review system security events and activities</CardDescription>
+              <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <CardTitle>Security Audit Log</CardTitle>
+                  <CardDescription>Review system security events and activities</CardDescription>
+                </div>
+                <Button variant="outline" className="mt-4 sm:mt-0 self-start sm:self-auto">
+                  Export Logs
+                </Button>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {securityAudits.map(audit => (
-                    <div key={audit.id} className="flex items-start space-x-3 p-3 border rounded-md">
+                    <div key={audit.id} className="flex items-start space-x-3 p-3 border rounded-md hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                       {audit.status === "success" ? (
                         <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
                       ) : (
                         <AlertTriangle className="h-5 w-5 text-red-500 mt-0.5" />
                       )}
                       <div className="flex-1">
-                        <div className="flex justify-between">
+                        <div className="flex flex-col sm:flex-row sm:justify-between">
                           <span className="font-medium">{audit.event}</span>
                           <span className="text-xs text-muted-foreground">
                             {format(audit.timestamp, 'MMM d, yyyy h:mm a')}

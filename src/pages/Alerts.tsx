@@ -3,11 +3,12 @@ import React, { useState } from 'react';
 import AppLayout from '@/components/layout/AppLayout';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Bell, AlertTriangle, Info, CheckCircle, Filter, RefreshCw } from 'lucide-react';
+import { Bell, AlertTriangle, Info, CheckCircle, Filter, RefreshCw, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import { Input } from '@/components/ui/input';
 
 // Mock alert data
 const mockAlerts = [
@@ -67,6 +68,7 @@ const Alerts = () => {
   const [alerts, setAlerts] = useState(mockAlerts);
   const [activeTab, setActiveTab] = useState('all');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const handleAcknowledge = (id: number) => {
     setAlerts(alerts.map(alert => 
@@ -119,23 +121,35 @@ const Alerts = () => {
     }
   };
 
-  const filteredAlerts = activeTab === 'all' 
-    ? alerts 
-    : activeTab === 'unread' 
-      ? alerts.filter(alert => !alert.read)
-      : activeTab === 'acknowledged'
-        ? alerts.filter(alert => alert.acknowledged)
-        : alerts.filter(alert => !alert.acknowledged);
+  const filteredAlerts = alerts
+    .filter(alert => {
+      // First filter by tab selection
+      if (activeTab === 'all') return true;
+      if (activeTab === 'unread') return !alert.read;
+      if (activeTab === 'unacknowledged') return !alert.acknowledged;
+      if (activeTab === 'acknowledged') return alert.acknowledged;
+      return true;
+    })
+    .filter(alert => {
+      // Then filter by search query
+      if (!searchQuery) return true;
+      const query = searchQuery.toLowerCase();
+      return (
+        alert.title.toLowerCase().includes(query) ||
+        alert.description.toLowerCase().includes(query) ||
+        alert.source.toLowerCase().includes(query)
+      );
+    });
 
   return (
     <AppLayout>
-      <div className="p-6">
-        <div className="flex justify-between items-center mb-6">
+      <div className="p-6 animate-in">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
           <div>
             <h1 className="text-2xl font-semibold mb-1">Alerts & Notifications</h1>
             <p className="text-muted-foreground">Monitor and manage system alerts</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 mt-4 md:mt-0">
             <Button variant="outline" onClick={handleRefresh} disabled={isRefreshing}>
               <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
               Refresh
@@ -147,65 +161,82 @@ const Alerts = () => {
           </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-6">
-            <TabsTrigger value="all">All Alerts</TabsTrigger>
-            <TabsTrigger value="unread">Unread</TabsTrigger>
-            <TabsTrigger value="unacknowledged">Unacknowledged</TabsTrigger>
-            <TabsTrigger value="acknowledged">Acknowledged</TabsTrigger>
-          </TabsList>
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-6">
+          <div className="relative w-full sm:w-96">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input 
+              placeholder="Search alerts..." 
+              className="pl-10 bg-background"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full sm:w-auto">
+            <TabsList className="w-full sm:w-auto">
+              <TabsTrigger value="all">All Alerts</TabsTrigger>
+              <TabsTrigger value="unread">Unread</TabsTrigger>
+              <TabsTrigger value="unacknowledged">Unacknowledged</TabsTrigger>
+              <TabsTrigger value="acknowledged">Acknowledged</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
 
-          <TabsContent value={activeTab} className="space-y-4">
-            {filteredAlerts.length > 0 ? (
-              filteredAlerts.map(alert => (
-                <Card 
-                  key={alert.id} 
-                  className={`transition-colors ${!alert.read ? 'border-l-4 border-l-primary' : ''}`}
-                  onClick={() => handleMarkAsRead(alert.id)}
-                >
-                  <CardHeader className="py-4">
-                    <div className="flex justify-between items-start">
-                      <div className="flex items-start space-x-3">
-                        {getSeverityIcon(alert.severity)}
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <CardTitle className="text-base">{alert.title}</CardTitle>
-                            {getSeverityBadge(alert.severity)}
-                            {!alert.read && <Badge variant="outline" className="bg-primary/10">New</Badge>}
-                          </div>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {alert.source} • {format(alert.timestamp, 'MMM d, yyyy h:mm a')}
-                          </p>
+        <div className="space-y-4">
+          {filteredAlerts.length > 0 ? (
+            filteredAlerts.map(alert => (
+              <Card 
+                key={alert.id} 
+                className={`transition-colors hover-card ${!alert.read ? 'border-l-4 border-l-primary' : ''}`}
+                onClick={() => handleMarkAsRead(alert.id)}
+              >
+                <CardHeader className="py-4">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start">
+                    <div className="flex items-start space-x-3">
+                      {getSeverityIcon(alert.severity)}
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <CardTitle className="text-base">{alert.title}</CardTitle>
+                          {getSeverityBadge(alert.severity)}
+                          {!alert.read && <Badge variant="outline" className="bg-primary/10">New</Badge>}
                         </div>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {alert.source} • {format(alert.timestamp, 'MMM d, yyyy h:mm a')}
+                        </p>
                       </div>
-                      {!alert.acknowledged && (
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleAcknowledge(alert.id);
-                          }}
-                        >
-                          Acknowledge
-                        </Button>
-                      )}
                     </div>
-                  </CardHeader>
-                  <CardContent className="pt-0 pb-4">
-                    <p className="text-sm text-muted-foreground">{alert.description}</p>
-                  </CardContent>
-                </Card>
-              ))
-            ) : (
-              <div className="text-center py-12">
-                <Bell className="mx-auto h-12 w-12 text-muted-foreground opacity-20" />
-                <h3 className="mt-4 text-lg font-medium">No alerts found</h3>
-                <p className="text-muted-foreground">There are no alerts matching your current filter.</p>
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
+                    {!alert.acknowledged && (
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="mt-3 sm:mt-0"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAcknowledge(alert.id);
+                        }}
+                      >
+                        Acknowledge
+                      </Button>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0 pb-4">
+                  <p className="text-sm text-muted-foreground">{alert.description}</p>
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            <div className="text-center py-16 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+              <Bell className="mx-auto h-12 w-12 text-muted-foreground opacity-20" />
+              <h3 className="mt-4 text-lg font-medium">No alerts found</h3>
+              <p className="text-muted-foreground max-w-xs mx-auto mt-2">
+                {searchQuery 
+                  ? "No alerts match your search criteria. Try adjusting your filters."
+                  : "There are no alerts matching your current filter."}
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </AppLayout>
   );

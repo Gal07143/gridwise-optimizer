@@ -35,14 +35,14 @@ const Header = () => {
   };
 
   return (
-    <header className="w-full h-16 px-6 border-b border-slate-200 dark:border-slate-700/50 flex items-center justify-between bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm z-10">
+    <header className="w-full h-16 px-6 border-b border-slate-200 dark:border-slate-700/50 flex items-center justify-between bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm z-10 sticky top-0">
       <div className="flex items-center">
         <Link to="/" className="mr-2 text-xl font-medium text-primary">
           GridWise
         </Link>
       </div>
 
-      <div className="flex-1 max-w-xl mx-8">
+      <div className="flex-1 max-w-xl mx-8 hidden md:block">
         <div className="relative">
           <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
             <Search size={18} />
@@ -59,7 +59,7 @@ const Header = () => {
         <Button 
           variant="outline"
           size="sm"
-          className="flex items-center gap-1 mr-2 text-sm"
+          className="flex items-center gap-1 mr-2 text-sm hidden sm:flex"
           onClick={handleAddDevice}
         >
           <Plus size={16} />
