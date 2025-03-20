@@ -14,7 +14,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 221.2 83.2% 53.3%;
+    --primary: 222.2 47.4% 11.2%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 210 40% 96.1%;
@@ -31,14 +31,17 @@
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
+    --ring: 222.2 84% 4.9%;
 
     --radius: 0.5rem;
 
-    --energy-green: 142.1 70.6% 45.3%;
-    --energy-blue: 201.3 96.3% 48.4%;
-    --energy-purple: 269.5 75.7% 52.7%;
-    --energy-orange: 24.6 95% 53.1%;
+    /* Energy dashboard colors */
+    --color-energy-green: #10b981;
+    --color-energy-red: #ef4444;
+    --color-energy-blue: #3b82f6;
+    --color-energy-amber: #f59e0b;
+    --color-energy-purple: #8b5cf6;
+    --color-energy-gray: #8e9196;
   }
 
   .dark {
@@ -51,7 +54,7 @@
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 217.2 91.2% 59.8%;
+    --primary: 210 40% 98%;
     --primary-foreground: 222.2 47.4% 11.2%;
 
     --secondary: 217.2 32.6% 17.5%;
@@ -68,7 +71,15 @@
 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    --ring: 212.7 26.8% 83.9%;
+
+    /* Energy dashboard colors - dark mode */
+    --color-energy-green: #34d399;
+    --color-energy-red: #f87171;
+    --color-energy-blue: #60a5fa;
+    --color-energy-amber: #fbbf24;
+    --color-energy-purple: #a78bfa;
+    --color-energy-gray: #9ca3af;
   }
 }
 
@@ -78,87 +89,130 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
-  }
-  
-  h1, h2, h3, h4, h5, h6 {
-    @apply tracking-tight;
   }
 }
 
-@layer utilities {
-  .grid-pattern {
-    background-size: 20px 20px;
-    background-image:
-      linear-gradient(to right, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+/* Add custom animation for energy flow lines */
+@keyframes flowPattern {
+  0% {
+    stroke-dashoffset: 24;
   }
-
-  .dark .grid-pattern {
-    background-image:
-      linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-  }
-
-  .glass-panel {
-    @apply backdrop-blur-sm bg-white/80 dark:bg-slate-900/80 border border-slate-200/50 dark:border-slate-700/50 rounded-lg shadow-sm;
-  }
-
-  /* Animation for energy flow */
-  @keyframes flow {
-    0% {
-      stroke-dashoffset: 24;
-    }
-    100% {
-      stroke-dashoffset: 0;
-    }
-  }
-
-  .animate-flow {
-    animation: flow 1s linear infinite;
-  }
-  
-  /* Animation utilities */
-  .animate-in {
-    animation: fadeIn 0.5s ease-out forwards;
-    opacity: 0;
-  }
-  
-  .animate-scale {
-    transition: transform 0.2s ease-in-out;
-  }
-  
-  .animate-scale:hover {
-    transform: scale(1.02);
-  }
-  
-  .hover-card {
-    @apply transition-all duration-200;
-  }
-  
-  .hover-card:hover {
-    @apply shadow-md border-primary/20;
-  }
-  
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+  100% {
+    stroke-dashoffset: 0;
   }
 }
 
-/* Make components look better on small screens */
+.animate-flow {
+  animation: flowPattern 1.5s linear infinite;
+}
+
+/* Grid pattern for energy flow backgrounds */
+.grid-pattern {
+  background-image: 
+    linear-gradient(to right, rgba(128, 128, 128, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(128, 128, 128, 0.05) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Glass panel gradient */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+}
+
+/* Dark mode adjustment for glass panels */
+.dark .glass-panel {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(128, 128, 128, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(128, 128, 128, 0.5);
+}
+
+/* Responsive improvements for small screens */
 @media (max-width: 640px) {
-  .card {
-    @apply rounded-none border-x-0;
+  .sm-stacked {
+    flex-direction: column;
   }
   
-  .container {
-    @apply px-4;
+  .sm-full-width {
+    width: 100%;
   }
+}
+
+/* Chart tooltip customization */
+.recharts-tooltip-wrapper .recharts-default-tooltip {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid rgba(224, 224, 224, 0.5) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+  padding: 8px 12px !important;
+}
+
+.dark .recharts-tooltip-wrapper .recharts-default-tooltip {
+  background-color: rgba(30, 41, 59, 0.9) !important;
+  border: 1px solid rgba(51, 65, 85, 0.5) !important;
+}
+
+.recharts-tooltip-wrapper .recharts-default-tooltip .recharts-tooltip-label {
+  color: #334155 !important;
+  font-weight: 500 !important;
+  margin-bottom: 4px !important;
+}
+
+.dark .recharts-tooltip-wrapper .recharts-default-tooltip .recharts-tooltip-label {
+  color: #e2e8f0 !important;
+}
+
+.recharts-tooltip-wrapper .recharts-default-tooltip .recharts-tooltip-item {
+  color: #64748b !important;
+  font-size: 0.875rem !important;
+}
+
+.dark .recharts-tooltip-wrapper .recharts-default-tooltip .recharts-tooltip-item {
+  color: #cbd5e1 !important;
+}
+
+/* Animated entry for dashboard components */
+.animate-in {
+  animation-duration: 350ms;
+  animation-timing-function: ease-out;
+  animation-fill-mode: both;
+}
+
+.fade-in {
+  animation-name: fadeIn;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Better transitions for interactive elements */
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
 }

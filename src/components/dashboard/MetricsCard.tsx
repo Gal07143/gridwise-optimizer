@@ -61,7 +61,7 @@ const MetricsCard = ({
   return (
     <div 
       className={cn(
-        "rounded-xl flex items-start group transition-all duration-300 shadow-sm overflow-hidden",
+        "rounded-xl flex items-start group transition-all duration-300 shadow-sm overflow-hidden animate-in fade-in",
         "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/50",
         className
       )}
