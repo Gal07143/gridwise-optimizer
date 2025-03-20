@@ -12,7 +12,7 @@ export interface EnergyPrediction {
   weatherCondition?: string;
   confidence: number;
   // Add these properties for compatibility with PredictionsCard
-  day?: number;
+  day?: string;
   value?: number;
 }
 

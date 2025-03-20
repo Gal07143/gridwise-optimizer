@@ -3,8 +3,6 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { 
   getEnergyPredictions, 
-  EnergyPrediction, 
-  SystemRecommendation,
   PredictionResult 
 } from "@/services/predictions/energyPredictionService";
 import { weeklyEnergyData } from "@/components/analytics/data/sampleData";

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { 
@@ -38,22 +37,18 @@ interface ForecastTabProps {
 const ForecastTab: React.FC<ForecastTabProps> = ({ siteId }) => {
   const [forecastHours, setForecastHours] = useState<number>(24);
   
-  // Fetch forecast data
   const { data: forecastData, isLoading: isLoadingForecast, error: forecastError } = useQuery({
     queryKey: ['energy-forecast', siteId, forecastHours],
     queryFn: () => getSiteForecasts(siteId, forecastHours),
   });
 
-  // Fetch forecast metrics
   const { data: forecastMetrics, isLoading: isLoadingMetrics } = useQuery({
     queryKey: ['forecast-metrics', siteId],
     queryFn: () => getSiteForecastMetrics(siteId),
   });
 
-  // Process forecast data for chart
   const processForecastData = () => {
     if (!forecastData || forecastData.length === 0) {
-      // Generate sample data if no real data is available
       return Array.from({ length: 24 }, (_, i) => ({
         hour: `${i}:00`,
         generation: Math.random() * 10 + 5,
@@ -75,7 +70,6 @@ const ForecastTab: React.FC<ForecastTabProps> = ({ siteId }) => {
 
   const chartData = processForecastData();
 
-  // Calculate weather influence factors (sample data - would be real in production)
   const weatherFactors = [
     { name: 'Solar Radiation', icon: <SunMoon className="h-4 w-4" />, value: 78, impact: 'high' },
     { name: 'Precipitation', icon: <Droplets className="h-4 w-4" />, value: 12, impact: 'low' },
@@ -100,7 +94,6 @@ const ForecastTab: React.FC<ForecastTabProps> = ({ siteId }) => {
         </Badge>
       </div>
 
-      {/* Forecast Metrics Panel */}
       {isLoadingMetrics ? (
         <Skeleton className="h-20 w-full" />
       ) : forecastMetrics ? (

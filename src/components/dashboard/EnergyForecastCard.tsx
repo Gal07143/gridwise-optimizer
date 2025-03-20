@@ -3,7 +3,7 @@ import React from 'react';
 import { LineChart, CloudRain } from 'lucide-react';
 import DashboardCard from './DashboardCard';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useForecastData } from '@/hooks/useForecastData';
+import { useForecast } from '@/hooks/useForecast';
 import ForecastMetricsPanel from './forecasts/ForecastMetricsPanel';
 import ForecastChart from './forecasts/ForecastChart';
 import ForecastFooter from './forecasts/ForecastFooter';
@@ -23,7 +23,7 @@ const EnergyForecastCard = ({ className, animationDelay }: EnergyForecastCardPro
     isUsingLocalData,
     currentWeather,
     lastUpdated
-  } = useForecastData();
+  } = useForecast();
 
   // Handle loading and error states
   if (isLoading && processedData.length === 0) {
