@@ -1,11 +1,10 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { EnergyForecast } from '@/types/energy';
 import { generateEnergyPredictions } from '@/services/energyAIPredictionService';
 import { getWeatherForecast } from '@/services/weatherService';
-import { useSite, useSiteContext } from '@/contexts/SiteContext';
+import { useSiteContext } from '@/contexts/SiteContext';
 import { generateSampleForecasts } from '@/services/forecasts/sampleGenerator';
 
 const REFRESH_INTERVAL = 15000; // 15 seconds
@@ -29,7 +28,7 @@ export interface ForecastMetrics {
   peakGeneration: number;
   peakConsumption: number;
   confidence: number;
-  netEnergy: number; // Ensure this is always required
+  netEnergy: number; // Required property
 }
 
 export interface Prediction {
@@ -53,7 +52,7 @@ export function useForecastData() {
     peakGeneration: 0,
     peakConsumption: 0,
     confidence: 85,
-    netEnergy: 0 // Add the missing property
+    netEnergy: 0
   });
   const [currentWeather, setCurrentWeather] = useState<{
     condition: string;
@@ -90,7 +89,7 @@ export function useForecastData() {
           cloudCover: forecast.cloud_cover,
           windSpeed: forecast.wind_speed,
           weatherCondition: forecast.weather_condition,
-          confidence: forecast.confidence || 85, // Add default confidence
+          confidence: forecast.confidence || 85, // Ensure confidence is always provided
         }));
       }
     },

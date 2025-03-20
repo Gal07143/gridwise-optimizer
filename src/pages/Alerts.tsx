@@ -1,242 +1,248 @@
 
-import React, { useState } from 'react';
-import AppLayout from '@/components/layout/AppLayout';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Bell, AlertTriangle, Info, CheckCircle, Filter, RefreshCw, Search } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { AlertTriangle, Bell, CheckCircle, Clock, Filter } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { format } from 'date-fns';
 import { toast } from 'sonner';
-import { Input } from '@/components/ui/input';
+import AppLayout from '@/components/layout/AppLayout';
+import { AlertItem } from '@/components/microgrid/types';
+import { supabase } from '@/integrations/supabase/client';
 
-// Mock alert data
-const mockAlerts = [
+const mockAlerts: AlertItem[] = [
   {
-    id: 1,
-    title: 'Battery Discharge Rate Exceeding Threshold',
-    description: 'The battery discharge rate has exceeded the configured threshold of 5kW for more than 15 minutes.',
-    severity: 'critical',
-    timestamp: new Date(Date.now() - 1000 * 60 * 30),
-    source: 'Battery Management System',
-    read: false,
+    id: '1',
+    timestamp: new Date(Date.now() - 3600000).toISOString(),
+    message: 'Battery storage capacity below 20%',
+    severity: 'high',
     acknowledged: false
   },
   {
-    id: 2,
-    title: 'Solar Panel Efficiency Decreasing',
-    description: 'Solar panel array A efficiency has decreased by 15% over the past week. Maintenance check recommended.',
-    severity: 'warning',
-    timestamp: new Date(Date.now() - 1000 * 60 * 120),
-    source: 'Performance Monitoring',
-    read: true,
+    id: '2',
+    timestamp: new Date(Date.now() - 7200000).toISOString(),
+    message: 'Solar panel efficiency dropped below threshold',
+    severity: 'medium',
     acknowledged: false
   },
   {
-    id: 3,
-    title: 'Scheduled Maintenance Reminder',
-    description: 'Scheduled maintenance for inverter system is due in 2 days.',
-    severity: 'info',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 12),
-    source: 'Maintenance Scheduler',
-    read: true,
+    id: '3',
+    timestamp: new Date(Date.now() - 86400000).toISOString(),
+    message: 'System update available',
+    severity: 'low',
     acknowledged: true
   },
   {
-    id: 4,
-    title: 'Firmware Update Available',
-    description: 'A new firmware update (v2.3.5) is available for your energy management system.',
-    severity: 'info',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2),
-    source: 'System Updates',
-    read: false,
-    acknowledged: false
-  },
-  {
-    id: 5,
-    title: 'Grid Connection Restored',
-    description: 'Grid connection has been successfully restored after 45 minutes of disconnection.',
-    severity: 'success',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3),
-    source: 'Grid Monitoring',
-    read: true,
+    id: '4',
+    timestamp: new Date(Date.now() - 172800000).toISOString(),
+    message: 'Grid connection status changed',
+    severity: 'medium',
     acknowledged: true
   }
 ];
 
-const Alerts = () => {
-  const [alerts, setAlerts] = useState(mockAlerts);
-  const [activeTab, setActiveTab] = useState('all');
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+const Alerts: React.FC = () => {
+  const [alerts, setAlerts] = useState<AlertItem[]>(mockAlerts);
+  const [filter, setFilter] = useState<'all' | 'unacknowledged' | 'acknowledged'>('all');
+  const [loading, setLoading] = useState(false);
 
-  const handleAcknowledge = (id: number) => {
-    setAlerts(alerts.map(alert => 
-      alert.id === id ? { ...alert, acknowledged: true } : alert
-    ));
-    toast.success('Alert acknowledged');
-  };
-
-  const handleMarkAsRead = (id: number) => {
-    setAlerts(alerts.map(alert => 
-      alert.id === id ? { ...alert, read: true } : alert
-    ));
-  };
-
-  const handleRefresh = () => {
-    setIsRefreshing(true);
-    setTimeout(() => {
-      setIsRefreshing(false);
-      toast.success('Alerts refreshed');
-    }, 1000);
-  };
-
-  const getSeverityIcon = (severity: string) => {
-    switch (severity) {
-      case 'critical':
-        return <AlertTriangle className="h-5 w-5 text-red-500" />;
-      case 'warning':
-        return <AlertTriangle className="h-5 w-5 text-amber-500" />;
-      case 'info':
-        return <Info className="h-5 w-5 text-blue-500" />;
-      case 'success':
-        return <CheckCircle className="h-5 w-5 text-green-500" />;
-      default:
-        return <Info className="h-5 w-5 text-blue-500" />;
+  // Fetch alerts from Supabase when available
+  const fetchAlerts = async () => {
+    setLoading(true);
+    try {
+      // In a real implementation, we would fetch alerts from Supabase
+      // For now, we'll use our mock data
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // In production, uncomment this code to fetch from Supabase
+      /*
+      const { data, error } = await supabase
+        .from('alerts')
+        .select('*')
+        .order('timestamp', { ascending: false });
+        
+      if (error) throw error;
+      setAlerts(data || []);
+      */
+      
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching alerts:', error);
+      toast.error('Failed to load alerts');
+      setLoading(false);
     }
   };
 
-  const getSeverityBadge = (severity: string) => {
-    switch (severity) {
-      case 'critical':
-        return <Badge variant="destructive">Critical</Badge>;
-      case 'warning':
-        return <Badge className="bg-amber-500">Warning</Badge>;
-      case 'info':
-        return <Badge variant="secondary">Info</Badge>;
-      case 'success':
-        return <Badge className="bg-green-500">Success</Badge>;
-      default:
-        return <Badge variant="secondary">Info</Badge>;
-    }
-  };
+  useEffect(() => {
+    fetchAlerts();
+  }, []);
 
-  const filteredAlerts = alerts
-    .filter(alert => {
-      // First filter by tab selection
-      if (activeTab === 'all') return true;
-      if (activeTab === 'unread') return !alert.read;
-      if (activeTab === 'unacknowledged') return !alert.acknowledged;
-      if (activeTab === 'acknowledged') return alert.acknowledged;
-      return true;
-    })
-    .filter(alert => {
-      // Then filter by search query
-      if (!searchQuery) return true;
-      const query = searchQuery.toLowerCase();
-      return (
-        alert.title.toLowerCase().includes(query) ||
-        alert.description.toLowerCase().includes(query) ||
-        alert.source.toLowerCase().includes(query)
+  const handleAcknowledge = async (id: string) => {
+    try {
+      // In a real implementation, we would update the alert in Supabase
+      // For now, we'll update our local state
+      const updatedAlerts = alerts.map(alert => 
+        alert.id === id ? { ...alert, acknowledged: true } : alert
       );
-    });
+      setAlerts(updatedAlerts);
+      
+      // In production, uncomment this code to update in Supabase
+      /*
+      const { error } = await supabase
+        .from('alerts')
+        .update({ acknowledged: true, acknowledged_at: new Date().toISOString() })
+        .eq('id', id);
+        
+      if (error) throw error;
+      */
+      
+      toast.success('Alert acknowledged');
+    } catch (error) {
+      console.error('Error acknowledging alert:', error);
+      toast.error('Failed to acknowledge alert');
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    try {
+      // In a real implementation, we would delete acknowledged alerts in Supabase
+      const updatedAlerts = alerts.filter(alert => !alert.acknowledged);
+      setAlerts(updatedAlerts);
+      
+      // In production, uncomment this code to delete in Supabase
+      /*
+      const { error } = await supabase
+        .from('alerts')
+        .delete()
+        .eq('acknowledged', true);
+        
+      if (error) throw error;
+      */
+      
+      toast.success('Acknowledged alerts cleared');
+    } catch (error) {
+      console.error('Error clearing alerts:', error);
+      toast.error('Failed to clear alerts');
+    }
+  };
+
+  const filteredAlerts = alerts.filter(alert => {
+    if (filter === 'all') return true;
+    if (filter === 'unacknowledged') return !alert.acknowledged;
+    if (filter === 'acknowledged') return alert.acknowledged;
+    return true;
+  });
+
+  const getSeverityColor = (severity: 'high' | 'medium' | 'low') => {
+    switch (severity) {
+      case 'high': return 'bg-red-500';
+      case 'medium': return 'bg-amber-500';
+      case 'low': return 'bg-blue-500';
+      default: return 'bg-gray-500';
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleString();
+  };
 
   return (
     <AppLayout>
-      <div className="p-6 animate-in">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+      <div className="p-6 max-w-7xl mx-auto">
+        <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-2xl font-semibold mb-1">Alerts & Notifications</h1>
-            <p className="text-muted-foreground">Monitor and manage system alerts</p>
+            <h1 className="text-2xl font-bold flex items-center gap-2">
+              <Bell className="h-6 w-6" />
+              Alerts & Notifications
+            </h1>
+            <p className="text-muted-foreground">Monitor and manage system alerts and notifications</p>
           </div>
-          <div className="flex gap-2 mt-4 md:mt-0">
-            <Button variant="outline" onClick={handleRefresh} disabled={isRefreshing}>
-              <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-              Refresh
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={fetchAlerts} disabled={loading}>
+              {loading ? 'Refreshing...' : 'Refresh'}
             </Button>
-            <Button variant="outline">
-              <Filter className="mr-2 h-4 w-4" />
-              Filter
+            <Button 
+              variant="destructive" 
+              onClick={handleDeleteAll}
+              disabled={!alerts.some(alert => alert.acknowledged)}
+            >
+              Clear Acknowledged
             </Button>
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-6">
-          <div className="relative w-full sm:w-96">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input 
-              placeholder="Search alerts..." 
-              className="pl-10 bg-background"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full sm:w-auto">
-            <TabsList className="w-full sm:w-auto">
-              <TabsTrigger value="all">All Alerts</TabsTrigger>
-              <TabsTrigger value="unread">Unread</TabsTrigger>
-              <TabsTrigger value="unacknowledged">Unacknowledged</TabsTrigger>
-              <TabsTrigger value="acknowledged">Acknowledged</TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
-
-        <div className="space-y-4">
-          {filteredAlerts.length > 0 ? (
-            filteredAlerts.map(alert => (
-              <Card 
-                key={alert.id} 
-                className={`transition-colors hover-card ${!alert.read ? 'border-l-4 border-l-primary' : ''}`}
-                onClick={() => handleMarkAsRead(alert.id)}
-              >
-                <CardHeader className="py-4">
-                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start">
-                    <div className="flex items-start space-x-3">
-                      {getSeverityIcon(alert.severity)}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle>System Alerts</CardTitle>
+                <CardDescription>
+                  {filteredAlerts.length} alert{filteredAlerts.length !== 1 ? 's' : ''} {filter !== 'all' ? `(${filter})` : ''}
+                </CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 text-muted-foreground" />
+                <select 
+                  className="border rounded px-2 py-1 bg-background text-sm"
+                  value={filter}
+                  onChange={(e) => setFilter(e.target.value as any)}
+                >
+                  <option value="all">All Alerts</option>
+                  <option value="unacknowledged">Unacknowledged</option>
+                  <option value="acknowledged">Acknowledged</option>
+                </select>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {filteredAlerts.length === 0 ? (
+              <div className="text-center py-12">
+                <AlertTriangle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <p className="text-muted-foreground">No alerts to display</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {filteredAlerts.map((alert) => (
+                  <div 
+                    key={alert.id} 
+                    className={`p-4 border rounded-lg flex justify-between items-center ${
+                      alert.acknowledged ? 'bg-muted/20' : 'bg-background'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className={`${getSeverityColor(alert.severity)} h-3 w-3 rounded-full mt-1.5`} />
                       <div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <CardTitle className="text-base">{alert.title}</CardTitle>
-                          {getSeverityBadge(alert.severity)}
-                          {!alert.read && <Badge variant="outline" className="bg-primary/10">New</Badge>}
+                        <p className="font-medium">{alert.message}</p>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                          <Clock className="h-3 w-3" />
+                          <span>{formatDate(alert.timestamp)}</span>
+                          {alert.acknowledged && (
+                            <Badge variant="outline" className="ml-2 bg-muted">
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              Acknowledged
+                            </Badge>
+                          )}
                         </div>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {alert.source} • {format(alert.timestamp, 'MMM d, yyyy h:mm a')}
-                        </p>
                       </div>
                     </div>
+                    
                     {!alert.acknowledged && (
                       <Button 
                         size="sm" 
-                        variant="outline" 
-                        className="mt-3 sm:mt-0"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleAcknowledge(alert.id);
-                        }}
+                        variant="outline"
+                        onClick={() => handleAcknowledge(alert.id)}
                       >
                         Acknowledge
                       </Button>
                     )}
                   </div>
-                </CardHeader>
-                <CardContent className="pt-0 pb-4">
-                  <p className="text-sm text-muted-foreground">{alert.description}</p>
-                </CardContent>
-              </Card>
-            ))
-          ) : (
-            <div className="text-center py-16 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
-              <Bell className="mx-auto h-12 w-12 text-muted-foreground opacity-20" />
-              <h3 className="mt-4 text-lg font-medium">No alerts found</h3>
-              <p className="text-muted-foreground max-w-xs mx-auto mt-2">
-                {searchQuery 
-                  ? "No alerts match your search criteria. Try adjusting your filters."
-                  : "There are no alerts matching your current filter."}
-              </p>
-            </div>
-          )}
-        </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </AppLayout>
   );

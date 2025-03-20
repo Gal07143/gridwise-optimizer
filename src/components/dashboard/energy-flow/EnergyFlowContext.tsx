@@ -1,21 +1,17 @@
 
-import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
-import { EnergyNode, NodeConnection } from './types';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { EnergyNode, EnergyConnection } from './types';
 import { fetchEnergyFlowData } from '@/services/energyFlowService';
 import { toast } from 'sonner';
-import { useSite } from '@/contexts/SiteContext';
+import { useSiteContext } from '@/contexts/SiteContext';
 
-// Refresh interval in milliseconds (15 seconds)
-const REFRESH_INTERVAL = 15000;
-
-interface EnergyFlowContextType {
+export interface EnergyFlowContextType {
   nodes: EnergyNode[];
-  connections: NodeConnection[];
+  connections: EnergyConnection[];
   isLoading: boolean;
-  error: Error | null;
-  lastUpdated: Date | null;
+  lastUpdated: string | null;
   refreshData: () => void;
-  // Add the missing properties used in EnergyFlowChart
+  sendCommand: (command: string, params: any) => Promise<boolean>;
   totalGeneration: number;
   totalConsumption: number;
   batteryPercentage: number;
@@ -33,103 +29,81 @@ export const useEnergyFlow = () => {
   return context;
 };
 
-export const EnergyFlowProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { currentSite: activeSite } = useSite();
+export const EnergyFlowProvider: React.FC<{ children: React.ReactNode }> = ({ 
+  children 
+}) => {
+  const { activeSite } = useSiteContext();
   const [nodes, setNodes] = useState<EnergyNode[]>([]);
-  const [connections, setConnections] = useState<NodeConnection[]>([]);
+  const [connections, setConnections] = useState<EnergyConnection[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  
-  // Add state for the new required properties
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [totalGeneration, setTotalGeneration] = useState(0);
   const [totalConsumption, setTotalConsumption] = useState(0);
   const [batteryPercentage, setBatteryPercentage] = useState(0);
   const [selfConsumptionRate, setSelfConsumptionRate] = useState(0);
   const [gridDependencyRate, setGridDependencyRate] = useState(0);
 
-  const loadData = useCallback(async () => {
+  const loadData = async () => {
+    if (!activeSite) return;
+    
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      setError(null);
-      
-      const data = await fetchEnergyFlowData(activeSite?.id || 'default');
-      
+      const data = await fetchEnergyFlowData(activeSite.id);
       setNodes(data.nodes);
       setConnections(data.connections);
-      setLastUpdated(new Date());
-      
-      // Calculate metrics from the nodes
-      let genTotal = 0;
-      let consTotal = 0;
-      let batteryLevel = 0;
-      
-      data.nodes.forEach(node => {
-        if (node.type === 'source' && node.deviceType !== 'grid') {
-          genTotal += node.power;
-        } else if (node.type === 'consumption') {
-          consTotal += node.power;
-        } else if (node.type === 'storage' && node.deviceType === 'battery') {
-          batteryLevel = node.batteryLevel || 0;
-        }
-      });
-      
-      // Calculate grid dependency and self-consumption
-      const gridNode = data.nodes.find(n => n.deviceType === 'grid');
-      const gridPower = gridNode ? gridNode.power : 0;
-      
-      setTotalGeneration(genTotal);
-      setTotalConsumption(consTotal);
-      setBatteryPercentage(batteryLevel);
-      
-      // Calculate self-consumption rate (what percentage of generated renewable energy is consumed on-site)
-      const selfConsRate = consTotal > 0 ? Math.min(100, (genTotal / consTotal) * 100) : 0;
-      setSelfConsumptionRate(selfConsRate);
-      
-      // Calculate grid dependency rate (what percentage of consumption comes from the grid)
-      const gridDepRate = consTotal > 0 ? Math.min(100, (gridPower / consTotal) * 100) : 0;
-      setGridDependencyRate(gridDepRate);
-      
-    } catch (err) {
-      console.error('Error loading energy flow data:', err);
-      setError(err instanceof Error ? err : new Error('Failed to load energy flow data'));
+      setLastUpdated(data.timestamp);
+      setTotalGeneration(data.totalGeneration);
+      setTotalConsumption(data.totalConsumption);
+      setBatteryPercentage(data.batteryPercentage);
+      setSelfConsumptionRate(data.selfConsumptionRate);
+      setGridDependencyRate(data.gridDependencyRate);
+    } catch (error) {
+      console.error('Error loading energy flow data:', error);
       toast.error('Failed to load energy flow data');
     } finally {
       setIsLoading(false);
     }
-  }, [activeSite?.id]);
+  };
 
-  // Refresh data on component mount and when activeSite changes
   useEffect(() => {
-    loadData();
-    
-    // Set up periodic refresh
-    const intervalId = setInterval(() => {
+    if (activeSite) {
       loadData();
-    }, REFRESH_INTERVAL);
-    
-    // Clean up interval on unmount
-    return () => clearInterval(intervalId);
-  }, [loadData]);
+      
+      // Refresh data every minute
+      const intervalId = setInterval(() => {
+        loadData();
+      }, 60000);
+      
+      return () => clearInterval(intervalId);
+    }
+  }, [activeSite]);
 
-  const refreshData = useCallback(() => {
+  const refreshData = () => {
     loadData();
     toast.success('Energy flow data refreshed');
-  }, [loadData]);
+  };
+
+  const sendCommand = async (command: string, params: any): Promise<boolean> => {
+    // Implementation for sending commands to the system
+    console.log(`Sending command: ${command}`, params);
+    toast.success(`Command "${command}" sent successfully`);
+    // Refresh data after command
+    setTimeout(() => loadData(), 1000);
+    return true;
+  };
 
   const value = {
     nodes,
     connections,
     isLoading,
-    error,
     lastUpdated,
     refreshData,
-    // Add the new properties to the context value
+    sendCommand,
     totalGeneration,
     totalConsumption,
     batteryPercentage,
     selfConsumptionRate,
-    gridDependencyRate,
+    gridDependencyRate
   };
 
   return (

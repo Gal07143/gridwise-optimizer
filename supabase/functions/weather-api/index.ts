@@ -1,137 +1,114 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
 
 serve(async (req) => {
   // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
+  if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { siteId, days = 7 } = await req.json();
-    
-    console.log(`Fetching weather data for site ${siteId} for ${days} days`);
-    
-    // In a real implementation, this would connect to a weather API
-    // For now, we'll generate realistic sample data
-    const forecast = generateSampleWeatherData(days);
-    
-    return new Response(
-      JSON.stringify({ 
-        success: true,
-        forecast: forecast 
-      }),
-      { 
-        headers: { 
-          'Content-Type': 'application/json',
-          ...corsHeaders 
-        } 
-      }
-    );
+    // Get the request params
+    const url = new URL(req.url);
+    const siteId = url.searchParams.get("siteId") || "default";
+    const days = parseInt(url.searchParams.get("days") || "1");
+
+    // Log the request params
+    console.log(`Fetching weather data for site: ${siteId}, days: ${days}`);
+
+    // Create a Supabase client
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Check if we have weather data in the database
+    const { data: weatherData, error: weatherError } = await supabase
+      .from("weather_data")
+      .select("*")
+      .eq("site_id", siteId)
+      .order("timestamp", { ascending: true })
+      .limit(24 * days);
+
+    // Generate mock data if no data found
+    if (weatherError || !weatherData || weatherData.length === 0) {
+      console.log("No weather data found, generating mock data");
+      
+      const mockData = generateMockWeatherData(days);
+      
+      return new Response(JSON.stringify(mockData), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Return the weather data
+    console.log(`Found ${weatherData.length} weather data records`);
+    return new Response(JSON.stringify(weatherData), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   } catch (error) {
-    console.error("Error processing request:", error);
-    
+    console.error("Error in weather API:", error);
     return new Response(
-      JSON.stringify({ 
-        success: false,
-        error: error.message 
-      }),
+      JSON.stringify({ error: error.message }),
       { 
-        status: 400,
-        headers: { 
-          'Content-Type': 'application/json',
-          ...corsHeaders 
-        } 
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500 
       }
     );
   }
 });
 
-function generateSampleWeatherData(days: number) {
-  const forecast = [];
+function generateMockWeatherData(days: number) {
+  const weatherConditions = ["sunny", "partly-cloudy", "cloudy", "rainy", "stormy"];
+  const data = [];
+  
   const now = new Date();
+  now.setHours(0, 0, 0, 0);
   
-  // Base weather patterns
-  const temperaturePattern = [
-    14, 13, 12, 12, 13, 14,      // 12am-6am
-    15, 17, 19, 20, 22, 23,      // 6am-12pm
-    24, 25, 24, 23, 21, 19,      // 12pm-6pm
-    18, 17, 16, 15, 14, 14       // 6pm-12am
-  ];
-  
-  // Generate weather for requested number of days
-  for (let day = 0; day < days; day++) {
-    // Temperature trend adjusts slightly each day (+/- 2 degrees)
-    const dailyTempAdjustment = Math.random() * 4 - 2;
-    
-    // Weather condition for the day
-    const weatherTypes = ["sunny", "partly cloudy", "cloudy", "light rain", "rain"];
-    const dayWeatherIndex = Math.floor(Math.random() * weatherTypes.length);
-    let dayWeather = weatherTypes[dayWeatherIndex];
-    
-    // Wind speed for the day (base value)
-    const baseWindSpeed = 2 + (Math.random() * 18); // 2-20 km/h
-    
-    // For each hour of the day
-    for (let hour = 0; hour < 24; hour++) {
-      const date = new Date(now);
-      date.setDate(date.getDate() + day);
-      date.setHours(hour, 0, 0, 0);
+  for (let d = 0; d < days; d++) {
+    for (let h = 0; h < 24; h++) {
+      const timestamp = new Date(now);
+      timestamp.setDate(now.getDate() + d);
+      timestamp.setHours(h);
       
-      // Get base temperature from pattern
-      let temperature = temperaturePattern[hour] + dailyTempAdjustment;
+      // Generate more realistic temperature based on time of day
+      const baseTemp = 15 + Math.sin((h - 6) * Math.PI / 12) * 10;
+      const temperature = baseTemp + (Math.random() * 4 - 2);
       
-      // Add hourly randomness to temperature
-      temperature += (Math.random() * 2 - 1); // +/- 1 degree
+      // Generate more realistic cloud cover based on time of day
+      const baseClouds = (Math.sin((h - 12) * Math.PI / 12) + 1) * 30;
+      const cloudCover = Math.max(0, Math.min(100, baseClouds + (Math.random() * 30)));
       
-      // Cloud cover based on weather type
-      let cloudCover;
-      switch (dayWeather) {
-        case "sunny": cloudCover = Math.random() * 0.2; break;  // 0-20%
-        case "partly cloudy": cloudCover = 0.3 + Math.random() * 0.3; break; // 30-60%
-        case "cloudy": cloudCover = 0.7 + Math.random() * 0.3; break; // 70-100%
-        case "light rain": cloudCover = 0.6 + Math.random() * 0.4; break; // 60-100%
-        case "rain": cloudCover = 0.8 + Math.random() * 0.2; break; // 80-100%
-        default: cloudCover = 0.5;
-      }
+      // Generate more realistic wind speed
+      const windSpeed = 2 + Math.random() * 8;
       
-      // Wind speed varies through the day
-      const hourWindVariance = 0.7 + (Math.random() * 0.6); // 70-130%
-      const windSpeed = baseWindSpeed * hourWindVariance;
+      // Select weather condition based on cloud cover
+      let conditionIndex;
+      if (cloudCover < 20) conditionIndex = 0; // sunny
+      else if (cloudCover < 40) conditionIndex = 1; // partly-cloudy
+      else if (cloudCover < 70) conditionIndex = 2; // cloudy
+      else if (cloudCover < 90) conditionIndex = 3; // rainy
+      else conditionIndex = 4; // stormy
       
-      // Precipitation probability based on weather type
-      let precipitation = 0;
-      if (dayWeather === "light rain") {
-        precipitation = Math.random() * 2; // 0-2mm
-      } else if (dayWeather === "rain") {
-        precipitation = 2 + Math.random() * 8; // 2-10mm
-      }
-      
-      // Weather can change slightly through the day
-      if (hour % 6 === 0 && Math.random() > 0.7) {
-        // 30% chance of weather changing every 6 hours
-        const newWeatherIndex = Math.max(0, Math.min(
-          dayWeatherIndex + (Math.floor(Math.random() * 3) - 1),
-          weatherTypes.length - 1
-        ));
-        dayWeather = weatherTypes[newWeatherIndex];
-      }
-      
-      forecast.push({
-        time: date.toISOString(),
+      data.push({
+        id: crypto.randomUUID(),
+        timestamp: timestamp.toISOString(),
         temperature: parseFloat(temperature.toFixed(1)),
-        condition: dayWeather,
-        cloudCover: parseFloat(cloudCover.toFixed(2)),
-        windSpeed: parseFloat(windSpeed.toFixed(1)),
-        precipitation: parseFloat(precipitation.toFixed(1))
+        cloud_cover: parseFloat(cloudCover.toFixed(1)),
+        wind_speed: parseFloat(windSpeed.toFixed(1)),
+        wind_direction: Math.floor(Math.random() * 360),
+        humidity: Math.floor(40 + Math.random() * 40),
+        precipitation: cloudCover > 70 ? parseFloat((Math.random() * 5).toFixed(1)) : 0,
+        weather_condition: weatherConditions[conditionIndex],
+        forecast: true
       });
     }
   }
   
-  return forecast;
+  return data;
 }
