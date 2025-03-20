@@ -11,22 +11,34 @@ export const updateDevice = async (
   try {
     console.log('Updating device with ID:', deviceId, 'Data:', deviceData);
     
-    // Validate device type if provided
-    if (deviceData.type && !isValidDeviceType(deviceData.type)) {
-      throw new Error('Invalid device type');
+    // Convert DeviceType to string for Supabase
+    let typeStr = undefined;
+    if (deviceData.type) {
+      if (!isValidDeviceTypeForDB(deviceData.type)) {
+        console.warn(`Converting device type ${deviceData.type} to compatible type`);
+        typeStr = convertToValidDeviceType(deviceData.type);
+      } else {
+        typeStr = deviceData.type;
+      }
     }
     
-    // Validate device status if provided
-    if (deviceData.status && !isValidDeviceStatus(deviceData.status)) {
-      throw new Error('Invalid device status');
+    // Convert DeviceStatus to string for Supabase
+    let statusStr = undefined;
+    if (deviceData.status) {
+      if (!isValidDeviceStatusForDB(deviceData.status)) {
+        console.warn(`Converting device status ${deviceData.status} to compatible status`);
+        statusStr = convertToValidDeviceStatus(deviceData.status);
+      } else {
+        statusStr = deviceData.status;
+      }
     }
     
     const { data, error } = await supabase
       .from('devices')
       .update({
         name: deviceData.name,
-        type: deviceData.type,
-        status: deviceData.status,
+        type: typeStr,
+        status: statusStr,
         location: deviceData.location,
         capacity: deviceData.capacity,
         firmware: deviceData.firmware,
@@ -104,9 +116,20 @@ export const batchUpdateDevices = async (
     
     // We need to perform updates one by one because Supabase doesn't support batch updates
     for (const device of devices) {
+      // Convert types for DB compatibility
+      const updates = { ...device.updates };
+      
+      if (updates.type && !isValidDeviceTypeForDB(updates.type)) {
+        updates.type = convertToValidDeviceType(updates.type);
+      }
+      
+      if (updates.status && !isValidDeviceStatusForDB(updates.status)) {
+        updates.status = convertToValidDeviceStatus(updates.status);
+      }
+      
       const { error } = await supabase
         .from('devices')
-        .update(device.updates)
+        .update(updates)
         .eq('id', device.id);
       
       if (error) {
@@ -126,10 +149,31 @@ export const batchUpdateDevices = async (
 };
 
 // Helper functions
-function isValidDeviceType(type: string): type is DeviceType {
-  return ['solar', 'wind', 'battery', 'grid', 'load', 'ev_charger', 'inverter', 'meter'].includes(type as DeviceType);
+export function isValidDeviceTypeForDB(type: string): boolean {
+  return ['solar', 'wind', 'battery', 'grid', 'load', 'ev_charger'].includes(type);
 }
 
-function isValidDeviceStatus(status: string): type is DeviceStatus {
-  return ['online', 'offline', 'maintenance', 'error', 'warning'].includes(status as DeviceStatus);
+export function isValidDeviceStatusForDB(status: string): boolean {
+  return ['online', 'offline', 'maintenance', 'error'].includes(status);
+}
+
+export function convertToValidDeviceType(type: DeviceType): string {
+  // Map non-supported types to supported ones
+  switch (type) {
+    case 'inverter':
+    case 'meter':
+      return 'grid'; // Map to closest equivalent
+    default:
+      return type; 
+  }
+}
+
+export function convertToValidDeviceStatus(status: DeviceStatus): string {
+  // Map non-supported statuses to supported ones
+  switch (status) {
+    case 'warning':
+      return 'maintenance'; // Map to closest equivalent
+    default:
+      return status;
+  }
 }

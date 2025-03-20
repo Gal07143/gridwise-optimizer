@@ -17,7 +17,7 @@ interface MicrogridTabContentProps {
 
 const MicrogridTabContent: React.FC<MicrogridTabContentProps> = ({ activeTab }) => {
   const { 
-    microgridState, 
+    state, 
     alerts, 
     settings, 
     commandHistory,
@@ -34,7 +34,7 @@ const MicrogridTabContent: React.FC<MicrogridTabContentProps> = ({ activeTab }) 
       <TabsContent value="overview" className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6" id="status">
           <div className="lg:col-span-2 space-y-6">
-            <StatusOverview microgridState={microgridState} />
+            <StatusOverview microgridState={state} />
           </div>
           
           <div>
@@ -45,13 +45,13 @@ const MicrogridTabContent: React.FC<MicrogridTabContentProps> = ({ activeTab }) 
           </div>
         </div>
         
-        <CommandHistory commandHistory={commandHistory} />
+        <CommandHistory history={commandHistory} />
       </TabsContent>
       
       <TabsContent value="control" className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" id="controls">
           <MicrogridControls
-            microgridState={microgridState}
+            microgridState={state}
             minBatteryReserve={settings.minBatteryReserve}
             onModeChange={handleModeChange}
             onGridConnectionToggle={handleGridConnectionToggle}
@@ -70,12 +70,12 @@ const MicrogridTabContent: React.FC<MicrogridTabContentProps> = ({ activeTab }) 
       </TabsContent>
       
       <TabsContent value="flow" className="space-y-6">
-        <EnergyFlowVisualization microgridState={microgridState} />
+        <EnergyFlowVisualization microgridState={state} />
       </TabsContent>
       
       <TabsContent value="insights" className="space-y-6">
         <MicrogridSystemInsights 
-          microgridState={microgridState}
+          microgridState={state}
           minBatteryReserve={settings.minBatteryReserve}
         />
       </TabsContent>

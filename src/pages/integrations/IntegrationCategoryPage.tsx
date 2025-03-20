@@ -9,44 +9,38 @@ import DeviceModelsCard from '@/components/integrations/DeviceModelsCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 
-// Create interface types for component props to resolve typescript errors
-interface PageHeaderProps {
-  title?: string;
-  description?: string;
-  categoryId?: string;
-}
-
-interface SearchFilterBarProps {
-  searchQuery?: string;
-  onSearchChange?: (value: string) => void;
-  activeTab?: string;
-  onTabChange?: (value: string) => void;
-  deviceCount?: number;
-}
-
-interface DeviceModelsCardProps {
-  deviceModels?: any[];
-  sortField?: string;
-  sortDirection?: 'asc' | 'desc';
-  onSort?: (field: string) => void;
-}
-
 const IntegrationCategoryPage = () => {
   const { categoryId } = useParams<{ categoryId: string }>();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState('all');
   
   const {
-    filteredDevices,
-    searchQuery,
-    setSearchQuery,
-    activeTab,
-    setActiveTab,
+    devices,
     sortField,
     sortDirection,
     handleSort,
-    deviceCount
+    deviceCount,
+    error,
   } = useDeviceModels(categoryId);
+  
+  // Filter devices based on search query and active tab
+  const filteredDevices = React.useMemo(() => {
+    if (!devices) return [];
+    
+    return devices.filter(device => {
+      // Search filter
+      const matchesSearch = !searchQuery || 
+        device.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        device.manufacturer.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      // Tab filter (all, solar, wind, battery, etc.)
+      const matchesTab = activeTab === 'all' || device.type === activeTab;
+      
+      return matchesSearch && matchesTab;
+    });
+  }, [devices, searchQuery, activeTab]);
   
   // Simulate loading delay
   useEffect(() => {

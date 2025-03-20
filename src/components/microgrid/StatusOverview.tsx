@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   Sun, 
@@ -39,6 +38,36 @@ const StatusOverview: React.FC<StatusOverviewProps> = ({ microgridState }) => {
 
   // Calculate total production
   const totalProduction = microgridState.solarProduction + microgridState.windProduction;
+
+  // Get mode badge variant
+  const getModeVariant = (mode: string) => {
+    switch (mode) {
+      case 'manual':
+        return 'secondary';
+      case 'eco':
+        return 'success';
+      case 'backup':
+        return 'destructive';
+      case 'auto':
+      default:
+        return 'outline';
+    }
+  };
+
+  // Get mode label
+  const getModeLabel = (mode: string) => {
+    switch (mode) {
+      case 'manual':
+        return 'Manual Control';
+      case 'eco':
+        return 'Eco Mode';
+      case 'backup':
+        return 'Backup Mode';
+      case 'auto':
+      default:
+        return 'Automatic';
+    }
+  };
 
   // Calculate net energy flow
   const netEnergyFlow = totalProduction - microgridState.loadConsumption;
@@ -266,7 +295,7 @@ const StatusOverview: React.FC<StatusOverviewProps> = ({ microgridState }) => {
             {microgridState.gridConnection ? 'Grid Connected' : 'Island Mode'}
           </Badge>
           <Badge variant="outline" className="border-primary text-primary">
-            {microgridState.operatingMode.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+            {getModeLabel(microgridState.operatingMode)}
           </Badge>
         </div>
         <div className={cn(

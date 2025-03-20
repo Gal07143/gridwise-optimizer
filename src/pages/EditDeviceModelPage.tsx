@@ -64,9 +64,11 @@ const EditDeviceModelPage = () => {
       
       setIsLoading(true);
       try {
-        // Use execute_sql RPC to get the device model
+        // Use a custom function to get the device model
         const query = `SELECT * FROM device_models WHERE id = '${modelId}'`;
-        const { data, error } = await supabase.rpc('execute_sql', { query_text: query });
+        const { data, error } = await supabase.functions.invoke('execute-sql', {
+          body: { query }
+        });
         
         if (error) throw error;
         
@@ -120,7 +122,7 @@ const EditDeviceModelPage = () => {
         last_updated: new Date().toISOString()
       };
       
-      // Update the device model in Supabase
+      // Update the device model using our custom function
       const updateQuery = `
         UPDATE device_models
         SET 
@@ -142,7 +144,9 @@ const EditDeviceModelPage = () => {
         RETURNING *
       `;
       
-      const { data: responseData, error } = await supabase.rpc('execute_sql', { query_text: updateQuery });
+      const { data: responseData, error } = await supabase.functions.invoke('execute-sql', {
+        body: { query: updateQuery }
+      });
       
       if (error) throw error;
       

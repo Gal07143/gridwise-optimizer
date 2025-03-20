@@ -9,7 +9,6 @@ export interface DeviceModel {
   manufacturer: string;
   model_number?: string;
   type: string;
-  category?: string;
   capacity?: number;
   power_rating?: number;
   efficiency?: number;
@@ -18,199 +17,108 @@ export interface DeviceModel {
   warranty_period?: number;
   release_date?: string;
   description?: string;
-  technical_specs?: Record<string, any>;
   datasheet_url?: string;
   created_at: string;
   last_updated: string;
 }
 
 export const categoryNames: Record<string, string> = {
-  'batteries': 'Batteries',
-  'inverters': 'Inverters',
-  'solar-panels': 'Solar Panels',
-  'wind-turbines': 'Wind Turbines',
-  'ev-chargers': 'EV Chargers',
-  'meters': 'Smart Meters',
-  'loads': 'Loads',
-  'grid-connections': 'Grid Connections'
+  'solar': 'Solar Panels',
+  'wind': 'Wind Turbines',
+  'battery': 'Battery Storage',
+  'inverter': 'Inverters',
+  'meter': 'Energy Meters',
+  'ev-charger': 'EV Chargers',
+  'hybrid': 'Hybrid Systems'
 };
 
 export const useDeviceModels = (categoryId?: string) => {
   const [devices, setDevices] = useState<DeviceModel[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [deviceCount, setDeviceCount] = useState(0);
   const [sortField, setSortField] = useState('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [deviceCount, setDeviceCount] = useState(0);
-  const [filteredDevices, setFilteredDevices] = useState<DeviceModel[]>([]);
-  const [activeTab, setActiveTab] = useState<string>('all');
   
-  const categoryName = categoryId ? categoryNames[categoryId] || 'Devices' : 'All Devices';
-  
-  // Fetch device models from Supabase
   useEffect(() => {
     const fetchDeviceModels = async () => {
       setIsLoading(true);
-      setError(null);
-      
       try {
-        // Create a dynamic SQL query to fetch from device_models
-        const query = `
-          SELECT * FROM device_models
-          ${categoryId ? `WHERE type ILIKE '%${mapCategoryToType(categoryId)}%'` : ''}
-          ORDER BY name ASC
-        `;
+        let query = `SELECT * FROM device_models`;
         
-        // Use custom RPC function to execute SQL query
-        const { data, error } = await supabase.rpc('execute_sql', { query_text: query });
+        // Add category filter if specified
+        if (categoryId && categoryId !== 'all') {
+          const category = categoryId === 'ev-charger' ? 'ev_charger' : categoryId;
+          query += ` WHERE type = '${category}'`;
+        }
+        
+        // Add sorting
+        query += ` ORDER BY ${sortField} ${sortDirection}`;
+        
+        // Execute the query
+        const { data, error } = await supabase.functions.invoke('execute-sql', {
+          body: { query }
+        });
         
         if (error) throw error;
         
-        if (data) {
-          // Parse the JSON string result
-          const parsedData = typeof data === 'string' ? JSON.parse(data) : data;
-          
-          if (Array.isArray(parsedData)) {
-            const mappedData = parsedData.map((item: any) => ({
-              id: item.id,
-              name: item.name,
-              manufacturer: item.manufacturer,
-              model_number: item.model_number,
-              type: item.type,
-              category: mapTypeToCategory(item.type),
-              capacity: item.capacity,
-              power_rating: item.power_rating,
-              efficiency: item.efficiency,
-              dimensions: item.dimensions,
-              weight: item.weight,
-              warranty_period: item.warranty_period,
-              release_date: item.release_date,
-              description: item.description,
-              technical_specs: item.technical_specs,
-              datasheet_url: item.datasheet_url,
-              created_at: item.created_at,
-              last_updated: item.last_updated
-            })) as DeviceModel[];
-            
-            setDevices(mappedData);
-            setFilteredDevices(mappedData);
-            setDeviceCount(mappedData.length);
-          } else {
-            console.error('Unexpected data format:', parsedData);
-            setDevices([]);
-            setFilteredDevices([]);
-            setDeviceCount(0);
+        // Parse the response if needed
+        let parsedData;
+        if (typeof data === 'string') {
+          try {
+            parsedData = JSON.parse(data);
+          } catch (e) {
+            console.error('Error parsing response:', e);
+            parsedData = [];
           }
+        } else {
+          parsedData = data;
         }
+        
+        // Check if we got an array of device models
+        if (Array.isArray(parsedData)) {
+          setDevices(parsedData as DeviceModel[]);
+          setDeviceCount(parsedData.length);
+        } else {
+          setDevices([]);
+          setDeviceCount(0);
+        }
+        
       } catch (err) {
         console.error('Error fetching device models:', err);
         setError(err as Error);
-        toast.error('Failed to fetch device models');
+        toast.error('Failed to load device models');
         setDevices([]);
-        setFilteredDevices([]);
+        setDeviceCount(0);
       } finally {
         setIsLoading(false);
       }
     };
     
     fetchDeviceModels();
-  }, [categoryId]);
-  
-  // Apply search filter and sorting
-  useEffect(() => {
-    let result = [...devices];
-    
-    // Apply search filter
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(device => 
-        device.name.toLowerCase().includes(query) ||
-        device.manufacturer.toLowerCase().includes(query) ||
-        (device.description?.toLowerCase().includes(query))
-      );
-    }
-    
-    // Apply sorting
-    result.sort((a, b) => {
-      const fieldA = a[sortField as keyof DeviceModel];
-      const fieldB = b[sortField as keyof DeviceModel];
-      
-      // Handle undefined or null values
-      if (fieldA === undefined || fieldA === null) return sortDirection === 'asc' ? -1 : 1;
-      if (fieldB === undefined || fieldB === null) return sortDirection === 'asc' ? 1 : -1;
-      
-      // Compare values
-      if (typeof fieldA === 'string' && typeof fieldB === 'string') {
-        return sortDirection === 'asc' 
-          ? fieldA.localeCompare(fieldB) 
-          : fieldB.localeCompare(fieldA);
-      } else {
-        return sortDirection === 'asc' 
-          ? (fieldA as number) - (fieldB as number) 
-          : (fieldB as number) - (fieldA as number);
-      }
-    });
-    
-    setFilteredDevices(result);
-  }, [devices, searchQuery, sortField, sortDirection]);
+  }, [categoryId, sortField, sortDirection]);
   
   const handleSort = (field: string) => {
     if (field === sortField) {
+      // Toggle direction if same field
       setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
     } else {
+      // New field, set to ascending by default
       setSortField(field);
       setSortDirection('asc');
     }
   };
   
-  // Helper function to map category IDs to device types
-  function mapCategoryToType(categoryId: string): string {
-    const categoryMap: Record<string, string> = {
-      'batteries': 'battery',
-      'inverters': 'inverter',
-      'solar-panels': 'solar',
-      'wind-turbines': 'wind',
-      'ev-chargers': 'ev_charger',
-      'meters': 'meter',
-      'loads': 'load',
-      'grid-connections': 'grid'
-    };
-    
-    return categoryMap[categoryId] || '';
-  }
-  
-  // Helper function to map device types to category IDs
-  function mapTypeToCategory(type: string): string {
-    const typeMap: Record<string, string> = {
-      'battery': 'batteries',
-      'inverter': 'inverters',
-      'solar': 'solar-panels',
-      'wind': 'wind-turbines',
-      'ev_charger': 'ev-chargers',
-      'meter': 'meters',
-      'load': 'loads',
-      'grid': 'grid-connections'
-    };
-    
-    return typeMap[type] || '';
-  }
-  
   return {
     devices,
-    filteredDevices,
     isLoading,
     error,
     sortField,
     sortDirection,
-    searchQuery,
-    setSearchQuery,
+    searchQuery: '',
+    setSearchQuery: () => {},
     handleSort,
     deviceCount,
-    categoryName,
-    activeTab,
-    setActiveTab
+    categoryName: categoryId ? categoryNames[categoryId as keyof typeof categoryNames] || 'Devices' : 'Devices'
   };
 };
-
-export default useDeviceModels;

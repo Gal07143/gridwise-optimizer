@@ -1,81 +1,89 @@
 
 import React from 'react';
-import { Clock, CheckCircle2, AlertCircle } from 'lucide-react';
-import { CommandHistoryItem } from './types';
-import { format } from 'date-fns';
-import {
+import { 
   Card,
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
+  CardTitle
 } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from '@/components/ui/table';
+import { format } from 'date-fns';
+import { CommandHistoryItem } from './types';
+import { BadgeExtended } from '@/components/ui/badge-extended';
+import { Check, X, Info } from 'lucide-react';
 
 interface CommandHistoryProps {
-  commands: CommandHistoryItem[];
+  history: CommandHistoryItem[];
 }
 
-const CommandHistory: React.FC<CommandHistoryProps> = ({ commands }) => {
-  if (!commands || commands.length === 0) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Command History</CardTitle>
-          <CardDescription>Recent system commands and operations</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-8 text-muted-foreground">
-            No commands have been executed yet.
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
+const CommandHistory: React.FC<CommandHistoryProps> = ({ history }) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">Command History</CardTitle>
-        <CardDescription>Recent system commands and operations</CardDescription>
+        <CardTitle>Command History</CardTitle>
+        <CardDescription>Recent system commands and their status</CardDescription>
       </CardHeader>
-      <CardContent className="p-0">
-        <div className="max-h-[300px] overflow-y-auto">
-          {commands.map((command, index) => (
-            <div 
-              key={command.id || index}
-              className={cn(
-                "flex items-start gap-3 p-4 border-b last:border-b-0",
-                command.success ? "hover:bg-green-50 dark:hover:bg-green-900/10" : "hover:bg-red-50 dark:hover:bg-red-900/10"
+      <CardContent>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[180px]">Timestamp</TableHead>
+                <TableHead>Command</TableHead>
+                <TableHead>User</TableHead>
+                <TableHead className="w-[100px] text-right">Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {history.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
+                    No commands have been executed yet
+                  </TableCell>
+                </TableRow>
+              ) : (
+                history.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell className="font-mono text-xs">
+                      {format(new Date(item.timestamp), 'yyyy-MM-dd HH:mm:ss')}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-start gap-2">
+                        <div>
+                          <span className="font-medium">{item.command}</span>
+                          {item.details && (
+                            <p className="text-xs text-muted-foreground mt-1">{item.details}</p>
+                          )}
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>{item.user || 'System'}</TableCell>
+                    <TableCell className="text-right">
+                      {item.success ? (
+                        <BadgeExtended variant="success" className="inline-flex items-center">
+                          <Check className="h-3 w-3 mr-1" />
+                          Success
+                        </BadgeExtended>
+                      ) : (
+                        <BadgeExtended variant="destructive" className="inline-flex items-center">
+                          <X className="h-3 w-3 mr-1" />
+                          Failed
+                        </BadgeExtended>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))
               )}
-            >
-              <div className={cn(
-                "mt-1 flex-shrink-0 h-6 w-6 rounded-full flex items-center justify-center",
-                command.success ? "bg-green-100 dark:bg-green-900/20" : "bg-red-100 dark:bg-red-900/20" 
-              )}>
-                {command.success ? (
-                  <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-                ) : (
-                  <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
-                )}
-              </div>
-              
-              <div className="flex-grow">
-                <div className="font-medium">{command.command}</div>
-                <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-                  <Clock className="h-3 w-3" />
-                  <span>
-                    {format(new Date(command.timestamp), 'MMM d, yyyy h:mm a')}
-                  </span>
-                  <span className="mx-1">•</span>
-                  <span>By {command.user}</span>
-                </div>
-                {command.details && (
-                  <div className="text-sm text-muted-foreground mt-2">{command.details}</div>
-                )}
-              </div>
-            </div>
-          ))}
+            </TableBody>
+          </Table>
         </div>
       </CardContent>
     </Card>

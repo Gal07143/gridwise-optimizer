@@ -43,4 +43,4 @@ const Badge = forwardRef<HTMLDivElement, BadgeProps>(
 
 Badge.displayName = "Badge";
 
-export { Badge, badgeVariants };
+export { Badge as BadgeExtended, badgeVariants };
