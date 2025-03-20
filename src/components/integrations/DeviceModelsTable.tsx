@@ -49,19 +49,40 @@ const DeviceModelsTable: React.FC<DeviceModelsTableProps> = ({
   sortDirection,
   onSort,
 }) => {
-  const handleViewManual = (deviceId: string, hasManual: boolean) => {
+  const handleViewManual = (deviceId: string, deviceName: string, hasManual: boolean) => {
     if (hasManual) {
-      toast.info('Opening device manual...');
+      toast.success(`Opening manual for ${deviceName}...`);
+      // Simulate loading a PDF manual
+      setTimeout(() => {
+        toast.info(`Manual for ${deviceName} opened in new window`);
+        // In a real app, this would open a new window or tab with the manual
+      }, 1000);
     } else {
-      toast.error('Manual not available for this device');
+      toast.error(`Manual not available for ${deviceName}`);
     }
   };
 
   const handleProtocolInfo = (protocol: string) => {
     toast.info(`${protocol} Information`, {
-      description: `Details about the ${protocol} communication protocol would appear here.`,
+      description: `${protocol} is a standardized communication protocol used for device interconnection and data exchange in energy management systems.`,
       duration: 5000,
     });
+  };
+
+  const handleDownloadSpecs = (deviceName: string) => {
+    toast.success(`Downloading specifications for ${deviceName}...`);
+    // Simulate download delay
+    setTimeout(() => {
+      toast.info(`${deviceName} specifications downloaded successfully`);
+    }, 1500);
+  };
+
+  const handleVisitManufacturerWebsite = (manufacturer: string) => {
+    toast.info(`Opening ${manufacturer} website...`);
+    // In a real app, this would use window.open() to go to the manufacturer website
+    setTimeout(() => {
+      toast.success(`${manufacturer} website opened in new tab`);
+    }, 800);
   };
 
   return (
@@ -144,7 +165,7 @@ const DeviceModelsTable: React.FC<DeviceModelsTableProps> = ({
                 <TableCell>{device.firmware}</TableCell>
                 <TableCell>
                   {device.supported ? (
-                    <Badge variant="default" className="bg-green-500">Supported</Badge>
+                    <Badge className="bg-green-500">Supported</Badge>
                   ) : (
                     <Badge variant="outline" className="border-amber-500 text-amber-500">
                       <AlertCircle className="h-3 w-3 mr-1" />
@@ -157,7 +178,7 @@ const DeviceModelsTable: React.FC<DeviceModelsTableProps> = ({
                     variant="ghost" 
                     size="sm" 
                     className={device.hasManual ? "" : "text-muted-foreground"} 
-                    onClick={() => handleViewManual(device.id, device.hasManual)}
+                    onClick={() => handleViewManual(device.id, `${device.manufacturer} ${device.model}`, device.hasManual)}
                   >
                     <FileText className="h-4 w-4 mr-1" />
                     Manual
@@ -177,11 +198,15 @@ const DeviceModelsTable: React.FC<DeviceModelsTableProps> = ({
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => toast.info(`Downloading ${device.manufacturer} ${device.model} specs...`)}>
+                        <DropdownMenuItem 
+                          onClick={() => handleDownloadSpecs(`${device.manufacturer} ${device.model}`)}
+                        >
                           <Download className="h-4 w-4 mr-2" />
                           Download Specs
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => toast.info(`Opening ${device.manufacturer} website...`)}>
+                        <DropdownMenuItem 
+                          onClick={() => handleVisitManufacturerWebsite(device.manufacturer)}
+                        >
                           <ExternalLink className="h-4 w-4 mr-2" />
                           Manufacturer Website
                         </DropdownMenuItem>

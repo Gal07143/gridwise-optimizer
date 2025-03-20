@@ -7,6 +7,7 @@ import {
   BatteryCharging,
   ChevronRight,
   ExternalLink,
+  Eye,
   Filter,
   Info,
   Lightbulb,
@@ -15,7 +16,8 @@ import {
   Settings,
   Trash,
   Wind,
-  Zap
+  Zap,
+  Download
 } from 'lucide-react';
 import AppLayout from '@/components/layout/AppLayout';
 import { Input } from '@/components/ui/input';
@@ -29,7 +31,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 // Mock device data
@@ -124,6 +125,33 @@ const Devices = () => {
     toast.error("Delete functionality is not implemented yet");
   };
 
+  const handleDownloadSpecs = (deviceName: string) => {
+    // In a real app, this would initiate a file download
+    toast.success(`Downloading specifications for ${deviceName}...`);
+    // Simulate download completion
+    setTimeout(() => {
+      toast.info(`${deviceName} specifications downloaded successfully`);
+    }, 1500);
+  };
+
+  const handleDownloadManual = (deviceName: string) => {
+    // In a real app, this would initiate a file download
+    toast.success(`Downloading user manual for ${deviceName}...`);
+    // Simulate download completion
+    setTimeout(() => {
+      toast.info(`${deviceName} user manual downloaded successfully`);
+    }, 1500);
+  };
+
+  const handleExportData = (deviceName: string) => {
+    // In a real app, this would initiate a file download
+    toast.success(`Exporting data for ${deviceName}...`);
+    // Simulate download completion
+    setTimeout(() => {
+      toast.info(`${deviceName} data exported successfully as CSV`);
+    }, 1500);
+  };
+
   return (
     <AppLayout>
       <div className="p-6 animate-in fade-in duration-500">
@@ -188,17 +216,46 @@ const Devices = () => {
                   {getStatusBadge(device.status)}
                 </CardHeader>
                 <CardContent>
-                  <div className="flex justify-between items-center pt-2">
+                  <div className="flex flex-col gap-3">
                     <span className="text-xs text-muted-foreground">
                       Last updated: {device.lastUpdated.toLocaleTimeString()}
                     </span>
-                    <div className="flex gap-2">
-                      <Button variant="ghost" size="sm" asChild>
+                    
+                    <div className="flex flex-wrap gap-2">
+                      <Button variant="outline" size="sm" asChild>
+                        <Link to={`/device-view/${device.id}`}>
+                          <Eye className="h-4 w-4 mr-1" />
+                          View
+                        </Link>
+                      </Button>
+                      
+                      <Button variant="outline" size="sm" asChild>
                         <Link to={`/edit-device/${device.id}`}>
                           <Settings className="h-4 w-4 mr-1" />
                           Manage
                         </Link>
                       </Button>
+                      
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="sm">
+                            <Download className="h-4 w-4 mr-1" />
+                            Download
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleDownloadSpecs(device.name)}>
+                            Download Specifications
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleDownloadManual(device.name)}>
+                            Download User Manual
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleExportData(device.name)}>
+                            Export Device Data
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                      
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="sm">

@@ -35,19 +35,35 @@ const DeviceModelsCard: React.FC<DeviceModelsCardProps> = ({
 }) => {
   const handleExportList = () => {
     toast.success("Exporting device list...");
+    // Simulate file download
     setTimeout(() => {
-      toast.info("Device list exported as CSV");
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const filename = `${categoryName.toLowerCase()}-list-${timestamp}.csv`;
+      toast.info(`Device list exported as ${filename}`);
     }, 1500);
   };
 
   const handleRefreshData = () => {
     toast.success("Refreshing device data...");
     // In a real application, this would trigger a refetch
+    setTimeout(() => {
+      toast.info("Device data refreshed successfully");
+    }, 1200);
   };
 
   const handleClearFilters = () => {
     // This would be implemented to clear all active filters
     toast.info("Filters cleared");
+  };
+
+  const handleDownloadCatalog = () => {
+    toast.success(`Downloading ${categoryName} catalog...`);
+    // Simulate file download
+    setTimeout(() => {
+      const timestamp = new Date().toISOString().slice(0, 10);
+      const filename = `${categoryName.toLowerCase()}-catalog-${timestamp}.pdf`;
+      toast.info(`Catalog downloaded as ${filename}`);
+    }, 2000);
   };
 
   return (
@@ -93,7 +109,7 @@ const DeviceModelsCard: React.FC<DeviceModelsCardProps> = ({
             <Download className="h-4 w-4 mr-2" />
             Export List
           </Button>
-          <Button variant="outline" size="sm" className="text-muted-foreground">
+          <Button variant="outline" size="sm" className="text-muted-foreground" onClick={handleDownloadCatalog}>
             <Download className="h-4 w-4 mr-2" />
             Download Catalog
           </Button>
