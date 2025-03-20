@@ -28,7 +28,7 @@ export interface ForecastMetrics {
   peakGeneration: number;
   peakConsumption: number;
   confidence: number;
-  netEnergy: number; // Required property
+  netEnergy: number;
 }
 
 export interface Prediction {

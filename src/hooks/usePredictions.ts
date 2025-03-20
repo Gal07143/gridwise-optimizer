@@ -9,6 +9,12 @@ import {
 } from "@/services/predictions/energyPredictionService";
 import { weeklyEnergyData } from "@/components/analytics/data/sampleData";
 
+interface ProcessedPrediction {
+  day: string;
+  value: number;
+  confidence: number;
+}
+
 export const usePredictions = (
   timeframe: string,
   customData?: any[]
@@ -16,6 +22,7 @@ export const usePredictions = (
   const [predictionDays, setPredictionDays] = useState(7);
   const [includeRecommendations, setIncludeRecommendations] = useState(true);
   const [lastError, setLastError] = useState<string | null>(null);
+  const [processedPredictions, setProcessedPredictions] = useState<ProcessedPrediction[]>([]);
   
   // Use either custom data or default sample data based on timeframe
   const getInputData = () => {
@@ -70,13 +77,26 @@ export const usePredictions = (
     staleTime: 5 * 60 * 1000
   });
   
+  // Process raw predictions into the format expected by the PredictionsCard
+  useEffect(() => {
+    if (data?.predictions && data.predictions.length > 0) {
+      const processed = data.predictions.map((pred, index) => ({
+        day: `Day ${index + 1}`,
+        value: pred.consumption,
+        confidence: pred.confidence
+      }));
+      setProcessedPredictions(processed);
+    }
+  }, [data?.predictions]);
+
   // Clear error state if query parameters change
   useEffect(() => {
     setLastError(null);
   }, [timeframe, predictionDays, customData?.length, includeRecommendations]);
 
   return {
-    predictions: data?.predictions || [],
+    predictions: processedPredictions,
+    rawPredictions: data?.predictions || [],
     recommendations: data?.recommendations || [],
     modelVersion: data?.model_version,
     isLoading,

@@ -25,12 +25,8 @@ const PredictionsCard = ({ timeframe, customData }: PredictionsCardProps) => {
     setPredictionDays(value[0]);
   };
 
-  // Transform predictions for chart display
-  const chartData = predictions.map(pred => ({
-    day: `Day ${pred.day}`,
-    value: pred.value,
-    confidence: pred.confidence
-  }));
+  // The predictions are now properly typed with day, value and confidence properties
+  const chartData = predictions;
 
   // Calculate average confidence if we have predictions
   const avgConfidence = predictions.length 
