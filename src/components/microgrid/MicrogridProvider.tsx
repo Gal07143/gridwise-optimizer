@@ -169,7 +169,7 @@ const MicrogridProvider: React.FC<MicrogridProviderProps> = ({ children }) => {
           lastUpdated: new Date().toISOString()
         };
       });
-    }, 3000);
+    }, 15000); // Changed from 3000 to 15000 (15 seconds)
     
     return () => clearInterval(interval);
   }, []);

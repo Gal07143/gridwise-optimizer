@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { EnergyReading } from "@/types/energy";
 import { toast } from "sonner";
@@ -206,7 +205,7 @@ export const setupRealtimePolling = (deviceId: string, onUpdate: (reading: Energ
       } catch (error) {
         console.error("Error in device polling:", error);
       }
-    }, POLLING_INTERVAL);
+    }, 15000); // Changed from 30000 to 15000 (15 seconds)
   };
   
   const stopPolling = () => {

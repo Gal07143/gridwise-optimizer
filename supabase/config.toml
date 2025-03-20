@@ -1,18 +1,9 @@
 
 project_id = "xullgeycueouyxeirrqs"
-
 [api]
-port = 54321
-schemas = ["public", "storage"]
-
-[db]
-port = 54322
-
-[realtime]
 enabled = true
-
-[studio]
-port = 54323
-
-[functions.energy-predictions]
+[functions]
+[functions.energy-ai-predictions]
+verify_jwt = false
+[functions.weather-api]
 verify_jwt = false

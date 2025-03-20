@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { EnergyNode, EnergyConnection } from './types';
 import { fetchRealtimeReadingsFromDevice } from '@/services/devices/readingsService';
@@ -201,7 +200,7 @@ export const EnergyFlowProvider: React.FC<EnergyFlowProviderProps> = ({ children
     
     const interval = setInterval(() => {
       updateEnergyFlowBasedOnTime();
-    }, 5000);
+    }, 15000); // Changed from 5000 to 15000 (15 seconds)
     
     return () => clearInterval(interval);
   }, [lastUpdate, totalGeneration, totalConsumption, batteryPercentage]);

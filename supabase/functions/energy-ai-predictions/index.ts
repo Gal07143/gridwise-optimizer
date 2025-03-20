@@ -1,424 +1,238 @@
 
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
 };
 
-// Create a Supabase client with the Auth context of the function
-const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
-const supabaseServiceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-const supabase = createClient(supabaseUrl, supabaseServiceRole);
-
-interface AIPredictionRequest {
-  siteId?: string | null;
-  days?: number;
-  storeInDatabase?: boolean;
+interface PredictionRequest {
+  siteId: string;
+  days: number;
+  includeWeather?: boolean;
 }
 
-interface ConsumptionPrediction {
-  date: string;
-  consumption: number;
-  confidence: number;
-}
-
-interface ProductionPrediction {
-  date: string;
-  production: number;
-  solarProduction: number;
-  windProduction: number;
-  confidence: number;
-  weather: {
-    sunnyConditions: number;
-    windyConditions: number;
-  };
-}
-
-interface CostPrediction {
-  date: string;
-  importCost: number;
-  exportRevenue: number;
-  netCost: number;
-  savings: number;
-  selfConsumptionRate: string;
-}
-
-interface AIRecommendation {
-  id: string;
-  title: string;
-  description: string;
-  type: string;
-  priority: string;
-  potentialSavings: string;
-  confidence: number;
-}
-
-interface AIPredictionResponse {
-  consumptionPredictions: ConsumptionPrediction[];
-  productionPredictions: ProductionPrediction[];
-  costPredictions: CostPrediction[];
-  recommendations: AIRecommendation[];
-  metadata: {
-    days: number;
-    generated: string;
-    model_version: string;
-  };
-}
-
-// Get site information
-async function getSiteInfo(siteId: string): Promise<any> {
-  try {
-    if (!siteId) {
-      // Get default site if no site ID provided
-      const { data, error } = await supabase
-        .rpc('get_default_site_id');
-        
-      if (error) throw error;
-      siteId = data;
-    }
-    
-    const { data, error } = await supabase
-      .from('sites')
-      .select('*')
-      .eq('id', siteId)
-      .single();
-      
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error("Error getting site info:", error);
-    return null;
+serve(async (req) => {
+  // Handle CORS preflight request
+  if (req.method === "OPTIONS") {
+    return new Response(null, {
+      status: 204,
+      headers: corsHeaders,
+    });
   }
-}
 
-// Get previous consumption data to base predictions on
-async function getPreviousConsumption(siteId: string): Promise<any[]> {
+  // Initialize Supabase client
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+  const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
   try {
-    // Get energy readings for devices in the site
-    const { data: devices, error: devicesError } = await supabase
-      .from('devices')
-      .select('id')
-      .eq('site_id', siteId);
-      
-    if (devicesError) throw devicesError;
+    // Parse the request
+    const { siteId, days = 7, includeWeather = true } = await req.json() as PredictionRequest;
     
-    if (!devices || devices.length === 0) {
-      console.log("No devices found for site:", siteId);
-      return [];
+    console.log(`Generating energy predictions for site ${siteId}, days: ${days}, includeWeather: ${includeWeather}`);
+
+    if (!siteId) {
+      return new Response(
+        JSON.stringify({ error: "Missing required parameters" }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
     }
+
+    // In a real app, we would call an AI model here
+    // For demo purposes, we'll generate synthetic data
     
-    const deviceIds = devices.map(d => d.id);
-    
-    // Get energy readings for these devices
-    const { data: readings, error: readingsError } = await supabase
+    // 1. Get historical data for the site to base predictions on
+    const { data: historicalReadings, error: readingsError } = await supabase
       .from('energy_readings')
-      .select('*')
-      .in('device_id', deviceIds)
+      .select('device_id, timestamp, power, energy')
       .order('timestamp', { ascending: false })
       .limit(100);
-      
-    if (readingsError) throw readingsError;
     
-    return readings || [];
-  } catch (error) {
-    console.error("Error getting previous consumption:", error);
-    return [];
-  }
-}
-
-// Store AI predictions in the database
-async function storePredictions(siteId: string, predictions: AIPredictionResponse): Promise<void> {
-  try {
-    console.log("Storing predictions for site:", siteId);
+    if (readingsError) {
+      throw new Error(`Error fetching historical data: ${readingsError.message}`);
+    }
     
-    // Store forecasts in energy_forecasts table
-    for (const prediction of predictions.consumptionPredictions) {
-      const forecastData = {
-        site_id: siteId,
-        forecast_time: new Date(prediction.date),
-        consumption_forecast: prediction.consumption,
-        generation_forecast: predictions.productionPredictions.find(p => p.date === prediction.date)?.production || 0,
-        confidence: prediction.confidence,
-        source: 'ai-prediction',
-        timestamp: new Date()
-      };
+    // 2. Get device information
+    const { data: devices, error: devicesError } = await supabase
+      .from('devices')
+      .select('id, type, capacity')
+      .eq('site_id', siteId);
+    
+    if (devicesError) {
+      throw new Error(`Error fetching devices: ${devicesError.message}`);
+    }
+    
+    // 3. Get weather data if requested
+    let weatherData = null;
+    if (includeWeather) {
+      const { data: weather, error: weatherError } = await supabase
+        .from('weather_data')
+        .select('*')
+        .eq('site_id', siteId)
+        .eq('forecast', true)
+        .order('timestamp', { ascending: true })
+        .limit(days);
       
-      const { error } = await supabase
-        .from('energy_forecasts')
-        .upsert(forecastData, { 
-          onConflict: 'site_id,forecast_time' 
-        });
-        
-      if (error) {
-        console.error("Error storing forecast:", error);
+      if (!weatherError) {
+        weatherData = weather;
       }
     }
     
-    // Store recommendations in ai_recommendations table
-    for (const recommendation of predictions.recommendations) {
-      const recommendationData = {
-        site_id: siteId,
-        title: recommendation.title,
-        description: recommendation.description,
-        type: recommendation.type,
-        priority: recommendation.priority,
-        potential_savings: recommendation.potentialSavings,
-        confidence: recommendation.confidence,
-        created_at: new Date()
-      };
-      
-      const { error } = await supabase
-        .from('ai_recommendations')
-        .insert(recommendationData);
-        
-      if (error) {
-        console.error("Error storing recommendation:", error);
+    // 4. Generate predictions
+    const predictions = generateEnergyPredictions(devices, days, weatherData);
+    
+    // 5. Store predictions in the database
+    const now = new Date();
+    const predictionEntries = predictions.map(pred => ({
+      site_id: siteId,
+      timestamp: now.toISOString(),
+      forecast_time: pred.date,
+      generation_forecast: pred.generation,
+      consumption_forecast: pred.consumption,
+      temperature: pred.temperature,
+      cloud_cover: pred.cloudCover,
+      wind_speed: pred.windSpeed,
+      weather_condition: pred.weatherCondition,
+      confidence: 0.85 + (Math.random() * 0.1),
+      source: 'model'
+    }));
+    
+    // Insert predictions
+    const { error: insertError } = await supabase
+      .from('energy_forecasts')
+      .insert(predictionEntries);
+    
+    if (insertError) {
+      console.warn(`Warning: Failed to store predictions: ${insertError.message}`);
+    }
+    
+    // 6. Return predictions
+    return new Response(
+      JSON.stringify({ 
+        predictions,
+        message: "AI predictions generated successfully" 
+      }),
+      {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
-    }
+    );
     
-    console.log("Predictions storage completed");
   } catch (error) {
-    console.error("Error in storePredictions:", error);
-  }
-}
-
-// Generate realistic AI predictions
-function generateAIPredictions(days: number, siteId: string, previousConsumption: any[]): AIPredictionResponse {
-  console.log(`Generating ${days} days of predictions for site ${siteId}`);
-  
-  const startDate = new Date();
-  const consumptionPredictions: ConsumptionPrediction[] = [];
-  const productionPredictions: ProductionPrediction[] = [];
-  const costPredictions: CostPrediction[] = [];
-  
-  // Use previous consumption data if available to make "smarter" predictions
-  const hasHistoricalData = previousConsumption.length > 0;
-  let avgConsumption = 15; // Default daily consumption in kWh
-  
-  if (hasHistoricalData) {
-    // Calculate average consumption from historical data
-    const totalConsumption = previousConsumption.reduce((sum, reading) => sum + reading.energy, 0);
-    avgConsumption = totalConsumption / previousConsumption.length;
-    console.log("Using average consumption from historical data:", avgConsumption);
-  }
-  
-  // Generate day-by-day predictions
-  for (let i = 0; i < days; i++) {
-    const predictionDate = new Date(startDate);
-    predictionDate.setDate(predictionDate.getDate() + i);
-    const dateStr = predictionDate.toISOString().split('T')[0];
+    console.error("Error generating predictions:", error);
     
-    // Weekend adjustment: weekend consumption is typically different
-    const isWeekend = predictionDate.getDay() === 0 || predictionDate.getDay() === 6;
-    const weekendFactor = isWeekend ? 0.8 : 1.1;
-    
-    // Time of year adjustment
-    const month = predictionDate.getMonth();
-    const seasonalFactor = month >= 5 && month <= 8 ? 1.2 : // Summer
-                          month >= 9 && month <= 10 ? 0.9 : // Fall
-                          month >= 11 || month <= 1 ? 1.3 : // Winter
-                          1.0; // Spring
-    
-    // Add some randomness
-    const randomFactor = 0.85 + Math.random() * 0.3;
-    
-    // Calculate daily consumption prediction
-    const dailyConsumption = avgConsumption * weekendFactor * seasonalFactor * randomFactor;
-    
-    // Consumption prediction
-    consumptionPredictions.push({
-      date: dateStr,
-      consumption: parseFloat(dailyConsumption.toFixed(2)),
-      confidence: parseFloat((0.85 + Math.random() * 0.1).toFixed(2))
-    });
-    
-    // Weather-based factors for production
-    const sunnyConditions = parseFloat((0.4 + Math.random() * 0.6).toFixed(2));
-    const windyConditions = parseFloat((0.2 + Math.random() * 0.7).toFixed(2));
-    
-    // Solar production is higher in summer, lower in winter
-    const solarSeasonalFactor = month >= 5 && month <= 8 ? 1.4 : // Summer
-                              month >= 9 && month <= 10 ? 0.8 : // Fall
-                              month >= 11 || month <= 1 ? 0.5 : // Winter
-                              1.1; // Spring
-    
-    // Calculate production components
-    const solarProduction = 6.0 * sunnyConditions * solarSeasonalFactor;
-    const windProduction = 3.5 * windyConditions;
-    const totalProduction = solarProduction + windProduction;
-    
-    // Production prediction
-    productionPredictions.push({
-      date: dateStr,
-      production: parseFloat(totalProduction.toFixed(2)),
-      solarProduction: parseFloat(solarProduction.toFixed(2)),
-      windProduction: parseFloat(windProduction.toFixed(2)),
-      confidence: parseFloat((0.8 + Math.random() * 0.15).toFixed(2)),
-      weather: {
-        sunnyConditions,
-        windyConditions
+    return new Response(
+      JSON.stringify({ error: error.message || "Failed to generate predictions" }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
-    });
-    
-    // Calculate costs based on consumption, production, and typical energy prices
-    const importRate = 0.25; // $/kWh for grid import
-    const exportRate = 0.10; // $/kWh for grid export
-    
-    // Calculate cost components
-    const netConsumption = Math.max(0, dailyConsumption - totalProduction);
-    const netProduction = Math.max(0, totalProduction - dailyConsumption);
-    const importCost = netConsumption * importRate;
-    const exportRevenue = netProduction * exportRate;
-    const netCost = importCost - exportRevenue;
-    
-    // Calculate what the cost would have been without own production
-    const noProductionCost = dailyConsumption * importRate;
-    const savings = noProductionCost - netCost;
-    
-    // Calculate self-consumption rate
-    const selfConsumption = totalProduction > 0 
-      ? Math.min(dailyConsumption, totalProduction) / totalProduction 
-      : 0;
-    
-    // Cost prediction
-    costPredictions.push({
-      date: dateStr,
-      importCost: parseFloat(importCost.toFixed(2)),
-      exportRevenue: parseFloat(exportRevenue.toFixed(2)),
-      netCost: parseFloat(netCost.toFixed(2)),
-      savings: parseFloat(savings.toFixed(2)),
-      selfConsumptionRate: `${(selfConsumption * 100).toFixed(1)}%`
-    });
-  }
-  
-  // Generate AI recommendations based on the prediction patterns
-  const recommendations: AIRecommendation[] = [];
-  
-  // Calculate average self-consumption rate
-  const avgSelfConsumption = costPredictions.reduce(
-    (sum, cost) => sum + parseFloat(cost.selfConsumptionRate.replace('%', '')), 
-    0
-  ) / costPredictions.length;
-  
-  // Calculate average net cost
-  const avgNetCost = costPredictions.reduce((sum, cost) => sum + cost.netCost, 0) / costPredictions.length;
-  
-  // Only add recommendations if there's enough data to analyze
-  if (consumptionPredictions.length > 0) {
-    // Add recommendation about self-consumption if it's low
-    if (avgSelfConsumption < 70) {
-      recommendations.push({
-        id: crypto.randomUUID(),
-        title: "Improve Self-Consumption Rate",
-        description: "Your system is exporting a significant amount of energy back to the grid. " +
-                    "Consider shifting some consumption to times of high production.",
-        type: "optimization",
-        priority: avgSelfConsumption < 50 ? "high" : "medium",
-        potentialSavings: `$${(avgNetCost * 0.2 * 30).toFixed(2)}/month`,
-        confidence: 0.85
-      });
-    }
-    
-    // Add recommendation about battery if consumption and production patterns suggest it would help
-    const hasEveningConsumption = Math.random() > 0.5; // Simplified for demo
-    if (hasEveningConsumption) {
-      recommendations.push({
-        id: crypto.randomUUID(),
-        title: "Battery Storage Opportunity",
-        description: "Your consumption pattern shows significant evening usage when solar production is low. " +
-                    "A battery system could store excess daytime production for evening use.",
-        type: "system",
-        priority: "medium",
-        potentialSavings: `$${(avgNetCost * 0.4 * 30).toFixed(2)}/month`,
-        confidence: 0.78
-      });
-    }
-    
-    // Always add an energy efficiency recommendation (common for all patterns)
-    recommendations.push({
-      id: crypto.randomUUID(),
-      title: "Schedule High-Consumption Activities",
-      description: "Schedule your high-energy activities like laundry and dishwashing during peak solar hours " +
-                  "to maximize direct use of your renewable energy.",
-      type: "behavioral",
-      priority: "low",
-      potentialSavings: `$${(avgNetCost * 0.1 * 30).toFixed(2)}/month`,
-      confidence: 0.92
-    });
-    
-    // Add a maintenance recommendation if applicable
-    if (Math.random() > 0.7) { // 30% chance to suggest maintenance
-      recommendations.push({
-        id: crypto.randomUUID(),
-        title: "Solar Panel Cleaning",
-        description: "Your solar production appears to be lower than expected. " +
-                    "Consider cleaning your solar panels to improve efficiency.",
-        type: "maintenance",
-        priority: "medium",
-        potentialSavings: `$${(avgNetCost * 0.15 * 30).toFixed(2)}/month`,
-        confidence: 0.75
-      });
-    }
-  }
-  
-  return {
-    consumptionPredictions,
-    productionPredictions,
-    costPredictions,
-    recommendations,
-    metadata: {
-      days,
-      generated: new Date().toISOString(),
-      model_version: "1.0.0-beta"
-    }
-  };
-}
-
-// Main server handler
-serve(async (req: Request) => {
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
-  
-  try {
-    // Parse request parameters
-    const { siteId, days = 7, storeInDatabase = true } = await req.json() as AIPredictionRequest;
-    console.log("Request params:", { siteId, days, storeInDatabase });
-    
-    // Get site information
-    const site = await getSiteInfo(siteId);
-    
-    if (!site) {
-      throw new Error("Site not found");
-    }
-    
-    // Get previous consumption data to make more accurate predictions
-    const previousConsumption = await getPreviousConsumption(site.id);
-    
-    // Generate AI predictions
-    const predictions = generateAIPredictions(days, site.id, previousConsumption);
-    
-    // Store predictions in database if requested
-    if (storeInDatabase) {
-      await storePredictions(site.id, predictions);
-    }
-    
-    // Return predictions
-    return new Response(JSON.stringify(predictions), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200
-    });
-  } catch (error) {
-    console.error("Error generating AI predictions:", error);
-    
-    return new Response(JSON.stringify({
-      error: error.message || "An error occurred while generating predictions"
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 400
-    });
+    );
   }
 });
+
+function generateEnergyPredictions(devices: any[], days: number, weatherData: any[] | null) {
+  const startDate = new Date();
+  const predictions = [];
+  
+  // Calculate device capacities by type
+  const solarCapacity = devices
+    .filter(d => d.type === 'solar')
+    .reduce((sum, d) => sum + (d.capacity || 0), 0);
+  
+  const windCapacity = devices
+    .filter(d => d.type === 'wind')
+    .reduce((sum, d) => sum + (d.capacity || 0), 0);
+  
+  const totalConsumptionCapacity = devices
+    .filter(d => d.type === 'load')
+    .reduce((sum, d) => sum + (d.capacity || 0), 0);
+  
+  // Generate predictions for each day
+  for (let i = 0; i < days; i++) {
+    const predictionDate = new Date(startDate);
+    predictionDate.setDate(startDate.getDate() + i);
+    
+    // Use weather data if available, otherwise generate random
+    let temperature = 10 + Math.random() * 20; // 10-30°C
+    let cloudCover = Math.random();
+    let windSpeed = 2 + Math.random() * 8; // 2-10 m/s
+    let weatherCondition = "Partly Cloudy";
+    
+    if (weatherData && weatherData[i]) {
+      temperature = weatherData[i].temperature || temperature;
+      cloudCover = weatherData[i].cloud_cover || cloudCover;
+      windSpeed = weatherData[i].wind_speed || windSpeed;
+      
+      // Determine weather condition based on cloud cover
+      if (cloudCover < 0.3) weatherCondition = "Clear";
+      else if (cloudCover < 0.7) weatherCondition = "Partly Cloudy";
+      else weatherCondition = "Cloudy";
+      
+      if (weatherData[i].precipitation > 1) {
+        weatherCondition = "Rain";
+      }
+    }
+    
+    // Calculate solar generation based on cloud cover and capacity
+    const dayOfYear = getDayOfYear(predictionDate);
+    const seasonalFactor = getSeasonalFactor(dayOfYear);
+    
+    const effectiveSolarCapacity = solarCapacity * seasonalFactor * (1 - (cloudCover * 0.7));
+    
+    // Calculate wind generation based on wind speed and capacity
+    // Wind power is proportional to the cube of wind speed, but with cutoffs
+    let windEfficiency = 0;
+    if (windSpeed < 3) {
+      windEfficiency = windSpeed / 3; // Low wind
+    } else if (windSpeed < 12) {
+      windEfficiency = 0.3 + (windSpeed - 3) * 0.07; // Normal operation range
+    } else {
+      windEfficiency = 0.9; // Maximum efficiency
+    }
+    
+    const effectiveWindCapacity = windCapacity * windEfficiency;
+    
+    // Calculate consumption based on temperature (higher in extreme temperatures)
+    const temperatureFactor = Math.abs(temperature - 20) / 10; // Deviation from comfortable temp
+    const timeOfYear = dayOfYear / 365;
+    const seasonalConsumptionFactor = 1 + (Math.sin(timeOfYear * 2 * Math.PI) * 0.15); // ±15% seasonal variation
+    
+    const consumption = totalConsumptionCapacity * (0.7 + temperatureFactor * 0.3) * seasonalConsumptionFactor;
+    
+    // Add some randomness for realism
+    const randomFactor = 0.9 + Math.random() * 0.2; // 0.9-1.1
+    
+    predictions.push({
+      date: predictionDate.toISOString(),
+      generation: Math.round((effectiveSolarCapacity + effectiveWindCapacity) * randomFactor * 100) / 100,
+      consumption: Math.round(consumption * randomFactor * 100) / 100,
+      temperature: Math.round(temperature * 10) / 10,
+      cloudCover: Math.round(cloudCover * 100) / 100,
+      windSpeed: Math.round(windSpeed * 10) / 10,
+      weatherCondition
+    });
+  }
+  
+  return predictions;
+}
+
+function getDayOfYear(date: Date): number {
+  const start = new Date(date.getFullYear(), 0, 0);
+  const diff = date.getTime() - start.getTime();
+  const oneDay = 1000 * 60 * 60 * 24;
+  return Math.floor(diff / oneDay);
+}
+
+function getSeasonalFactor(dayOfYear: number): number {
+  // Simplified seasonal factor: peaks in summer, lowest in winter
+  // This assumes northern hemisphere
+  const normalizedDay = dayOfYear / 365; // 0-1 range
+  return 0.6 + Math.sin((normalizedDay - 0.25) * 2 * Math.PI) * 0.4; // 0.2-1.0 range
+}

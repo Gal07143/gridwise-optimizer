@@ -1,250 +1,175 @@
 
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
 };
-
-// Create a Supabase client with the Auth context of the function
-const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
-const supabaseServiceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-const supabase = createClient(supabaseUrl, supabaseServiceRole);
 
 interface WeatherRequest {
   siteId: string;
   lat?: number;
   lng?: number;
   days?: number;
-  storeInDatabase?: boolean;
 }
 
-interface WeatherResponse {
-  current: {
-    temperature: number;
-    humidity: number;
-    condition: string;
-    wind_speed: number;
-    wind_direction: number;
-    cloud_cover: number;
-    precipitation: number;
-    timestamp: string;
-  };
-  forecast: {
-    date: string;
-    temperature_min: number;
-    temperature_max: number;
-    condition: string;
-    wind_speed: number;
-    cloud_cover: number;
-    precipitation_chance: number;
-    humidity: number;
-  }[];
-  location: {
-    name: string;
-    lat: number;
-    lng: number;
-    timezone: string;
-  };
-}
-
-// Helper function to generate realistic weather data
-function generateWeatherData(lat: number, lng: number, days = 5): WeatherResponse {
-  const currentDate = new Date();
-  
-  // Generate current weather
-  const current = {
-    temperature: 15 + Math.random() * 20, // 15-35°C
-    humidity: 30 + Math.random() * 60, // 30-90%
-    condition: ["sunny", "partly_cloudy", "cloudy", "rain", "thunderstorm"][Math.floor(Math.random() * 5)],
-    wind_speed: Math.random() * 30, // 0-30 km/h
-    wind_direction: Math.random() * 360, // 0-360 degrees
-    cloud_cover: Math.random() * 100, // 0-100%
-    precipitation: Math.random() * 5, // 0-5 mm
-    timestamp: currentDate.toISOString()
-  };
-  
-  // Generate forecast for the requested number of days
-  const forecast = [];
-  
-  for (let i = 0; i < days; i++) {
-    const forecastDate = new Date(currentDate);
-    forecastDate.setDate(forecastDate.getDate() + i);
-    
-    // Base values on the current weather with some variation
-    const condition = ["sunny", "partly_cloudy", "cloudy", "rain", "thunderstorm"][Math.floor(Math.random() * 5)];
-    const cloudCover = condition === "sunny" ? Math.random() * 20 : 
-                      condition === "partly_cloudy" ? 20 + Math.random() * 30 : 
-                      condition === "cloudy" ? 50 + Math.random() * 30 : 
-                      70 + Math.random() * 30;
-    
-    forecast.push({
-      date: forecastDate.toISOString().split('T')[0],
-      temperature_min: 10 + Math.random() * 15,
-      temperature_max: 20 + Math.random() * 15,
-      condition,
-      wind_speed: Math.random() * 30,
-      cloud_cover: cloudCover,
-      precipitation_chance: condition === "rain" || condition === "thunderstorm" ? 50 + Math.random() * 50 : Math.random() * 30,
-      humidity: 30 + Math.random() * 60
+serve(async (req) => {
+  // Handle CORS preflight request
+  if (req.method === "OPTIONS") {
+    return new Response(null, {
+      status: 204,
+      headers: corsHeaders,
     });
   }
-  
-  // Use the provided coordinates for the location
-  const location = {
-    name: "Weather Station",
-    lat,
-    lng,
-    timezone: "UTC" // In a real implementation, this would be determined from the coordinates
-  };
-  
-  return {
-    current,
-    forecast,
-    location
-  };
-}
 
-// Store weather data in the database
-async function storeWeatherData(siteId: string, data: WeatherResponse): Promise<void> {
-  try {
-    console.log(`Storing weather data for site: ${siteId}`);
-    
-    // Store current weather
-    const currentWeatherData = {
-      site_id: siteId,
-      timestamp: new Date(data.current.timestamp),
-      forecast: false,
-      temperature: data.current.temperature,
-      humidity: data.current.humidity,
-      precipitation: data.current.precipitation,
-      wind_speed: data.current.wind_speed,
-      wind_direction: data.current.wind_direction,
-      cloud_cover: data.current.cloud_cover,
-      source: "weather-api"
-    };
-    
-    const { error: currentError } = await supabase
-      .from('weather_data')
-      .upsert(currentWeatherData, { 
-        onConflict: 'site_id,timestamp,forecast' 
-      });
-    
-    if (currentError) {
-      console.error("Error storing current weather:", currentError);
-    }
-    
-    // Store forecast data
-    for (const day of data.forecast) {
-      const forecastData = {
-        site_id: siteId,
-        timestamp: new Date(day.date),
-        forecast: true,
-        temperature: (day.temperature_min + day.temperature_max) / 2, // Average temp
-        humidity: day.humidity,
-        precipitation: day.precipitation_chance / 100 * 5, // Estimate based on chance
-        wind_speed: day.wind_speed,
-        wind_direction: Math.random() * 360, // Random direction
-        cloud_cover: day.cloud_cover,
-        source: "weather-api"
-      };
-      
-      const { error: forecastError } = await supabase
-        .from('weather_data')
-        .upsert(forecastData, { 
-          onConflict: 'site_id,timestamp,forecast' 
-        });
-      
-      if (forecastError) {
-        console.error(`Error storing forecast for ${day.date}:`, forecastError);
-      }
-    }
-    
-    console.log("Weather data storage completed");
-  } catch (error) {
-    console.error("Error in storeWeatherData:", error);
-  }
-}
+  // Initialize Supabase client
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+  const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Get site coordinates if not provided
-async function getSiteCoordinates(siteId: string): Promise<{ lat: number, lng: number } | null> {
   try {
-    const { data, error } = await supabase
-      .from('sites')
-      .select('lat, lng')
-      .eq('id', siteId)
-      .single();
+    // Parse the request
+    const { siteId, lat, lng, days = 7 } = await req.json() as WeatherRequest;
     
-    if (error) {
-      console.error("Error fetching site coordinates:", error);
-      return null;
-    }
-    
-    if (!data.lat || !data.lng) {
-      console.error("Site has no coordinates:", siteId);
-      return null;
-    }
-    
-    return { lat: data.lat, lng: data.lng };
-  } catch (error) {
-    console.error("Error in getSiteCoordinates:", error);
-    return null;
-  }
-}
+    console.log(`Fetching weather data for site ${siteId}, days: ${days}`);
 
-// Main server handler
-serve(async (req: Request) => {
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
-  
-  try {
-    // Parse request body
-    const requestData: WeatherRequest = await req.json();
-    console.log("Received weather request:", requestData);
-    
-    const { siteId, lat, lng, days = 5, storeInDatabase = true } = requestData;
-    
     if (!siteId) {
-      throw new Error("Missing required parameter: siteId");
+      return new Response(
+        JSON.stringify({ error: "Missing required parameters" }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
     }
+
+    let siteCoordinates;
     
-    let coordinates;
-    
-    // Use provided coordinates or fetch from database
-    if (lat !== undefined && lng !== undefined) {
-      coordinates = { lat, lng };
-    } else {
-      coordinates = await getSiteCoordinates(siteId);
+    // Get coordinates from the site if not provided
+    if (!lat || !lng) {
+      const { data: siteData, error: siteError } = await supabase
+        .from('sites')
+        .select('lat, lng')
+        .eq('id', siteId)
+        .single();
       
-      if (!coordinates) {
-        throw new Error(`Unable to get coordinates for site ${siteId}`);
+      if (siteError || !siteData || !siteData.lat || !siteData.lng) {
+        return new Response(
+          JSON.stringify({ error: "Site coordinates not found" }),
+          {
+            status: 404,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
       }
+      
+      siteCoordinates = { lat: siteData.lat, lng: siteData.lng };
+    } else {
+      siteCoordinates = { lat, lng };
+    }
+
+    // In a real app, this would call a weather API
+    // For demo purposes, we'll generate synthetic weather data
+    const weatherData = generateWeatherForecast(siteCoordinates.lat, siteCoordinates.lng, days);
+    
+    // Store the weather data in the database
+    const now = new Date();
+    const weatherEntries = weatherData.map(weather => ({
+      site_id: siteId,
+      timestamp: now.toISOString(),
+      forecast: true,
+      temperature: weather.temperature,
+      humidity: weather.humidity,
+      precipitation: weather.precipitation,
+      wind_speed: weather.windSpeed,
+      wind_direction: weather.windDirection,
+      cloud_cover: weather.cloudCover,
+      source: 'weather-api'
+    }));
+    
+    // Insert weather forecast
+    const { error: insertError } = await supabase
+      .from('weather_data')
+      .insert(weatherEntries);
+    
+    if (insertError) {
+      console.warn(`Warning: Failed to store weather data: ${insertError.message}`);
     }
     
-    // Generate weather data
-    const weatherData = generateWeatherData(coordinates.lat, coordinates.lng, days);
+    return new Response(
+      JSON.stringify({ 
+        forecast: weatherData,
+        message: "Weather forecast retrieved successfully" 
+      }),
+      {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
     
-    // Store data if requested
-    if (storeInDatabase) {
-      await storeWeatherData(siteId, weatherData);
-    }
-    
-    // Return weather data
-    return new Response(JSON.stringify(weatherData), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200
-    });
   } catch (error) {
-    console.error("Error processing weather request:", error);
+    console.error("Error fetching weather data:", error);
     
-    return new Response(JSON.stringify({
-      error: error.message || "An error occurred while processing your request"
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 400
-    });
+    return new Response(
+      JSON.stringify({ error: error.message || "Failed to fetch weather data" }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
   }
 });
+
+function generateWeatherForecast(lat: number, lng: number, days: number) {
+  const forecast = [];
+  const startDate = new Date();
+  
+  // Use location to influence forecast (very simplistic)
+  const isNorthern = lat > 0;
+  const isTropical = Math.abs(lat) < 23.5;
+  const isCoastal = Math.abs(lng) < 10 || Math.abs(lng) > 170; // Simplistic assumption
+  
+  // Base temperature for the location
+  const baseTemp = isTropical ? 28 : (isNorthern ? 15 : 18);
+  
+  // Generate a weather pattern for the next N days
+  for (let i = 0; i < days; i++) {
+    const forecastDate = new Date(startDate);
+    forecastDate.setDate(startDate.getDate() + i);
+    
+    // Create weather variations
+    const dayVariation = Math.sin((i / days) * Math.PI) * 3; // Temperature variation over forecast period
+    const randomVariation = (Math.random() - 0.5) * 5; // Random daily variation
+    
+    // Calculate temperature
+    const temperature = baseTemp + dayVariation + randomVariation;
+    
+    // Humidity tends to be higher in coastal and tropical areas
+    const humidity = (isTropical ? 70 : 50) + (isCoastal ? 15 : 0) + (Math.random() * 20);
+    
+    // Cloud cover and precipitation are related
+    const cloudCover = Math.random() * 0.8;
+    let precipitation = 0;
+    if (cloudCover > 0.5) {
+      precipitation = (cloudCover - 0.5) * 2 * 10 * Math.random(); // 0-10mm if cloudy
+    }
+    
+    // Wind speed and direction
+    const windSpeed = 2 + Math.random() * 10; // 2-12 m/s
+    const windDirection = Math.floor(Math.random() * 360); // 0-359 degrees
+    
+    forecast.push({
+      date: forecastDate.toISOString(),
+      temperature: Math.round(temperature * 10) / 10,
+      humidity: Math.round(humidity),
+      precipitation: Math.round(precipitation * 10) / 10,
+      windSpeed: Math.round(windSpeed * 10) / 10,
+      windDirection,
+      cloudCover: Math.round(cloudCover * 100) / 100,
+    });
+  }
+  
+  return forecast;
+}
