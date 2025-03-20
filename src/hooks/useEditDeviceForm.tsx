@@ -2,10 +2,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { getDeviceById, updateDevice } from '@/services/devices';
+import { getDeviceById } from '@/services/devices/queries';
+import { updateDevice } from '@/services/devices/mutations';
 import { useBaseDeviceForm, DeviceFormState } from './useBaseDeviceForm';
 import { toast } from 'sonner';
-import { EnergyDevice } from '@/types/energy';
+import { EnergyDevice, DeviceType, DeviceStatus } from '@/types/energy';
 import { validateDeviceData, formatValidationErrors, ValidationError } from '@/services/devices/mutations/deviceValidation';
 
 export const useEditDeviceForm = () => {
@@ -24,9 +25,6 @@ export const useEditDeviceForm = () => {
     queryKey: ['device', deviceId],
     queryFn: () => deviceId ? getDeviceById(deviceId) : null,
     enabled: !!deviceId,
-    retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000), // Exponential backoff
-    staleTime: 1000 * 60 * 5, // 5 minutes
   });
   
   // Handle errors
@@ -63,7 +61,15 @@ export const useEditDeviceForm = () => {
     
     try {
       console.log("Updating device with data:", deviceData);
-      const updatedDevice = await updateDevice(deviceId, deviceData);
+      
+      // Ensure type is properly cast to DeviceType
+      const updatedDeviceData: Partial<EnergyDevice> = {
+        ...deviceData,
+        type: deviceData.type as DeviceType,
+        status: deviceData.status as DeviceStatus
+      };
+      
+      const updatedDevice = await updateDevice(deviceId, updatedDeviceData);
       
       if (updatedDevice) {
         toast.success('Device updated successfully');
@@ -95,8 +101,8 @@ export const useEditDeviceForm = () => {
       baseFormHook.setDevice({
         name: deviceData.name,
         location: deviceData.location || '',
-        type: deviceData.type,
-        status: deviceData.status,
+        type: deviceData.type as DeviceType,
+        status: deviceData.status as DeviceStatus,
         capacity: deviceData.capacity,
         firmware: deviceData.firmware || '',
         description: deviceData.description || '',

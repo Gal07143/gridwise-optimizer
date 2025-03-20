@@ -1,443 +1,399 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { toast } from 'sonner';
-import SettingsPageTemplate from '@/components/settings/SettingsPageTemplate';
+import { supabase } from '@/integrations/supabase/client';
 import { 
-  Loader2, 
-  Package, 
-  Save, 
-  Upload,
-  ChevronLeft
-} from 'lucide-react';
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle 
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
+} from '@/components/ui/form';
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
-import { supabase } from '@/integrations/supabase/client';
-import { categoryNames } from '@/hooks/useDeviceModels';
-
-interface DeviceModel {
-  id: string;
-  name: string;
-  manufacturer: string;
-  model_number?: string;
-  type: string;
-  capacity?: number;
-  power_rating?: number;
-  efficiency?: number;
-  dimensions?: string;
-  weight?: number;
-  warranty_period?: number;
-  release_date?: string;
-  description?: string;
-  technical_specs?: Record<string, any>;
-  datasheet_url?: string;
-  supported?: boolean;
-  protocol?: string;
-  firmware?: string;
-}
-
-const getDeviceModelById = async (id: string): Promise<DeviceModel | null> => {
-  try {
-    const { data, error } = await supabase
-      .from('device_models')
-      .select('*')
-      .eq('id', id)
-      .maybeSingle();
-      
-    if (error) throw error;
-    if (!data) return null;
-    
-    return data as DeviceModel;
-  } catch (error) {
-    console.error('Error fetching device model:', error);
-    throw error;
-  }
-};
-
-const updateDeviceModel = async (id: string, updates: Partial<DeviceModel>): Promise<DeviceModel> => {
-  try {
-    const { data, error } = await supabase
-      .from('device_models')
-      .update(updates)
-      .eq('id', id)
-      .select()
-      .single();
-      
-    if (error) throw error;
-    if (!data) throw new Error('No data returned from update');
-    
-    return data as DeviceModel;
-  } catch (error) {
-    console.error('Error updating device model:', error);
-    throw error;
-  }
-};
+import { toast } from 'sonner';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { DeviceModel } from '@/hooks/useDeviceModels';
+import { ArrowLeft, Save, Trash2 } from 'lucide-react';
+import AppLayout from '@/components/layout/AppLayout';
 
 const EditDeviceModelPage = () => {
-  const { id } = useParams<{ id: string }>();
+  const { modelId } = useParams<{ modelId: string }>();
   const navigate = useNavigate();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [deviceModel, setDeviceModel] = useState<DeviceModel | null>(null);
   const [formData, setFormData] = useState<Partial<DeviceModel>>({});
   
-  const { data: deviceModel, isLoading, isError } = useQuery({
-    queryKey: ['deviceModel', id],
-    queryFn: () => getDeviceModelById(id as string),
-    enabled: !!id
-  });
-  
-  // Initialize form data when device model is loaded
+  // Fetch device model data
   useEffect(() => {
-    if (deviceModel) {
-      setFormData({
-        name: `${deviceModel.manufacturer} ${deviceModel.model_number || ''}`.trim(),
-        manufacturer: deviceModel.manufacturer,
-        model_number: deviceModel.model_number,
-        type: deviceModel.type,
-        capacity: deviceModel.capacity,
-        power_rating: deviceModel.power_rating,
-        efficiency: deviceModel.efficiency,
-        dimensions: deviceModel.dimensions,
-        weight: deviceModel.weight,
-        warranty_period: deviceModel.warranty_period,
-        release_date: deviceModel.release_date,
-        description: deviceModel.description,
-        datasheet_url: deviceModel.datasheet_url,
-        supported: deviceModel.supported !== false, // Default to true if not set
-        protocol: deviceModel.protocol,
-        firmware: deviceModel.firmware,
-      });
+    const fetchDeviceModel = async () => {
+      setIsLoading(true);
+      
+      try {
+        // Use a custom function to get device model data
+        const query = `
+          SELECT * FROM device_models 
+          WHERE id = '${modelId}'
+          LIMIT 1
+        `;
+        
+        const { data, error } = await supabase.rpc('execute_sql', { sql_query: query });
+        
+        if (error) throw error;
+        
+        if (data && data.length > 0) {
+          const model = data[0] as DeviceModel;
+          setDeviceModel(model);
+          setFormData({
+            name: model.name,
+            manufacturer: model.manufacturer,
+            model_number: model.model_number,
+            type: model.type,
+            capacity: model.capacity,
+            power_rating: model.power_rating,
+            efficiency: model.efficiency,
+            dimensions: model.dimensions,
+            weight: model.weight,
+            warranty_period: model.warranty_period,
+            description: model.description,
+            datasheet_url: model.datasheet_url
+          });
+        } else {
+          toast.error('Device model not found');
+          navigate('/integrations');
+        }
+      } catch (error: any) {
+        console.error('Error fetching device model:', error);
+        toast.error(`Failed to fetch device model: ${error.message}`);
+        navigate('/integrations');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    if (modelId) {
+      fetchDeviceModel();
+    } else {
+      setIsLoading(false);
     }
-  }, [deviceModel]);
+  }, [modelId, navigate]);
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     
-    if (type === 'number') {
-      setFormData(prev => ({ ...prev, [name]: value === '' ? undefined : parseFloat(value) }));
+    // Handle numeric input conversion
+    const numericFields = ['capacity', 'power_rating', 'efficiency', 'weight', 'warranty_period'];
+    
+    if (numericFields.includes(name) && value !== '') {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: parseFloat(value)
+      }));
     } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value
+      }));
     }
   };
   
   const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value
+    }));
   };
   
-  const handleSwitchChange = (name: string, checked: boolean) => {
-    setFormData(prev => ({ ...prev, [name]: checked }));
-  };
-  
-  const handleUploadSpecs = () => {
-    toast.info('Upload specifications dialog would open here');
-  };
-  
-  const handleSubmit = async () => {
-    if (!id) return;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     
-    // Validate form
-    if (!formData.manufacturer || !formData.type) {
-      toast.error('Please fill in all required fields');
+    if (!modelId) {
+      toast.error('Model ID is missing');
       return;
     }
     
-    setIsSubmitting(true);
+    setIsSaving(true);
     
     try {
-      // Update the device model
-      await updateDeviceModel(id, {
-        ...formData,
-        name: `${formData.manufacturer} ${formData.model_number || ''}`.trim(),
-      });
+      // Use a custom function to update device model
+      const query = `
+        UPDATE device_models
+        SET 
+          name = '${formData.name}',
+          manufacturer = '${formData.manufacturer}',
+          model_number = '${formData.model_number || ''}',
+          type = '${formData.type}',
+          capacity = ${formData.capacity || 'NULL'},
+          power_rating = ${formData.power_rating || 'NULL'},
+          efficiency = ${formData.efficiency || 'NULL'},
+          dimensions = '${formData.dimensions || ''}',
+          weight = ${formData.weight || 'NULL'},
+          warranty_period = ${formData.warranty_period || 'NULL'},
+          description = '${formData.description || ''}',
+          datasheet_url = '${formData.datasheet_url || ''}',
+          last_updated = NOW()
+        WHERE id = '${modelId}'
+        RETURNING *
+      `;
       
-      toast.success('Device model updated successfully');
-      navigate(`/integrations/device-models/${id}`);
+      const { data, error } = await supabase.rpc('execute_sql', { sql_query: query });
+      
+      if (error) throw error;
+      
+      if (data && data.length > 0) {
+        toast.success('Device model updated successfully');
+        navigate('/integrations');
+      } else {
+        toast.error('Failed to update device model');
+      }
     } catch (error: any) {
       console.error('Error updating device model:', error);
-      toast.error(`Failed to update device model: ${error.message || 'Unknown error'}`);
+      toast.error(`Failed to update device model: ${error.message}`);
     } finally {
-      setIsSubmitting(false);
+      setIsSaving(false);
     }
   };
   
   if (isLoading) {
     return (
-      <SettingsPageTemplate
-        title="Edit Device Model"
-        description="Update device model details"
-        backLink={`/integrations/device-models/${id}`}
-      >
-        <div className="flex justify-center items-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <AppLayout>
+        <div className="flex-1 p-6 flex justify-center items-center">
+          <div className="text-center">
+            <LoadingSpinner size="lg" className="mb-4" />
+            <p className="text-muted-foreground">Loading device model...</p>
+          </div>
         </div>
-      </SettingsPageTemplate>
-    );
-  }
-  
-  if (isError || !deviceModel) {
-    return (
-      <SettingsPageTemplate
-        title="Edit Device Model"
-        description="Update device model details"
-        backLink="/integrations"
-      >
-        <Alert variant="destructive" className="mb-6">
-          <AlertTitle>Device Model Not Found</AlertTitle>
-          <AlertDescription>
-            The device model you are trying to edit could not be found.
-          </AlertDescription>
-        </Alert>
-        
-        <Button onClick={() => navigate('/integrations')}>
-          Back to Integrations
-        </Button>
-      </SettingsPageTemplate>
+      </AppLayout>
     );
   }
   
   return (
-    <SettingsPageTemplate
-      title={`Edit Device Model: ${deviceModel.name}`}
-      description="Update device model information and specifications"
-      backLink={`/integrations/device-models/${id}`}
-      headerIcon={<Package size={20} />}
-      actions={
-        <Button 
-          onClick={handleSubmit} 
-          disabled={isSubmitting}
-          className="gap-2"
-        >
-          {isSubmitting ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Save size={16} />
-          )}
-          Save Changes
-        </Button>
-      }
-    >
-      <div className="grid gap-6">
-        <div className="p-6 border rounded-md space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="manufacturer">Manufacturer <span className="text-red-500">*</span></Label>
-              <Input 
-                id="manufacturer" 
-                name="manufacturer"
-                placeholder="e.g., Tesla, SMA, Enphase" 
-                value={formData.manufacturer || ''}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="model_number">Model Number</Label>
-              <Input 
-                id="model_number" 
-                name="model_number"
-                placeholder="e.g., Powerwall 2, Sunny Boy" 
-                value={formData.model_number || ''}
-                onChange={handleInputChange}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="type">Category <span className="text-red-500">*</span></Label>
-              <Select 
-                value={formData.type || ''} 
-                onValueChange={(value) => handleSelectChange('type', value)}
-              >
-                <SelectTrigger id="type">
-                  <SelectValue placeholder="Select a category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="battery">Battery</SelectItem>
-                  <SelectItem value="solar">Solar Panel</SelectItem>
-                  <SelectItem value="wind">Wind Turbine</SelectItem>
-                  <SelectItem value="grid">Grid Connection</SelectItem>
-                  <SelectItem value="load">Load</SelectItem>
-                  <SelectItem value="ev_charger">EV Charger</SelectItem>
-                  <SelectItem value="inverter">Inverter</SelectItem>
-                  <SelectItem value="meter">Smart Meter</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="protocol">Communication Protocol</Label>
-              <Input 
-                id="protocol" 
-                name="protocol"
-                placeholder="e.g., Modbus TCP, REST API" 
-                value={formData.protocol || ''}
-                onChange={handleInputChange}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="firmware">Latest Firmware Version</Label>
-              <Input 
-                id="firmware" 
-                name="firmware"
-                placeholder="e.g., v1.45.2" 
-                value={formData.firmware || ''}
-                onChange={handleInputChange}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="supported">Supported Device</Label>
-                <Switch 
-                  id="supported" 
-                  checked={formData.supported !== false}
-                  onCheckedChange={(checked) => handleSwitchChange('supported', checked)}
+    <AppLayout>
+      <div className="flex-1 p-6">
+        <div className="flex items-center mb-6">
+          <Button variant="ghost" size="icon" asChild className="mr-2">
+            <Link to="/integrations">
+              <ArrowLeft className="h-5 w-5" />
+            </Link>
+          </Button>
+          <h1 className="text-2xl font-semibold">Edit Device Model</h1>
+        </div>
+        
+        <form onSubmit={handleSubmit}>
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Basic Information</CardTitle>
+              <CardDescription>Edit the device model details</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <FormLabel htmlFor="name">Name</FormLabel>
+                  <Input
+                    id="name"
+                    name="name"
+                    value={formData.name || ''}
+                    onChange={handleInputChange}
+                    placeholder="Enter device model name"
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <FormLabel htmlFor="manufacturer">Manufacturer</FormLabel>
+                  <Input
+                    id="manufacturer"
+                    name="manufacturer"
+                    value={formData.manufacturer || ''}
+                    onChange={handleInputChange}
+                    placeholder="Enter manufacturer name"
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <FormLabel htmlFor="model_number">Model Number</FormLabel>
+                  <Input
+                    id="model_number"
+                    name="model_number"
+                    value={formData.model_number || ''}
+                    onChange={handleInputChange}
+                    placeholder="Enter model number"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <FormLabel htmlFor="type">Type</FormLabel>
+                  <Select
+                    value={formData.type}
+                    onValueChange={(value) => handleSelectChange('type', value)}
+                  >
+                    <SelectTrigger id="type">
+                      <SelectValue placeholder="Select device type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="battery">Battery</SelectItem>
+                      <SelectItem value="inverter">Inverter</SelectItem>
+                      <SelectItem value="solar">Solar Panel</SelectItem>
+                      <SelectItem value="wind">Wind Turbine</SelectItem>
+                      <SelectItem value="ev_charger">EV Charger</SelectItem>
+                      <SelectItem value="meter">Smart Meter</SelectItem>
+                      <SelectItem value="load">Load</SelectItem>
+                      <SelectItem value="grid">Grid Connection</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              <Separator />
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <FormLabel htmlFor="capacity">Capacity (kWh)</FormLabel>
+                  <Input
+                    id="capacity"
+                    name="capacity"
+                    type="number"
+                    step="0.01"
+                    value={formData.capacity || ''}
+                    onChange={handleInputChange}
+                    placeholder="Enter capacity"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <FormLabel htmlFor="power_rating">Power Rating (kW)</FormLabel>
+                  <Input
+                    id="power_rating"
+                    name="power_rating"
+                    type="number"
+                    step="0.01"
+                    value={formData.power_rating || ''}
+                    onChange={handleInputChange}
+                    placeholder="Enter power rating"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <FormLabel htmlFor="efficiency">Efficiency (%)</FormLabel>
+                  <Input
+                    id="efficiency"
+                    name="efficiency"
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    max="100"
+                    value={formData.efficiency || ''}
+                    onChange={handleInputChange}
+                    placeholder="Enter efficiency"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <FormLabel htmlFor="dimensions">Dimensions</FormLabel>
+                  <Input
+                    id="dimensions"
+                    name="dimensions"
+                    value={formData.dimensions || ''}
+                    onChange={handleInputChange}
+                    placeholder="Enter dimensions"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <FormLabel htmlFor="weight">Weight (kg)</FormLabel>
+                  <Input
+                    id="weight"
+                    name="weight"
+                    type="number"
+                    step="0.1"
+                    value={formData.weight || ''}
+                    onChange={handleInputChange}
+                    placeholder="Enter weight"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <FormLabel htmlFor="warranty_period">Warranty (months)</FormLabel>
+                  <Input
+                    id="warranty_period"
+                    name="warranty_period"
+                    type="number"
+                    value={formData.warranty_period || ''}
+                    onChange={handleInputChange}
+                    placeholder="Enter warranty period"
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <FormLabel htmlFor="description">Description</FormLabel>
+                <Textarea
+                  id="description"
+                  name="description"
+                  value={formData.description || ''}
+                  onChange={handleInputChange}
+                  placeholder="Enter device description"
+                  rows={4}
                 />
               </div>
-              <p className="text-sm text-muted-foreground">
-                Is this device officially supported by the system?
-              </p>
-            </div>
-          </div>
+              
+              <div className="space-y-2">
+                <FormLabel htmlFor="datasheet_url">Datasheet URL</FormLabel>
+                <Input
+                  id="datasheet_url"
+                  name="datasheet_url"
+                  value={formData.datasheet_url || ''}
+                  onChange={handleInputChange}
+                  placeholder="Enter URL to datasheet"
+                />
+              </div>
+            </CardContent>
+          </Card>
           
-          <Separator />
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="capacity">Capacity (kWh/kW)</Label>
-              <Input 
-                id="capacity" 
-                name="capacity"
-                type="number"
-                step="0.01"
-                placeholder="Enter capacity" 
-                value={formData.capacity === undefined ? '' : formData.capacity}
-                onChange={handleInputChange}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="power_rating">Power Rating (kW)</Label>
-              <Input 
-                id="power_rating" 
-                name="power_rating"
-                type="number"
-                step="0.01"
-                placeholder="Enter power rating" 
-                value={formData.power_rating === undefined ? '' : formData.power_rating}
-                onChange={handleInputChange}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="efficiency">Efficiency (%)</Label>
-              <Input 
-                id="efficiency" 
-                name="efficiency"
-                type="number"
-                step="0.01"
-                placeholder="Enter efficiency" 
-                value={formData.efficiency === undefined ? '' : formData.efficiency}
-                onChange={handleInputChange}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="dimensions">Dimensions</Label>
-              <Input 
-                id="dimensions" 
-                name="dimensions"
-                placeholder="e.g., 1200 x 800 x 200 mm" 
-                value={formData.dimensions || ''}
-                onChange={handleInputChange}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="weight">Weight (kg)</Label>
-              <Input 
-                id="weight" 
-                name="weight"
-                type="number"
-                step="0.01"
-                placeholder="Enter weight" 
-                value={formData.weight === undefined ? '' : formData.weight}
-                onChange={handleInputChange}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="warranty_period">Warranty Period (years)</Label>
-              <Input 
-                id="warranty_period" 
-                name="warranty_period"
-                type="number"
-                placeholder="Enter warranty period" 
-                value={formData.warranty_period === undefined ? '' : formData.warranty_period}
-                onChange={handleInputChange}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="release_date">Release Date</Label>
-              <Input 
-                id="release_date" 
-                name="release_date"
-                type="date"
-                placeholder="Select release date" 
-                value={formData.release_date || ''}
-                onChange={handleInputChange}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="datasheet_url">Datasheet URL</Label>
-              <Input 
-                id="datasheet_url" 
-                name="datasheet_url"
-                placeholder="Enter datasheet URL" 
-                value={formData.datasheet_url || ''}
-                onChange={handleInputChange}
-              />
-            </div>
-          </div>
-          
-          <Separator />
-          
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea 
-              id="description" 
-              name="description"
-              placeholder="Enter a description of the device" 
-              rows={4}
-              value={formData.description || ''}
-              onChange={handleInputChange}
-            />
-          </div>
-          
-          <div className="pt-2">
-            <Button type="button" variant="outline" onClick={handleUploadSpecs}>
-              <Upload className="h-4 w-4 mr-2" />
-              Upload Specifications
+          <div className="flex justify-between">
+            <Button type="button" variant="outline" onClick={() => navigate('/integrations')}>
+              Cancel
             </Button>
+            <div className="flex gap-2">
+              <Button type="submit" disabled={isSaving} className="gap-2">
+                {isSaving ? (
+                  <>
+                    <LoadingSpinner size="sm" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4" />
+                    Save Changes
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
-        </div>
+        </form>
       </div>
-    </SettingsPageTemplate>
+    </AppLayout>
   );
 };
 

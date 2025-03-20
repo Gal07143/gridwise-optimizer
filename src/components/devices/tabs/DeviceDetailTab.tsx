@@ -1,11 +1,10 @@
-
 import React, { useState } from 'react';
-import DeviceForm from '../DeviceForm';
-import { DeviceType, DeviceStatus } from '@/types/energy';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Calendar, Check, Edit, Loader2, X } from 'lucide-react';
+import { DeviceType, DeviceStatus, EnergyDevice } from '@/types/energy';
 import { Button } from '@/components/ui/button';
-import { updateDevice } from '@/services/devices'; // Fixed import path
+import { updateDevice } from '@/services/devices/mutations';
 import { toast } from 'sonner';
-import { useQueryClient } from '@tanstack/react-query';
 
 interface DeviceDetailTabProps {
   device: {

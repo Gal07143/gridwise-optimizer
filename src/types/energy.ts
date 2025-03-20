@@ -1,7 +1,8 @@
+
 // Types for the Energy Management System
 
-export type DeviceType = 'solar' | 'wind' | 'battery' | 'grid' | 'load' | 'ev_charger';
-export type DeviceStatus = 'online' | 'offline' | 'maintenance' | 'error';
+export type DeviceType = 'solar' | 'wind' | 'battery' | 'grid' | 'load' | 'ev_charger' | 'inverter' | 'meter';
+export type DeviceStatus = 'online' | 'offline' | 'maintenance' | 'error' | 'warning';
 export type AlertType = 'warning' | 'critical' | 'info';
 export type UserRole = 'admin' | 'operator' | 'viewer';
 export type ThemePreference = 'light' | 'dark' | 'system';
@@ -188,11 +189,11 @@ export interface EnergyForecast {
 
 // Add validation utility functions
 export const isValidDeviceType = (type: string): type is DeviceType => {
-  return ['solar', 'wind', 'battery', 'grid', 'load', 'ev_charger'].includes(type as DeviceType);
+  return ['solar', 'wind', 'battery', 'grid', 'load', 'ev_charger', 'inverter', 'meter'].includes(type as DeviceType);
 };
 
 export const isValidDeviceStatus = (status: string): status is DeviceStatus => {
-  return ['online', 'offline', 'maintenance', 'error'].includes(status as DeviceStatus);
+  return ['online', 'offline', 'maintenance', 'error', 'warning'].includes(status as DeviceStatus);
 };
 
 // Site management utilities

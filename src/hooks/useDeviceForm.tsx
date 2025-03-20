@@ -1,139 +1,86 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { toast } from 'sonner';
-import { createDevice } from '@/services/deviceService';
-import { getOrCreateDummySite, clearSiteCache } from '@/services/sites/siteService';
 import { useBaseDeviceForm, DeviceFormState } from './useBaseDeviceForm';
+import { useQueryClient } from '@tanstack/react-query';
+import { EnergyDevice } from '@/types/energy';
+import { toast } from 'sonner';
+import { createDevice } from '@/services/devices/createDevice';
+import { validateDeviceData, formatValidationErrors, ValidationError } from '@/services/devices/mutations/deviceValidation';
 
 export const useDeviceForm = () => {
-  const { user } = useAuth();
-  const [defaultSiteId, setDefaultSiteId] = useState<string | null>(null);
-  const [siteError, setSiteError] = useState<boolean>(false);
-  const [isLoadingSite, setIsLoadingSite] = useState<boolean>(true);
-  const [retryCount, setRetryCount] = useState<number>(0);
-  const [isMounted, setIsMounted] = useState(true); // Track component mount state
-
-  // Use a useCallback to handle site fetching
-  const fetchDefaultSite = useCallback(async () => {
-    if (!isMounted) return; // Prevent state updates if unmounted
-    
-    try {
-      setIsLoadingSite(true);
-      setSiteError(false);
-      
-      // Always set a fallback ID first to ensure we have something
-      setDefaultSiteId("00000000-0000-0000-0000-000000000000");
-      
-      // On retry, clear the site cache to force a fresh fetch
-      if (retryCount > 0) {
-        clearSiteCache();
-      }
-      
-      // Try to get site from API with a timeout to prevent hanging
-      const timeoutPromise = new Promise<null>((_, reject) => {
-        setTimeout(() => reject(new Error("Site fetch timeout")), 5000);
-      });
-      
-      const sitePromise = getOrCreateDummySite();
-      const site = await Promise.race([sitePromise, timeoutPromise]) as any;
-      
-      if (!isMounted) return; // Check again before setting state
-      
-      if (site && site.id) {
-        console.log("Successfully fetched site:", site);
-        setDefaultSiteId(site.id);
-        setSiteError(false);
-      } else {
-        throw new Error("Failed to fetch site data");
-      }
-    } catch (error) {
-      if (!isMounted) return;
-      
-      console.error("Error fetching default site:", error);
-      setSiteError(true);
-      
-      // Use a single toast instead of multiple
-      toast.error("Failed to fetch site information", {
-        description: "Using fallback configuration.",
-        duration: 5000,
-        id: "site-fetch-error" // Prevent duplicate toasts
-      });
-    } finally {
-      if (isMounted) {
-        setIsLoadingSite(false);
-      }
-    }
-  }, [retryCount, isMounted]);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [isSaving, setIsSaving] = useState(false);
   
-  // Set up mount tracking
-  useEffect(() => {
-    setIsMounted(true);
-    return () => setIsMounted(false);
+  const validateDeviceForm = useCallback((data: DeviceFormState): boolean => {
+    const errors: ValidationError[] = validateDeviceData(data as Partial<EnergyDevice>);
+    const formattedErrors = formatValidationErrors(errors);
+    
+    setValidationErrors(formattedErrors);
+    return Object.keys(formattedErrors).length === 0;
   }, []);
   
-  // Reload site when retry count changes
-  useEffect(() => {
-    fetchDefaultSite();
-  }, [fetchDefaultSite]);
-  
-  // Function to manually retry site fetching
-  const reloadSite = () => {
-    setRetryCount(prev => prev + 1);
-  };
-
-  const handleCreateDevice = async (deviceData: DeviceFormState) => {
-    if (!user) {
-      toast.error('You must be logged in to create a device');
+  const handleCreateDevice = useCallback(async (deviceData: DeviceFormState) => {
+    if (!validateDeviceForm(deviceData)) {
+      toast.error('Please fix the validation errors before saving');
       return null;
-    }
-
-    // Display a warning if we're using the fallback site ID
-    if (siteError) {
-      toast.warning("Using fallback site configuration", {
-        description: "Some features may be limited.",
-        id: "fallback-site-warning" // Prevent duplicate toasts
-      });
     }
     
+    setIsSaving(true);
+    
     try {
-      console.log("Creating device with data:", {
-        ...deviceData,
-        site_id: defaultSiteId
+      console.log("Creating device with data:", deviceData);
+      
+      const newDevice = await createDevice({
+        name: deviceData.name,
+        type: deviceData.type,
+        status: deviceData.status,
+        location: deviceData.location || null,
+        capacity: deviceData.capacity,
+        firmware: deviceData.firmware || null,
+        description: deviceData.description || null,
+        site_id: deviceData.site_id || null
       });
       
-      // Create the new device with the user ID and default site
-      const result = await createDevice({
-        ...deviceData,
-        site_id: defaultSiteId
-      });
-      
-      if (result) {
-        toast.success("Device created successfully", {
-          description: `${deviceData.name} has been added to your system.`
-        });
+      if (newDevice) {
+        toast.success('Device created successfully');
+        // Invalidate and refetch devices
+        queryClient.invalidateQueries({ queryKey: ['devices'] });
+        
+        return newDevice;
+      } else {
+        toast.error('Failed to create device');
+        return null;
       }
-      
-      return result;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating device:", error);
-      toast.error("Failed to create device", {
-        description: "Please try again later."
-      });
+      toast.error(`Failed to create device: ${error?.message || 'Unknown error'}`);
       return null;
+    } finally {
+      setIsSaving(false);
     }
-  };
+  }, [queryClient, validateDeviceForm]);
 
   const baseFormHook = useBaseDeviceForm({
+    initialDevice: null,
     onSubmit: handleCreateDevice
   });
 
   return {
     ...baseFormHook,
-    isSubmitting: baseFormHook.isSubmitting,
-    hasSiteError: siteError,
-    isLoadingSite,
-    reloadSite // Add ability to retry loading
+    isSaving,
+    validationErrors,
+    validateDeviceForm,
+    clearValidationError: (field: string) => {
+      setValidationErrors(prev => {
+        const updated = { ...prev };
+        delete updated[field];
+        return updated;
+      });
+    }
   };
 };
+
+export default useDeviceForm;

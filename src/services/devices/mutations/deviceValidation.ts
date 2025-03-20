@@ -1,112 +1,84 @@
 
-import { EnergyDevice, DeviceStatus, DeviceType, isValidDeviceStatus, isValidDeviceType } from "@/types/energy";
+import { EnergyDevice, DeviceType, DeviceStatus } from '@/types/energy';
 
 export interface ValidationError {
   field: string;
   message: string;
 }
 
-/**
- * Validate device type and status
- * @param deviceData Partial device data to validate
- * @returns Array of validation errors or empty array if valid
- */
 export const validateDeviceData = (deviceData: Partial<EnergyDevice>): ValidationError[] => {
   const errors: ValidationError[] = [];
   
-  // Required fields validation
+  // Validate required fields
   if (!deviceData.name || deviceData.name.trim() === '') {
-    errors.push({ field: 'name', message: 'Device name is required' });
-  } else if (deviceData.name.length > 100) {
-    errors.push({ field: 'name', message: 'Device name must be less than 100 characters' });
+    errors.push({
+      field: 'name',
+      message: 'Device name is required'
+    });
   }
   
-  if (!deviceData.location || deviceData.location.trim() === '') {
-    errors.push({ field: 'location', message: 'Location is required' });
-  }
-  
-  // Type validation
   if (!deviceData.type) {
-    errors.push({ field: 'type', message: 'Device type is required' });
+    errors.push({
+      field: 'type',
+      message: 'Device type is required'
+    });
   } else if (!isValidDeviceType(deviceData.type)) {
-    errors.push({ field: 'type', message: `Invalid device type: ${deviceData.type}` });
+    errors.push({
+      field: 'type',
+      message: 'Invalid device type'
+    });
   }
   
-  // Status validation
-  if (deviceData.status && !isValidDeviceStatus(deviceData.status)) {
-    errors.push({ field: 'status', message: `Invalid device status: ${deviceData.status}` });
+  if (!deviceData.status) {
+    errors.push({
+      field: 'status',
+      message: 'Device status is required'
+    });
+  } else if (!isValidDeviceStatus(deviceData.status)) {
+    errors.push({
+      field: 'status',
+      message: 'Invalid device status'
+    });
   }
   
-  // Capacity validation
-  if (deviceData.capacity === undefined || deviceData.capacity === null) {
-    errors.push({ field: 'capacity', message: 'Capacity is required' });
-  } else if (isNaN(Number(deviceData.capacity)) || Number(deviceData.capacity) <= 0) {
-    errors.push({ field: 'capacity', message: 'Capacity must be greater than 0' });
-  } else if (Number(deviceData.capacity) > 1000000) {
-    errors.push({ field: 'capacity', message: 'Capacity value is unrealistically high' });
-  }
-  
-  // Optional field format validation
-  if (deviceData.firmware && deviceData.firmware.length > 50) {
-    errors.push({ field: 'firmware', message: 'Firmware version must be less than 50 characters' });
-  }
-  
-  if (deviceData.description && deviceData.description.length > 1000) {
-    errors.push({ field: 'description', message: 'Description must be less than 1000 characters' });
-  }
-  
-  // Site ID validation (if applicable)
-  if (deviceData.site_id === '') {
-    errors.push({ field: 'site_id', message: 'Site is required' });
+  if (deviceData.capacity !== undefined) {
+    if (deviceData.capacity <= 0) {
+      errors.push({
+        field: 'capacity',
+        message: 'Capacity must be greater than 0'
+      });
+    }
+  } else {
+    errors.push({
+      field: 'capacity',
+      message: 'Capacity is required'
+    });
   }
   
   return errors;
 };
 
-/**
- * Throws an error if validation fails
- * @param deviceData Partial device data to validate
- * @throws Error with validation message if validation fails
- */
-export const validateDeviceDataAndThrow = (deviceData: Partial<EnergyDevice>): void => {
-  const errors = validateDeviceData(deviceData);
-  
-  if (errors.length > 0) {
-    throw new Error(errors.map(err => `${err.field}: ${err.message}`).join(', '));
-  }
-};
-
-/**
- * Format validation errors into a record for easier form handling
- * @param errors Array of validation errors
- * @returns Record with field names as keys and error messages as values
- */
 export const formatValidationErrors = (errors: ValidationError[]): Record<string, string> => {
-  return errors.reduce((acc, error) => {
-    acc[error.field] = error.message;
-    return acc;
-  }, {} as Record<string, string>);
+  const formattedErrors: Record<string, string> = {};
+  
+  errors.forEach(error => {
+    formattedErrors[error.field] = error.message;
+  });
+  
+  return formattedErrors;
 };
 
-/**
- * Validate a single field
- * @param fieldName Field to validate
- * @param value Value to validate
- * @param deviceData Complete device data for context-dependent validation
- * @returns Error message if invalid, empty string if valid
- */
-export const validateDeviceField = (
-  fieldName: string, 
-  value: any, 
-  deviceData?: Partial<EnergyDevice>
-): string => {
-  const testData = { 
-    ...deviceData, 
-    [fieldName]: value 
-  };
-  
-  const errors = validateDeviceData(testData);
-  const fieldError = errors.find(err => err.field === fieldName);
-  
-  return fieldError ? fieldError.message : '';
-};
+// Helper functions to validate device type and status
+function isValidDeviceType(type: string): boolean {
+  const validTypes: DeviceType[] = [
+    'solar', 'wind', 'battery', 'grid', 'load', 'ev_charger', 'inverter', 'meter'
+  ];
+  return validTypes.includes(type as DeviceType);
+}
+
+function isValidDeviceStatus(status: string): boolean {
+  const validStatuses: DeviceStatus[] = [
+    'online', 'offline', 'maintenance', 'error', 'warning'
+  ];
+  return validStatuses.includes(status as DeviceStatus);
+}

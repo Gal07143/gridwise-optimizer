@@ -1,56 +1,81 @@
 
 import React from 'react';
-import { History, Check, X } from 'lucide-react';
+import { Clock, CheckCircle2, AlertCircle } from 'lucide-react';
 import { CommandHistoryItem } from './types';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { format } from 'date-fns';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 interface CommandHistoryProps {
-  commandHistory: CommandHistoryItem[];
+  commands: CommandHistoryItem[];
 }
 
-const CommandHistory: React.FC<CommandHistoryProps> = ({ commandHistory }) => {
-  // Function to format date for display
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString() + ', ' + date.toLocaleDateString();
-  };
+const CommandHistory: React.FC<CommandHistoryProps> = ({ commands }) => {
+  if (!commands || commands.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Command History</CardTitle>
+          <CardDescription>Recent system commands and operations</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8 text-muted-foreground">
+            No commands have been executed yet.
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
-      <CardHeader className="bg-primary/5">
-        <CardTitle className="flex items-center text-lg">
-          <History className="mr-2 h-5 w-5 text-primary" />
-          Command History
-        </CardTitle>
-        <CardDescription>
-          Recent control actions and system commands
-        </CardDescription>
+      <CardHeader>
+        <CardTitle className="text-lg">Command History</CardTitle>
+        <CardDescription>Recent system commands and operations</CardDescription>
       </CardHeader>
-      
-      <CardContent className="pt-6">
-        <div className="relative">
-          <div className="absolute inset-0 w-0.5 bg-slate-200 dark:bg-slate-700 ml-4 mt-6 mb-6"></div>
-          <div className="space-y-6 relative">
-            {commandHistory.map((command, index) => (
-              <div key={index} className="flex gap-4">
-                <div className="flex-shrink-0 w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center z-10">
-                  {command.success ? 
-                    <Check className="h-5 w-5 text-primary" /> : 
-                    <X className="h-5 w-5 text-red-500" />
-                  }
-                </div>
-                <div className="flex-1">
-                  <div className="flex flex-col sm:flex-row sm:justify-between">
-                    <div className="font-medium">{command.command}</div>
-                    <div className="text-sm text-muted-foreground">{formatDate(command.timestamp)}</div>
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    Initiated by: {command.user}
-                  </div>
-                </div>
+      <CardContent className="p-0">
+        <div className="max-h-[300px] overflow-y-auto">
+          {commands.map((command, index) => (
+            <div 
+              key={command.id || index}
+              className={cn(
+                "flex items-start gap-3 p-4 border-b last:border-b-0",
+                command.success ? "hover:bg-green-50 dark:hover:bg-green-900/10" : "hover:bg-red-50 dark:hover:bg-red-900/10"
+              )}
+            >
+              <div className={cn(
+                "mt-1 flex-shrink-0 h-6 w-6 rounded-full flex items-center justify-center",
+                command.success ? "bg-green-100 dark:bg-green-900/20" : "bg-red-100 dark:bg-red-900/20" 
+              )}>
+                {command.success ? (
+                  <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+                ) : (
+                  <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                )}
               </div>
-            ))}
-          </div>
+              
+              <div className="flex-grow">
+                <div className="font-medium">{command.command}</div>
+                <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+                  <Clock className="h-3 w-3" />
+                  <span>
+                    {format(new Date(command.timestamp), 'MMM d, yyyy h:mm a')}
+                  </span>
+                  <span className="mx-1">•</span>
+                  <span>By {command.user}</span>
+                </div>
+                {command.details && (
+                  <div className="text-sm text-muted-foreground mt-2">{command.details}</div>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       </CardContent>
     </Card>

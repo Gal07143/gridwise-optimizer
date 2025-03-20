@@ -36,13 +36,14 @@ export const categoryNames: Record<string, string> = {
 
 export const useDeviceModels = (categoryId?: string) => {
   const [devices, setDevices] = useState<DeviceModel[]>([]);
-  const [filteredDevices, setFilteredDevices] = useState<DeviceModel[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [sortField, setSortField] = useState('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [searchQuery, setSearchQuery] = useState('');
   const [deviceCount, setDeviceCount] = useState(0);
+  const [filteredDevices, setFilteredDevices] = useState<DeviceModel[]>([]);
+  const [activeTab, setActiveTab] = useState<string>('all');
   
   const categoryName = categoryId ? categoryNames[categoryId] || 'Devices' : 'All Devices';
   
@@ -53,34 +54,41 @@ export const useDeviceModels = (categoryId?: string) => {
       setError(null);
       
       try {
-        let query = supabase.from('device_models').select('*');
+        // Create a dynamic SQL query to fetch from device_models
+        const query = `
+          SELECT * FROM device_models
+          ${categoryId ? `WHERE type ILIKE '%${mapCategoryToType(categoryId)}%'` : ''}
+          ORDER BY name ASC
+        `;
         
-        // Filter by device type if category is specified
-        if (categoryId) {
-          const categoryMap: Record<string, string> = {
-            'batteries': 'battery',
-            'inverters': 'inverter',
-            'solar-panels': 'solar',
-            'wind-turbines': 'wind',
-            'ev-chargers': 'ev_charger',
-            'meters': 'meter',
-            'loads': 'load',
-            'grid-connections': 'grid'
-          };
-          
-          const deviceType = categoryMap[categoryId];
-          if (deviceType) {
-            query = query.eq('type', deviceType);
-          }
-        }
-        
-        const { data, error } = await query;
+        const { data, error } = await supabase.rpc('execute_sql', { sql_query: query });
         
         if (error) throw error;
         
         if (data) {
-          setDevices(data as DeviceModel[]);
-          setDeviceCount(data.length);
+          const mappedData = data.map((item: any) => ({
+            id: item.id,
+            name: item.name,
+            manufacturer: item.manufacturer,
+            model_number: item.model_number,
+            type: item.type,
+            capacity: item.capacity,
+            power_rating: item.power_rating,
+            efficiency: item.efficiency,
+            dimensions: item.dimensions,
+            weight: item.weight,
+            warranty_period: item.warranty_period,
+            release_date: item.release_date,
+            description: item.description,
+            technical_specs: item.technical_specs,
+            datasheet_url: item.datasheet_url,
+            created_at: item.created_at,
+            last_updated: item.last_updated
+          })) as DeviceModel[];
+          
+          setDevices(mappedData);
+          setFilteredDevices(mappedData);
+          setDeviceCount(mappedData.length);
         }
       } catch (err) {
         console.error('Error fetching device models:', err);
@@ -141,8 +149,25 @@ export const useDeviceModels = (categoryId?: string) => {
     }
   };
   
+  // Helper function to map category IDs to device types
+  function mapCategoryToType(categoryId: string): string {
+    const categoryMap: Record<string, string> = {
+      'batteries': 'battery',
+      'inverters': 'inverter',
+      'solar-panels': 'solar',
+      'wind-turbines': 'wind',
+      'ev-chargers': 'ev_charger',
+      'meters': 'meter',
+      'loads': 'load',
+      'grid-connections': 'grid'
+    };
+    
+    return categoryMap[categoryId] || '';
+  }
+  
   return {
     devices: filteredDevices,
+    filteredDevices,
     isLoading,
     error,
     sortField,
@@ -151,7 +176,9 @@ export const useDeviceModels = (categoryId?: string) => {
     setSearchQuery,
     handleSort,
     deviceCount,
-    categoryName
+    categoryName,
+    activeTab,
+    setActiveTab
   };
 };
 

@@ -49,39 +49,37 @@ const IntegrationCategoryPage = () => {
   
   return (
     <AppLayout>
-      <div className="flex flex-col gap-6 p-6 animate-in fade-in duration-500">
+      <div className="flex flex-col gap-6 p-6">
+        {/* Page Header */}
+        <PageHeader 
+          title={categoryName} 
+          description={`Browse and manage ${categoryName.toLowerCase()} for your energy management system.`}
+          categoryId={categoryId}
+        />
+        
+        {/* Search and Filter Bar */}
+        <SearchFilterBar 
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          deviceCount={deviceCount}
+        />
+        
+        {/* Device Models Grid */}
         {isLoading ? (
-          <>
-            <div className="space-y-2">
-              <Skeleton className="h-10 w-64" />
-              <Skeleton className="h-5 w-full max-w-lg" />
-            </div>
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-[400px] w-full" />
-          </>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <Skeleton key={i} className="h-[300px] rounded-xl" />
+            ))}
+          </div>
         ) : (
-          <>
-            <PageHeader 
-              categoryName={categoryName} 
-              categoryId={categoryId} 
-            />
-            
-            <SearchFilterBar 
-              searchQuery={searchQuery}
-              onSearchChange={setSearchQuery}
-              activeTab={activeTab}
-              onTabChange={setActiveTab}
-            />
-            
-            <DeviceModelsCard 
-              deviceCount={deviceCount}
-              categoryName={categoryName}
-              filteredDevices={filteredDevices}
-              sortField={sortField}
-              sortDirection={sortDirection}
-              onSort={handleSort}
-            />
-          </>
+          <DeviceModelsCard 
+            devices={filteredDevices} 
+            sortField={sortField}
+            sortDirection={sortDirection}
+            onSort={handleSort}
+          />
         )}
       </div>
     </AppLayout>

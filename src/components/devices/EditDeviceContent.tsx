@@ -9,7 +9,8 @@ import {
   AlertTriangle,
   Check
 } from 'lucide-react';
-import { getDeviceById, updateDevice } from '@/services/devices';
+import { getDeviceById } from '@/services/devices/queries';
+import { updateDevice } from '@/services/devices/mutations';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -52,20 +53,22 @@ const EditDeviceContent = () => {
     queryKey: ['device', deviceId],
     queryFn: () => getDeviceById(deviceId as string),
     enabled: !!deviceId,
-    onSuccess: (data) => {
-      if (data) {
-        setFormData({
-          name: data.name,
-          type: data.type,
-          status: data.status,
-          location: data.location || '',
-          capacity: data.capacity,
-          firmware: data.firmware || '',
-          description: data.description || '',
-        });
-      }
-    }
   });
+
+  // Set form data when device data is loaded
+  React.useEffect(() => {
+    if (device) {
+      setFormData({
+        name: device.name,
+        type: device.type,
+        status: device.status,
+        location: device.location || '',
+        capacity: device.capacity,
+        firmware: device.firmware || '',
+        description: device.description || '',
+      });
+    }
+  }, [device]);
 
   const validateForm = () => {
     const errors: Record<string, string> = {};

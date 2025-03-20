@@ -18,6 +18,27 @@ export interface MicrogridState {
   buildingEfficiency: number;
   timestamp: Date;
   systemMode: 'auto' | 'manual' | 'eco' | 'backup';
+  
+  // Add missing properties needed by components
+  solarProduction: number;
+  windProduction: number;
+  batteryLevel: number;
+  batteryDischargeEnabled: boolean;
+  batteryChargeEnabled: boolean;
+  loadConsumption: number;
+  gridImport: number;
+  gridExport: number;
+  frequency: number;
+  voltage: number;
+  lastUpdated: string;
+  operatingMode: 'automatic' | 'manual' | 'eco' | 'backup';
+  batteryChargeRate: number;
+  gridImportEnabled: boolean;
+  gridExportEnabled: boolean;
+  batterySelfConsumptionMode: boolean;
+  economicMode: boolean;
+  peakShavingEnabled: boolean;
+  demandResponseEnabled: boolean;
 }
 
 export interface MicrogridAction {
@@ -51,11 +72,11 @@ export interface SystemAlert {
 }
 
 export interface CommandHistoryItem {
-  id: string;
-  timestamp: Date;
-  user: string;
+  id?: string;
+  timestamp: string;
   command: string;
-  status: 'success' | 'failed' | 'pending';
+  success: boolean;
+  user: string;
   details?: string;
 }
 
@@ -67,4 +88,59 @@ export interface MicrogridInsight {
   category: 'efficiency' | 'performance' | 'savings' | 'reliability';
   value?: number;
   unit?: string;
+}
+
+// Additional interfaces needed for MicrogridProvider
+export interface MicrogridDevice {
+  id: string;
+  name: string;
+  type: string;
+  status: string;
+  location: string | null;
+  capacity: number;
+  site_id?: string | null;
+  last_updated: string;
+  created_at: string;
+}
+
+export interface MicrogridAlert {
+  id: string;
+  device_id: string;
+  type: string;
+  message: string;
+  timestamp: string;
+  acknowledged: boolean;
+  severity: string;
+}
+
+export interface MicrogridSystemState {
+  mode: string;
+  status: string;
+  gridConnected: boolean;
+  lastModeChange: string;
+  batteryReserve: number;
+  prioritizeRenewables: boolean;
+  energyExport: boolean;
+  safetyProtocols: boolean;
+}
+
+export interface ControlSettings {
+  prioritizeSelfConsumption: boolean;
+  gridExportLimit: number;
+  minBatteryReserve: number;
+  peakShavingEnabled: boolean;
+  peakShavingThreshold: number;
+  demandResponseEnabled: boolean;
+  economicOptimizationEnabled: boolean;
+  weatherPredictiveControlEnabled: boolean;
+}
+
+export interface AlertItem {
+  id: string;
+  timestamp: string;
+  title: string;
+  message: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  deviceId?: string;
+  acknowledged: boolean;
 }
