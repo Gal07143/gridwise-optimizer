@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/layout/AppLayout';
@@ -8,8 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { ArrowLeft, Battery, Zap, FileText, AlertCircle, Package, ChevronRight, Download, Settings, Code, FileCode, CheckCircle2, XCircle, Info } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { ArrowLeft, Battery, Zap, FileText, AlertCircle, Package, ChevronRight, Download, Settings, Code, FileCode, CheckCircle2, XCircle, Info, Activity } from 'lucide-react';
 
 interface DeviceModel {
   id: string;
@@ -54,6 +52,105 @@ interface Document {
   uploadedAt: string;
 }
 
+const mockDeviceModel: DeviceModel = {
+  id: "1",
+  manufacturer: "SolarEdge",
+  model: "StorEdge SE10K",
+  deviceType: "inverters",
+  protocol: "Modbus TCP",
+  firmware: "3.2415.9",
+  supported: true,
+  hasManual: true,
+  hasRegisterMap: true,
+  description: "The StorEdge SE10K is a high-performance hybrid inverter specifically designed for energy storage applications, featuring advanced monitoring and control capabilities.",
+  technicalSpecs: {
+    capacity: 10000,
+    maxEfficiency: "98.3%",
+    inputVoltage: "320-800V",
+    maxCurrent: "16A",
+    dimensions: "540 x 315 x 260 mm",
+    weight: "33.2 kg",
+    warrantyYears: 12,
+    ipRating: "IP65"
+  },
+  knownIssues: [
+    "Firmware version 3.21.x may have intermittent communication drops in high temperature environments",
+    "Remote firmware updates may require multiple attempts on slow network connections",
+    "Temperature sensors may report inaccurate values in firmware versions prior to 3.20"
+  ],
+  integrationNotes: "The StorEdge SE10K requires configuration of Modbus TCP settings in the installer interface before it can be properly connected to the management system. Default port is 502 and the default unit ID is 1.",
+  configOptions: [
+    {
+      name: "Unit ID",
+      description: "Modbus unit identifier",
+      defaultValue: "1",
+      options: ["1", "2", "3", "4"]
+    },
+    {
+      name: "IP Configuration",
+      description: "Network configuration method",
+      defaultValue: "DHCP",
+      options: ["DHCP", "Static"]
+    },
+    {
+      name: "Power Limit",
+      description: "Maximum output power percentage",
+      defaultValue: "100",
+      options: ["50", "75", "90", "100"]
+    }
+  ],
+  compatibleDevices: [
+    {
+      type: "batteries",
+      models: [
+        { id: "2", manufacturer: "LG Chem", model: "RESU10H" },
+        { id: "3", manufacturer: "BYD", model: "Battery-Box HV" },
+        { id: "4", manufacturer: "Tesla", model: "Powerwall 2" }
+      ]
+    },
+    {
+      type: "meters",
+      models: [
+        { id: "5", manufacturer: "WattNode", model: "WNC-3Y-400-MB" },
+        { id: "6", manufacturer: "Eastron", model: "SDM630" }
+      ]
+    }
+  ]
+};
+
+const mockDocuments: Document[] = [
+  {
+    id: "1",
+    documentType: "manual",
+    documentName: "StorEdge SE10K Installation Manual",
+    filePath: "/documents/se10k-install-guide.pdf",
+    fileType: "pdf",
+    fileSize: 4250,
+    description: "Complete installation guide for StorEdge SE10K",
+    uploadedAt: "2023-06-15T14:30:00Z"
+  },
+  {
+    id: "2",
+    documentType: "datasheet",
+    documentName: "StorEdge SE10K Technical Datasheet",
+    filePath: "/documents/se10k-datasheet.pdf",
+    fileType: "pdf",
+    fileSize: 1200,
+    description: "Technical specifications and performance details",
+    uploadedAt: "2023-06-15T14:30:00Z"
+  },
+  {
+    id: "3",
+    documentType: "register_map",
+    documentName: "StorEdge SE10K Modbus Register Map",
+    filePath: "/documents/se10k-modbus-map.xlsx",
+    fileType: "xlsx",
+    fileSize: 860,
+    description: "Modbus TCP register addresses for data points and controls",
+    uploadedAt: "2023-06-17T09:15:00Z"
+  }
+];
+
 const DeviceModelDetailPage: React.FC = () => {
   const { deviceId } = useParams<{ deviceId: string }>();
   const navigate = useNavigate();
@@ -64,84 +161,17 @@ const DeviceModelDetailPage: React.FC = () => {
   useEffect(() => {
     const fetchDeviceModel = async () => {
       try {
-        if (!deviceId) return;
-
-        // Fetch device model
-        const { data: modelData, error: modelError } = await supabase
-          .from('device_models')
-          .select(`
-            id,
-            model_name,
-            device_type,
-            protocol,
-            firmware_version,
-            description,
-            supported,
-            has_manual,
-            has_register_map,
-            technical_specs,
-            config_options,
-            known_issues,
-            integration_notes,
-            compatible_devices,
-            manufacturers(name, website)
-          `)
-          .eq('id', deviceId)
-          .single();
-
-        if (modelError) throw modelError;
+        setLoading(true);
         
-        if (!modelData) {
-          toast.error('Device model not found');
-          navigate('/integrations');
-          return;
-        }
-
-        // Fetch documents
-        const { data: docsData, error: docsError } = await supabase
-          .from('device_documentation')
-          .select('*')
-          .eq('device_model_id', deviceId);
-
-        if (docsError) throw docsError;
-
-        // Format the device model data
-        const formattedModel: DeviceModel = {
-          id: modelData.id,
-          manufacturer: modelData.manufacturers?.name || 'Unknown',
-          model: modelData.model_name,
-          deviceType: modelData.device_type,
-          protocol: modelData.protocol,
-          firmware: modelData.firmware_version || '',
-          supported: modelData.supported,
-          hasManual: modelData.has_manual,
-          hasRegisterMap: modelData.has_register_map,
-          description: modelData.description || '',
-          technicalSpecs: modelData.technical_specs || {},
-          knownIssues: modelData.known_issues || [],
-          integrationNotes: modelData.integration_notes || '',
-          configOptions: modelData.config_options || [],
-          compatibleDevices: modelData.compatible_devices || []
-        };
-
-        // Format the documents data
-        const formattedDocs = (docsData || []).map(doc => ({
-          id: doc.id,
-          documentType: doc.document_type,
-          documentName: doc.document_name,
-          filePath: doc.file_path,
-          fileType: doc.file_type,
-          fileSize: doc.file_size || 0,
-          description: doc.description || '',
-          uploadedAt: doc.uploaded_at
-        }));
-
-        setDeviceModel(formattedModel);
-        setDocuments(formattedDocs);
+        setTimeout(() => {
+          setDeviceModel(mockDeviceModel);
+          setDocuments(mockDocuments);
+          setLoading(false);
+        }, 500);
+        
       } catch (error) {
         console.error('Error fetching device model:', error);
         toast.error('Failed to fetch device model details');
-      } finally {
         setLoading(false);
       }
     };

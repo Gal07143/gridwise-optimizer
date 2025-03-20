@@ -1,421 +1,305 @@
 
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
-import { 
-  AlertTriangle, 
-  Bell, 
-  CheckCircle, 
-  Clock, 
-  Info, 
-  Search, 
-  SlidersHorizontal,
-  MessageCircle
-} from 'lucide-react';
-import Header from '@/components/layout/Header';
-import Sidebar from '@/components/layout/Sidebar';
-import GlassPanel from '@/components/ui/GlassPanel';
-import { getAlerts, acknowledgeAlert } from '@/services/alertService';
-import { Alert, AlertType } from '@/types/energy';
+import { Bell, AlertTriangle, Clock, CheckCircle, Filter, RefreshCw, Search, MoreHorizontal, Eye, Check, X } from 'lucide-react';
+import AppLayout from '@/components/layout/AppLayout';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import SiteSelector from '@/components/sites/SiteSelector';
-import { useSite } from '@/contexts/SiteContext';
 import { Input } from '@/components/ui/input';
-import DashboardCard from '@/components/dashboard/DashboardCard';
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-  DropdownMenuCheckboxItem,
-} from "@/components/ui/dropdown-menu";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
-import { toast } from 'sonner';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-const AlertIconMap: Record<AlertType, React.ReactNode> = {
-  warning: <AlertTriangle className="h-5 w-5 text-amber-500" />,
-  critical: <AlertTriangle className="h-5 w-5 text-red-500" />,
-  info: <Info className="h-5 w-5 text-blue-500" />
-};
+// Mock data for alerts
+const mockAlerts = [
+  {
+    id: '1',
+    timestamp: new Date(Date.now() - 10 * 60000).toISOString(),
+    severity: 'critical',
+    message: 'Battery system disconnected unexpectedly',
+    source: 'Battery Controller',
+    deviceId: 'batt-001',
+    deviceName: 'Main Battery System',
+    acknowledged: false,
+    resolved: false
+  },
+  {
+    id: '2',
+    timestamp: new Date(Date.now() - 45 * 60000).toISOString(),
+    severity: 'warning',
+    message: 'Inverter efficiency below expected threshold',
+    source: 'Inverter Monitoring',
+    deviceId: 'inv-002',
+    deviceName: 'SolarEdge Inverter 1',
+    acknowledged: true,
+    resolved: false
+  },
+  {
+    id: '3', 
+    timestamp: new Date(Date.now() - 2 * 3600000).toISOString(),
+    severity: 'info',
+    message: 'Scheduled maintenance due for solar panels',
+    source: 'Maintenance System',
+    deviceId: 'solar-array-1',
+    deviceName: 'Rooftop Solar Array',
+    acknowledged: false,
+    resolved: false
+  },
+  {
+    id: '4',
+    timestamp: new Date(Date.now() - 5 * 3600000).toISOString(),
+    severity: 'warning',
+    message: 'Grid power quality fluctuations detected',
+    source: 'Grid Connection Monitor',
+    deviceId: 'grid-conn-1',
+    deviceName: 'Main Grid Connection',
+    acknowledged: false,
+    resolved: false
+  },
+  {
+    id: '5',
+    timestamp: new Date(Date.now() - 8 * 3600000).toISOString(),
+    severity: 'critical',
+    message: 'Energy storage system temperature exceeding safe limits',
+    source: 'Battery Management System',
+    deviceId: 'batt-001',
+    deviceName: 'Main Battery System',
+    acknowledged: true,
+    resolved: true
+  }
+];
 
-const AlertsPage = () => {
-  const navigate = useNavigate();
-  const { currentSite } = useSite();
+const Alerts = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterAcknowledged, setFilterAcknowledged] = useState<boolean | null>(null);
-  const [filterType, setFilterType] = useState<AlertType | null>(null);
-  const [currentPage, setCurrentPage] = useState(0);
-  const itemsPerPage = 10;
-  
-  const {
-    data: alerts = [],
-    isLoading,
-    refetch
-  } = useQuery({
-    queryKey: ['alerts', currentSite?.id, filterAcknowledged, filterType, currentPage],
-    queryFn: () => getAlerts({
-      deviceId: undefined, // We'll filter by site later
-      acknowledged: filterAcknowledged !== null ? filterAcknowledged : undefined,
-      type: filterType || undefined,
-      limit: 100 // Get all and filter client-side for now
-    }),
-    enabled: !!currentSite
+  const [selectedSeverity, setSelectedSeverity] = useState('all');
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const filteredAlerts = mockAlerts.filter(alert => {
+    const matchesSearch = 
+      alert.message.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      alert.source.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      alert.deviceName.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesSeverity = selectedSeverity === 'all' || alert.severity === selectedSeverity;
+    
+    return matchesSearch && matchesSeverity;
   });
-  
-  // Filter alerts client-side
-  const filteredAlerts = alerts
-    .filter(alert => {
-      // Filter by site
-      if (currentSite && alert.device_id) {
-        // This is a simplification. In a real app, we'd check if the device belongs to the site
-        // For now, we're assuming all alerts are relevant to the current site
-        return true;
-      }
-      
-      // If no site is selected, show all alerts
-      return !currentSite;
-    })
-    .filter(alert => {
-      // Filter by search query
-      if (!searchQuery) return true;
-      return alert.message.toLowerCase().includes(searchQuery.toLowerCase());
-    });
-  
-  // Pagination
-  const totalAlerts = filteredAlerts.length;
-  const totalPages = Math.ceil(totalAlerts / itemsPerPage);
-  const paginatedAlerts = filteredAlerts.slice(
-    currentPage * itemsPerPage,
-    (currentPage + 1) * itemsPerPage
-  );
-  
-  const handleAcknowledge = async (alertId: string) => {
-    try {
-      const success = await acknowledgeAlert(alertId);
-      if (success) {
-        toast.success("Alert acknowledged");
-        refetch();
-      }
-    } catch (error) {
-      toast.error("Failed to acknowledge alert");
+
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    setTimeout(() => setIsRefreshing(false), 1000);
+  };
+
+  const getActiveAlerts = () => filteredAlerts.filter(alert => !alert.resolved);
+  const getResolvedAlerts = () => filteredAlerts.filter(alert => alert.resolved);
+
+  const getSeverityBadge = (severity: string) => {
+    switch (severity) {
+      case 'critical':
+        return <Badge variant="destructive">Critical</Badge>;
+      case 'warning':
+        return <Badge variant="outline" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Warning</Badge>;
+      case 'info':
+        return <Badge variant="outline" className="bg-blue-100 text-blue-800 hover:bg-blue-100">Info</Badge>;
+      default:
+        return <Badge variant="outline">Unknown</Badge>;
     }
   };
-  
-  const clearFilters = () => {
-    setSearchQuery('');
-    setFilterAcknowledged(null);
-    setFilterType(null);
-    setCurrentPage(0);
-  };
-  
-  const formatTimestamp = (timestamp: string) => {
-    const date = new Date(timestamp);
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(date);
-  };
-  
-  const getTimeSince = (timestamp: string) => {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
-    
-    if (days > 0) return `${days}d ago`;
-    if (hours > 0) return `${hours}h ago`;
-    if (minutes > 0) return `${minutes}m ago`;
-    return 'Just now';
-  };
-  
-  return (
-    <div className="flex h-screen overflow-hidden">
-      <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Header />
-        <div className="flex-1 overflow-y-auto p-6 animate-fade-in">
-          <div className="mb-6 flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-semibold">System Alerts</h1>
-                <SiteSelector />
-              </div>
-              <p className="text-muted-foreground mt-1">
-                Monitor and manage system alerts and notifications
-              </p>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-            <DashboardCard 
-              title="Critical Alerts" 
-              icon={<AlertTriangle className="text-red-500" size={18} />}
-              className="bg-red-950/10"
-            >
-              <div className="flex flex-col items-center justify-center h-20">
-                <div className="text-3xl font-bold text-red-500">
-                  {filteredAlerts.filter(a => a.type === 'critical' && !a.acknowledged).length}
-                </div>
-                <div className="text-sm text-muted-foreground">Unacknowledged</div>
-              </div>
-            </DashboardCard>
-            
-            <DashboardCard 
-              title="Warning Alerts" 
-              icon={<AlertTriangle className="text-amber-500" size={18} />}
-              className="bg-amber-950/10"
-            >
-              <div className="flex flex-col items-center justify-center h-20">
-                <div className="text-3xl font-bold text-amber-500">
-                  {filteredAlerts.filter(a => a.type === 'warning' && !a.acknowledged).length}
-                </div>
-                <div className="text-sm text-muted-foreground">Unacknowledged</div>
-              </div>
-            </DashboardCard>
-            
-            <DashboardCard 
-              title="Info Alerts" 
-              icon={<Info className="text-blue-500" size={18} />}
-              className="bg-blue-950/10"
-            >
-              <div className="flex flex-col items-center justify-center h-20">
-                <div className="text-3xl font-bold text-blue-500">
-                  {filteredAlerts.filter(a => a.type === 'info' && !a.acknowledged).length}
-                </div>
-                <div className="text-sm text-muted-foreground">Unacknowledged</div>
-              </div>
-            </DashboardCard>
-            
-            <DashboardCard 
-              title="Total Alerts" 
-              icon={<MessageCircle size={18} />}
-            >
-              <div className="flex flex-col items-center justify-center h-20">
-                <div className="text-3xl font-bold">
-                  {filteredAlerts.length}
-                </div>
-                <div className="text-sm text-muted-foreground">All alerts</div>
-              </div>
-            </DashboardCard>
-          </div>
-          
-          <div className="mb-6 flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search alerts..."
-                className="pl-8"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            
-            <div className="flex gap-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="flex items-center gap-2">
-                    <SlidersHorizontal size={16} />
-                    <span className="hidden sm:inline">Filter</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem disabled className="text-xs font-medium text-muted-foreground">
-                    Status
-                  </DropdownMenuItem>
-                  <DropdownMenuCheckboxItem
-                    checked={filterAcknowledged === false}
-                    onCheckedChange={() => setFilterAcknowledged(prev => prev === false ? null : false)}
-                  >
-                    Unacknowledged
-                  </DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem
-                    checked={filterAcknowledged === true}
-                    onCheckedChange={() => setFilterAcknowledged(prev => prev === true ? null : true)}
-                  >
-                    Acknowledged
-                  </DropdownMenuCheckboxItem>
-                  
-                  <DropdownMenuSeparator />
-                  
-                  <DropdownMenuItem disabled className="text-xs font-medium text-muted-foreground">
-                    Alert Type
-                  </DropdownMenuItem>
-                  <DropdownMenuCheckboxItem
-                    checked={filterType === 'critical'}
-                    onCheckedChange={() => setFilterType(prev => prev === 'critical' ? null : 'critical')}
-                  >
-                    Critical
-                  </DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem
-                    checked={filterType === 'warning'}
-                    onCheckedChange={() => setFilterType(prev => prev === 'warning' ? null : 'warning')}
-                  >
-                    Warning
-                  </DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem
-                    checked={filterType === 'info'}
-                    onCheckedChange={() => setFilterType(prev => prev === 'info' ? null : 'info')}
-                  >
-                    Info
-                  </DropdownMenuCheckboxItem>
-                  
-                  <DropdownMenuSeparator />
-                  
-                  <DropdownMenuItem onClick={clearFilters}>
-                    Clear All Filters
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-          
-          <GlassPanel className="mb-6">
-            {isLoading ? (
-              <div className="p-8 text-center">
-                <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mx-auto mb-2"></div>
-                <div>Loading alerts...</div>
-              </div>
-            ) : paginatedAlerts.length === 0 ? (
-              <div className="p-8 text-center">
-                <Bell size={32} className="mx-auto mb-2 text-muted-foreground" />
-                <h3 className="text-lg font-medium mb-1">No alerts found</h3>
-                <p className="text-muted-foreground">
-                  {searchQuery || filterAcknowledged !== null || filterType !== null
-                    ? "Try adjusting your filters"
-                    : "System is running smoothly with no alerts"}
-                </p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-border">
-                      <th className="text-left p-4 font-medium">Type</th>
-                      <th className="text-left p-4 font-medium">Message</th>
-                      <th className="text-left p-4 font-medium">Time</th>
-                      <th className="text-left p-4 font-medium">Status</th>
-                      <th className="text-right p-4 font-medium">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {paginatedAlerts.map((alert) => (
-                      <tr key={alert.id} className="border-b border-border hover:bg-secondary/20">
-                        <td className="p-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            {AlertIconMap[alert.type]}
-                            <span className="ml-2 capitalize">{alert.type}</span>
-                          </div>
-                        </td>
-                        <td className="p-4">
-                          <div className="font-medium">{alert.message}</div>
-                          <div className="text-xs text-muted-foreground">Device ID: {alert.device_id}</div>
-                        </td>
-                        <td className="p-4 whitespace-nowrap">
-                          <div className="flex items-center text-sm">
-                            <Clock size={14} className="mr-1 text-muted-foreground" />
-                            <div>
-                              <div>{formatTimestamp(alert.timestamp)}</div>
-                              <div className="text-xs text-muted-foreground">{getTimeSince(alert.timestamp)}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="p-4">
-                          {alert.acknowledged ? (
-                            <Badge variant="outline" className="bg-green-500/10 text-green-500">
-                              <CheckCircle size={12} className="mr-1" />
-                              Acknowledged
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="bg-amber-500/10 text-amber-500">
-                              Unacknowledged
-                            </Badge>
-                          )}
-                        </td>
-                        <td className="p-4 text-right">
-                          {!alert.acknowledged && (
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => handleAcknowledge(alert.id)}
-                            >
-                              <CheckCircle size={14} className="mr-1" />
-                              Acknowledge
-                            </Button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-            
-            {totalPages > 1 && (
-              <div className="p-4 border-t border-border">
-                <Pagination>
-                  <PaginationContent>
-                    <PaginationItem>
-                      <PaginationPrevious 
-                        href="#"
-                        onClick={(e) => { 
-                          e.preventDefault();
-                          setCurrentPage(prev => Math.max(0, prev - 1));
-                        }}
-                        aria-disabled={currentPage === 0}
-                        className={currentPage === 0 ? "pointer-events-none opacity-50" : ""}
-                      />
-                    </PaginationItem>
-                    
-                    {[...Array(totalPages)].map((_, i) => (
-                      <PaginationItem key={i}>
-                        <PaginationLink 
-                          href="#"
-                          isActive={currentPage === i}
-                          onClick={(e) => { 
-                            e.preventDefault();
-                            setCurrentPage(i);
-                          }}
-                        >
-                          {i + 1}
-                        </PaginationLink>
-                      </PaginationItem>
-                    ))}
-                    
-                    <PaginationItem>
-                      <PaginationNext 
-                        href="#"
-                        onClick={(e) => { 
-                          e.preventDefault();
-                          setCurrentPage(prev => Math.min(totalPages - 1, prev + 1));
-                        }}
-                        aria-disabled={currentPage >= totalPages - 1}
-                        className={currentPage >= totalPages - 1 ? "pointer-events-none opacity-50" : ""}
-                      />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
-              </div>
-            )}
-          </GlassPanel>
+
+  const AlertRow = ({ alert }: { alert: any }) => (
+    <div className="flex items-center justify-between p-4 border-b last:border-0">
+      <div className="flex items-start gap-4">
+        <div className="mt-1">
+          {getSeverityBadge(alert.severity)}
         </div>
+        <div>
+          <h3 className="font-medium">{alert.message}</h3>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-1 text-sm text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <Clock size={14} />
+              {new Date(alert.timestamp).toLocaleString()}
+            </span>
+            <span>{alert.source}</span>
+            <span>{alert.deviceName}</span>
+          </div>
+        </div>
+      </div>
+      <div className="flex items-center">
+        {!alert.resolved && (
+          <div className="flex space-x-2">
+            {!alert.acknowledged && (
+              <Button size="sm" variant="outline" className="hidden sm:flex">
+                <Check size={14} className="mr-1" />
+                Acknowledge
+              </Button>
+            )}
+            <Button size="sm" variant="outline" className="hidden sm:flex">
+              <Eye size={14} className="mr-1" />
+              View
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="icon" variant="ghost">
+                  <MoreHorizontal size={16} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {!alert.acknowledged && (
+                  <DropdownMenuItem>
+                    <Check size={14} className="mr-2" />
+                    Acknowledge
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem>
+                  <Eye size={14} className="mr-2" />
+                  View Details
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <CheckCircle size={14} className="mr-2" />
+                  Mark as Resolved
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )}
+        {alert.resolved && (
+          <Badge variant="outline" className="bg-green-100 text-green-800">Resolved</Badge>
+        )}
       </div>
     </div>
   );
+
+  return (
+    <AppLayout>
+      <div className="flex-1 overflow-y-auto p-6 animate-fade-in">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-2xl font-semibold mb-1">System Alerts</h1>
+            <p className="text-muted-foreground">View and manage system alerts and notifications</p>
+          </div>
+          <Button onClick={handleRefresh} className="gap-2">
+            <RefreshCw size={16} className={isRefreshing ? "animate-spin" : ""} />
+            Refresh
+          </Button>
+        </div>
+        
+        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+          <div className="relative flex-1">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search alerts..."
+              className="pl-8"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <Select value={selectedSeverity} onValueChange={setSelectedSeverity}>
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue placeholder="Filter by severity" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Severities</SelectItem>
+              <SelectItem value="critical">Critical</SelectItem>
+              <SelectItem value="warning">Warning</SelectItem>
+              <SelectItem value="info">Info</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <Tabs defaultValue="active" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="active" className="relative">
+              Active Alerts
+              {getActiveAlerts().length > 0 && (
+                <span className="ml-1 inline-flex items-center justify-center rounded-full bg-primary/10 px-1.5 text-xs text-primary">
+                  {getActiveAlerts().length}
+                </span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="resolved">Resolved Alerts</TabsTrigger>
+            <TabsTrigger value="all">All Alerts</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="active">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">Active Alerts</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                {getActiveAlerts().length > 0 ? (
+                  <div>
+                    {getActiveAlerts().map(alert => (
+                      <AlertRow key={alert.id} alert={alert} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-10">
+                    <CheckCircle size={48} className="text-green-500 mb-4" />
+                    <h3 className="text-lg font-medium mb-1">No Active Alerts</h3>
+                    <p className="text-muted-foreground">
+                      All systems are running normally.
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="resolved">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">Resolved Alerts</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                {getResolvedAlerts().length > 0 ? (
+                  <div>
+                    {getResolvedAlerts().map(alert => (
+                      <AlertRow key={alert.id} alert={alert} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-10">
+                    <AlertTriangle size={48} className="text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-medium mb-1">No Resolved Alerts</h3>
+                    <p className="text-muted-foreground">
+                      There are no resolved alerts in your history.
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="all">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">All Alerts</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                {filteredAlerts.length > 0 ? (
+                  <div>
+                    {filteredAlerts.map(alert => (
+                      <AlertRow key={alert.id} alert={alert} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-10">
+                    <AlertTriangle size={48} className="text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-medium mb-1">No Alerts Found</h3>
+                    <p className="text-muted-foreground">
+                      No alerts match your current filters.
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </AppLayout>
+  );
 };
 
-export default AlertsPage;
+export default Alerts;

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   Book, 
@@ -15,11 +14,10 @@ import {
   Zap,
   ChevronRight
 } from 'lucide-react';
-import Header from '@/components/layout/Header';
-import Sidebar from '@/components/layout/Sidebar';
 import { cn } from '@/lib/utils';
 import GlassPanel from '@/components/ui/GlassPanel';
 import { Link } from 'react-router-dom';
+import AppLayout from '@/components/layout/AppLayout';
 
 const Settings = () => {
   // In a real app, these would be dynamic and connected to state
@@ -213,79 +211,75 @@ const Settings = () => {
   );
   
   return (
-    <div className="flex h-screen overflow-hidden">
-      <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Header />
-        <div className="flex-1 overflow-y-auto p-6 animate-fade-in">
-          <div className="mb-6">
-            <h1 className="text-2xl font-semibold mb-1">System Settings</h1>
-            <p className="text-muted-foreground">Configure the Energy Management System</p>
-          </div>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-            {settingCategories.map((category, index) => (
-              <GlassPanel
-                key={category.id}
-                className="overflow-hidden animate-slide-up"
-                style={{ animationDelay: `${0.1 + 0.05 * index}s` }}
-              >
-                <div className="p-5 border-b border-border/50 flex items-center space-x-3">
-                  <div className="rounded-full p-2 bg-primary/10 text-primary">
-                    {category.icon}
-                  </div>
-                  <div>
-                    <h3 className="font-medium">{category.name}</h3>
-                    <p className="text-sm text-muted-foreground">{category.description}</p>
-                  </div>
+    <AppLayout>
+      <div className="flex-1 overflow-y-auto p-6 animate-fade-in">
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold mb-1">System Settings</h1>
+          <p className="text-muted-foreground">Configure the Energy Management System</p>
+        </div>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+          {settingCategories.map((category, index) => (
+            <GlassPanel
+              key={category.id}
+              className="overflow-hidden animate-slide-up"
+              style={{ animationDelay: `${0.1 + 0.05 * index}s` }}
+            >
+              <div className="p-5 border-b border-border/50 flex items-center space-x-3">
+                <div className="rounded-full p-2 bg-primary/10 text-primary">
+                  {category.icon}
                 </div>
-                
-                <div className="p-2">
-                  {category.settings.map((setting) => (
-                    <SettingItem
-                      key={setting.id}
-                      name={setting.name}
-                      description={setting.description}
-                      path={setting.path}
-                    />
-                  ))}
+                <div>
+                  <h3 className="font-medium">{category.name}</h3>
+                  <p className="text-sm text-muted-foreground">{category.description}</p>
                 </div>
-              </GlassPanel>
-            ))}
-          </div>
+              </div>
+              
+              <div className="p-2">
+                {category.settings.map((setting) => (
+                  <SettingItem
+                    key={setting.id}
+                    name={setting.name}
+                    description={setting.description}
+                    path={setting.path}
+                  />
+                ))}
+              </div>
+            </GlassPanel>
+          ))}
+        </div>
+        
+        <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4 animate-slide-up" style={{ animationDelay: '0.5s' }}>
+          <QuickActionItem 
+            icon={<Key size={18} />} 
+            title="API Key Management" 
+            description="Configure secure API access keys" 
+            path="/settings/api-keys"
+          />
           
-          <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4 animate-slide-up" style={{ animationDelay: '0.5s' }}>
-            <QuickActionItem 
-              icon={<Key size={18} />} 
-              title="API Key Management" 
-              description="Configure secure API access keys" 
-              path="/settings/api-keys"
-            />
-            
-            <QuickActionItem 
-              icon={<RefreshCw size={18} />} 
-              title="Firmware Update" 
-              description="System v4.2.1 available" 
-              path="/settings/updates"
-            />
-            
-            <QuickActionItem 
-              icon={<Book size={18} />} 
-              title="Documentation" 
-              description="Access system documentation" 
-              path="/documentation"
-            />
-            
-            <QuickActionItem 
-              icon={<Server size={18} />} 
-              title="System Status" 
-              description="All services operational" 
-              path="/system-status"
-            />
-          </div>
+          <QuickActionItem 
+            icon={<RefreshCw size={18} />} 
+            title="Firmware Update" 
+            description="System v4.2.1 available" 
+            path="/settings/updates"
+          />
+          
+          <QuickActionItem 
+            icon={<Book size={18} />} 
+            title="Documentation" 
+            description="Access system documentation" 
+            path="/documentation"
+          />
+          
+          <QuickActionItem 
+            icon={<Server size={18} />} 
+            title="System Status" 
+            description="All services operational" 
+            path="/system-status"
+          />
         </div>
       </div>
-    </div>
+    </AppLayout>
   );
 };
 

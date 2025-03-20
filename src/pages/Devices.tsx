@@ -1,767 +1,454 @@
 
-import React, { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
-import { 
-  Battery, 
-  BatteryCharging, 
-  Cloud, 
-  PlugZap, 
-  Sun, 
-  Wind, 
-  AlertTriangle, 
-  Activity, 
-  Plus,
-  Trash2,
-  Edit,
-  MoreHorizontal,
-  Search,
-  Filter,
-  SlidersHorizontal,
-  FileText,
-  ChevronLeft,
-  ChevronRight
-} from 'lucide-react';
-import Header from '@/components/layout/Header';
-import Sidebar from '@/components/layout/Sidebar';
-import DashboardCard from '@/components/dashboard/DashboardCard';
-import GlassPanel from '@/components/ui/GlassPanel';
-import LiveChart from '@/components/dashboard/LiveChart';
-import { getAllDevices, getDeviceById, deleteDevice } from '@/services/deviceService';
-import { getDeviceReadings } from '@/services/devices/readingsService';
-import { getDeviceCount } from '@/services/devices/queries/getDeviceCount';
-import { EnergyDevice, DeviceType, DeviceStatus } from '@/types/energy';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import AppLayout from '@/components/layout/AppLayout';
+import { ArrowUpDown, Battery, Plus, MoreHorizontal, Search, Settings, Zap, Wind, Radio, RefreshCw, LogOut, Eye, Edit, Trash2, Tag, FilterX, Package, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { toast } from 'sonner';
-import SiteSelector from '@/components/sites/SiteSelector';
-import { useSite } from '@/contexts/SiteContext';
 import { Input } from '@/components/ui/input';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-  DropdownMenuCheckboxItem,
-} from "@/components/ui/dropdown-menu";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
-import DeviceControls from '@/components/devices/DeviceControls';
-import DeviceLogger from '@/components/devices/DeviceLogger';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { toast } from 'sonner';
 
-const DeviceTypeIcons: Record<DeviceType | string, React.ReactNode> = {
-  solar: <Sun size={20} />,
-  wind: <Wind size={20} />,
-  battery: <Battery size={20} />,
-  grid: <Cloud size={20} />,
-  load: <Activity size={20} />,
-  ev_charger: <PlugZap size={20} />
-};
-
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'online': return 'bg-green-500';
-    case 'offline': return 'bg-gray-500';
-    case 'maintenance': return 'bg-amber-500';
-    case 'error': return 'bg-red-500';
-    default: return 'bg-gray-500';
+// Mock data for devices
+const mockDevices = [
+  {
+    id: '1',
+    name: 'Main Battery Storage',
+    type: 'battery',
+    status: 'online',
+    capacity: 15,
+    location: 'Building A',
+    lastUpdated: new Date(Date.now() - 15 * 60000).toISOString(),
+    metrics: {
+      stateOfCharge: 78,
+      temp: 28.5,
+      voltage: 48.2,
+      currentPower: 3.2
+    }
+  },
+  {
+    id: '2',
+    name: 'Inverter System 1',
+    type: 'inverter',
+    status: 'online',
+    capacity: 10,
+    location: 'Roof',
+    lastUpdated: new Date(Date.now() - 5 * 60000).toISOString(),
+    metrics: {
+      efficiency: 96.8,
+      temp: 32.1,
+      voltage: 240,
+      currentPower: 6.5
+    }
+  },
+  {
+    id: '3',
+    name: 'South Solar Array',
+    type: 'solar',
+    status: 'online',
+    capacity: 12,
+    location: 'Roof South',
+    lastUpdated: new Date(Date.now() - 2 * 60000).toISOString(),
+    metrics: {
+      generation: 9.8,
+      temp: 42.5,
+      voltage: 48,
+      currentPower: 9.8
+    }
+  },
+  {
+    id: '4',
+    name: 'North Wind Turbine',
+    type: 'wind',
+    status: 'maintenance',
+    capacity: 5,
+    location: 'North Field',
+    lastUpdated: new Date(Date.now() - 1 * 3600000).toISOString(),
+    metrics: {
+      generation: 0,
+      temp: 26.2,
+      voltage: 48,
+      currentPower: 0
+    }
+  },
+  {
+    id: '5',
+    name: 'EV Charging Station 1',
+    type: 'ev-charger',
+    status: 'idle',
+    capacity: 11,
+    location: 'Parking Lot A',
+    lastUpdated: new Date(Date.now() - 25 * 60000).toISOString(),
+    metrics: {
+      usage: 0,
+      temp: 25.6,
+      voltage: 240,
+      currentPower: 0
+    }
+  },
+  {
+    id: '6',
+    name: 'Smart Meter - Main Building',
+    type: 'meter',
+    status: 'online',
+    capacity: 0,
+    location: 'Utility Room',
+    lastUpdated: new Date(Date.now() - 1 * 60000).toISOString(),
+    metrics: {
+      reading: 1254.8,
+      voltage: 240,
+      current: 12.5
+    }
+  },
+  {
+    id: '7',
+    name: 'Rooftop Weather Station',
+    type: 'sensor',
+    status: 'online',
+    capacity: 0,
+    location: 'Main Roof',
+    lastUpdated: new Date(Date.now() - 4 * 60000).toISOString(),
+    metrics: {
+      temperature: 32.1,
+      humidity: 45,
+      windSpeed: 12.3
+    }
+  },
+  {
+    id: '8',
+    name: 'Secondary Battery System',
+    type: 'battery',
+    status: 'offline',
+    capacity: 10,
+    location: 'Building B',
+    lastUpdated: new Date(Date.now() - 2 * 3600000).toISOString(),
+    metrics: {
+      stateOfCharge: 12,
+      temp: 22.5,
+      voltage: 0,
+      currentPower: 0
+    }
   }
-};
-
-interface DeviceFilterOptions {
-  status?: DeviceStatus | null;
-  type?: DeviceType | null;
-  search: string;
-}
-
-const ITEMS_PER_PAGE = 10;
+];
 
 const Devices = () => {
   const navigate = useNavigate();
-  const { currentSite } = useSite();
-  const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedType, setSelectedType] = useState('all');
+  const [selectedStatus, setSelectedStatus] = useState('all');
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [deviceToDelete, setDeviceToDelete] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(0);
-  
-  const [filters, setFilters] = useState<DeviceFilterOptions>({
-    status: null,
-    type: null,
-    search: '',
-  });
-  
-  const {
-    data: devices = [],
-    isLoading: isLoadingDevices,
-    refetch: refetchDevices
-  } = useQuery({
-    queryKey: ['devices', currentSite?.id, filters, currentPage],
-    queryFn: () => getAllDevices({
-      siteId: currentSite?.id,
-      page: currentPage,
-      pageSize: ITEMS_PER_PAGE,
-      status: filters.status || undefined,
-      type: filters.type || undefined,
-      search: filters.search || undefined,
-    }),
-    enabled: !!currentSite
-  });
-  
-  const { data: totalDevices = 0 } = useQuery({
-    queryKey: ['deviceCount', currentSite?.id, filters],
-    queryFn: () => getDeviceCount({
-      siteId: currentSite?.id,
-      status: filters.status || undefined,
-      type: filters.type || undefined,
-      search: filters.search || undefined,
-    }),
-    enabled: !!currentSite
-  });
-  
-  const { 
-    data: selectedDevice,
-    isLoading: isLoadingDevice
-  } = useQuery({
-    queryKey: ['device', selectedDeviceId],
-    queryFn: () => selectedDeviceId ? getDeviceById(selectedDeviceId) : null,
-    enabled: !!selectedDeviceId
-  });
-  
-  const { 
-    data: deviceReadings = [],
-    isLoading: isLoadingReadings
-  } = useQuery({
-    queryKey: ['deviceReadings', selectedDeviceId],
-    queryFn: () => selectedDeviceId ? getDeviceReadings(selectedDeviceId) : [],
-    enabled: !!selectedDeviceId
-  });
-  
-  useEffect(() => {
-    if (!selectedDeviceId && devices.length > 0) {
-      setSelectedDeviceId(devices[0].id);
-    }
-  }, [devices, selectedDeviceId]);
-  
-  const chartData = deviceReadings.map(reading => ({
-    time: new Date(reading.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    value: reading.power
-  }));
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  const handleAddDevice = () => {
-    navigate('/devices/add');
-  };
-
-  const handleEditDevice = (deviceId: string) => {
-    navigate(`/devices/edit/${deviceId}`);
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (!deviceToDelete) return;
+  // Filter devices based on search query, type and status
+  const filteredDevices = mockDevices.filter(device => {
+    const matchesSearch = device.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         device.location.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesType = selectedType === 'all' || device.type === selectedType;
+    const matchesStatus = selectedStatus === 'all' || device.status === selectedStatus;
     
-    try {
-      const success = await deleteDevice(deviceToDelete);
-      
-      if (success) {
-        toast.success("Device deleted successfully");
-        refetchDevices();
-        
-        // If we deleted the selected device, select another one
-        if (deviceToDelete === selectedDeviceId) {
-          const remainingDevices = devices.filter(d => d.id !== deviceToDelete);
-          setSelectedDeviceId(remainingDevices.length > 0 ? remainingDevices[0].id : null);
-        }
-      } else {
-        toast.error("Failed to delete device");
-      }
-    } catch (error) {
-      console.error("Error deleting device:", error);
-      toast.error("An error occurred while deleting the device");
-    } finally {
-      setDeleteDialogOpen(false);
+    return matchesSearch && matchesType && matchesStatus;
+  });
+
+  // Sort devices by status (online first)
+  const sortedDevices = [...filteredDevices].sort((a, b) => {
+    if (a.status === 'online' && b.status !== 'online') return -1;
+    if (a.status !== 'online' && b.status === 'online') return 1;
+    return 0;
+  });
+
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    setTimeout(() => setIsRefreshing(false), 1000);
+  };
+
+  const handleDeleteDevice = () => {
+    if (deviceToDelete) {
+      // In a real app, this would send a delete request to the API
+      console.log(`Deleting device with ID: ${deviceToDelete}`);
+      toast.success('Device deleted successfully');
+      setShowDeleteDialog(false);
       setDeviceToDelete(null);
     }
   };
 
-  const openDeleteDialog = (deviceId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const confirmDelete = (deviceId: string) => {
     setDeviceToDelete(deviceId);
-    setDeleteDialogOpen(true);
+    setShowDeleteDialog(true);
   };
-  
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFilters(prev => ({ ...prev, search: e.target.value }));
-    setCurrentPage(0); // Reset to first page when search changes
-  };
-  
+
   const clearFilters = () => {
-    setFilters({ status: null, type: null, search: '' });
-    setCurrentPage(0);
+    setSearchQuery('');
+    setSelectedType('all');
+    setSelectedStatus('all');
   };
-  
-  const totalPages = Math.ceil(totalDevices / ITEMS_PER_PAGE);
-  
+
+  const getDeviceTypeIcon = (type: string) => {
+    switch (type) {
+      case 'battery':
+        return <Battery className="h-4 w-4" />;
+      case 'inverter':
+        return <Zap className="h-4 w-4" />;
+      case 'solar':
+        return <Zap className="h-4 w-4" />;
+      case 'wind':
+        return <Wind className="h-4 w-4" />;
+      case 'ev-charger':
+        return <Zap className="h-4 w-4" />;
+      case 'meter':
+        return <Activity className="h-4 w-4" />;
+      case 'sensor':
+        return <Radio className="h-4 w-4" />;
+      default:
+        return <Package className="h-4 w-4" />;
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'online':
+        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Online</Badge>;
+      case 'offline':
+        return <Badge variant="secondary">Offline</Badge>;
+      case 'maintenance':
+        return <Badge variant="outline" className="bg-blue-100 text-blue-800 hover:bg-blue-100">Maintenance</Badge>;
+      case 'error':
+        return <Badge variant="destructive">Error</Badge>;
+      case 'idle':
+        return <Badge variant="outline">Idle</Badge>;
+      default:
+        return <Badge variant="outline">Unknown</Badge>;
+    }
+  };
+
   return (
-    <div className="flex h-screen overflow-hidden">
-      <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Header />
-        <div className="flex-1 overflow-y-auto p-6 animate-fade-in">
-          <div className="mb-6 flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-semibold">Energy Devices</h1>
-                <SiteSelector />
-              </div>
-              <p className="text-muted-foreground mt-1">
-                {currentSite 
-                  ? `Monitor and manage devices at ${currentSite.name}`
-                  : 'Monitor and manage all connected energy devices'}
-              </p>
-            </div>
-            <Button 
-              onClick={handleAddDevice}
-              className="flex items-center gap-2"
-            >
-              <Plus size={16} />
-              <span>Add Device</span>
+    <AppLayout>
+      <div className="flex-1 overflow-y-auto p-6 animate-fade-in">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-2xl font-semibold mb-1">Devices</h1>
+            <p className="text-muted-foreground">View and manage all connected devices</p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleRefresh} className="gap-1">
+              <RefreshCw size={16} className={isRefreshing ? "animate-spin" : ""} />
+              <span className="hidden sm:inline">Refresh</span>
+            </Button>
+            <Button asChild>
+              <Link to="/add-device" className="gap-1">
+                <Plus size={16} />
+                <span className="hidden sm:inline">Add Device</span>
+              </Link>
             </Button>
           </div>
-          
-          <div className="mb-6 flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search devices..."
-                className="pl-8"
-                value={filters.search}
-                onChange={handleSearchChange}
-              />
-            </div>
-            <div className="flex gap-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="flex items-center gap-2">
-                    <Filter size={16} />
-                    <span className="hidden sm:inline">Filter</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem disabled className="text-xs font-medium text-muted-foreground">
-                    Device Status
-                  </DropdownMenuItem>
-                  <DropdownMenuCheckboxItem
-                    checked={filters.status === 'online'}
-                    onCheckedChange={() => setFilters(prev => ({
-                      ...prev,
-                      status: prev.status === 'online' ? null : 'online'
-                    }))}
-                  >
-                    Online
-                  </DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem
-                    checked={filters.status === 'offline'}
-                    onCheckedChange={() => setFilters(prev => ({
-                      ...prev,
-                      status: prev.status === 'offline' ? null : 'offline'
-                    }))}
-                  >
-                    Offline
-                  </DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem
-                    checked={filters.status === 'maintenance'}
-                    onCheckedChange={() => setFilters(prev => ({
-                      ...prev,
-                      status: prev.status === 'maintenance' ? null : 'maintenance'
-                    }))}
-                  >
-                    Maintenance
-                  </DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem
-                    checked={filters.status === 'error'}
-                    onCheckedChange={() => setFilters(prev => ({
-                      ...prev,
-                      status: prev.status === 'error' ? null : 'error'
-                    }))}
-                  >
-                    Error
-                  </DropdownMenuCheckboxItem>
-                  
-                  <DropdownMenuSeparator />
-                  
-                  <DropdownMenuItem disabled className="text-xs font-medium text-muted-foreground">
-                    Device Type
-                  </DropdownMenuItem>
-                  <DropdownMenuCheckboxItem
-                    checked={filters.type === 'solar'}
-                    onCheckedChange={() => setFilters(prev => ({
-                      ...prev,
-                      type: prev.type === 'solar' ? null : 'solar'
-                    }))}
-                  >
-                    Solar
-                  </DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem
-                    checked={filters.type === 'wind'}
-                    onCheckedChange={() => setFilters(prev => ({
-                      ...prev,
-                      type: prev.type === 'wind' ? null : 'wind'
-                    }))}
-                  >
-                    Wind
-                  </DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem
-                    checked={filters.type === 'battery'}
-                    onCheckedChange={() => setFilters(prev => ({
-                      ...prev,
-                      type: prev.type === 'battery' ? null : 'battery'
-                    }))}
-                  >
-                    Battery
-                  </DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem
-                    checked={filters.type === 'grid'}
-                    onCheckedChange={() => setFilters(prev => ({
-                      ...prev,
-                      type: prev.type === 'grid' ? null : 'grid'
-                    }))}
-                  >
-                    Grid
-                  </DropdownMenuCheckboxItem>
-                  
-                  <DropdownMenuSeparator />
-                  
-                  <DropdownMenuItem onClick={clearFilters}>
-                    Clear All Filters
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="flex items-center gap-2">
-                    <SlidersHorizontal size={16} />
-                    <span className="hidden sm:inline">Sort</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem>
-                    Name (A-Z)
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    Name (Z-A)
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    Status
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    Type
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    Recently Added
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+        </div>
+        
+        <div className="flex flex-col md:flex-row gap-4 mb-6">
+          <div className="relative flex-1">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search devices..."
+              className="pl-8"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
           
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            <div className="lg:col-span-1">
-              <GlassPanel className="p-2 space-y-2 h-full overflow-auto">
-                <div className="p-2 font-medium text-sm flex justify-between items-center">
-                  <span>All Devices</span>
-                  {(filters.status || filters.type || filters.search) && (
-                    <Button variant="ghost" size="sm" onClick={clearFilters} className="h-7 px-2">
-                      Clear Filters
-                    </Button>
-                  )}
-                </div>
-                
-                {isLoadingDevices ? (
-                  <div className="p-4 text-center text-muted-foreground">Loading devices...</div>
-                ) : devices.length === 0 ? (
-                  <div className="p-4 text-center text-muted-foreground">
-                    {filters.status || filters.type || filters.search 
-                      ? "No devices match your filters"
-                      : "No devices found"}
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {devices.map(device => (
-                      <div
-                        key={device.id}
-                        className={`flex items-center justify-between p-3 rounded-lg cursor-pointer ${selectedDeviceId === device.id ? 'bg-accent/50' : 'hover:bg-secondary/30'}`}
-                        onClick={() => setSelectedDeviceId(device.id)}
-                      >
-                        <div className="flex items-center space-x-3 flex-1">
-                          <div className="text-muted-foreground">
-                            {DeviceTypeIcons[device.type] || <AlertTriangle size={20} />}
-                          </div>
-                          <div className="flex-1 text-left">
-                            <div className="font-medium text-sm truncate">{device.name}</div>
-                            <div className="text-xs text-muted-foreground truncate">{device.location}</div>
-                          </div>
-                          <div className={`rounded-full h-2.5 w-2.5 ${getStatusColor(device.status)}`}></div>
-                        </div>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreHorizontal size={16} />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={(e) => {
-                              e.stopPropagation();
-                              handleEditDevice(device.id);
-                            }}>
-                              <Edit size={16} className="mr-2" />
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              className="text-destructive focus:text-destructive"
-                              onClick={(e) => openDeleteDialog(device.id, e)}
-                            >
-                              <Trash2 size={16} className="mr-2" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                
-                {totalPages > 1 && (
-                  <Pagination className="mt-4">
-                    <PaginationContent>
-                      <PaginationItem>
-                        <Button 
-                          variant="outline"
-                          size="icon"
-                          onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
-                          disabled={currentPage === 0}
-                          className="h-9 w-9"
-                        >
-                          <ChevronLeft className="h-4 w-4" />
-                        </Button>
-                      </PaginationItem>
-                      
-                      {/* First page */}
-                      {currentPage > 1 && (
-                        <PaginationItem>
-                          <Button 
-                            variant="outline"
-                            size="icon"
-                            onClick={() => setCurrentPage(0)}
-                            className="h-9 w-9"
-                          >
-                            1
-                          </Button>
-                        </PaginationItem>
-                      )}
-                      
-                      {/* Ellipsis if needed */}
-                      {currentPage > 2 && (
-                        <PaginationItem>
-                          <span className="px-2.5">...</span>
-                        </PaginationItem>
-                      )}
-                      
-                      {/* Current page - 1 if applicable */}
-                      {currentPage > 0 && (
-                        <PaginationItem>
-                          <Button 
-                            variant="outline"
-                            size="icon"
-                            onClick={() => setCurrentPage(currentPage - 1)}
-                            className="h-9 w-9"
-                          >
-                            {currentPage}
-                          </Button>
-                        </PaginationItem>
-                      )}
-                      
-                      {/* Current page */}
-                      <PaginationItem>
-                        <Button 
-                          variant="outline"
-                          size="icon"
-                          className="h-9 w-9 bg-primary text-primary-foreground hover:bg-primary/90"
-                        >
-                          {currentPage + 1}
-                        </Button>
-                      </PaginationItem>
-                      
-                      {/* Current page + 1 if applicable */}
-                      {currentPage < totalPages - 1 && (
-                        <PaginationItem>
-                          <Button 
-                            variant="outline"
-                            size="icon"
-                            onClick={() => setCurrentPage(currentPage + 1)}
-                            className="h-9 w-9"
-                          >
-                            {currentPage + 2}
-                          </Button>
-                        </PaginationItem>
-                      )}
-                      
-                      {/* Ellipsis if needed */}
-                      {currentPage < totalPages - 3 && (
-                        <PaginationItem>
-                          <span className="px-2.5">...</span>
-                        </PaginationItem>
-                      )}
-                      
-                      {/* Last page */}
-                      {currentPage < totalPages - 2 && (
-                        <PaginationItem>
-                          <Button 
-                            variant="outline"
-                            size="icon"
-                            onClick={() => setCurrentPage(totalPages - 1)}
-                            className="h-9 w-9"
-                          >
-                            {totalPages}
-                          </Button>
-                        </PaginationItem>
-                      )}
-                      
-                      <PaginationItem>
-                        <Button 
-                          variant="outline"
-                          size="icon"
-                          onClick={() => setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))}
-                          disabled={currentPage >= totalPages - 1}
-                          className="h-9 w-9"
-                        >
-                          <ChevronRight className="h-4 w-4" />
-                        </Button>
-                      </PaginationItem>
-                    </PaginationContent>
-                  </Pagination>
-                )}
-              </GlassPanel>
-            </div>
+          <div className="flex gap-2">
+            <Select value={selectedType} onValueChange={setSelectedType}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="battery">Battery</SelectItem>
+                <SelectItem value="inverter">Inverter</SelectItem>
+                <SelectItem value="solar">Solar</SelectItem>
+                <SelectItem value="wind">Wind</SelectItem>
+                <SelectItem value="ev-charger">EV Charger</SelectItem>
+                <SelectItem value="meter">Meter</SelectItem>
+                <SelectItem value="sensor">Sensor</SelectItem>
+              </SelectContent>
+            </Select>
             
-            <div className="lg:col-span-3 space-y-6">
-              {selectedDevice ? (
-                <>
-                  <GlassPanel className="p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div>
-                        <div className="flex items-center space-x-3">
-                          <div className="text-primary">
-                            {DeviceTypeIcons[selectedDevice.type] || <AlertTriangle size={24} />}
-                          </div>
-                          <h2 className="text-xl font-semibold">{selectedDevice.name}</h2>
-                          <Badge variant={selectedDevice.status === 'online' ? 'default' : 'destructive'} className="ml-2">
-                            {selectedDevice.status.charAt(0).toUpperCase() + selectedDevice.status.slice(1)}
-                          </Badge>
-                        </div>
-                        <div className="mt-1 text-muted-foreground">{selectedDevice.location}</div>
-                      </div>
-                      <div className="flex space-x-2">
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => handleEditDevice(selectedDevice.id)}
-                        >
-                          <Edit size={14} className="mr-1" />
-                          Edit
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="destructive"
-                          onClick={(e) => openDeleteDialog(selectedDevice.id, e)}
-                        >
-                          <Trash2 size={14} className="mr-1" />
-                          Delete
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-                      <DeviceStatusCard 
-                        title="Capacity" 
-                        value={`${selectedDevice.capacity} ${selectedDevice.type === 'battery' ? 'kWh' : 'kW'}`} 
-                        icon={<Activity size={18} />}
-                      />
-                      <DeviceStatusCard 
-                        title="Firmware" 
-                        value={selectedDevice.firmware} 
-                        icon={<Activity size={18} />}
-                      />
-                      <DeviceStatusCard 
-                        title="Last Updated" 
-                        value={selectedDevice?.last_updated ? new Date(selectedDevice.last_updated).toLocaleString() : 'Unknown'} 
-                        icon={<Activity size={18} />}
-                      />
-                    </div>
-                  </GlassPanel>
-    
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-                    <DashboardCard title="Device Controls" icon={<SlidersHorizontal size={18} />}>
-                      <DeviceControls 
-                        deviceId={selectedDevice.id} 
-                        deviceType={selectedDevice.type}
-                        deviceStatus={selectedDevice.status}
-                      />
-                    </DashboardCard>
-                    
-                    <div className="space-y-6">
-                      <DashboardCard title="Power Output" icon={<BatteryCharging size={18} />}>
-                        <LiveChart
-                          data={chartData}
-                          height={250}
-                          color={selectedDevice.type === 'solar' ? 'rgba(45, 211, 111, 1)' : 
-                                 selectedDevice.type === 'wind' ? 'rgba(4, 150, 255, 1)' :
-                                 selectedDevice.type === 'battery' ? 'rgba(255, 196, 9, 1)' : 
-                                 'rgba(122, 90, 248, 1)'}
-                          type="area"
-                          gradientFrom={selectedDevice.type === 'solar' ? 'rgba(45, 211, 111, 0.5)' : 
-                                       selectedDevice.type === 'wind' ? 'rgba(4, 150, 255, 0.5)' :
-                                       selectedDevice.type === 'battery' ? 'rgba(255, 196, 9, 0.5)' : 
-                                       'rgba(122, 90, 248, 0.5)'}
-                          gradientTo={selectedDevice.type === 'solar' ? 'rgba(45, 211, 111, 0)' : 
-                                     selectedDevice.type === 'wind' ? 'rgba(4, 150, 255, 0)' :
-                                     selectedDevice.type === 'battery' ? 'rgba(255, 196, 9, 0)' : 
-                                     'rgba(122, 90, 248, 0)'}
-                          yAxisLabel="Power (kW)"
-                        />
-                      </DashboardCard>
-                      
-                      <DashboardCard title="Device Logs" icon={<FileText size={18} />}>
-                        <DeviceLogger deviceId={selectedDevice.id} />
-                      </DashboardCard>
-                    </div>
-                  </div>
-    
-                  {selectedDevice.metrics && (
-                    <DashboardCard title="Device Metrics" icon={<Activity size={18} />} className="mt-6">
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        {Object.entries(selectedDevice.metrics).map(([key, value]) => (
-                          <DeviceMetricCard key={key} name={key} value={value} />
-                        ))}
-                      </div>
-                    </DashboardCard>
-                  )}
-                  
-                  <DashboardCard title="Maintenance Information" icon={<AlertTriangle size={18} />} className="mt-6">
-                    <div className="space-y-4">
-                      <div className="flex justify-between p-3 bg-background/50 rounded-md">
-                        <div className="text-sm">Installation Date</div>
-                        <div className="text-sm font-medium">Jan 15, 2023</div>
-                      </div>
-                      <div className="flex justify-between p-3 bg-background/50 rounded-md">
-                        <div className="text-sm">Last Inspection</div>
-                        <div className="text-sm font-medium">Mar 22, 2023</div>
-                      </div>
-                      <div className="flex justify-between p-3 bg-background/50 rounded-md">
-                        <div className="text-sm">Next Maintenance Due</div>
-                        <div className="text-sm font-medium">Sep 15, 2023</div>
-                      </div>
-                      <div className="flex justify-between p-3 bg-background/50 rounded-md">
-                        <div className="text-sm">Warranty Status</div>
-                        <div className="text-sm font-medium">
-                          <Badge variant="outline" className="bg-green-500/10 text-green-500 hover:bg-green-500/20 hover:text-green-500">Active</Badge>
-                        </div>
-                      </div>
-                    </div>
-                  </DashboardCard>
-                </>
-              ) : (
-                <GlassPanel className="p-6 flex items-center justify-center h-64">
-                  <div className="text-center text-muted-foreground">
-                    {isLoadingDevice ? 'Loading device details...' : 'Select a device to view details'}
-                  </div>
-                </GlassPanel>
-              )}
-            </div>
+            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="online">Online</SelectItem>
+                <SelectItem value="offline">Offline</SelectItem>
+                <SelectItem value="maintenance">Maintenance</SelectItem>
+                <SelectItem value="error">Error</SelectItem>
+                <SelectItem value="idle">Idle</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            {(searchQuery || selectedType !== 'all' || selectedStatus !== 'all') && (
+              <Button variant="ghost" onClick={clearFilters} size="icon" title="Clear filters">
+                <FilterX size={16} />
+              </Button>
+            )}
           </div>
         </div>
+        
+        {sortedDevices.length === 0 ? (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-10">
+              <div className="rounded-full bg-primary/10 p-3 mb-4">
+                <Filter size={24} className="text-primary" />
+              </div>
+              <h3 className="text-lg font-medium mb-1">No devices found</h3>
+              <p className="text-muted-foreground mb-4">
+                No devices match your current filters.
+              </p>
+              <Button variant="outline" onClick={clearFilters}>Clear Filters</Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+            {sortedDevices.map((device) => (
+              <Card key={device.id} className="overflow-hidden">
+                <div className={`h-1 ${
+                  device.status === 'online' ? 'bg-green-500' : 
+                  device.status === 'offline' ? 'bg-slate-500' : 
+                  device.status === 'maintenance' ? 'bg-blue-500' : 
+                  device.status === 'error' ? 'bg-red-500' : 
+                  'bg-slate-400'
+                }`} />
+                <CardHeader className="pb-2">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <span className="flex items-center text-xs text-muted-foreground">
+                          {getDeviceTypeIcon(device.type)}
+                          <span className="ml-1 capitalize">{device.type.replace('-', ' ')}</span>
+                        </span>
+                        {getStatusBadge(device.status)}
+                      </div>
+                      <CardTitle className="mt-1.5 text-lg">{device.name}</CardTitle>
+                      <CardDescription>{device.location}</CardDescription>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreHorizontal size={16} />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => navigate(`/edit-device/${device.id}`)}>
+                          <Eye size={14} className="mr-2" />
+                          View Details
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => navigate(`/edit-device/${device.id}`)}>
+                          <Edit size={14} className="mr-2" />
+                          Edit Device
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => navigate(`/edit-device/${device.id}`)}>
+                          <Settings size={14} className="mr-2" />
+                          Configure
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem className="text-red-600 focus:text-red-600" onClick={() => confirmDelete(device.id)}>
+                          <Trash2 size={14} className="mr-2" />
+                          Delete Device
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-sm">
+                    {device.capacity > 0 && (
+                      <div className="flex justify-between py-0.5">
+                        <span className="text-muted-foreground">Capacity:</span>
+                        <span className="font-medium">{device.capacity} kW</span>
+                      </div>
+                    )}
+                    
+                    {device.metrics && Object.entries(device.metrics).map(([key, value]) => {
+                      let formattedKey = key.replace(/([A-Z])/g, ' $1').trim();
+                      formattedKey = formattedKey.charAt(0).toUpperCase() + formattedKey.slice(1);
+                      
+                      let formattedValue = value;
+                      let unit = '';
+                      
+                      // Add units based on the metric type
+                      if (key === 'stateOfCharge') {
+                        unit = '%';
+                      } else if (key === 'temp' || key === 'temperature') {
+                        unit = '°C';
+                      } else if (key === 'voltage') {
+                        unit = 'V';
+                      } else if (key === 'currentPower' || key === 'generation') {
+                        unit = 'kW';
+                      } else if (key === 'efficiency') {
+                        unit = '%';
+                      } else if (key === 'humidity') {
+                        unit = '%';
+                      } else if (key === 'windSpeed') {
+                        unit = 'm/s';
+                      } else if (key === 'reading') {
+                        unit = 'kWh';
+                      } else if (key === 'current') {
+                        unit = 'A';
+                      }
+                      
+                      return (
+                        <div key={key} className="flex justify-between py-0.5">
+                          <span className="text-muted-foreground">{formattedKey}:</span>
+                          <span className="font-medium">{formattedValue}{unit}</span>
+                        </div>
+                      );
+                    })}
+                    
+                    <div className="flex justify-between py-0.5 mt-1">
+                      <span className="text-muted-foreground">Last Updated:</span>
+                      <span className="text-xs">{new Date(device.lastUpdated).toLocaleString()}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4 grid grid-cols-2 gap-2">
+                    <Button variant="outline" size="sm" className="w-full" asChild>
+                      <Link to={`/edit-device/${device.id}`}>
+                        <Eye size={14} className="mr-1" />
+                        View
+                      </Link>
+                    </Button>
+                    <Button size="sm" className="w-full" asChild>
+                      <Link to={`/edit-device/${device.id}`}>
+                        <Settings size={14} className="mr-1" />
+                        Configure
+                      </Link>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
       
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Device</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this device? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
-  );
-};
-
-const DeviceStatusCard = ({ title, value, icon }: { title: string, value: string, icon: React.ReactNode }) => {
-  return (
-    <GlassPanel className="p-4 h-full" intensity="low">
-      <div className="flex items-center space-x-2 mb-2">
-        <div className="text-muted-foreground">{icon}</div>
-        <div className="text-sm text-muted-foreground">{title}</div>
-      </div>
-      <div className="text-lg font-medium">{value}</div>
-    </GlassPanel>
-  );
-};
-
-const DeviceMetricCard = ({ name, value }: { name: string, value: number }) => {
-  const formatMetricName = (name: string) => {
-    return name
-      .replace(/([A-Z])/g, ' $1')
-      .replace(/([a-z])([A-Z])/g, '$1 $2')
-      .replace(/_/g, ' ')
-      .split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(' ');
-  };
-  
-  const getMetricWithUnit = (name: string, value: number) => {
-    const nameLower = name.toLowerCase();
-    
-    if (nameLower.includes('temperature')) return `${value.toFixed(1)} °C`;
-    if (nameLower.includes('voltage')) return `${value.toFixed(1)} V`;
-    if (nameLower.includes('current')) return `${value.toFixed(1)} A`;
-    if (nameLower.includes('power')) return `${value.toFixed(1)} kW`;
-    if (nameLower.includes('energy') || nameLower.includes('production')) return `${value.toFixed(1)} kWh`;
-    if (nameLower.includes('efficiency') || nameLower.includes('charge')) return `${value.toFixed(1)} %`;
-    if (nameLower.includes('frequency')) return `${value.toFixed(2)} Hz`;
-    if (nameLower.includes('speed')) return nameLower.includes('wind') ? `${value.toFixed(1)} m/s` : `${value.toFixed(0)} rpm`;
-    
-    return value.toString();
-  };
-  
-  return (
-    <div className="p-3 bg-background/30 rounded-md">
-      <div className="text-xs text-muted-foreground mb-1">{formatMetricName(name)}</div>
-      <div className="text-base font-medium">{getMetricWithUnit(name, value)}</div>
-    </div>
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Device Deletion</DialogTitle>
+          </DialogHeader>
+          <p>Are you sure you want to delete this device? This action cannot be undone.</p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleDeleteDevice}>Delete</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </AppLayout>
   );
 };
 
 export default Devices;
-

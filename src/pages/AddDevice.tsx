@@ -1,128 +1,48 @@
 
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Header from '@/components/layout/Header';
-import Sidebar from '@/components/layout/Sidebar';
-import GlassPanel from '@/components/ui/GlassPanel';
+import AppLayout from '@/components/layout/AppLayout';
 import DeviceForm from '@/components/devices/DeviceForm';
-import DevicePageHeader from '@/components/devices/DevicePageHeader';
-import { useDeviceForm } from '@/hooks/useDeviceForm';
-import { Toaster } from 'sonner';
-import ErrorBoundary from '@/components/ui/ErrorBoundary';
-import { validateDeviceForm, errorsToRecord } from '@/utils/validation';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle, Wifi, WifiOff, RefreshCw, ServerOff } from 'lucide-react';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 const AddDevice = () => {
-  const {
-    device,
-    isSubmitting,
-    isLoadingSite,
-    hasSiteError,
-    handleInputChange,
-    handleSelectChange,
-    handleSubmit,
-    navigateBack,
-    reloadSite
-  } = useDeviceForm();
-  
-  const [validationErrors, setValidationErrors] = React.useState<Record<string, string>>({});
-  const [isOnline, setIsOnline] = React.useState<boolean>(navigator.onLine);
-  const isMobile = useIsMobile();
-  
-  // Listen for online/offline events
-  React.useEffect(() => {
-    const handleOffline = () => setIsOnline(false);
-    const handleOnline = () => setIsOnline(true);
-    
-    // Add event listeners
-    window.addEventListener('offline', handleOffline);
-    window.addEventListener('online', handleOnline);
-    
-    // Cleanup
-    return () => {
-      window.removeEventListener('offline', handleOffline);
-      window.removeEventListener('online', handleOnline);
-    };
-  }, []);
-  
-  const handleValidatedSubmit = (e?: React.FormEvent) => {
-    const errors = validateDeviceForm(device);
-    const errorRecord = errorsToRecord(errors);
-    
-    setValidationErrors(errorRecord);
-    
-    if (errors.length === 0) {
-      handleSubmit(e);
+  const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleAddDevice = async (formData: any) => {
+    try {
+      setIsSubmitting(true);
+      
+      // Here you would handle the actual form submission to create a device
+      console.log('Adding device:', formData);
+      
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      toast.success('Device added successfully');
+      navigate('/devices');
+    } catch (error) {
+      console.error('Error adding device:', error);
+      toast.error('Failed to add device. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Header />
-        <ErrorBoundary>
-          <div className="flex-1 overflow-y-auto p-6 animate-fade-in">
-            <DevicePageHeader 
-              title="Add New Device"
-              subtitle="Add a new energy device to the system"
-              onBack={navigateBack}
-              onSave={handleValidatedSubmit}
-              isSaving={isSubmitting}
-            />
-            
-            {!isOnline && (
-              <Alert variant="destructive" className="mb-4">
-                <WifiOff className="h-4 w-4" />
-                <AlertTitle>Network Unavailable</AlertTitle>
-                <AlertDescription>
-                  You're currently offline. Device creation will be queued until connection is restored.
-                </AlertDescription>
-              </Alert>
-            )}
-            
-            {hasSiteError && (
-              <Alert className="mb-4 border-yellow-500 text-yellow-800 dark:text-yellow-300 bg-yellow-50 dark:bg-yellow-900/20">
-                <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
-                <AlertTitle>Site Configuration Issue</AlertTitle>
-                <AlertDescription className="flex items-center justify-between">
-                  <span>Using fallback site configuration. Some features may be limited.</span>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={reloadSite}
-                    className="ml-2 border-yellow-500 hover:bg-yellow-100 dark:hover:bg-yellow-900/30"
-                  >
-                    <RefreshCw className="h-3 w-3 mr-1" />
-                    Retry
-                  </Button>
-                </AlertDescription>
-              </Alert>
-            )}
-            
-            {isLoadingSite ? (
-              <div className="flex flex-col items-center justify-center p-12 bg-background/50 rounded-lg border border-border/50">
-                <LoadingSpinner size="lg" className="text-primary mb-4" />
-                <p className="text-muted-foreground">Loading site information...</p>
-              </div>
-            ) : (
-              <GlassPanel className={`${isMobile ? 'p-4' : 'p-6'}`}>
-                <DeviceForm 
-                  device={device}
-                  handleInputChange={handleInputChange}
-                  handleSelectChange={handleSelectChange}
-                  validationErrors={validationErrors}
-                />
-              </GlassPanel>
-            )}
-          </div>
-        </ErrorBoundary>
+    <AppLayout>
+      <div className="flex-1 overflow-y-auto p-6 animate-fade-in">
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold mb-1">Add New Device</h1>
+          <p className="text-muted-foreground">Add a new device to your energy management system</p>
+        </div>
+        
+        <div className="max-w-4xl mx-auto">
+          <DeviceForm onSubmit={handleAddDevice} isSubmitting={isSubmitting} />
+        </div>
       </div>
-      <Toaster position="top-right" closeButton richColors />
-    </div>
+    </AppLayout>
   );
 };
 
