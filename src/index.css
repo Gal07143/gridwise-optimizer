@@ -5,12 +5,6 @@
 
 @layer base {
   :root {
-    --color-energy-green: 45, 211, 111;
-    --color-energy-blue: 14, 165, 233;
-    --color-energy-purple: 168, 85, 247;
-    --color-energy-orange: 245, 158, 11;
-    --color-energy-red: 239, 68, 68;
-
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
 
@@ -20,7 +14,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 222.2 47.4% 11.2%;
+    --primary: 221.2 83.2% 53.3%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 210 40% 96.1%;
@@ -37,18 +31,17 @@
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --ring: 221.2 83.2% 53.3%;
 
     --radius: 0.5rem;
+
+    --energy-green: 142.1 70.6% 45.3%;
+    --energy-blue: 201.3 96.3% 48.4%;
+    --energy-purple: 269.5 75.7% 52.7%;
+    --energy-orange: 24.6 95% 53.1%;
   }
 
   .dark {
-    --color-energy-green: 45, 211, 111;
-    --color-energy-blue: 14, 165, 233;
-    --color-energy-purple: 168, 85, 247;
-    --color-energy-orange: 245, 158, 11;
-    --color-energy-red: 239, 68, 68;
-
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
 
@@ -58,7 +51,7 @@
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
     --primary-foreground: 222.2 47.4% 11.2%;
 
     --secondary: 217.2 32.6% 17.5%;
@@ -75,7 +68,7 @@
 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --ring: 224.3 76.3% 48%;
   }
 }
 
@@ -88,96 +81,35 @@
   }
 }
 
-/* Grid pattern backgrounds */
-.grid-pattern {
-  background-image: 
-    linear-gradient(to right, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
-  background-size: 20px 20px;
-}
+@layer utilities {
+  .grid-pattern {
+    background-size: 20px 20px;
+    background-image:
+      linear-gradient(to right, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+  }
 
-.dark .grid-pattern {
-  background-image: 
-    linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-}
+  .dark .grid-pattern {
+    background-image:
+      linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  }
 
-.battery-pattern {
-  background-image: 
-    radial-gradient(circle, rgba(0, 0, 0, 0.1) 1px, transparent 1px);
-  background-size: 20px 20px;
-}
+  .glass-panel {
+    @apply backdrop-blur-sm bg-white/80 dark:bg-slate-900/80 border border-slate-200/50 dark:border-slate-700/50 rounded-lg shadow-sm;
+  }
 
-.dark .battery-pattern {
-  background-image: 
-    radial-gradient(circle, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
-}
+  /* Animation for energy flow */
+  @keyframes flow {
+    0% {
+      stroke-dashoffset: 24;
+    }
+    100% {
+      stroke-dashoffset: 0;
+    }
+  }
 
-/* Staggered fade-in animation */
-.staggered-fade-in > * {
-  animation: fadeIn 0.5s ease-in-out forwards;
-  opacity: 0;
-}
-
-.staggered-fade-in > *:nth-child(1) { animation-delay: 0.1s; }
-.staggered-fade-in > *:nth-child(2) { animation-delay: 0.2s; }
-.staggered-fade-in > *:nth-child(3) { animation-delay: 0.3s; }
-.staggered-fade-in > *:nth-child(4) { animation-delay: 0.4s; }
-.staggered-fade-in > *:nth-child(5) { animation-delay: 0.5s; }
-.staggered-fade-in > *:nth-child(6) { animation-delay: 0.6s; }
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* Energy flow animation */
-.animate-flow {
-  animation: flow 2s linear infinite;
-}
-
-@keyframes flow {
-  0% { stroke-dashoffset: 25; }
-  100% { stroke-dashoffset: 0; }
-}
-
-/* Additional global utility classes */
-.text-energy-green {
-  color: rgb(var(--color-energy-green));
-}
-
-.text-energy-blue {
-  color: rgb(var(--color-energy-blue));
-}
-
-.text-energy-purple {
-  color: rgb(var(--color-energy-purple));
-}
-
-.text-energy-orange {
-  color: rgb(var(--color-energy-orange));
-}
-
-.text-energy-red {
-  color: rgb(var(--color-energy-red));
-}
-
-.bg-energy-green {
-  background-color: rgb(var(--color-energy-green));
-}
-
-.bg-energy-blue {
-  background-color: rgb(var(--color-energy-blue));
-}
-
-.bg-energy-purple {
-  background-color: rgb(var(--color-energy-purple));
-}
-
-.bg-energy-orange {
-  background-color: rgb(var(--color-energy-orange));
-}
-
-.bg-energy-red {
-  background-color: rgb(var(--color-energy-red));
+  .animate-flow {
+    animation: flow 1s linear infinite;
+  }
 }

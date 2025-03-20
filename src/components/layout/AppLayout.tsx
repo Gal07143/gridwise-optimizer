@@ -10,7 +10,7 @@ interface AppLayoutProps {
 
 const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-slate-950">
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />

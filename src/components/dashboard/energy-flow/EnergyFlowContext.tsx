@@ -1,27 +1,22 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { EnergyNode, EnergyConnection } from './types';
 import { fetchRealtimeReadingsFromDevice } from '@/services/devices/readingsService';
 
-// Initial data
+// Initial data matching the design
 const INITIAL_NODES: EnergyNode[] = [
-  { id: 'solar', label: 'Solar Power', type: 'source', power: 75.2, status: 'active', deviceId: 'solar-1', deviceType: 'solar' },
-  { id: 'wind', label: 'Wind Power', type: 'source', power: 45.8, status: 'active', deviceId: 'wind-1', deviceType: 'wind' },
-  { id: 'grid', label: 'Grid', type: 'source', power: 32.1, status: 'active', deviceId: 'grid-1', deviceType: 'grid' },
+  { id: 'solar', label: 'Solar Power', type: 'source', power: 16.4, status: 'active', deviceId: 'solar-1', deviceType: 'solar' },
+  { id: 'wind', label: 'Wind Power', type: 'source', power: 8.2, status: 'active', deviceId: 'wind-1', deviceType: 'wind' },
   { id: 'battery', label: 'Battery Storage', type: 'storage', power: 120, status: 'active', deviceId: 'battery-1', deviceType: 'battery' },
-  { id: 'building', label: 'Main Building', type: 'consumption', power: 102.7, status: 'active', deviceId: 'load-1', deviceType: 'load' },
-  { id: 'ev', label: 'EV Charging', type: 'consumption', power: 48.3, status: 'active', deviceId: 'ev-1', deviceType: 'ev_charger' },
-  { id: 'export', label: 'Grid Export', type: 'consumption', power: 8.1, status: 'active', deviceId: 'grid-exp-1', deviceType: 'grid' },
+  { id: 'building', label: 'Main Building', type: 'consumption', power: 11.1, status: 'active', deviceId: 'load-1', deviceType: 'load' },
+  { id: 'devices', label: 'Devices', type: 'consumption', power: 2.8, status: 'active', deviceId: 'devices-1', deviceType: 'load' },
 ];
 
 const INITIAL_CONNECTIONS: EnergyConnection[] = [
-  { from: 'solar', to: 'battery', value: 35.2, active: true },
-  { from: 'solar', to: 'building', value: 40.0, active: true },
-  { from: 'wind', to: 'building', value: 25.8, active: true },
-  { from: 'wind', to: 'battery', value: 20, active: true },
-  { from: 'grid', to: 'building', value: 32.1, active: true },
-  { from: 'battery', to: 'ev', value: 48.3, active: true },
-  { from: 'battery', to: 'export', value: 8.1, active: true },
+  { from: 'solar', to: 'battery', value: 6.6, active: true },
+  { from: 'solar', to: 'building', value: 9.8, active: true },
+  { from: 'wind', to: 'battery', value: 3.5, active: true },
+  { from: 'wind', to: 'building', value: 4.7, active: true },
+  { from: 'battery', to: 'devices', value: 2.8, active: true },
 ];
 
 interface EnergyFlowContextType {
@@ -39,7 +34,7 @@ const EnergyFlowContext = createContext<EnergyFlowContextType>({
   connections: INITIAL_CONNECTIONS,
   totalGeneration: 0,
   totalConsumption: 0,
-  batteryPercentage: 0,
+  batteryPercentage: 73.6,
   selfConsumptionRate: 0,
   gridDependencyRate: 0,
 });
@@ -56,29 +51,25 @@ export const EnergyFlowProvider: React.FC<EnergyFlowProviderProps> = ({ children
   
   // Calculate derived metrics
   const totalGeneration = nodes
-    .filter(node => node.type === 'source' && node.id !== 'grid')
+    .filter(node => node.type === 'source')
     .reduce((sum, node) => sum + node.power, 0);
     
   const totalConsumption = nodes
     .filter(node => node.type === 'consumption')
     .reduce((sum, node) => sum + node.power, 0);
     
-  const gridImport = nodes.find(node => node.id === 'grid')?.power || 0;
-  
-  const batteryNode = nodes.find(node => node.id === 'battery');
-  const batteryPercentage = 68; // In a real app, this would come from the device state
+  // Fixed battery percentage to match design
+  const batteryPercentage = 73.6;
   
   // Self-consumption rate: percentage of renewable energy consumed on-site
   const selfConsumptionRate = totalGeneration > 0 
-    ? Math.min(100, ((totalGeneration - (nodes.find(n => n.id === 'export')?.power || 0)) / totalGeneration) * 100)
+    ? Math.min(100, ((totalConsumption) / totalGeneration) * 100)
     : 0;
     
   // Grid dependency rate: percentage of consumption that comes from the grid
-  const gridDependencyRate = totalConsumption > 0 
-    ? (gridImport / totalConsumption) * 100
-    : 0;
+  const gridDependencyRate = 0; // No grid in this design
   
-  // Simulating live data updates
+  // Simulating live data updates with small fluctuations
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
@@ -88,8 +79,8 @@ export const EnergyFlowProvider: React.FC<EnergyFlowProviderProps> = ({ children
         for (let i = 0; i < updatedNodes.length; i++) {
           const node = updatedNodes[i];
           
-          // Small random fluctuation (±5%)
-          const fluctuation = 1 + (Math.random() - 0.5) * 0.1;
+          // Small random fluctuation (±3%)
+          const fluctuation = 1 + (Math.random() - 0.5) * 0.06;
           
           // Apply time-of-day effects for solar
           if (node.id === 'solar') {
@@ -98,37 +89,47 @@ export const EnergyFlowProvider: React.FC<EnergyFlowProviderProps> = ({ children
             const isPeak = hour >= 10 && hour <= 15;
             
             if (!isDaytime) {
-              node.power = 0;
+              node.power = 0.1; // Minimal at night
             } else if (isPeak) {
-              node.power = node.power * fluctuation * 1.2;
+              // Keep close to 16.4 kW during peak hours
+              node.power = 16.4 * fluctuation;
             } else {
-              node.power = node.power * fluctuation * 0.8;
+              // Lower during non-peak daylight hours
+              node.power = 16.4 * fluctuation * 0.7;
             }
-          } else {
+          } else if (node.id !== 'battery') { // Don't fluctuate battery
             node.power = Math.max(0, node.power * fluctuation);
           }
         }
         
-        // Update connection values based on node changes
-        const updatedConnections = connections.map(conn => {
-          const sourceNode = updatedNodes.find(n => n.id === conn.from);
-          const targetNode = updatedNodes.find(n => n.id === conn.to);
+        // Update connection values to maintain consistent flow
+        const updatedConnections = [...connections];
+        
+        // Solar connections
+        const solarNode = updatedNodes.find(n => n.id === 'solar');
+        if (solarNode) {
+          const solarTotal = solarNode.power;
+          const solarToBattery = updatedConnections.find(c => c.from === 'solar' && c.to === 'battery');
+          const solarToBuilding = updatedConnections.find(c => c.from === 'solar' && c.to === 'building');
           
-          // Update connection value based on source node power
-          if (sourceNode && targetNode) {
-            const sourceTotalOutput = connections
-              .filter(c => c.from === sourceNode.id)
-              .reduce((sum, c) => sum + c.value, 0);
-              
-            const ratio = sourceTotalOutput > 0 ? conn.value / sourceTotalOutput : 0;
-            return {
-              ...conn,
-              value: sourceNode.power * ratio
-            };
+          if (solarToBattery && solarToBuilding) {
+            solarToBattery.value = solarTotal * 0.4;
+            solarToBuilding.value = solarTotal * 0.6;
           }
+        }
+        
+        // Wind connections
+        const windNode = updatedNodes.find(n => n.id === 'wind');
+        if (windNode) {
+          const windTotal = windNode.power;
+          const windToBattery = updatedConnections.find(c => c.from === 'wind' && c.to === 'battery');
+          const windToBuilding = updatedConnections.find(c => c.from === 'wind' && c.to === 'building');
           
-          return conn;
-        });
+          if (windToBattery && windToBuilding) {
+            windToBattery.value = windTotal * 0.43;
+            windToBuilding.value = windTotal * 0.57;
+          }
+        }
         
         setNodes(updatedNodes);
         setConnections(updatedConnections);
