@@ -91,14 +91,16 @@ export const getEnergyForecast = async (siteId: string): Promise<{
       : 85;
     
     // Get current weather from the first forecast point
-    const weather = forecastData[0]?.weather 
-      ? {
-          condition: forecastData[0].weather.condition || 'Unknown',
-          temperature: forecastData[0].weather.temperature || 0,
-          cloudCover: forecastData[0].weather.cloudCover || 0,
-          windSpeed: forecastData[0].weather.windSpeed || 0,
-        } 
-      : null;
+    let weather: WeatherCondition | null = null;
+    
+    if (forecastData[0]?.weather) {
+      weather = {
+        condition: forecastData[0].weather.condition || 'Sunny', // Default value to ensure it's not undefined
+        temperature: forecastData[0].weather.temperature ?? 0,
+        cloudCover: forecastData[0].weather.cloudCover ?? 0,
+        windSpeed: forecastData[0].weather.windSpeed ?? 0,
+      };
+    }
     
     return {
       forecastData,
@@ -144,6 +146,14 @@ export const getEnergyForecast = async (siteId: string): Promise<{
     const peakConsumption = Math.max(...forecastData.map(item => item.consumption));
     const netEnergy = totalGeneration - totalConsumption;
     
+    // Create a valid WeatherCondition object
+    const weather: WeatherCondition = {
+      condition: forecastData[0]?.weather?.condition || 'Sunny',
+      temperature: forecastData[0]?.weather?.temperature || 22,
+      cloudCover: forecastData[0]?.weather?.cloudCover || 10, 
+      windSpeed: forecastData[0]?.weather?.windSpeed || 5
+    };
+    
     return {
       forecastData,
       metrics: {
@@ -154,7 +164,7 @@ export const getEnergyForecast = async (siteId: string): Promise<{
         confidence: 85, // Default confidence for sample data
         netEnergy: Number(netEnergy.toFixed(1))
       },
-      weather: forecastData[0]?.weather || null,
+      weather,
       isLocalData: true
     };
   }

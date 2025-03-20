@@ -2,87 +2,57 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
+ 
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-
+    --foreground: 224 71.4% 4.1%;
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-
+    --card-foreground: 224 71.4% 4.1%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-
+    --popover-foreground: 224 71.4% 4.1%;
+    --primary: 262.1 83.3% 57.8%;
+    --primary-foreground: 210 20% 98%;
+    --secondary: 220 14.3% 95.9%;
+    --secondary-foreground: 220.9 39.3% 11%;
+    --muted: 220 14.3% 95.9%;
+    --muted-foreground: 220 8.9% 46.1%;
+    --accent: 220 14.3% 95.9%;
+    --accent-foreground: 220.9 39.3% 11%;
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-
+    --destructive-foreground: 210 20% 98%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 262.1 83.3% 57.8%;
     --radius: 0.5rem;
-
-    /* Energy dashboard colors */
-    --color-energy-green: #10b981;
-    --color-energy-red: #ef4444;
-    --color-energy-blue: #3b82f6;
-    --color-energy-amber: #f59e0b;
-    --color-energy-purple: #8b5cf6;
-    --color-energy-gray: #8e9196;
+    --energy-green: #2dd36f;
+    --energy-red: #eb445a;
+    --energy-purple: #7a5af8;
   }
-
+ 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
+    --background: 224 71.4% 4.1%;
+    --foreground: 210 20% 98%;
+    --card: 224 71.4% 4.1%;
+    --card-foreground: 210 20% 98%;
+    --popover: 224 71.4% 4.1%;
+    --popover-foreground: 210 20% 98%;
+    --primary: 263.4 70% 50.4%;
+    --primary-foreground: 210 20% 98%;
+    --secondary: 215 27.9% 16.9%;
+    --secondary-foreground: 210 20% 98%;
+    --muted: 215 27.9% 16.9%;
+    --muted-foreground: 217.9 10.6% 64.9%;
+    --accent: 215 27.9% 16.9%;
+    --accent-foreground: 210 20% 98%;
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-
-    /* Energy dashboard colors - dark mode */
-    --color-energy-green: #34d399;
-    --color-energy-red: #f87171;
-    --color-energy-blue: #60a5fa;
-    --color-energy-amber: #fbbf24;
-    --color-energy-purple: #a78bfa;
-    --color-energy-gray: #9ca3af;
+    --destructive-foreground: 210 20% 98%;
+    --border: 215 27.9% 16.9%;
+    --input: 215 27.9% 16.9%;
+    --ring: 263.4 70% 50.4%;
   }
 }
-
+ 
 @layer base {
   * {
     @apply border-border;
@@ -92,127 +62,55 @@
   }
 }
 
-/* Add custom animation for energy flow lines */
-@keyframes flowPattern {
-  0% {
-    stroke-dashoffset: 24;
-  }
-  100% {
-    stroke-dashoffset: 0;
-  }
-}
-
-.animate-flow {
-  animation: flowPattern 1.5s linear infinite;
-}
-
-/* Grid pattern for energy flow backgrounds */
-.grid-pattern {
-  background-image: 
-    linear-gradient(to right, rgba(128, 128, 128, 0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(128, 128, 128, 0.05) 1px, transparent 1px);
-  background-size: 20px 20px;
-}
-
-/* Glass panel gradient */
-.glass-panel {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-}
-
-/* Dark mode adjustment for glass panels */
-.dark .glass-panel {
-  background: rgba(0, 0, 0, 0.2);
-}
-
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(128, 128, 128, 0.3);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(128, 128, 128, 0.5);
-}
-
-/* Responsive improvements for small screens */
-@media (max-width: 640px) {
-  .sm-stacked {
-    flex-direction: column;
+@layer components {
+  .glass-panel {
+    @apply bg-white/40 dark:bg-slate-800/40 backdrop-blur-sm border border-white/20 dark:border-slate-700/50;
   }
   
-  .sm-full-width {
-    width: 100%;
+  .text-energy-green {
+    @apply text-[color:var(--energy-green)];
+  }
+  
+  .text-energy-red {
+    @apply text-[color:var(--energy-red)];
+  }
+  
+  .text-energy-purple {
+    @apply text-[color:var(--energy-purple)];
   }
 }
 
-/* Chart tooltip customization */
-.recharts-tooltip-wrapper .recharts-default-tooltip {
-  background-color: rgba(255, 255, 255, 0.9) !important;
-  border: 1px solid rgba(224, 224, 224, 0.5) !important;
-  border-radius: 6px !important;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
-  padding: 8px 12px !important;
-}
-
-.dark .recharts-tooltip-wrapper .recharts-default-tooltip {
-  background-color: rgba(30, 41, 59, 0.9) !important;
-  border: 1px solid rgba(51, 65, 85, 0.5) !important;
-}
-
-.recharts-tooltip-wrapper .recharts-default-tooltip .recharts-tooltip-label {
-  color: #334155 !important;
-  font-weight: 500 !important;
-  margin-bottom: 4px !important;
-}
-
-.dark .recharts-tooltip-wrapper .recharts-default-tooltip .recharts-tooltip-label {
-  color: #e2e8f0 !important;
-}
-
-.recharts-tooltip-wrapper .recharts-default-tooltip .recharts-tooltip-item {
-  color: #64748b !important;
-  font-size: 0.875rem !important;
-}
-
-.dark .recharts-tooltip-wrapper .recharts-default-tooltip .recharts-tooltip-item {
-  color: #cbd5e1 !important;
-}
-
-/* Animated entry for dashboard components */
-.animate-in {
-  animation-duration: 350ms;
-  animation-timing-function: ease-out;
-  animation-fill-mode: both;
-}
-
-.fade-in {
-  animation-name: fadeIn;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
+@layer utilities {
+  .bg-grid-pattern {
+    background-image: linear-gradient(to right, rgba(100, 116, 139, 0.1) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(100, 116, 139, 0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+  
+  /* Energy flow animations */
+  .animate-flow {
+    animation: flow 3s linear infinite;
   }
-}
-
-/* Better transitions for interactive elements */
-.transition-all {
-  transition-property: all;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;
+  
+  .animate-flow-reverse {
+    animation: flow-reverse 3s linear infinite;
+  }
+  
+  @keyframes flow {
+    0% {
+      stroke-dashoffset: 100;
+    }
+    100% {
+      stroke-dashoffset: 0;
+    }
+  }
+  
+  @keyframes flow-reverse {
+    0% {
+      stroke-dashoffset: 0;
+    }
+    100% {
+      stroke-dashoffset: 100;
+    }
+  }
 }

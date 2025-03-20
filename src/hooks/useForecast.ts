@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useSiteContext } from '@/contexts/SiteContext';
@@ -10,11 +10,12 @@ import {
   WeatherCondition 
 } from '@/services/forecasts/forecastService';
 
-const REFRESH_INTERVAL = 15000; // 15 seconds
+const REFRESH_INTERVAL = 300000; // 5 minutes
 
 export function useForecast() {
   const { activeSite } = useSiteContext();
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+  const [processedData, setProcessedData] = useState<any[]>([]);
   
   // Fetch energy forecasts using the service
   const {
@@ -36,7 +37,29 @@ export function useForecast() {
     refetchInterval: REFRESH_INTERVAL,
     refetchOnWindowFocus: false,
     enabled: !!activeSite?.id,
+    retry: 1,
+    staleTime: 240000, // 4 minutes
   });
+
+  // Process the raw forecast data into the format needed for charts
+  useEffect(() => {
+    if (!data?.forecastData || data.forecastData.length === 0) return;
+    
+    // Convert the forecast data into hourly data points for the chart
+    const hourlyData = data.forecastData.map(item => {
+      const date = new Date(item.time);
+      return {
+        time: item.time,
+        hour: `${date.getHours()}:00`,
+        generation: item.generation,
+        consumption: item.consumption,
+        netEnergy: item.netEnergy,
+        weather: item.weather
+      };
+    });
+    
+    setProcessedData(hourlyData);
+  }, [data]);
 
   // Function to manually refresh the data
   const refreshData = useCallback(() => {
@@ -45,7 +68,7 @@ export function useForecast() {
   }, [refetch]);
 
   return {
-    processedData: data?.forecastData || [],
+    processedData,
     forecastMetrics: data?.metrics || {
       totalGeneration: 0,
       totalConsumption: 0,
