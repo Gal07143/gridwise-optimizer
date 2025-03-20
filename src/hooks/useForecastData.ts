@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -40,7 +39,10 @@ export interface Prediction {
   cloudCover?: number;
   windSpeed?: number;
   weatherCondition?: string;
-  confidence: number; // Added the confidence property that was missing
+  confidence: number; // Making sure this property is defined
+  // Add these properties for compatibility with PredictionsCard
+  day?: number;
+  value?: number;
 }
 
 export function useForecastData() {
