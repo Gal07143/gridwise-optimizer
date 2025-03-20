@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { 
@@ -55,6 +54,27 @@ const EfficiencyReportContent: React.FC<EfficiencyReportContentProps> = ({ data 
     name,
     value,
   }));
+
+  // Type-safe label renderer functions that ensure they return ReactNode values
+  const renderComponentLabel = (props: any): React.ReactNode => {
+    const { name, percent } = props;
+    if (!name || typeof percent !== 'number') return null;
+    
+    const formattedName = String(name).replace(/_/g, ' ');
+    const formattedPercent = `${Math.round(percent * 100)}%`;
+    
+    return `${formattedName} ${formattedPercent}`;
+  };
+  
+  const renderLossLabel = (props: any): React.ReactNode => {
+    const { name, percent } = props;
+    if (!name || typeof percent !== 'number') return null;
+    
+    const formattedName = String(name);
+    const formattedPercent = `${Math.round(percent * 100)}%`;
+    
+    return `${formattedName} ${formattedPercent}`;
+  };
 
   return (
     <div className="space-y-6">
@@ -173,7 +193,7 @@ const EfficiencyReportContent: React.FC<EfficiencyReportContentProps> = ({ data 
                     outerRadius={80}
                     fill="#8884d8"
                     dataKey="value"
-                    label={({ name, percent }) => `${name && String(name).replace(/_/g, ' ')} ${percent && (percent * 100).toFixed(0)}%`}
+                    label={renderComponentLabel}
                   >
                     {componentPieData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -215,7 +235,7 @@ const EfficiencyReportContent: React.FC<EfficiencyReportContentProps> = ({ data 
                     outerRadius={80}
                     fill="#FF8042"
                     dataKey="value"
-                    label={({ name, percent }) => `${name && String(name)} ${percent && (percent * 100).toFixed(0)}%`}
+                    label={renderLossLabel}
                   >
                     {lossData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
