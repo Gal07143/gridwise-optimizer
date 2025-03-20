@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { EnergyForecast } from '@/types/energy';
 import { generateEnergyPredictions } from '@/services/energyAIPredictionService';
 import { getWeatherForecast } from '@/services/weatherService';
-import { useSiteContext } from '@/contexts/SiteContext';
+import { useSite, useSiteContext } from '@/contexts/SiteContext';
 import { generateSampleForecasts } from '@/services/forecasts/sampleGenerator';
 
 const REFRESH_INTERVAL = 15000; // 15 seconds
@@ -29,6 +29,18 @@ export interface ForecastMetrics {
   peakGeneration: number;
   peakConsumption: number;
   confidence: number;
+  netEnergy?: number; // Add this missing property
+}
+
+export interface Prediction {
+  date: string;
+  generation: number;
+  consumption: number;
+  temperature?: number;
+  cloudCover?: number;
+  windSpeed?: number;
+  weatherCondition?: string;
+  confidence?: number; // Add this missing property
 }
 
 export function useForecastData() {
@@ -41,6 +53,7 @@ export function useForecastData() {
     peakGeneration: 0,
     peakConsumption: 0,
     confidence: 85,
+    netEnergy: 0 // Add the missing property
   });
   const [currentWeather, setCurrentWeather] = useState<{
     condition: string;
@@ -77,6 +90,7 @@ export function useForecastData() {
           cloudCover: forecast.cloud_cover,
           windSpeed: forecast.wind_speed,
           weatherCondition: forecast.weather_condition,
+          confidence: forecast.confidence || 85, // Add default confidence
         }));
       }
     },
@@ -130,6 +144,7 @@ export function useForecastData() {
       const totalConsumption = transformed.reduce((sum, item) => sum + item.consumption, 0);
       const peakGeneration = Math.max(...transformed.map(item => item.generation));
       const peakConsumption = Math.max(...transformed.map(item => item.consumption));
+      const netEnergy = totalGeneration - totalConsumption;
       
       setForecastMetrics({
         totalGeneration: Number(totalGeneration.toFixed(1)),
@@ -137,6 +152,7 @@ export function useForecastData() {
         peakGeneration: Number(peakGeneration.toFixed(1)),
         peakConsumption: Number(peakConsumption.toFixed(1)),
         confidence: Math.round((forecastData[0]?.confidence || 85)),
+        netEnergy: Number(netEnergy.toFixed(1))
       });
 
       // Set current weather from the first forecast item

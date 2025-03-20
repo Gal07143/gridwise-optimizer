@@ -1,6 +1,7 @@
+
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
-import { MicrogridDevice, MicrogridAlert, MicrogridSystemState } from './types';
-import { useSiteContext } from '@/contexts/SiteContext';
+import { MicrogridDevice, MicrogridAlert, MicrogridSystemState, MicrogridState, ControlSettings, CommandHistoryItem, AlertItem } from './types';
+import { useSite, useSiteContext } from '@/contexts/SiteContext';
 import { toast } from 'sonner';
 
 // Refresh interval in milliseconds (15 seconds)
@@ -17,6 +18,17 @@ interface MicrogridContextType {
   sendCommand: (deviceId: string, command: string, params?: any) => Promise<boolean>;
   dismissAlert: (alertId: string) => void;
   loadCommandHistory: (deviceId: string) => Promise<any[]>;
+  
+  // Add properties required by MicrogridTabContent
+  microgridState: MicrogridState;
+  settings: ControlSettings;
+  commandHistory: CommandHistoryItem[];
+  handleAcknowledgeAlert: (alertId: string) => void;
+  handleModeChange: (mode: string) => void;
+  handleGridConnectionToggle: () => void;
+  handleBatteryDischargeToggle: () => void;
+  handleSettingsChange: (setting: string, value: any) => void;
+  handleSaveSettings: () => void;
 }
 
 const MicrogridContext = createContext<MicrogridContextType | undefined>(undefined);
@@ -126,6 +138,59 @@ export const MicrogridProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     energyExport: true,
     safetyProtocols: true,
   });
+  
+  // Add the missing state objects needed by MicrogridTabContent
+  const [microgridState, setMicrogridState] = useState<MicrogridState>({
+    batteryChargeEnabled: true,
+    batteryDischargeEnabled: true,
+    gridImportEnabled: true,
+    gridExportEnabled: true,
+    solarProduction: 3.2,
+    windProduction: 1.8,
+    batteryLevel: 65,
+    batteryChargeRate: 2.5,
+    batterySelfConsumptionMode: true,
+    systemMode: 'automatic',
+    economicMode: true,
+    peakShavingEnabled: true,
+    demandResponseEnabled: false,
+    lastUpdated: new Date().toISOString(),
+    operatingMode: 'automatic',
+    gridConnection: true,
+    batteryCharge: 65,
+    loadConsumption: 4.2,
+    gridImport: 1.5,
+    gridExport: 0.8,
+    frequency: 50,
+    voltage: 230
+  });
+  
+  const [settings, setSettings] = useState<ControlSettings>({
+    prioritizeSelfConsumption: true,
+    gridExportLimit: 10,
+    minBatteryReserve: 20,
+    peakShavingEnabled: true,
+    peakShavingThreshold: 5,
+    demandResponseEnabled: false,
+    economicOptimizationEnabled: true,
+    weatherPredictiveControlEnabled: true
+  });
+  
+  const [commandHistory, setCommandHistory] = useState<CommandHistoryItem[]>([
+    {
+      timestamp: new Date().toISOString(),
+      command: "Battery discharge enabled",
+      success: true,
+      user: "Admin"
+    },
+    {
+      timestamp: new Date(Date.now() - 3600000).toISOString(),
+      command: "Grid export disabled",
+      success: true,
+      user: "System"
+    }
+  ]);
+  
   const [isLoading, setIsLoading] = useState(true);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
 
@@ -143,6 +208,15 @@ export const MicrogridProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setDevices(fetchedDevices);
       setAlerts(fetchedAlerts);
       setSystemState(fetchedSystemState);
+      
+      // Update microgrid state based on fetched data
+      setMicrogridState(prev => ({
+        ...prev,
+        gridConnection: fetchedSystemState.gridConnected,
+        operatingMode: fetchedSystemState.mode as any,
+        lastUpdated: new Date().toISOString()
+      }));
+      
     } catch (error) {
       console.error('Error loading microgrid data:', error);
       toast.error('Failed to load microgrid data');
@@ -192,6 +266,15 @@ export const MicrogridProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           return d;
         });
         setDevices(updatedDevices);
+        
+        // Add to command history
+        const newCommand: CommandHistoryItem = {
+          timestamp: new Date().toISOString(),
+          command: command,
+          success: true,
+          user: "User"
+        };
+        setCommandHistory(prev => [newCommand, ...prev]);
 
         resolve(true);
       }, 500);
@@ -202,7 +285,7 @@ export const MicrogridProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     // Simulate dismissing an alert
     setAlerts((prevAlerts) => prevAlerts.filter((alert) => alert.id !== alertId));
     toast.success('Alert dismissed');
-  }, [alerts, setAlerts]);
+  }, []);
 
   const loadCommandHistory = useCallback(async (deviceId: string): Promise<any[]> => {
     // Simulate fetching command history for a device
@@ -226,6 +309,94 @@ export const MicrogridProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       }, 300);
     });
   }, []);
+  
+  // Add the missing handler functions needed by MicrogridTabContent
+  const handleAcknowledgeAlert = useCallback((alertId: string) => {
+    setAlerts(prevAlerts => 
+      prevAlerts.map(alert => 
+        alert.id === alertId ? { ...alert, acknowledged: true } : alert
+      )
+    );
+    toast.success('Alert acknowledged');
+  }, []);
+  
+  const handleModeChange = useCallback((mode: string) => {
+    setMicrogridState(prev => ({
+      ...prev,
+      operatingMode: mode as any,
+      lastUpdated: new Date().toISOString()
+    }));
+    toast.success(`Mode changed to ${mode}`);
+    
+    // Add to command history
+    const newCommand: CommandHistoryItem = {
+      timestamp: new Date().toISOString(),
+      command: `Mode changed to ${mode}`,
+      success: true,
+      user: "User"
+    };
+    setCommandHistory(prev => [newCommand, ...prev]);
+  }, []);
+  
+  const handleGridConnectionToggle = useCallback(() => {
+    setMicrogridState(prev => ({
+      ...prev,
+      gridConnection: !prev.gridConnection,
+      lastUpdated: new Date().toISOString()
+    }));
+    
+    const newState = !microgridState.gridConnection;
+    toast.success(`Grid connection ${newState ? 'enabled' : 'disabled'}`);
+    
+    // Add to command history
+    const newCommand: CommandHistoryItem = {
+      timestamp: new Date().toISOString(),
+      command: `Grid connection ${newState ? 'enabled' : 'disabled'}`,
+      success: true,
+      user: "User"
+    };
+    setCommandHistory(prev => [newCommand, ...prev]);
+  }, [microgridState.gridConnection]);
+  
+  const handleBatteryDischargeToggle = useCallback(() => {
+    setMicrogridState(prev => ({
+      ...prev,
+      batteryDischargeEnabled: !prev.batteryDischargeEnabled,
+      lastUpdated: new Date().toISOString()
+    }));
+    
+    const newState = !microgridState.batteryDischargeEnabled;
+    toast.success(`Battery discharge ${newState ? 'enabled' : 'disabled'}`);
+    
+    // Add to command history
+    const newCommand: CommandHistoryItem = {
+      timestamp: new Date().toISOString(),
+      command: `Battery discharge ${newState ? 'enabled' : 'disabled'}`,
+      success: true,
+      user: "User"
+    };
+    setCommandHistory(prev => [newCommand, ...prev]);
+  }, [microgridState.batteryDischargeEnabled]);
+  
+  const handleSettingsChange = useCallback((setting: string, value: any) => {
+    setSettings(prev => ({
+      ...prev,
+      [setting]: value
+    }));
+  }, []);
+  
+  const handleSaveSettings = useCallback(() => {
+    toast.success('Settings saved successfully');
+    
+    // Add to command history
+    const newCommand: CommandHistoryItem = {
+      timestamp: new Date().toISOString(),
+      command: "Settings updated",
+      success: true,
+      user: "User"
+    };
+    setCommandHistory(prev => [newCommand, ...prev]);
+  }, []);
 
   const value = {
     devices,
@@ -238,6 +409,16 @@ export const MicrogridProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     sendCommand,
     dismissAlert,
     loadCommandHistory,
+    // Add the missing properties and functions needed by MicrogridTabContent
+    microgridState,
+    settings,
+    commandHistory,
+    handleAcknowledgeAlert,
+    handleModeChange,
+    handleGridConnectionToggle, 
+    handleBatteryDischargeToggle,
+    handleSettingsChange,
+    handleSaveSettings
   };
 
   return (

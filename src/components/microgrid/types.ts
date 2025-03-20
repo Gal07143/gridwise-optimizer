@@ -51,3 +51,36 @@ export interface AlertItem {
   severity: 'low' | 'medium' | 'high';
   acknowledged: boolean;
 }
+
+// Additional types needed for MicrogridProvider
+export interface MicrogridDevice {
+  id: string;
+  name: string;
+  type: string;
+  status: string;
+  location: string;
+  capacity: number;
+  site_id: string;
+  last_updated: string;
+  created_at: string;
+}
+
+export interface MicrogridAlert {
+  id: string;
+  device_id: string;
+  type: string;
+  message: string;
+  timestamp: string;
+  acknowledged: boolean;
+}
+
+export interface MicrogridSystemState {
+  mode: string;
+  status: string;
+  gridConnected: boolean;
+  lastModeChange: string;
+  batteryReserve: number;
+  prioritizeRenewables: boolean;
+  energyExport: boolean;
+  safetyProtocols: boolean;
+}

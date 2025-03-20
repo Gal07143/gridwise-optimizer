@@ -17,6 +17,8 @@ export interface EnergyConnection {
   active: boolean;
 }
 
+export type NodeConnection = EnergyConnection;
+
 export interface EnergyFlowChartProps {
   className?: string;
   animationDelay?: string;

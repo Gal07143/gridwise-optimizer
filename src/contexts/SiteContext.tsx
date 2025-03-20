@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Site } from '@/types/energy';
@@ -9,6 +10,7 @@ interface SiteContextType {
   isLoading: boolean;
   error: Error | null;
   setCurrentSite: (site: Site) => void;
+  activeSite: Site | null; // Add alias for backward compatibility
 }
 
 const SiteContext = createContext<SiteContextType | undefined>(undefined);
@@ -57,6 +59,7 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isLoading,
         error: error as Error | null,
         setCurrentSite,
+        activeSite: currentSite, // Add alias for backward compatibility
       }}
     >
       {children}
@@ -71,3 +74,6 @@ export const useSite = (): SiteContextType => {
   }
   return context;
 };
+
+// Add this for backward compatibility
+export const useSiteContext = useSite;

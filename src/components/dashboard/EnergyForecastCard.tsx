@@ -64,7 +64,7 @@ const EnergyForecastCard = ({ className, animationDelay }: EnergyForecastCardPro
       icon={<LineChart size={18} />}
       className={className}
       style={animationDelay ? { animationDelay } : undefined}
-      action={
+      actions={
         <div className="flex items-center gap-2">
           {currentWeather && (
             <Badge variant="outline" className="flex items-center gap-1">
