@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { 
@@ -173,7 +172,7 @@ const EfficiencyReportContent: React.FC<EfficiencyReportContentProps> = ({ data 
                     outerRadius={80}
                     fill="#8884d8"
                     dataKey="value"
-                    label={({ name, percent }) => `${name.replace(/_/g, ' ')} ${(percent * 100).toFixed(0)}%`}
+                    label={({ name, percent }) => `${String(name).replace(/_/g, ' ')} ${(percent * 100).toFixed(0)}%`}
                   >
                     {componentPieData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -188,7 +187,7 @@ const EfficiencyReportContent: React.FC<EfficiencyReportContentProps> = ({ data 
               {Object.entries(byComponent).map(([key, value], index) => (
                 <div key={key} className="space-y-1">
                   <div className="flex justify-between text-sm">
-                    <span className="capitalize">{key.replace(/_/g, ' ')}</span>
+                    <span className="capitalize">{String(key).replace(/_/g, ' ')}</span>
                     <span className="font-medium">{value}%</span>
                   </div>
                   <Progress value={Number(value)} className="h-2" />
@@ -215,7 +214,7 @@ const EfficiencyReportContent: React.FC<EfficiencyReportContentProps> = ({ data 
                     outerRadius={80}
                     fill="#FF8042"
                     dataKey="value"
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    label={({ name, percent }) => `${String(name)} ${(percent * 100).toFixed(0)}%`}
                   >
                     {lossData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -249,7 +248,7 @@ const EfficiencyReportContent: React.FC<EfficiencyReportContentProps> = ({ data 
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {data.improvement_opportunities.map((opp, index) => (
+              {data.improvement_opportunities.map((opp: any, index: number) => (
                 <div key={index} className="border rounded-lg p-4">
                   <div className="flex justify-between items-start">
                     <div>

@@ -21,7 +21,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
-import { AlertTriangle, CheckCircle, Info, Tool, Zap } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Info, Wrench, Zap } from 'lucide-react';
 
 interface PerformanceReportContentProps {
   data: any;
@@ -117,7 +117,7 @@ const PerformanceReportContent: React.FC<PerformanceReportContentProps> = ({ dat
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {data.devices.map((device, index) => (
+              {data.devices.map((device: any, index: number) => (
                 <div key={index} className="border rounded-lg p-4">
                   <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-3">
                     <div>
@@ -254,7 +254,12 @@ const PerformanceReportContent: React.FC<PerformanceReportContentProps> = ({ dat
           </CardHeader>
           <CardContent>
             <div className="mb-6">
-              <ChartContainer className="h-[200px]">
+              <ChartContainer 
+                config={{
+                  metrics: { theme: { light: "#8884d8", dark: "#9575CD" }, label: "Metrics" }
+                }}
+                className="h-[200px]"
+              >
                 <ResponsiveContainer width="100%" height="100%">
                   <RadarChart outerRadius={90} data={[
                     { 
@@ -320,7 +325,7 @@ const PerformanceReportContent: React.FC<PerformanceReportContentProps> = ({ dat
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {data.maintenance_items.map((item, index) => (
+              {data.maintenance_items.map((item: any, index: number) => (
                 <div key={index} className="border rounded-lg p-4">
                   <div className="flex justify-between items-start">
                     <div>
@@ -339,7 +344,7 @@ const PerformanceReportContent: React.FC<PerformanceReportContentProps> = ({ dat
                   </div>
                   <div className="flex items-center gap-4 mt-2 text-sm">
                     <div className="flex items-center">
-                      <Tool className="h-4 w-4 mr-1" />
+                      <Wrench className="h-4 w-4 mr-1" />
                       <span>Due: {item.due_date}</span>
                     </div>
                   </div>

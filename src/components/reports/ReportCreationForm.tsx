@@ -80,12 +80,14 @@ const ReportCreationForm: React.FC<ReportCreationFormProps> = ({ onClose, onSucc
       }
       
       const reportData = {
-        ...data,
         site_id: currentSite.id,
         created_by: 'current-user', // In a real app, this would be the actual user ID
-        // Ensure required fields are present
         type: data.type || 'energy_consumption',  
         title: data.title,
+        description: data.description,
+        is_template: data.is_template,
+        schedule: data.schedule,
+        parameters: data.parameters || {},
       };
       
       await createReport(reportData);

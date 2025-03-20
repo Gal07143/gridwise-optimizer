@@ -40,7 +40,9 @@ const routes: RouteObject[] = [
     element: <Auth />
   },
   {
-    element: <ProtectedRoute />,
+    element: <ProtectedRoute>
+      {/* Protected routes will be rendered as children */}
+    </ProtectedRoute>,
     children: [
       {
         path: "/dashboard",
@@ -107,12 +109,12 @@ const routes: RouteObject[] = [
 ];
 
 const App = () => {
-  const { user, checkAuthentication } = useAuth();
+  const { user, checkAuth } = useAuth();
   const { currentSite, setCurrentSite } = useSite();
   
   useEffect(() => {
-    checkAuthentication();
-  }, [checkAuthentication]);
+    checkAuth();
+  }, [checkAuth]);
   
   useEffect(() => {
     const storedSiteId = localStorage.getItem('currentSiteId');
