@@ -26,8 +26,6 @@ const EnergyFlow = () => {
               variant="outline"
               className="h-9"
               onClick={() => navigate('/analytics')}
-              as={Link}
-              to="/analytics"
             >
               View Analytics
             </Button>
@@ -35,8 +33,6 @@ const EnergyFlow = () => {
               variant="default"
               className="h-9"
               onClick={() => navigate('/microgrid-control')}
-              as={Link}
-              to="/microgrid-control"
             >
               Control System
             </Button>

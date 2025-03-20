@@ -43,19 +43,13 @@ const Analytics = () => {
   return (
     <AppLayout>
       <div className="animate-in fade-in duration-500 p-6">
-        <AnalyticsHeader 
-          siteName={currentSite?.name || 'Loading...'}
-          siteLastUpdated={new Date().toISOString()}
-        />
+        <AnalyticsHeader />
         
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-2">
-          <TimeframeSelector value={timeframe} onChange={setTimeframe} />
+          <TimeframeSelector />
           
           <div className="flex items-center gap-2">
-            <ComparisonToggle
-              checked={showComparison}
-              onCheckedChange={setShowComparison}
-            />
+            <ComparisonToggle />
             
             <Button
               variant="outline"
@@ -90,34 +84,19 @@ const Analytics = () => {
           </TabsList>
           
           <TabsContent value="generation" className="space-y-4">
-            <GenerationTab 
-              timeframe={timeframe}
-              showComparison={showComparison}
-              siteId={currentSite?.id || ''}
-            />
+            <GenerationTab />
           </TabsContent>
           
           <TabsContent value="consumption" className="space-y-4">
-            <ConsumptionTab 
-              timeframe={timeframe}
-              showComparison={showComparison}
-              siteId={currentSite?.id || ''}
-            />
+            <ConsumptionTab />
           </TabsContent>
           
           <TabsContent value="cost" className="space-y-4">
-            <CostTab 
-              timeframe={timeframe}
-              showComparison={showComparison}
-              siteId={currentSite?.id || ''}
-            />
+            <CostTab />
           </TabsContent>
           
           <TabsContent value="insights" className="space-y-4">
-            <InsightsTab 
-              timeframe={timeframe}
-              siteId={currentSite?.id || ''}
-            />
+            <InsightsTab />
           </TabsContent>
         </Tabs>
       </div>
