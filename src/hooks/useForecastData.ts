@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -39,9 +40,8 @@ export interface Prediction {
   cloudCover?: number;
   windSpeed?: number;
   weatherCondition?: string;
-  confidence: number; // Making sure this property is defined
-  // Add these properties for compatibility with PredictionsCard
-  day?: number;
+  confidence: number;
+  day?: string;
   value?: number;
 }
 
@@ -92,7 +92,7 @@ export function useForecastData() {
           cloudCover: forecast.cloud_cover,
           windSpeed: forecast.wind_speed,
           weatherCondition: forecast.weather_condition,
-          confidence: forecast.confidence || 85, // Ensure confidence is always provided
+          confidence: forecast.confidence || 85,
         }));
       }
     },
@@ -148,12 +148,17 @@ export function useForecastData() {
       const peakConsumption = Math.max(...transformed.map(item => item.consumption));
       const netEnergy = totalGeneration - totalConsumption;
       
+      // Use the confidence value from the first forecast point if available, default to 85
+      const confidenceValue = typeof forecastData[0]?.confidence === 'number' 
+        ? forecastData[0].confidence 
+        : 85;
+      
       setForecastMetrics({
         totalGeneration: Number(totalGeneration.toFixed(1)),
         totalConsumption: Number(totalConsumption.toFixed(1)),
         peakGeneration: Number(peakGeneration.toFixed(1)),
         peakConsumption: Number(peakConsumption.toFixed(1)),
-        confidence: Math.round(forecastData[0]?.confidence || 85),
+        confidence: Math.round(confidenceValue),
         netEnergy: Number(netEnergy.toFixed(1))
       });
 
