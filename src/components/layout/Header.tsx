@@ -31,7 +31,7 @@ const Header = () => {
   };
 
   const handleAddDevice = () => {
-    navigate('/devices/add');
+    navigate('/add-device');
   };
 
   return (
@@ -139,6 +139,9 @@ const Header = () => {
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <Link to="/settings/preferences">Preferences</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/security">Security</Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleSignOut}>

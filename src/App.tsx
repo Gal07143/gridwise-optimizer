@@ -23,6 +23,11 @@ import Auth from './pages/Auth';
 import { Toaster } from 'sonner';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import SiteSettings from './pages/settings/SiteSettings';
+import Security from './pages/Security';
+import Alerts from './pages/Alerts';
+import Encryption from './pages/settings/Encryption';
+import Permissions from './pages/settings/Permissions';
+import ExternalServices from './pages/settings/ExternalServices';
 
 // Create a client
 const queryClient = new QueryClient();
@@ -39,6 +44,9 @@ function App() {
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
               <Route path="/settings/sites" element={<ProtectedRoute><SiteSettings /></ProtectedRoute>} />
+              <Route path="/settings/encryption" element={<ProtectedRoute><Encryption /></ProtectedRoute>} />
+              <Route path="/settings/permissions" element={<ProtectedRoute><Permissions /></ProtectedRoute>} />
+              <Route path="/settings/external-services" element={<ProtectedRoute><ExternalServices /></ProtectedRoute>} />
               <Route path="/reports" element={<ProtectedRoute><ReportsPage /></ProtectedRoute>} />
               <Route path="/energy-flow" element={<ProtectedRoute><EnergyFlow /></ProtectedRoute>} />
               <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
@@ -47,6 +55,8 @@ function App() {
               <Route path="/edit-device/:id" element={<ProtectedRoute><EditDevice /></ProtectedRoute>} />
               <Route path="/add-device" element={<ProtectedRoute><AddDevice /></ProtectedRoute>} />
               <Route path="/devices" element={<ProtectedRoute><Devices /></ProtectedRoute>} />
+              <Route path="/security" element={<ProtectedRoute><Security /></ProtectedRoute>} />
+              <Route path="/alerts" element={<ProtectedRoute><Alerts /></ProtectedRoute>} />
               
               {/* Integration Routes */}
               <Route path="/integrations" element={<ProtectedRoute><IntegrationsHome /></ProtectedRoute>} />

@@ -1,689 +1,288 @@
 import React, { useState } from 'react';
 import AppLayout from '@/components/layout/AppLayout';
-import GlassPanel from '@/components/ui/GlassPanel';
-import { Shield, Lock, UserCheck, AlertTriangle, Key, Fingerprint, Eye, EyeOff, HistoryIcon, Clock, Calendar, RefreshCw, CheckCircle2, XCircle, Search } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Shield, Lock, Users, Activity, FileText, AlertTriangle, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger
-} from '@/components/ui/tabs';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
+import { Progress } from '@/components/ui/progress';
+import { format } from 'date-fns';
 
-// Mock data for security events
-const securityEvents = [
+// Mock security audit data
+const securityAudits = [
   {
-    id: 'evt-001',
-    timestamp: '2023-12-15T10:30:42Z',
-    type: 'authentication',
-    action: 'login_success',
-    user: 'admin@example.com',
-    source: '192.168.1.105',
-    details: 'Successful login via web interface'
+    id: 1,
+    event: "User Login Attempt",
+    user: "admin@example.com",
+    ip: "192.168.1.105",
+    timestamp: new Date(Date.now() - 1000 * 60 * 5),
+    status: "success"
   },
   {
-    id: 'evt-002',
-    timestamp: '2023-12-15T08:15:22Z',
-    type: 'authentication',
-    action: 'login_failed',
-    user: 'user@example.com',
-    source: '192.168.1.120',
-    details: 'Failed login attempt (incorrect password)'
+    id: 2,
+    event: "Password Changed",
+    user: "operator@example.com",
+    ip: "192.168.1.120",
+    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
+    status: "success"
   },
   {
-    id: 'evt-003',
-    timestamp: '2023-12-14T16:42:10Z',
-    type: 'authorization',
-    action: 'permission_denied',
-    user: 'guest@example.com',
-    source: '192.168.1.130',
-    details: 'Attempted to access admin settings'
+    id: 3,
+    event: "Failed Login Attempt",
+    user: "unknown",
+    ip: "203.0.113.42",
+    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 6),
+    status: "failure"
   },
   {
-    id: 'evt-004',
-    timestamp: '2023-12-14T12:10:05Z',
-    type: 'system',
-    action: 'settings_changed',
-    user: 'admin@example.com',
-    source: '192.168.1.105',
-    details: 'Security settings updated'
+    id: 4,
+    event: "User Role Modified",
+    user: "technician@example.com",
+    ip: "192.168.1.110",
+    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24),
+    status: "success"
   },
   {
-    id: 'evt-005',
-    timestamp: '2023-12-13T09:30:18Z',
-    type: 'system',
-    action: 'firmware_updated',
-    user: 'system',
-    source: 'localhost',
-    details: 'Security firmware updated to v2.3.4'
+    id: 5,
+    event: "API Key Generated",
+    user: "admin@example.com",
+    ip: "192.168.1.105",
+    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2),
+    status: "success"
   }
 ];
 
-// Mock data for active sessions
-const activeSessions = [
-  {
-    id: 'sess-001',
-    user: 'admin@example.com',
-    device: 'MacBook Pro',
-    browser: 'Chrome 119.0',
-    ip: '192.168.1.105',
-    location: 'San Francisco, CA',
-    loginTime: '2023-12-15T10:30:42Z',
-    lastActive: '2023-12-15T11:45:22Z'
-  },
-  {
-    id: 'sess-002',
-    user: 'user@example.com',
-    device: 'iPhone 14',
-    browser: 'Safari 16.0',
-    ip: '192.168.1.120',
-    location: 'San Francisco, CA',
-    loginTime: '2023-12-15T11:05:18Z',
-    lastActive: '2023-12-15T11:42:08Z'
-  },
-  {
-    id: 'sess-003',
-    user: 'admin@example.com',
-    device: 'Windows PC',
-    browser: 'Edge 109.0',
-    ip: '203.0.113.42',
-    location: 'New York, NY',
-    loginTime: '2023-12-15T08:22:10Z',
-    lastActive: '2023-12-15T10:15:45Z'
-  }
-];
-
-// Mock data for security threats
-const securityThreats = [
-  {
-    id: 'threat-001',
-    timestamp: '2023-12-15T06:42:18Z',
-    severity: 'medium',
-    type: 'suspicious_login',
-    status: 'investigating',
-    source: '203.0.113.100',
-    details: 'Multiple failed login attempts detected'
-  },
-  {
-    id: 'threat-002',
-    timestamp: '2023-12-14T22:15:30Z',
-    severity: 'high',
-    type: 'api_abuse',
-    status: 'mitigated',
-    source: '198.51.100.75',
-    details: 'Unusual API request pattern detected and blocked'
-  }
+// Security score details
+const securityScores = [
+  { name: "Access Controls", score: 85, recommendation: "Enable multi-factor authentication for all admin accounts" },
+  { name: "Data Encryption", score: 92, recommendation: null },
+  { name: "User Permissions", score: 78, recommendation: "Review role-based access control settings for operator accounts" },
+  { name: "System Updates", score: 95, recommendation: null },
+  { name: "Vulnerability Management", score: 70, recommendation: "Schedule a security audit for API endpoints" }
 ];
 
 const Security = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [timeRange, setTimeRange] = useState('24h');
+  const [activeTab, setActiveTab] = useState('overview');
   
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString();
-  };
-  
-  const timeSince = (dateString: string) => {
-    const now = new Date();
-    const date = new Date(dateString);
-    const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-    
-    let interval = seconds / 3600;
-    if (interval > 24) {
-      return Math.floor(interval / 24) + "d ago";
-    }
-    if (interval > 1) {
-      return Math.floor(interval) + "h ago";
-    }
-    interval = seconds / 60;
-    if (interval > 1) {
-      return Math.floor(interval) + "m ago";
-    }
-    return Math.floor(seconds) + "s ago";
-  };
-  
-  const SecurityStat = ({ 
-    icon: Icon, 
-    title, 
-    value, 
-    status,
-    detail
-  }: { 
-    icon: React.ElementType; 
-    title: string; 
-    value: string | number;
-    status: 'good' | 'warning' | 'critical';
-    detail?: string;
-  }) => (
-    <div className="flex items-center bg-card p-4 rounded-lg border">
-      <div className={`p-3 rounded-full ${
-        status === 'good' ? 'bg-green-500/10' : 
-        status === 'warning' ? 'bg-amber-500/10' : 
-        'bg-destructive/10'
-      }`}>
-        <Icon className={`h-5 w-5 ${
-          status === 'good' ? 'text-green-500' : 
-          status === 'warning' ? 'text-amber-500' : 
-          'text-destructive'
-        }`} />
-      </div>
-      <div className="ml-4">
-        <div className="text-sm font-medium">{title}</div>
-        <div className="text-lg font-bold">
-          {value}
-          {detail && (
-            <span className="text-xs font-normal text-muted-foreground ml-2">
-              {detail}
-            </span>
-          )}
-        </div>
-      </div>
-    </div>
+  // Calculate overall security score
+  const overallScore = Math.round(
+    securityScores.reduce((sum, item) => sum + item.score, 0) / securityScores.length
   );
-  
-  const EventTypeBadge = ({ type }: { type: string }) => {
-    switch (type) {
-      case 'authentication':
-        return <Badge variant="outline" className="bg-blue-500/10 text-blue-500 border-blue-500/20">Authentication</Badge>;
-      case 'authorization':
-        return <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/20">Authorization</Badge>;
-      case 'system':
-        return <Badge variant="outline" className="bg-indigo-500/10 text-indigo-500 border-indigo-500/20">System</Badge>;
-      default:
-        return <Badge variant="outline">{type}</Badge>;
-    }
+
+  const getScoreColor = (score: number) => {
+    if (score >= 90) return "text-green-500";
+    if (score >= 70) return "text-amber-500";
+    return "text-red-500";
   };
-  
-  const SecurityLevel = ({ level }: { level: string }) => {
-    switch (level) {
-      case 'high':
-        return <Badge className="bg-green-500">{level}</Badge>;
-      case 'medium':
-        return <Badge className="bg-amber-500">{level}</Badge>;
-      case 'low':
-        return <Badge variant="destructive">{level}</Badge>;
-      default:
-        return <Badge>{level}</Badge>;
-    }
+
+  const getProgressColor = (score: number) => {
+    if (score >= 90) return "bg-green-500";
+    if (score >= 70) return "bg-amber-500";
+    return "bg-red-500";
   };
-  
-  const SeverityBadge = ({ severity }: { severity: string }) => {
-    switch (severity) {
-      case 'low':
-        return <Badge className="bg-blue-500">{severity}</Badge>;
-      case 'medium':
-        return <Badge className="bg-amber-500">{severity}</Badge>;
-      case 'high':
-        return <Badge variant="destructive">{severity}</Badge>;
-      default:
-        return <Badge>{severity}</Badge>;
-    }
-  };
-  
-  const ActionBadge = ({ action }: { action: string }) => {
-    switch (action) {
-      case 'login_success':
-        return <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">Login Success</Badge>;
-      case 'login_failed':
-        return <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20">Login Failed</Badge>;
-      case 'permission_denied':
-        return <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/20">Permission Denied</Badge>;
-      case 'settings_changed':
-        return <Badge variant="outline" className="bg-blue-500/10 text-blue-500 border-blue-500/20">Settings Changed</Badge>;
-      case 'firmware_updated':
-        return <Badge variant="outline" className="bg-indigo-500/10 text-indigo-500 border-indigo-500/20">Firmware Updated</Badge>;
-      default:
-        return <Badge variant="outline">{action}</Badge>;
-    }
-  };
-  
+
   return (
     <AppLayout>
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-semibold mb-1">Security Dashboard</h1>
-          <p className="text-muted-foreground">
-            Monitor system security, access control, and threat detection
-          </p>
+      <div className="p-6">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-2xl font-semibold mb-1">Security Center</h1>
+            <p className="text-muted-foreground">Manage and monitor system security</p>
+          </div>
+          <Button>
+            <Shield className="mr-2 h-4 w-4" />
+            Run Security Scan
+          </Button>
         </div>
-        
-        <div className="flex items-center space-x-2">
-          <Select
-            defaultValue={timeRange}
-            onValueChange={setTimeRange}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Select time range" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="1h">Last Hour</SelectItem>
-              <SelectItem value="24h">Last 24 Hours</SelectItem>
-              <SelectItem value="7d">Last 7 Days</SelectItem>
-              <SelectItem value="30d">Last 30 Days</SelectItem>
-            </SelectContent>
-          </Select>
-          
-          <Button variant="outline">Export Report</Button>
-        </div>
-      </div>
-      
-      <div className="grid gap-6 grid-cols-1 md:grid-cols-4 mb-6">
-        <SecurityStat 
-          icon={Shield} 
-          title="Security Level" 
-          value="High" 
-          status="good"
-          detail="All systems secure"
-        />
-        
-        <SecurityStat 
-          icon={AlertTriangle} 
-          title="Active Threats" 
-          value={securityThreats.filter(t => t.status !== 'mitigated').length} 
-          status={securityThreats.filter(t => t.status !== 'mitigated').length > 0 ? 'warning' : 'good'}
-          detail="Under investigation"
-        />
-        
-        <SecurityStat 
-          icon={UserCheck} 
-          title="Active Sessions" 
-          value={activeSessions.length} 
-          status="good"
-        />
-        
-        <SecurityStat 
-          icon={Lock} 
-          title="Failed Logins" 
-          value="2" 
-          status="warning"
-          detail="Last 24 hours"
-        />
-      </div>
-      
-      <Tabs defaultValue="events" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="events" className="flex items-center gap-2">
-            <HistoryIcon className="h-4 w-4" />
-            Security Events
-          </TabsTrigger>
-          <TabsTrigger value="sessions" className="flex items-center gap-2">
-            <UserCheck className="h-4 w-4" />
-            Active Sessions
-          </TabsTrigger>
-          <TabsTrigger value="threats" className="flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4" />
-            Threats
-          </TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="events">
-          <GlassPanel>
-            <div className="p-4 border-b border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div className="flex items-center">
-                <HistoryIcon className="h-5 w-5 text-primary mr-2" />
-                <h2 className="font-medium">Security Event Log</h2>
-              </div>
-              <div className="relative w-full sm:w-64">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search events..."
-                  className="pl-8"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-            </div>
-            
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Time</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Action</TableHead>
-                    <TableHead>User</TableHead>
-                    <TableHead>Source</TableHead>
-                    <TableHead>Details</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {securityEvents.map((event) => (
-                    <TableRow key={event.id}>
-                      <TableCell>
-                        <div className="font-medium">{timeSince(event.timestamp)}</div>
-                        <div className="text-xs text-muted-foreground">{formatDate(event.timestamp)}</div>
-                      </TableCell>
-                      <TableCell>
-                        <EventTypeBadge type={event.type} />
-                      </TableCell>
-                      <TableCell>
-                        <ActionBadge action={event.action} />
-                      </TableCell>
-                      <TableCell>{event.user}</TableCell>
-                      <TableCell>
-                        <code className="text-xs bg-muted p-1 rounded">{event.source}</code>
-                      </TableCell>
-                      <TableCell>{event.details}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </GlassPanel>
-        </TabsContent>
-        
-        <TabsContent value="sessions">
-          <GlassPanel>
-            <div className="p-4 border-b border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div className="flex items-center">
-                <UserCheck className="h-5 w-5 text-primary mr-2" />
-                <h2 className="font-medium">Active User Sessions</h2>
-              </div>
-              <Button variant="outline" size="sm">
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh
-              </Button>
-            </div>
-            
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Device</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead>Login Time</TableHead>
-                    <TableHead>Last Activity</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {activeSessions.map((session) => (
-                    <TableRow key={session.id}>
-                      <TableCell>
-                        <div className="font-medium">{session.user}</div>
-                        <div className="text-xs text-muted-foreground">IP: {session.ip}</div>
-                      </TableCell>
-                      <TableCell>
-                        <div>{session.device}</div>
-                        <div className="text-xs text-muted-foreground">{session.browser}</div>
-                      </TableCell>
-                      <TableCell>{session.location}</TableCell>
-                      <TableCell>
-                        <div>{timeSince(session.loginTime)}</div>
-                        <div className="text-xs text-muted-foreground">{formatDate(session.loginTime)}</div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center">
-                          <div className="h-2 w-2 rounded-full bg-green-500 mr-2"></div>
-                          <span>{timeSince(session.lastActive)}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" className="text-destructive">Terminate</Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </GlassPanel>
-        </TabsContent>
-        
-        <TabsContent value="threats">
-          <GlassPanel>
-            <div className="p-4 border-b border-border">
-              <div className="flex items-center">
-                <AlertTriangle className="h-5 w-5 text-primary mr-2" />
-                <h2 className="font-medium">Detected Security Threats</h2>
-              </div>
-            </div>
-            
-            {securityThreats.length > 0 ? (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Time</TableHead>
-                      <TableHead>Severity</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Source</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Details</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {securityThreats.map((threat) => (
-                      <TableRow key={threat.id}>
-                        <TableCell>
-                          <div>{timeSince(threat.timestamp)}</div>
-                          <div className="text-xs text-muted-foreground">{formatDate(threat.timestamp)}</div>
-                        </TableCell>
-                        <TableCell>
-                          <SeverityBadge severity={threat.severity} />
-                        </TableCell>
-                        <TableCell className="font-medium capitalize">{threat.type.replace('_', ' ')}</TableCell>
-                        <TableCell>
-                          <code className="text-xs bg-muted p-1 rounded">{threat.source}</code>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center">
-                            {threat.status === 'mitigated' ? (
-                              <CheckCircle2 className="h-4 w-4 text-green-500 mr-1.5" />
-                            ) : (
-                              <Clock className="h-4 w-4 text-amber-500 mr-1.5" />
-                            )}
-                            <span className="capitalize">{threat.status}</span>
+
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="mb-6">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="access">Access Control</TabsTrigger>
+            <TabsTrigger value="encryption">Encryption</TabsTrigger>
+            <TabsTrigger value="audit">Audit Log</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card className="md:col-span-2">
+                <CardHeader>
+                  <CardTitle className="text-lg">Security Status</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                    <div className="text-center">
+                      <div className="relative inline-flex items-center justify-center">
+                        <svg className="w-32 h-32">
+                          <circle
+                            className="text-muted stroke-current"
+                            strokeWidth="8"
+                            stroke="currentColor"
+                            fill="transparent"
+                            r="56"
+                            cx="64"
+                            cy="64"
+                          />
+                          <circle
+                            className={`${getScoreColor(overallScore)} stroke-current`}
+                            strokeWidth="8"
+                            strokeLinecap="round"
+                            stroke="currentColor"
+                            fill="transparent"
+                            r="56"
+                            cx="64"
+                            cy="64"
+                            strokeDasharray={`${overallScore * 3.51}, 400`}
+                          />
+                        </svg>
+                        <span className={`absolute text-2xl font-bold ${getScoreColor(overallScore)}`}>
+                          {overallScore}%
+                        </span>
+                      </div>
+                      <h3 className="text-lg font-medium mt-2">Overall Score</h3>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      {securityScores
+                        .filter(item => item.recommendation)
+                        .slice(0, 3)
+                        .map(item => (
+                          <div key={item.name} className="space-y-1">
+                            <div className="flex justify-between">
+                              <span className="text-sm font-medium">{item.name}</span>
+                              <span className={`text-sm ${getScoreColor(item.score)}`}>{item.score}%</span>
+                            </div>
+                            <Progress value={item.score} className={getProgressColor(item.score)} />
+                            <p className="text-xs text-muted-foreground">{item.recommendation}</p>
                           </div>
-                        </TableCell>
-                        <TableCell>{threat.details}</TableCell>
-                        <TableCell className="text-right">
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            disabled={threat.status === 'mitigated'}
-                          >
-                            {threat.status === 'mitigated' ? 'Resolved' : 'Resolve'}
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            ) : (
-              <div className="text-center p-8">
-                <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-4" />
-                <h3 className="text-lg font-medium">No Active Threats</h3>
-                <p className="text-muted-foreground mt-2">
-                  Your system is secure. No security threats detected.
+                        ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Quick Actions</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <Button variant="outline" className="w-full justify-start">
+                      <Lock className="mr-2 h-4 w-4" />
+                      Configure 2FA
+                    </Button>
+                    <Button variant="outline" className="w-full justify-start">
+                      <Users className="mr-2 h-4 w-4" />
+                      Manage User Access
+                    </Button>
+                    <Button variant="outline" className="w-full justify-start">
+                      <Activity className="mr-2 h-4 w-4" />
+                      View Audit Logs
+                    </Button>
+                    <Button variant="outline" className="w-full justify-start">
+                      <FileText className="mr-2 h-4 w-4" />
+                      Security Policies
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Recent Activity</CardTitle>
+                <CardDescription>Recent security events from the system</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {securityAudits.slice(0, 3).map(audit => (
+                    <div key={audit.id} className="flex items-start space-x-3 p-3 border rounded-md">
+                      {audit.status === "success" ? (
+                        <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
+                      ) : (
+                        <AlertTriangle className="h-5 w-5 text-red-500 mt-0.5" />
+                      )}
+                      <div className="flex-1">
+                        <div className="flex justify-between">
+                          <span className="font-medium">{audit.event}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {format(audit.timestamp, 'MMM d, yyyy h:mm a')}
+                          </span>
+                        </div>
+                        <div className="text-sm text-muted-foreground mt-1">
+                          User: {audit.user} • IP: {audit.ip}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="access" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Access Control Settings</CardTitle>
+                <CardDescription>Configure authentication and access policies</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-center py-12 text-muted-foreground">
+                  Access control content will be implemented here
                 </p>
-              </div>
-            )}
-          </GlassPanel>
-        </TabsContent>
-      </Tabs>
-      
-      <div className="grid gap-6 md:grid-cols-3 mt-6">
-        <GlassPanel>
-          <div className="p-4 border-b border-border">
-            <div className="flex items-center">
-              <Lock className="h-5 w-5 text-primary mr-2" />
-              <h2 className="font-medium">Authentication Settings</h2>
-            </div>
-          </div>
-          <div className="p-4 space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">Two-Factor Authentication</div>
-                <div className="text-xs text-muted-foreground">Require 2FA for all admin users</div>
-              </div>
-              <div className="flex h-5 items-center space-x-2">
-                <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                <span className="text-xs">Enforced</span>
-              </div>
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">Password Complexity</div>
-                <div className="text-xs text-muted-foreground">Minimum 12 characters with mixed types</div>
-              </div>
-              <div className="flex h-5 items-center space-x-2">
-                <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                <span className="text-xs">High</span>
-              </div>
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">Session Timeout</div>
-                <div className="text-xs text-muted-foreground">Inactive sessions auto-logout</div>
-              </div>
-              <div className="flex h-5 items-center space-x-2">
-                <span className="text-xs">30 minutes</span>
-              </div>
-            </div>
-            
-            <Button variant="outline" size="sm" className="w-full mt-2">
-              <Settings className="h-4 w-4 mr-2" />
-              Manage Authentication
-            </Button>
-          </div>
-        </GlassPanel>
-        
-        <GlassPanel>
-          <div className="p-4 border-b border-border">
-            <div className="flex items-center">
-              <Key className="h-5 w-5 text-primary mr-2" />
-              <h2 className="font-medium">API Security</h2>
-            </div>
-          </div>
-          <div className="p-4 space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">API Rate Limiting</div>
-                <div className="text-xs text-muted-foreground">Prevent API abuse</div>
-              </div>
-              <div className="flex h-5 items-center space-x-2">
-                <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                <span className="text-xs">Enabled</span>
-              </div>
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">Token Expiration</div>
-                <div className="text-xs text-muted-foreground">API tokens auto-expire</div>
-              </div>
-              <div className="flex h-5 items-center space-x-2">
-                <span className="text-xs">24 hours</span>
-              </div>
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">API Audit Logging</div>
-                <div className="text-xs text-muted-foreground">Log all API access</div>
-              </div>
-              <div className="flex h-5 items-center space-x-2">
-                <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                <span className="text-xs">Verbose</span>
-              </div>
-            </div>
-            
-            <Button variant="outline" size="sm" className="w-full mt-2">
-              <Settings className="h-4 w-4 mr-2" />
-              Manage API Security
-            </Button>
-          </div>
-        </GlassPanel>
-        
-        <GlassPanel>
-          <div className="p-4 border-b border-border">
-            <div className="flex items-center">
-              <Fingerprint className="h-5 w-5 text-primary mr-2" />
-              <h2 className="font-medium">Access Control</h2>
-            </div>
-          </div>
-          <div className="p-4 space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">Role-Based Access</div>
-                <div className="text-xs text-muted-foreground">Granular permission control</div>
-              </div>
-              <div className="flex h-5 items-center space-x-2">
-                <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                <span className="text-xs">Enabled</span>
-              </div>
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">IP Restrictions</div>
-                <div className="text-xs text-muted-foreground">Limit access by IP address</div>
-              </div>
-              <div className="flex h-5 items-center space-x-2">
-                <div className="h-2 w-2 rounded-full bg-amber-500"></div>
-                <span className="text-xs">Partial</span>
-              </div>
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">Device Authorization</div>
-                <div className="text-xs text-muted-foreground">Verify new device logins</div>
-              </div>
-              <div className="flex h-5 items-center space-x-2">
-                <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                <span className="text-xs">Enabled</span>
-              </div>
-            </div>
-            
-            <Button variant="outline" size="sm" className="w-full mt-2">
-              <Settings className="h-4 w-4 mr-2" />
-              Manage Access Control
-            </Button>
-          </div>
-        </GlassPanel>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="encryption" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Encryption Settings</CardTitle>
+                <CardDescription>Manage data encryption and security protocols</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-center py-12 text-muted-foreground">
+                  Encryption settings content will be implemented here
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="audit" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Security Audit Log</CardTitle>
+                <CardDescription>Review system security events and activities</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {securityAudits.map(audit => (
+                    <div key={audit.id} className="flex items-start space-x-3 p-3 border rounded-md">
+                      {audit.status === "success" ? (
+                        <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
+                      ) : (
+                        <AlertTriangle className="h-5 w-5 text-red-500 mt-0.5" />
+                      )}
+                      <div className="flex-1">
+                        <div className="flex justify-between">
+                          <span className="font-medium">{audit.event}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {format(audit.timestamp, 'MMM d, yyyy h:mm a')}
+                          </span>
+                        </div>
+                        <div className="text-sm text-muted-foreground mt-1">
+                          User: {audit.user} • IP: {audit.ip}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </AppLayout>
   );
 };
-
-// Settings icon component
-const Settings = ({ className }: { className?: string }) => (
-  <svg 
-    xmlns="http://www.w3.org/2000/svg" 
-    viewBox="0 0 24 24" 
-    fill="none" 
-    stroke="currentColor" 
-    strokeWidth="2" 
-    strokeLinecap="round" 
-    strokeLinejoin="round" 
-    className={className}
-  >
-    <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
-    <circle cx="12" cy="12" r="3" />
-  </svg>
-);
 
 export default Security;
