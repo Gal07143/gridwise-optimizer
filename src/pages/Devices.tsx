@@ -223,14 +223,14 @@ const Devices = () => {
                     
                     <div className="flex flex-wrap gap-2">
                       <Button variant="outline" size="sm" asChild>
-                        <Link to={`/device-view/${device.id}`}>
+                        <Link to={`/devices/${device.id}`}>
                           <Eye className="h-4 w-4 mr-1" />
                           View
                         </Link>
                       </Button>
                       
                       <Button variant="outline" size="sm" asChild>
-                        <Link to={`/edit-device/${device.id}`}>
+                        <Link to={`/devices/${device.id}/edit`}>
                           <Settings className="h-4 w-4 mr-1" />
                           Manage
                         </Link>
@@ -264,7 +264,7 @@ const Devices = () => {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem asChild>
-                            <Link to={`/edit-device/${device.id}`}>Edit Device</Link>
+                            <Link to={`/devices/${device.id}/edit`}>Edit Device</Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="text-red-500 focus:text-red-500"

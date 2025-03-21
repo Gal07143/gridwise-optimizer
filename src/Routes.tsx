@@ -161,6 +161,15 @@ const AppRoutes: React.FC = () => {
         </ProtectedRoute>
       } />
       
+      {/* Support for legacy route that may be linked in other places */}
+      <Route path="/device-view/:deviceId" element={
+        <Navigate to={(location) => {
+          // Extract the deviceId from the current location
+          const deviceId = location.pathname.split('/').pop();
+          return `/devices/${deviceId}`; 
+        }} replace />
+      } />
+      
       {/* 404 route - must be last */}
       <Route path="*" element={<NotFound />} />
     </Routes>
