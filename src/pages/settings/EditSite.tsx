@@ -11,24 +11,24 @@ import { CornerDownLeft, Loader2, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const EditSite = () => {
-  const { id } = useParams<{ id: string }>();
+  const { siteId } = useParams<{ siteId: string }>();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const { data: site, isLoading, isError, error } = useQuery({
-    queryKey: ['site', id],
-    queryFn: () => getSiteById(id as string),
-    enabled: !!id,
+    queryKey: ['site', siteId],
+    queryFn: () => getSiteById(siteId as string),
+    enabled: !!siteId,
     retry: 1,
   });
   
   const handleSubmit = async (data: any) => {
-    if (!id) return;
+    if (!siteId) return;
     
     setIsSubmitting(true);
     
     try {
-      const result = await updateSite(id, data);
+      const result = await updateSite(siteId, data);
       
       if (result) {
         toast.success("Site updated successfully");

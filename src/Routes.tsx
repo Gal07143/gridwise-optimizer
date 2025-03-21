@@ -101,7 +101,7 @@ const AppRoutes: React.FC = () => {
           <EnergyFlow />
         </ProtectedRoute>
       } />
-      <Route path="/microgrid" element={
+      <Route path="/microgrid-control" element={
         <ProtectedRoute>
           <MicrogridControl />
         </ProtectedRoute>
@@ -153,7 +153,7 @@ const AppRoutes: React.FC = () => {
       <Route path="/settings/api" element={
         <RoleProtectedRoute allowedRoles={['admin']}>
           <ApiSettings />
-        </RoleProtectedRoute>
+        </ProtectedRoute>
       } />
       <Route path="/settings/notifications" element={
         <ProtectedRoute>
@@ -161,7 +161,7 @@ const AppRoutes: React.FC = () => {
         </ProtectedRoute>
       } />
       
-      {/* 404 route */}
+      {/* 404 route - must be last */}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
