@@ -141,33 +141,206 @@ export type Database = {
       }
       api_keys: {
         Row: {
+          allowed_ips: string[] | null
           api_key: string
           created_at: string
+          created_by: string | null
+          description: string | null
+          expires_at: string | null
           id: string
           is_active: boolean
           last_used: string | null
+          permissions: Json | null
           service: string
           usage_count: number | null
         }
         Insert: {
+          allowed_ips?: string[] | null
           api_key: string
           created_at?: string
+          created_by?: string | null
+          description?: string | null
+          expires_at?: string | null
           id?: string
           is_active?: boolean
           last_used?: string | null
+          permissions?: Json | null
           service: string
           usage_count?: number | null
         }
         Update: {
+          allowed_ips?: string[] | null
           api_key?: string
           created_at?: string
+          created_by?: string | null
+          description?: string | null
+          expires_at?: string | null
           id?: string
           is_active?: boolean
           last_used?: string | null
+          permissions?: Json | null
           service?: string
           usage_count?: number | null
         }
         Relationships: []
+      }
+      audit_logs: {
+        Row: {
+          action: string
+          affected_data: Json | null
+          created_at: string
+          details: Json | null
+          id: string
+          ip_address: string | null
+          resource_id: string | null
+          resource_type: string
+          status: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          affected_data?: Json | null
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          resource_id?: string | null
+          resource_type: string
+          status: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          affected_data?: Json | null
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          resource_id?: string | null
+          resource_type?: string
+          status?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      authentication_settings: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          setting_name: string
+          setting_value: Json
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          setting_name: string
+          setting_value: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          setting_name?: string
+          setting_value?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      backup_configurations: {
+        Row: {
+          backup_type: string
+          created_at: string
+          id: string
+          include_data: string[]
+          last_backup: string | null
+          name: string
+          retention_period: number
+          schedule: string
+          status: string
+          storage_location: string
+          updated_at: string
+        }
+        Insert: {
+          backup_type: string
+          created_at?: string
+          id?: string
+          include_data?: string[]
+          last_backup?: string | null
+          name: string
+          retention_period: number
+          schedule: string
+          status?: string
+          storage_location: string
+          updated_at?: string
+        }
+        Update: {
+          backup_type?: string
+          created_at?: string
+          id?: string
+          include_data?: string[]
+          last_backup?: string | null
+          name?: string
+          retention_period?: number
+          schedule?: string
+          status?: string
+          storage_location?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      backup_logs: {
+        Row: {
+          backup_id: string | null
+          completed_at: string | null
+          file_location: string | null
+          id: string
+          log_details: string | null
+          size_bytes: number | null
+          started_at: string
+          status: string
+          triggered_by: string | null
+        }
+        Insert: {
+          backup_id?: string | null
+          completed_at?: string | null
+          file_location?: string | null
+          id?: string
+          log_details?: string | null
+          size_bytes?: number | null
+          started_at?: string
+          status: string
+          triggered_by?: string | null
+        }
+        Update: {
+          backup_id?: string | null
+          completed_at?: string | null
+          file_location?: string | null
+          id?: string
+          log_details?: string | null
+          size_bytes?: number | null
+          started_at?: string
+          status?: string
+          triggered_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "backup_logs_backup_id_fkey"
+            columns: ["backup_id"]
+            isOneToOne: false
+            referencedRelation: "backup_configurations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       devices: {
         Row: {
@@ -230,6 +403,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      encryption_keys: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          expiry_date: string | null
+          id: string
+          key_name: string
+          key_status: string
+          key_type: string
+          last_rotated: string | null
+          metadata: Json | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          expiry_date?: string | null
+          id?: string
+          key_name: string
+          key_status?: string
+          key_type: string
+          last_rotated?: string | null
+          metadata?: Json | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          expiry_date?: string | null
+          id?: string
+          key_name?: string
+          key_status?: string
+          key_type?: string
+          last_rotated?: string | null
+          metadata?: Json | null
+        }
+        Relationships: []
       }
       energy_forecasts: {
         Row: {
@@ -387,6 +599,36 @@ export type Database = {
           },
         ]
       }
+      permissions: {
+        Row: {
+          action: string
+          conditions: Json | null
+          created_at: string
+          description: string | null
+          id: string
+          permission_name: string
+          resource_type: string
+        }
+        Insert: {
+          action: string
+          conditions?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          permission_name: string
+          resource_type: string
+        }
+        Update: {
+          action?: string
+          conditions?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          permission_name?: string
+          resource_type?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -399,6 +641,11 @@ export type Database = {
           last_name: string | null
           push_notifications: boolean | null
           role: Database["public"]["Enums"]["user_role"]
+          role_created_at: string | null
+          role_description: string | null
+          role_permissions: Json | null
+          role_updated_at: string | null
+          role_updated_by: string | null
           sms_notifications: boolean | null
           theme_preference: Database["public"]["Enums"]["theme_preference"]
         }
@@ -413,6 +660,11 @@ export type Database = {
           last_name?: string | null
           push_notifications?: boolean | null
           role?: Database["public"]["Enums"]["user_role"]
+          role_created_at?: string | null
+          role_description?: string | null
+          role_permissions?: Json | null
+          role_updated_at?: string | null
+          role_updated_by?: string | null
           sms_notifications?: boolean | null
           theme_preference?: Database["public"]["Enums"]["theme_preference"]
         }
@@ -427,6 +679,11 @@ export type Database = {
           last_name?: string | null
           push_notifications?: boolean | null
           role?: Database["public"]["Enums"]["user_role"]
+          role_created_at?: string | null
+          role_description?: string | null
+          role_permissions?: Json | null
+          role_updated_at?: string | null
+          role_updated_by?: string | null
           sms_notifications?: boolean | null
           theme_preference?: Database["public"]["Enums"]["theme_preference"]
         }
@@ -514,6 +771,38 @@ export type Database = {
           },
         ]
       }
+      role_permissions: {
+        Row: {
+          created_at: string
+          granted_by: string | null
+          id: string
+          permission_id: string
+          role: string
+        }
+        Insert: {
+          created_at?: string
+          granted_by?: string | null
+          id?: string
+          permission_id: string
+          role: string
+        }
+        Update: {
+          created_at?: string
+          granted_by?: string | null
+          id?: string
+          permission_id?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_permissions_permission_id_fkey"
+            columns: ["permission_id"]
+            isOneToOne: false
+            referencedRelation: "permissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sites: {
         Row: {
           created_at: string
@@ -543,6 +832,48 @@ export type Database = {
           location?: string
           name?: string
           timezone?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_accounts: {
+        Row: {
+          account_status: string
+          created_at: string
+          failed_login_attempts: number | null
+          id: string
+          last_password_change: string | null
+          locked_until: string | null
+          must_change_password: boolean | null
+          password_expiry: string | null
+          recovery_email: string | null
+          security_questions: Json | null
+          updated_at: string
+        }
+        Insert: {
+          account_status?: string
+          created_at?: string
+          failed_login_attempts?: number | null
+          id: string
+          last_password_change?: string | null
+          locked_until?: string | null
+          must_change_password?: boolean | null
+          password_expiry?: string | null
+          recovery_email?: string | null
+          security_questions?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          account_status?: string
+          created_at?: string
+          failed_login_attempts?: number | null
+          id?: string
+          last_password_change?: string | null
+          locked_until?: string | null
+          must_change_password?: boolean | null
+          password_expiry?: string | null
+          recovery_email?: string | null
+          security_questions?: Json | null
           updated_at?: string
         }
         Relationships: []
