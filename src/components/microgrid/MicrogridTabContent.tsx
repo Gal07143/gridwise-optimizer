@@ -27,6 +27,33 @@ const MicrogridTabContent: React.FC<MicrogridTabContentProps> = ({ activeTab }) 
     handleSaveSettings
   } = useMicrogrid();
 
+  // Mode mapping function to convert between different mode naming conventions
+  const mapModeToControlsFormat = (mode: "auto" | "manual" | "eco" | "backup"): "automatic" | "manual" | "island" | "grid-connected" => {
+    switch (mode) {
+      case "auto": return "automatic";
+      case "manual": return "manual";
+      case "eco": return "island";
+      case "backup": return "grid-connected";
+      default: return "automatic";
+    }
+  };
+
+  // Reverse mapping function
+  const mapControlsFormatToMode = (mode: "automatic" | "manual" | "island" | "grid-connected"): "auto" | "manual" | "eco" | "backup" => {
+    switch (mode) {
+      case "automatic": return "auto";
+      case "manual": return "manual";
+      case "island": return "eco";
+      case "grid-connected": return "backup";
+      default: return "auto";
+    }
+  };
+
+  // The adapter function for onModeChange
+  const handleModeChangeAdapter = (mode: "automatic" | "manual" | "island" | "grid-connected") => {
+    handleModeChange(mapControlsFormatToMode(mode));
+  };
+
   // Render the active tab content
   const renderTabContent = () => {
     switch (activeTab) {
@@ -45,7 +72,7 @@ const MicrogridTabContent: React.FC<MicrogridTabContentProps> = ({ activeTab }) 
             <MicrogridControls 
               microgridState={microgridState}
               minBatteryReserve={settings.minBatteryReserve}
-              onModeChange={handleModeChange}
+              onModeChange={handleModeChangeAdapter}
               onGridConnectionToggle={() => dispatch({ type: 'UPDATE_PRODUCTION', payload: { gridConnection: !microgridState.gridConnection } })}
               onBatteryDischargeToggle={() => dispatch({ type: 'SET_BATTERY_DISCHARGE_ENABLED', payload: !microgridState.batteryDischargeEnabled })}
               onBatteryReserveChange={(value) => handleSettingsChange('minBatteryReserve', value)}

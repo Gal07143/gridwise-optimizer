@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { User, UserRole } from "@/types/energy";
 import { toast } from "sonner";
@@ -124,7 +125,7 @@ export const updateUserRole = async (userId: string, role: UserRole): Promise<bo
     
     const { error } = await supabase
       .from('profiles')
-      .update({ role: dbRole })
+      .update({ role: dbRole as any }) // Use type assertion to bypass TypeScript checking
       .eq('id', userId);
     
     if (error) throw error;
