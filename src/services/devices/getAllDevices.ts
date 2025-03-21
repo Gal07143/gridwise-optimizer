@@ -69,7 +69,7 @@ export const getAllDevices = async (options?: DeviceQueryOptions): Promise<Energ
       ...item,
       type: item.type as DeviceType,
       status: item.status as DeviceStatus,
-      metrics: item.metrics ? (typeof item.metrics === 'string' ? JSON.parse(item.metrics) : item.metrics) as Record<string, number>
+      metrics: item.metrics ? (typeof item.metrics === 'string' ? JSON.parse(item.metrics) : item.metrics) as Record<string, number> : null
     }));
     
     return devices;
