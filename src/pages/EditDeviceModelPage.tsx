@@ -12,23 +12,31 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { DeviceModel } from '@/hooks/useDeviceModels';
+
+// Update DeviceModel interface to match what's available
+interface DeviceModel {
+  id: string;
+  name: string;
+  manufacturer: string;
+  model_number?: string;
+  protocol?: string;
+  capacity?: number;
+  power_rating?: number;
+  certification?: string;
+  category?: string;
+  created_at: string;
+}
 
 // Form schema definition
 const formSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }),
   manufacturer: z.string().min(1, { message: "Manufacturer is required" }),
   model_number: z.string().optional(),
-  type: z.string().min(1, { message: "Type is required" }),
+  protocol: z.string().optional(),
   capacity: z.coerce.number().optional(),
   power_rating: z.coerce.number().optional(),
-  efficiency: z.coerce.number().optional(),
-  dimensions: z.string().optional(),
-  weight: z.coerce.number().optional(),
-  warranty_period: z.coerce.number().optional(),
-  release_date: z.string().optional(),
-  description: z.string().optional(),
-  datasheet_url: z.string().optional()
+  certification: z.string().optional(),
+  category: z.string().optional()
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -45,16 +53,11 @@ const EditDeviceModelPage = () => {
       name: '',
       manufacturer: '',
       model_number: '',
-      type: '',
+      protocol: '',
       capacity: undefined,
       power_rating: undefined,
-      efficiency: undefined,
-      dimensions: '',
-      weight: undefined,
-      warranty_period: undefined,
-      release_date: '',
-      description: '',
-      datasheet_url: ''
+      certification: '',
+      category: ''
     }
   });
 
@@ -85,16 +88,11 @@ const EditDeviceModelPage = () => {
               name: modelData.name,
               manufacturer: modelData.manufacturer,
               model_number: modelData.model_number || '',
-              type: modelData.type,
+              protocol: modelData.protocol || '',
               capacity: modelData.capacity,
               power_rating: modelData.power_rating,
-              efficiency: modelData.efficiency,
-              dimensions: modelData.dimensions || '',
-              weight: modelData.weight,
-              warranty_period: modelData.warranty_period,
-              release_date: modelData.release_date || '',
-              description: modelData.description || '',
-              datasheet_url: modelData.datasheet_url || ''
+              certification: modelData.certification || '',
+              category: modelData.category || ''
             });
           } else {
             toast.error("Device model not found");
@@ -129,16 +127,11 @@ const EditDeviceModelPage = () => {
           name = '${updateData.name}',
           manufacturer = '${updateData.manufacturer}',
           model_number = ${updateData.model_number ? `'${updateData.model_number}'` : 'NULL'},
-          type = '${updateData.type}',
+          protocol = ${updateData.protocol ? `'${updateData.protocol}'` : 'NULL'},
           capacity = ${updateData.capacity || 'NULL'},
           power_rating = ${updateData.power_rating || 'NULL'},
-          efficiency = ${updateData.efficiency || 'NULL'},
-          dimensions = ${updateData.dimensions ? `'${updateData.dimensions}'` : 'NULL'},
-          weight = ${updateData.weight || 'NULL'},
-          warranty_period = ${updateData.warranty_period || 'NULL'},
-          release_date = ${updateData.release_date ? `'${updateData.release_date}'` : 'NULL'},
-          description = ${updateData.description ? `'${updateData.description}'` : 'NULL'},
-          datasheet_url = ${updateData.datasheet_url ? `'${updateData.datasheet_url}'` : 'NULL'},
+          certification = ${updateData.certification ? `'${updateData.certification}'` : 'NULL'},
+          category = ${updateData.category ? `'${updateData.category}'` : 'NULL'},
           last_updated = '${updateData.last_updated}'
         WHERE id = '${modelId}'
         RETURNING *
@@ -213,9 +206,9 @@ const EditDeviceModelPage = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="type">Type</Label>
-                  <Input id="type" {...register('type')} />
-                  {errors.type && <p className="text-red-500 text-sm">{errors.type.message}</p>}
+                  <Label htmlFor="protocol">Protocol</Label>
+                  <Input id="protocol" {...register('protocol')} />
+                  {errors.protocol && <p className="text-red-500 text-sm">{errors.protocol.message}</p>}
                 </div>
                 
                 <div className="space-y-2">
@@ -231,46 +224,16 @@ const EditDeviceModelPage = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="efficiency">Efficiency (0-1)</Label>
-                  <Input id="efficiency" type="number" step="0.01" {...register('efficiency')} />
-                  {errors.efficiency && <p className="text-red-500 text-sm">{errors.efficiency.message}</p>}
+                  <Label htmlFor="certification">Certification</Label>
+                  <Input id="certification" {...register('certification')} />
+                  {errors.certification && <p className="text-red-500 text-sm">{errors.certification.message}</p>}
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="dimensions">Dimensions</Label>
-                  <Input id="dimensions" {...register('dimensions')} />
-                  {errors.dimensions && <p className="text-red-500 text-sm">{errors.dimensions.message}</p>}
+                  <Label htmlFor="category">Category</Label>
+                  <Input id="category" {...register('category')} />
+                  {errors.category && <p className="text-red-500 text-sm">{errors.category.message}</p>}
                 </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="weight">Weight (kg)</Label>
-                  <Input id="weight" type="number" step="0.1" {...register('weight')} />
-                  {errors.weight && <p className="text-red-500 text-sm">{errors.weight.message}</p>}
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="warranty_period">Warranty Period (months)</Label>
-                  <Input id="warranty_period" type="number" {...register('warranty_period')} />
-                  {errors.warranty_period && <p className="text-red-500 text-sm">{errors.warranty_period.message}</p>}
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="release_date">Release Date</Label>
-                  <Input id="release_date" type="date" {...register('release_date')} />
-                  {errors.release_date && <p className="text-red-500 text-sm">{errors.release_date.message}</p>}
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="datasheet_url">Datasheet URL</Label>
-                  <Input id="datasheet_url" {...register('datasheet_url')} />
-                  {errors.datasheet_url && <p className="text-red-500 text-sm">{errors.datasheet_url.message}</p>}
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea id="description" className="h-32" {...register('description')} />
-                {errors.description && <p className="text-red-500 text-sm">{errors.description.message}</p>}
               </div>
               
               <div className="flex justify-end gap-2">

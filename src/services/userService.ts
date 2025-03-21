@@ -15,24 +15,37 @@ export const getAllUsers = async (): Promise<Partial<User>[]> => {
     if (error) throw error;
     
     // Map Supabase profile data to User type
-    return (data || []).map(profile => ({
-      id: profile.id,
-      email: profile.email,
-      firstName: profile.first_name,
-      lastName: profile.last_name,
-      role: profile.role,
-      createdAt: profile.created_at,
-      lastLogin: profile.last_login,
-      preferences: {
-        theme: profile.theme_preference,
-        notifications: {
-          email: profile.email_notifications,
-          push: profile.push_notifications,
-          sms: profile.sms_notifications
-        },
-        dashboardLayout: profile.dashboard_layout
+    return (data || []).map(profile => {
+      // Convert role to ensure it matches UserRole type
+      let role: UserRole = 'viewer'; // Default
+      
+      if (profile.role === 'admin' || profile.role === 'installer' || 
+          profile.role === 'user' || profile.role === 'viewer') {
+        role = profile.role as UserRole;
+      } else if (profile.role === 'operator') {
+        // Handle 'operator' by mapping to an equivalent valid role
+        role = 'installer'; // Map operator to installer as closest equivalent
       }
-    }));
+      
+      return {
+        id: profile.id,
+        email: profile.email,
+        firstName: profile.first_name,
+        lastName: profile.last_name,
+        role,
+        createdAt: profile.created_at,
+        lastLogin: profile.last_login,
+        preferences: {
+          theme: profile.theme_preference,
+          notifications: {
+            email: profile.email_notifications,
+            push: profile.push_notifications,
+            sms: profile.sms_notifications
+          },
+          dashboardLayout: profile.dashboard_layout
+        }
+      };
+    });
     
   } catch (error) {
     console.error("Error fetching users:", error);
@@ -56,13 +69,24 @@ export const getUserById = async (userId: string): Promise<Partial<User> | null>
     
     if (!data) return null;
     
+    // Convert role to ensure it matches UserRole type
+    let role: UserRole = 'viewer'; // Default
+    
+    if (data.role === 'admin' || data.role === 'installer' || 
+        data.role === 'user' || data.role === 'viewer') {
+      role = data.role as UserRole;
+    } else if (data.role === 'operator') {
+      // Handle 'operator' by mapping to an equivalent valid role
+      role = 'installer'; // Map operator to installer as closest equivalent
+    }
+    
     // Map Supabase profile data to User type
     return {
       id: data.id,
       email: data.email,
       firstName: data.first_name,
       lastName: data.last_name,
-      role: data.role,
+      role,
       createdAt: data.created_at,
       lastLogin: data.last_login,
       preferences: {
@@ -88,9 +112,12 @@ export const getUserById = async (userId: string): Promise<Partial<User> | null>
  */
 export const updateUserRole = async (userId: string, role: UserRole): Promise<boolean> => {
   try {
+    // Map any invalid DB roles to valid ones before storing
+    let dbRole = role;
+    
     const { error } = await supabase
       .from('profiles')
-      .update({ role })
+      .update({ role: dbRole })
       .eq('id', userId);
     
     if (error) throw error;

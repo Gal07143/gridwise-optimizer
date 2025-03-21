@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Key, Plus, Eye, EyeOff, Copy, Check, Trash2, RefreshCw, Clock, Calendar } from 'lucide-react';
@@ -49,7 +48,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { format } from 'date-fns';
-import LoadingSpinner from '@/components/ui/loading-spinner';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import ErrorMessage from '@/components/ui/error-message';
 import { executeSql } from '@/services/sqlExecutor';
 import { useAuth } from '@/contexts/AuthContext';
@@ -90,7 +89,6 @@ const ApiKeyManagement = () => {
     allowed_ips: '' // Comma-separated list
   });
   
-  // Fetch API keys
   const {
     data: apiKeys,
     isLoading,
@@ -118,16 +116,13 @@ const ApiKeyManagement = () => {
     }
   });
   
-  // Create API key mutation
   const createApiKeyMutation = useMutation({
     mutationFn: async (keyData: typeof newKeyData) => {
-      // Generate a secure API key (in a real app, this would be done server-side)
       const generatedApiKey = Array.from(
         { length: 32 },
         () => "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"[Math.floor(Math.random() * 62)]
       ).join('');
       
-      // Store the key but show it to the user only once
       setGeneratedKey(generatedApiKey);
       
       const result = await executeSql<{ id: string }>(`
@@ -151,7 +146,6 @@ const ApiKeyManagement = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['api-keys'] });
-      // Don't close dialog immediately so user can copy the key
       toast.success('API key created successfully');
     },
     onError: (error) => {
@@ -160,7 +154,6 @@ const ApiKeyManagement = () => {
     }
   });
   
-  // Toggle API key status mutation
   const toggleApiKeyStatusMutation = useMutation({
     mutationFn: async ({ keyId, isActive }: { keyId: string; isActive: boolean }) => {
       await executeSql(`
@@ -180,7 +173,6 @@ const ApiKeyManagement = () => {
     }
   });
   
-  // Delete API key mutation
   const deleteApiKeyMutation = useMutation({
     mutationFn: async (keyId: string) => {
       await executeSql(`
@@ -255,7 +247,6 @@ const ApiKeyManagement = () => {
     });
   };
   
-  // Loading state
   if (isLoading) {
     return (
       <SettingsPageTemplate 
@@ -270,7 +261,6 @@ const ApiKeyManagement = () => {
     );
   }
   
-  // Error state
   if (error) {
     return (
       <SettingsPageTemplate 
@@ -409,7 +399,6 @@ const ApiKeyManagement = () => {
           </Table>
         </div>
         
-        {/* Usage Guidelines */}
         <div className="bg-muted rounded-lg p-4 mt-8">
           <h3 className="text-lg font-semibold mb-2">API Key Usage Guidelines</h3>
           <ul className="space-y-2 text-sm">
@@ -435,7 +424,6 @@ const ApiKeyManagement = () => {
         </div>
       </div>
       
-      {/* Create New API Key Dialog */}
       <Dialog open={newKeyDialog} onOpenChange={closeAndResetDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -653,7 +641,6 @@ const ApiKeyManagement = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Delete API Key Alert */}
       <AlertDialog open={!!deleteKeyId} onOpenChange={(open) => !open && setDeleteKeyId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>

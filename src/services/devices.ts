@@ -12,20 +12,16 @@ const deviceModels: DeviceModel[] = [
     name: 'SolarEdge Inverter',
     manufacturer: 'SolarEdge',
     type: 'inverter',
-    version: '1.0.0',
     description: 'High-efficiency solar inverter',
-    created_at: new Date().toISOString(),
-    last_updated: new Date().toISOString()
+    created_at: new Date().toISOString()
   },
   {
     id: '2',
     name: 'Tesla Powerwall',
     manufacturer: 'Tesla',
     type: 'battery',
-    version: '2.0.0',
     description: 'Home battery storage system',
-    created_at: new Date().toISOString(),
-    last_updated: new Date().toISOString()
+    created_at: new Date().toISOString()
   }
 ];
 
@@ -69,60 +65,48 @@ export const getMockDeviceModels = (): DeviceModel[] => {
       name: 'SolarEdge Inverter',
       manufacturer: 'SolarEdge',
       type: 'inverter',
-      version: '1.0.0',
       description: 'High-efficiency solar inverter',
-      created_at: new Date().toISOString(),
-      last_updated: new Date().toISOString()
+      created_at: new Date().toISOString()
     },
     {
       id: '2',
       name: 'Tesla Powerwall',
       manufacturer: 'Tesla',
       type: 'battery',
-      version: '2.0.0',
       description: 'Home battery storage system',
-      created_at: new Date().toISOString(),
-      last_updated: new Date().toISOString()
+      created_at: new Date().toISOString()
     },
     {
       id: '3',
       name: 'Fronius Symo',
       manufacturer: 'Fronius',
       type: 'inverter',
-      version: '3.0.0',
       description: 'Three-phase inverter for commercial applications',
-      created_at: new Date().toISOString(),
-      last_updated: new Date().toISOString()
+      created_at: new Date().toISOString()
     },
     {
       id: '4',
       name: 'Enphase Microinverter',
       manufacturer: 'Enphase',
       type: 'inverter',
-      version: '1.5.0',
       description: 'Module-level power electronics',
-      created_at: new Date().toISOString(),
-      last_updated: new Date().toISOString()
+      created_at: new Date().toISOString()
     },
     {
       id: '5',
       name: 'SMA Sunny Boy',
       manufacturer: 'SMA',
       type: 'inverter',
-      version: '2.1.0',
       description: 'String inverter for residential applications',
-      created_at: new Date().toISOString(),
-      last_updated: new Date().toISOString()
+      created_at: new Date().toISOString()
     },
     {
       id: '6',
       name: 'LG Chem RESU',
       manufacturer: 'LG Chem',
       type: 'battery',
-      version: '1.2.0',
       description: 'Residential energy storage unit',
-      created_at: new Date().toISOString(),
-      last_updated: new Date().toISOString()
+      created_at: new Date().toISOString()
     }
   ];
 };
@@ -147,5 +131,23 @@ export const getDeviceCategories = async (): Promise<string[]> => {
   } catch (error) {
     console.error('Error fetching device categories:', error);
     return ['inverter', 'battery', 'meter', 'solar', 'wind'];
+  }
+};
+
+// Add the missing getDeviceModelById function
+export const getDeviceModelById = async (id: string): Promise<DeviceModel | null> => {
+  try {
+    const query = `SELECT * FROM device_models WHERE id = $1`;
+    const result = await executeSql<DeviceModel>(query, [id]);
+    
+    if (Array.isArray(result) && result.length > 0) {
+      return result[0];
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Error fetching device model:', error);
+    toast.error('Failed to fetch device model');
+    return null;
   }
 };

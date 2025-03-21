@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { Alert, AlertType } from "@/types/energy";
+import { Alert, AlertType, AlertSeverity } from "@/types/energy";
 import { toast } from "sonner";
 
 /**
@@ -38,7 +38,23 @@ export const getAlerts = async (options?: {
     const { data, error } = await query;
     
     if (error) throw error;
-    return data || [];
+    
+    // Transform data to match Alert interface
+    const alerts: Alert[] = (data || []).map(item => ({
+      id: item.id,
+      device_id: item.device_id,
+      type: item.type as AlertType,
+      title: item.title || item.type, // Use type as title if not provided
+      message: item.message,
+      severity: item.severity as AlertSeverity || 'medium', // Default to medium if not provided
+      timestamp: item.timestamp,
+      acknowledged: item.acknowledged,
+      acknowledged_at: item.acknowledged_at,
+      acknowledged_by: item.acknowledged_by,
+      resolved_at: item.resolved_at
+    }));
+    
+    return alerts;
     
   } catch (error) {
     console.error("Error fetching alerts:", error);
@@ -81,14 +97,35 @@ export const createAlert = async (alert: Omit<Alert, 'id' | 'acknowledged' | 'ac
     const { data, error } = await supabase
       .from('alerts')
       .insert([{
-        ...alert,
+        device_id: alert.device_id,
+        type: alert.type,
+        title: alert.title,
+        message: alert.message,
+        severity: alert.severity,
+        timestamp: alert.timestamp,
         acknowledged: false
       }])
       .select()
       .single();
     
     if (error) throw error;
-    return data;
+    
+    // Transform to match Alert interface
+    const createdAlert: Alert = {
+      id: data.id,
+      device_id: data.device_id,
+      type: data.type,
+      title: data.title,
+      message: data.message,
+      severity: data.severity,
+      timestamp: data.timestamp,
+      acknowledged: data.acknowledged,
+      acknowledged_at: data.acknowledged_at,
+      acknowledged_by: data.acknowledged_by,
+      resolved_at: data.resolved_at
+    };
+    
+    return createdAlert;
     
   } catch (error) {
     console.error("Error creating alert:", error);

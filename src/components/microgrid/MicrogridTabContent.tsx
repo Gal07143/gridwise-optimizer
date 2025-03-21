@@ -18,54 +18,47 @@ const MicrogridTabContent: React.FC<MicrogridTabContentProps> = ({ activeTab }) 
   const { 
     state: microgridState,
     dispatch,
-    commandHistory,
     alerts,
-    acknowledgeAlert,
-    systemMode,
-    setSystemMode,
-    minBatteryReserve,
-    setMinBatteryReserve
+    commandHistory,
+    handleAcknowledgeAlert,
+    handleModeChange,
+    settings
   } = useMicrogrid();
-
-  // Function to handle mode changes
-  const handleModeChange = (mode: "auto" | "manual" | "eco" | "backup") => {
-    setSystemMode(mode);
-  };
 
   // Render the active tab content
   const renderTabContent = () => {
     switch (activeTab) {
-      case 'dashboard':
+      case 'overview':
         return (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <StatusOverview microgridState={microgridState} />
             <EnergyFlowVisualization microgridState={microgridState} />
-            <AlertsPanel alerts={alerts} onAcknowledge={acknowledgeAlert} />
+            <AlertsPanel alerts={alerts} onAcknowledge={handleAcknowledgeAlert} />
             <CommandHistory commandHistory={commandHistory} />
           </div>
         );
-      case 'controls':
+      case 'control':
         return (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <MicrogridControls 
-              systemMode={systemMode} 
+              systemMode={microgridState.systemMode} 
               onModeChange={handleModeChange}
-              microgridState={microgridState}
             />
-            <DeviceControlsPanel microgridState={microgridState} dispatch={dispatch} />
+            <DeviceControlsPanel />
           </div>
         );
       case 'advanced':
         return (
           <div className="space-y-6">
             <AdvancedControlSettings 
-              minBatteryReserve={minBatteryReserve}
-              setMinBatteryReserve={setMinBatteryReserve}
-              microgridState={microgridState}
+              minBatteryReserve={settings.minBatteryReserve}
+              setMinBatteryReserve={(value) => {
+                // Handle setting change
+              }}
             />
             <MicrogridSystemInsights 
               microgridState={microgridState}
-              minBatteryReserve={minBatteryReserve}
+              minBatteryReserve={settings.minBatteryReserve}
             />
           </div>
         );

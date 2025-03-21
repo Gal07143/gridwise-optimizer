@@ -115,3 +115,7 @@ export const seedTestData = async (): Promise<boolean> => {
     return false;
   }
 };
+
+export const getOrCreateDummySite = async () => {
+  return { id: 'dummy-site-id' };
+};

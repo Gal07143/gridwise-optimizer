@@ -7,7 +7,19 @@ import SettingsPageTemplate from '@/components/settings/SettingsPageTemplate';
 import { Loader2, Package, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { getDeviceModelById } from '@/services/devices';
+import { executeSql } from '@/services/sqlExecutor';
+
+// Create a getDeviceModelById function to replace the import
+const getDeviceModelById = async (id: string) => {
+  try {
+    const query = `SELECT * FROM device_models WHERE id = '${id}'`;
+    const result = await executeSql(query);
+    return result[0] || null;
+  } catch (error) {
+    console.error("Error fetching device model:", error);
+    return null;
+  }
+};
 
 const EditDeviceModelPage = () => {
   const { id } = useParams<{ id: string }>();

@@ -84,7 +84,7 @@ const EnergyForecastCard = ({ className, animationDelay }: EnergyForecastCardPro
           <HoverCard>
             <HoverCardTrigger asChild>
               <Badge 
-                variant={hasEnergySurplus ? "success" : "destructive"} 
+                variant={hasEnergySurplus ? "default" : "destructive"} 
                 className="flex items-center gap-1 cursor-help"
               >
                 <ArrowDownUp size={14} />

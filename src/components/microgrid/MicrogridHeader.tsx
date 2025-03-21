@@ -3,25 +3,21 @@ import React from 'react';
 import { useMicrogrid } from './MicrogridProvider';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge-extended';
-import { RefreshCcw, Clock } from 'lucide-react';
+import { RefreshCw, Clock } from 'lucide-react';
 
 interface MicrogridHeaderProps {
   title?: string;
 }
 
 const MicrogridHeader: React.FC<MicrogridHeaderProps> = ({ title = "Microgrid Control Center" }) => {
-  const { 
-    state,
-    systemMode,
-    refreshData,
-    lastUpdated
-  } = useMicrogrid();
+  const { state, handleModeChange, handleGridConnectionToggle } = useMicrogrid();
 
   const getStatusBadgeColor = (connected: boolean) => {
     return connected ? "success" : "destructive";
   };
 
   const formatLastUpdated = () => {
+    const lastUpdated = state.lastUpdated;
     if (!lastUpdated) return "Never";
     
     const date = new Date(lastUpdated);
@@ -39,7 +35,7 @@ const MicrogridHeader: React.FC<MicrogridHeaderProps> = ({ title = "Microgrid Co
             {state.gridConnection ? "Grid Connected" : "Island Mode"}
           </Badge>
           <Badge variant="outline">
-            {systemMode.charAt(0).toUpperCase() + systemMode.slice(1)} Mode
+            {state.systemMode.charAt(0).toUpperCase() + state.systemMode.slice(1)} Mode
           </Badge>
           <div className="flex items-center gap-1">
             <Clock className="h-3.5 w-3.5" />
@@ -47,8 +43,8 @@ const MicrogridHeader: React.FC<MicrogridHeaderProps> = ({ title = "Microgrid Co
           </div>
         </div>
       </div>
-      <Button variant="outline" size="sm" onClick={refreshData}>
-        <RefreshCcw className="mr-2 h-4 w-4" />
+      <Button variant="outline" size="sm" onClick={() => handleModeChange(state.systemMode)}>
+        <RefreshCw className="mr-2 h-4 w-4" />
         Refresh Data
       </Button>
     </div>

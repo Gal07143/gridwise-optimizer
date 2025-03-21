@@ -1,3 +1,4 @@
+
 export type UserRole = 'admin' | 'installer' | 'user' | 'viewer';
 
 export type ThemePreference = 'light' | 'dark' | 'system';
@@ -43,6 +44,10 @@ export function createEmptySite(): Omit<Site, 'id' | 'created_at' | 'updated_at'
 export type DeviceType = 'solar' | 'wind' | 'battery' | 'grid' | 'load' | 'ev_charger' | 'inverter' | 'meter';
 
 export type DeviceStatus = 'online' | 'offline' | 'maintenance' | 'error' | 'warning';
+
+// Adding database-compatible types
+export type DatabaseDeviceType = 'solar' | 'wind' | 'battery' | 'grid' | 'load' | 'ev_charger';
+export type DatabaseDeviceStatus = 'online' | 'offline' | 'maintenance' | 'error';
 
 export interface EnergyDevice {
   id: string;
@@ -97,10 +102,10 @@ export interface DeviceModel {
   id: string;
   name: string;
   manufacturer: string;
-  model_number: string;
-  protocol: string;
-  type: DeviceType;
-  capacity: number;
+  model_number?: string;
+  protocol?: string;
+  type?: DeviceType;
+  capacity?: number;
   efficiency?: number;
   dimensions?: string;
   weight?: number;
@@ -110,6 +115,7 @@ export interface DeviceModel {
   datasheet_url?: string;
   created_at: string;
   category?: string;
+  power_rating?: number;
 }
 
 export type AlertType = 'warning' | 'critical' | 'info';
@@ -149,3 +155,23 @@ export const convertTypeFromDatabase = (type: string): DeviceType => {
 export const convertStatusFromDatabase = (status: string): DeviceStatus => {
   return status as DeviceStatus;
 };
+
+// Add isValidDeviceType helper function
+export function isValidDeviceType(type: string): type is DeviceType {
+  return ['solar', 'wind', 'battery', 'grid', 'load', 'ev_charger', 'inverter', 'meter'].includes(type);
+}
+
+// Add isValidDeviceStatus helper function
+export function isValidDeviceStatus(status: string): status is DeviceStatus {
+  return ['online', 'offline', 'maintenance', 'error', 'warning'].includes(status);
+}
+
+// Add isValidDatabaseDeviceType helper function
+export function isValidDatabaseDeviceType(type: string): type is DatabaseDeviceType {
+  return ['solar', 'wind', 'battery', 'grid', 'load', 'ev_charger'].includes(type);
+}
+
+// Add isValidDatabaseDeviceStatus helper function
+export function isValidDatabaseDeviceStatus(status: string): status is DatabaseDeviceStatus {
+  return ['online', 'offline', 'maintenance', 'error'].includes(status);
+}
