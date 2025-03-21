@@ -153,7 +153,7 @@ const AppRoutes: React.FC = () => {
       <Route path="/settings/api" element={
         <RoleProtectedRoute allowedRoles={['admin']}>
           <ApiSettings />
-        </ProtectedRoute>
+        </RoleProtectedRoute>
       } />
       <Route path="/settings/notifications" element={
         <ProtectedRoute>
