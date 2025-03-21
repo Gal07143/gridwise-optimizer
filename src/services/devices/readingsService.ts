@@ -1,3 +1,5 @@
+
+// Just updating the addDeviceReading function to fix the type issue
 import { supabase } from "@/integrations/supabase/client";
 import { EnergyReading } from "@/types/energy";
 import { toast } from "sonner";
@@ -164,9 +166,22 @@ function generateRealisticPower(deviceType: string, capacity: number): number {
  */
 export const addDeviceReading = async (reading: Omit<EnergyReading, 'id' | 'created_at'>): Promise<EnergyReading | null> => {
   try {
+    // Ensure all required fields are present
+    const readingData = {
+      device_id: reading.device_id,
+      timestamp: reading.timestamp,
+      power: reading.power,
+      energy: reading.energy,
+      voltage: reading.voltage,
+      current: reading.current,
+      frequency: reading.frequency,
+      temperature: reading.temperature,
+      state_of_charge: reading.state_of_charge
+    };
+
     const { data, error } = await supabase
       .from('energy_readings')
-      .insert([reading])
+      .insert([readingData])
       .select()
       .single();
     

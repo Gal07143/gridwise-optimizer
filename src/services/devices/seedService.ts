@@ -1,12 +1,12 @@
-
-import { DeviceStatus, DeviceType } from "@/types/energy";
-import { supabase } from "@/integrations/supabase/client";
-import { getOrCreateDummySite } from "../sites/siteService";
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { DeviceType, DeviceStatus } from '@/types/energy';
+import { convertDeviceTypeForDb, convertDeviceStatusForDb } from '@/utils/deviceTypeUtils';
 
 /**
  * Helper functions to seed test data if needed
  */
-export const seedTestData = async () => {
+export const seedTestData = async (): Promise<boolean> => {
   try {
     // Get or create a test site
     const site = await getOrCreateDummySite();
@@ -24,12 +24,14 @@ export const seedTestData = async () => {
       return true;
     }
     
-    // Create test devices
+    console.log('Creating sample devices for site:', site.id);
+    
+    // Create test devices with database-compatible types
     const testDevices = [
       {
         name: "Rooftop Solar Array",
-        type: "solar" as DeviceType,
-        status: "online" as DeviceStatus,
+        type: convertDeviceTypeForDb("solar" as DeviceType),
+        status: convertDeviceStatusForDb("online" as DeviceStatus),
         location: "Main Building",
         capacity: 50,
         site_id: site.id,
@@ -42,8 +44,8 @@ export const seedTestData = async () => {
       },
       {
         name: "Primary Storage System",
-        type: "battery" as DeviceType,
-        status: "online" as DeviceStatus,
+        type: convertDeviceTypeForDb("battery" as DeviceType),
+        status: convertDeviceStatusForDb("online" as DeviceStatus),
         location: "Utility Room",
         capacity: 120,
         site_id: site.id,
@@ -56,8 +58,8 @@ export const seedTestData = async () => {
       },
       {
         name: "Wind Turbine Array",
-        type: "wind" as DeviceType,
-        status: "online" as DeviceStatus,
+        type: convertDeviceTypeForDb("wind" as DeviceType),
+        status: convertDeviceStatusForDb("online" as DeviceStatus),
         location: "North Field",
         capacity: 30,
         site_id: site.id,
@@ -70,8 +72,8 @@ export const seedTestData = async () => {
       },
       {
         name: "EV Charging Station 1",
-        type: "ev_charger" as DeviceType,
-        status: "online" as DeviceStatus,
+        type: convertDeviceTypeForDb("ev_charger" as DeviceType),
+        status: convertDeviceStatusForDb("online" as DeviceStatus),
         location: "Parking Level 1",
         capacity: 22,
         site_id: site.id,
@@ -84,8 +86,8 @@ export const seedTestData = async () => {
       },
       {
         name: "Grid Connection Point",
-        type: "grid" as DeviceType,
-        status: "online" as DeviceStatus,
+        type: convertDeviceTypeForDb("grid" as DeviceType),
+        status: convertDeviceStatusForDb("online" as DeviceStatus),
         location: "Main Distribution",
         capacity: 200,
         site_id: site.id,
@@ -105,9 +107,11 @@ export const seedTestData = async () => {
     
     if (insertError) throw insertError;
     
+    console.log('Successfully seeded test devices');
     return true;
   } catch (error) {
     console.error("Error seeding test data:", error);
+    toast.error("Failed to seed test data");
     return false;
   }
 };

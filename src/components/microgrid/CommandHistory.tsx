@@ -1,90 +1,76 @@
 
 import React from 'react';
 import { 
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
+  Card, 
+  CardHeader, 
+  CardTitle, 
+  CardContent 
 } from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
+import { 
+  Table, 
+  TableHeader, 
+  TableRow, 
+  TableHead, 
+  TableBody, 
+  TableCell 
 } from '@/components/ui/table';
-import { format } from 'date-fns';
-import { CommandHistoryItem } from './types';
-import { BadgeExtended } from '@/components/ui/badge-extended';
-import { Check, X, Info } from 'lucide-react';
+import { Badge } from '@/components/ui/badge-extended';
+import { Terminal } from 'lucide-react';
+import { CommandHistoryItem } from '@/components/microgrid/types';
 
-interface CommandHistoryProps {
-  history: CommandHistoryItem[];
+export interface CommandHistoryProps {
+  commandHistory: CommandHistoryItem[];
 }
 
-const CommandHistory: React.FC<CommandHistoryProps> = ({ history }) => {
+const CommandHistory: React.FC<CommandHistoryProps> = ({ commandHistory }) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Command History</CardTitle>
-        <CardDescription>Recent system commands and their status</CardDescription>
+        <CardTitle className="text-lg font-medium flex items-center gap-2">
+          <Terminal className="h-5 w-5" />
+          Command History
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
+        {commandHistory.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            No commands have been executed
+          </div>
+        ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[180px]">Timestamp</TableHead>
+                <TableHead>Time</TableHead>
                 <TableHead>Command</TableHead>
                 <TableHead>User</TableHead>
-                <TableHead className="w-[100px] text-right">Status</TableHead>
+                <TableHead>Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {history.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
-                    No commands have been executed yet
+              {commandHistory.slice(0, 10).map((command, index) => (
+                <TableRow key={command.id || index}>
+                  <TableCell className="text-xs">
+                    {new Date(command.timestamp).toLocaleTimeString()}
+                  </TableCell>
+                  <TableCell>
+                    <div className="font-medium">{command.command}</div>
+                    {command.details && (
+                      <div className="text-xs text-muted-foreground">{command.details}</div>
+                    )}
+                  </TableCell>
+                  <TableCell>{command.user}</TableCell>
+                  <TableCell>
+                    {command.success ? (
+                      <Badge variant="success">Success</Badge>
+                    ) : (
+                      <Badge variant="destructive">Failed</Badge>
+                    )}
                   </TableCell>
                 </TableRow>
-              ) : (
-                history.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell className="font-mono text-xs">
-                      {format(new Date(item.timestamp), 'yyyy-MM-dd HH:mm:ss')}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-start gap-2">
-                        <div>
-                          <span className="font-medium">{item.command}</span>
-                          {item.details && (
-                            <p className="text-xs text-muted-foreground mt-1">{item.details}</p>
-                          )}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>{item.user || 'System'}</TableCell>
-                    <TableCell className="text-right">
-                      {item.success ? (
-                        <BadgeExtended variant="success" className="inline-flex items-center">
-                          <Check className="h-3 w-3 mr-1" />
-                          Success
-                        </BadgeExtended>
-                      ) : (
-                        <BadgeExtended variant="destructive" className="inline-flex items-center">
-                          <X className="h-3 w-3 mr-1" />
-                          Failed
-                        </BadgeExtended>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
+              ))}
             </TableBody>
           </Table>
-        </div>
+        )}
       </CardContent>
     </Card>
   );

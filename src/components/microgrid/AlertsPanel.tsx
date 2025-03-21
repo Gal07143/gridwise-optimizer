@@ -1,126 +1,106 @@
 
 import React from 'react';
 import { 
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
+  Card, 
+  CardHeader, 
+  CardTitle, 
+  CardContent 
 } from '@/components/ui/card';
+import { 
+  Table, 
+  TableHeader, 
+  TableRow, 
+  TableHead, 
+  TableBody, 
+  TableCell 
+} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge-extended';
 import { Button } from '@/components/ui/button';
-import { AlertItem } from './types';
-import { BadgeExtended } from '@/components/ui/badge-extended';
-import { Bell, CheckCircle2 } from 'lucide-react';
+import { CheckCircle, AlertCircle } from 'lucide-react';
+import { AlertItem } from '@/components/microgrid/types';
 
-interface AlertsPanelProps {
+export interface AlertsPanelProps {
   alerts: AlertItem[];
   onAcknowledge: (alertId: string) => void;
 }
 
-const AlertsPanel: React.FC<AlertsPanelProps> = ({ alerts, onAcknowledge }) => {
-  // Filter alerts to show unacknowledged first
-  const sortedAlerts = [...alerts].sort((a, b) => {
-    // Sort by acknowledged status first
-    if (a.acknowledged !== b.acknowledged) {
-      return a.acknowledged ? 1 : -1;
-    }
-    
-    // Then sort by severity
-    const severityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
-    return severityOrder[a.severity as keyof typeof severityOrder] - 
-           severityOrder[b.severity as keyof typeof severityOrder];
-  });
-
-  // Get badge variant based on alert severity
-  const getSeverityVariant = (severity: string) => {
+const AlertsPanel: React.FC<AlertsPanelProps> = ({ 
+  alerts,
+  onAcknowledge
+}) => {
+  const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case 'critical':
-        return 'destructive';
-      case 'high':
-        return 'destructive';
-      case 'medium':
-        return 'secondary';
-      case 'low':
-      default:
-        return 'outline';
+      case 'critical': return 'destructive';
+      case 'high': return 'destructive';
+      case 'medium': return 'default';
+      case 'low': return 'secondary';
+      default: return 'secondary';
     }
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <span>System Alerts</span>
-          <BadgeExtended variant="secondary">
-            {alerts.filter(a => !a.acknowledged).length}/{alerts.length}
-          </BadgeExtended>
+        <CardTitle className="text-lg font-medium flex items-center gap-2">
+          <AlertCircle className="h-5 w-5" />
+          System Alerts
         </CardTitle>
-        <CardDescription>Recent system events and notifications</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          {sortedAlerts.length === 0 ? (
-            <div className="text-center p-4 text-muted-foreground">
-              <p>No alerts to display</p>
-            </div>
-          ) : (
-            sortedAlerts.map((alert) => (
-              <div 
-                key={alert.id}
-                className={`p-3 border rounded-lg ${
-                  alert.acknowledged ? 'bg-muted/50' : 'bg-background border-border'
-                }`}
-              >
-                <div className="flex justify-between items-start mb-1">
-                  <div className="flex items-center gap-2">
-                    <BadgeExtended 
-                      variant={getSeverityVariant(alert.severity)} 
-                      className="uppercase text-[10px]"
-                    >
+        {alerts.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            No active alerts
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Time</TableHead>
+                <TableHead>Alert</TableHead>
+                <TableHead>Severity</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Action</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {alerts.map((alert) => (
+                <TableRow key={alert.id}>
+                  <TableCell className="text-xs">
+                    {new Date(alert.timestamp).toLocaleTimeString()}
+                  </TableCell>
+                  <TableCell>
+                    <div className="font-medium">{alert.title}</div>
+                    <div className="text-xs text-muted-foreground">{alert.message}</div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={getSeverityColor(alert.severity)}>
                       {alert.severity}
-                    </BadgeExtended>
-                    <h4 className={`text-sm font-medium ${
-                      alert.acknowledged ? 'text-muted-foreground' : ''
-                    }`}>
-                      {alert.title}
-                    </h4>
-                  </div>
-                  
-                  {!alert.acknowledged && (
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-6 w-6"
-                      onClick={() => onAcknowledge(alert.id)}
-                    >
-                      <CheckCircle2 className="h-4 w-4" />
-                      <span className="sr-only">Acknowledge</span>
-                    </Button>
-                  )}
-                </div>
-                
-                <p className={`text-sm ${
-                  alert.acknowledged ? 'text-muted-foreground' : ''
-                }`}>
-                  {alert.message}
-                </p>
-                
-                <div className="flex justify-between items-center mt-2">
-                  <span className="text-xs text-muted-foreground">
-                    {new Date(alert.timestamp).toLocaleString()}
-                  </span>
-                  
-                  {alert.acknowledged && (
-                    <span className="text-xs text-muted-foreground flex items-center">
-                      <CheckCircle2 className="h-3 w-3 mr-1" />
-                      Acknowledged
-                    </span>
-                  )}
-                </div>
-              </div>
-            ))
-          )}
-        </div>
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {alert.acknowledged ? (
+                      <Badge variant="success">Acknowledged</Badge>
+                    ) : (
+                      <Badge variant="outline">New</Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {!alert.acknowledged && (
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => onAcknowledge(alert.id)}
+                      >
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        Acknowledge
+                      </Button>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
       </CardContent>
     </Card>
   );

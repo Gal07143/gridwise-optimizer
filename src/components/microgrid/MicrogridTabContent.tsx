@@ -1,71 +1,80 @@
 
 import React from 'react';
-import { MicrogridControls } from './MicrogridControls';
-import { useMicrogrid } from './MicrogridProvider';
-import { MicrogridOperatingMode } from '@/types/energy';
+import MicrogridControls from "./MicrogridControls";
 import StatusOverview from './StatusOverview';
+import EnergyFlowVisualization from './EnergyFlowVisualization';
 import AlertsPanel from './AlertsPanel';
 import CommandHistory from './CommandHistory';
 import DeviceControlsPanel from './DeviceControlsPanel';
-import EnergyFlowVisualization from './EnergyFlowVisualization';
+import AdvancedControlSettings from './AdvancedControlSettings';
 import MicrogridSystemInsights from './MicrogridSystemInsights';
+import { useMicrogrid } from './MicrogridProvider';
 
 interface MicrogridTabContentProps {
   activeTab: string;
 }
 
-/**
- * Component that renders the content for the selected microgrid tab
- */
 const MicrogridTabContent: React.FC<MicrogridTabContentProps> = ({ activeTab }) => {
-  const { state, dispatch } = useMicrogrid();
+  const { 
+    state: microgridState,
+    dispatch,
+    commandHistory,
+    alerts,
+    acknowledgeAlert,
+    systemMode,
+    setSystemMode,
+    minBatteryReserve,
+    setMinBatteryReserve
+  } = useMicrogrid();
 
-  const handleModeChange = (mode: MicrogridOperatingMode) => {
-    dispatch({ type: 'SET_OPERATING_MODE', payload: mode });
+  // Function to handle mode changes
+  const handleModeChange = (mode: "auto" | "manual" | "eco" | "backup") => {
+    setSystemMode(mode);
   };
 
-  const handleGridConnectionToggle = () => {
-    dispatch({ type: 'TOGGLE_GRID_CONNECTION' });
+  // Render the active tab content
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'dashboard':
+        return (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <StatusOverview microgridState={microgridState} />
+            <EnergyFlowVisualization microgridState={microgridState} />
+            <AlertsPanel alerts={alerts} onAcknowledge={acknowledgeAlert} />
+            <CommandHistory commandHistory={commandHistory} />
+          </div>
+        );
+      case 'controls':
+        return (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <MicrogridControls 
+              systemMode={systemMode} 
+              onModeChange={handleModeChange}
+              microgridState={microgridState}
+            />
+            <DeviceControlsPanel microgridState={microgridState} dispatch={dispatch} />
+          </div>
+        );
+      case 'advanced':
+        return (
+          <div className="space-y-6">
+            <AdvancedControlSettings 
+              minBatteryReserve={minBatteryReserve}
+              setMinBatteryReserve={setMinBatteryReserve}
+              microgridState={microgridState}
+            />
+            <MicrogridSystemInsights 
+              microgridState={microgridState}
+              minBatteryReserve={minBatteryReserve}
+            />
+          </div>
+        );
+      default:
+        return <div>Select a tab to view content</div>;
+    }
   };
 
-  return (
-    <div className="space-y-6">
-      {activeTab === 'dashboard' && (
-        <>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
-              <StatusOverview />
-            </div>
-            <div>
-              <MicrogridControls 
-                operatingMode={state.operatingMode}
-                onModeChange={handleModeChange}
-                gridConnected={state.gridConnection}
-                onGridConnectionToggle={handleGridConnectionToggle}
-              />
-            </div>
-          </div>
-          <EnergyFlowVisualization />
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
-              <AlertsPanel alerts={state.alerts} />
-            </div>
-            <div>
-              <CommandHistory commandHistory={state.commandHistory} />
-            </div>
-          </div>
-        </>
-      )}
-
-      {activeTab === 'devices' && (
-        <DeviceControlsPanel />
-      )}
-
-      {activeTab === 'analytics' && (
-        <MicrogridSystemInsights />
-      )}
-    </div>
-  );
+  return renderTabContent();
 };
 
 export default MicrogridTabContent;

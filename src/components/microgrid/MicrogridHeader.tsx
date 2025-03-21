@@ -1,37 +1,57 @@
 
 import React from 'react';
-import { Power } from 'lucide-react';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge-extended';
 import { useMicrogrid } from './MicrogridProvider';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge-extended';
+import { RefreshCcw, Clock } from 'lucide-react';
 
-const MicrogridHeader: React.FC = () => {
-  const { state } = useMicrogrid();
+interface MicrogridHeaderProps {
+  title?: string;
+}
+
+const MicrogridHeader: React.FC<MicrogridHeaderProps> = ({ title = "Microgrid Control Center" }) => {
+  const { 
+    state,
+    systemMode,
+    refreshData,
+    lastUpdated
+  } = useMicrogrid();
+
+  const getStatusBadgeColor = (connected: boolean) => {
+    return connected ? "success" : "destructive";
+  };
+
+  const formatLastUpdated = () => {
+    if (!lastUpdated) return "Never";
+    
+    const date = new Date(lastUpdated);
+    return date.toLocaleTimeString();
+  };
 
   return (
-    <Card className="p-6 mb-8 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 border-slate-200/60 dark:border-slate-800/60 shadow-lg">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center">
-            <Power className="mr-3 h-8 w-8 text-primary" />
-            Microgrid Control
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Advanced monitoring and management of your microgrid system
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Badge className={`${state.gridConnection ? 'bg-green-500 hover:bg-green-600' : 'bg-yellow-500 hover:bg-yellow-600'} text-white px-3 py-1.5 flex items-center gap-1`} variant={state.gridConnection ? 'success' : 'default'}>
-            <div className="h-1.5 w-1.5 rounded-full bg-white animate-pulse"></div>
-            {state.gridConnection ? 'Grid Connected' : 'Island Mode'}
+    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+      <div>
+        <h1 className="text-2xl font-bold">{title}</h1>
+        <div className="flex items-center mt-2 gap-2 text-sm text-muted-foreground">
+          <Badge 
+            variant={getStatusBadgeColor(state.gridConnection)}
+          >
+            {state.gridConnection ? "Grid Connected" : "Island Mode"}
           </Badge>
-          <Badge className="px-3 py-1.5 flex items-center gap-1" variant="default">
-            <div className="h-3 w-3"></div>
-            {state.operatingMode.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+          <Badge variant="outline">
+            {systemMode.charAt(0).toUpperCase() + systemMode.slice(1)} Mode
           </Badge>
+          <div className="flex items-center gap-1">
+            <Clock className="h-3.5 w-3.5" />
+            <span>Updated: {formatLastUpdated()}</span>
+          </div>
         </div>
       </div>
-    </Card>
+      <Button variant="outline" size="sm" onClick={refreshData}>
+        <RefreshCcw className="mr-2 h-4 w-4" />
+        Refresh Data
+      </Button>
+    </div>
   );
 };
 
