@@ -1,79 +1,87 @@
 
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useParams } from 'react-router-dom';
 import AppLayout from '@/components/layout/AppLayout';
-import { useDeviceModels, categoryNames } from '@/hooks/useDeviceModels';
-import PageHeader from '@/components/integrations/PageHeader';
-import SearchFilterBar from '@/components/integrations/SearchFilterBar';
-import DeviceModelsCard from '@/components/integrations/DeviceModelsCard';
-import { Skeleton } from '@/components/ui/skeleton';
-import { toast } from 'sonner';
+import LoadingSpinner from '@/components/ui/loading-spinner';
+import ErrorMessage from '@/components/ui/error-message';
+import { useDeviceModels } from '@/hooks/useDeviceModels';
+import IntegrationDeviceModelsCard from '@/components/integrations/IntegrationDeviceModelsCard';
+import IntegrationInstallationCard from '@/components/integrations/IntegrationInstallationCard';
+import PageHeader from '@/components/pages/PageHeader';
+import NoResults from '@/components/ui/no-results';
+import SearchFilterBar from '@/components/ui/SearchFilterBar';
+
+// Define prop types for PageHeader if missing
+interface PageHeaderProps {
+  title: string;
+  description: string;
+  categoryId: string;
+}
+
+// Define prop types for SearchFilterBar if missing
+interface SearchFilterBarProps {
+  searchQuery: string;
+  onSearchChange: React.Dispatch<React.SetStateAction<string>>;
+  activeTab: string;
+  onTabChange: React.Dispatch<React.SetStateAction<string>>;
+  deviceCount: number;
+}
+
+// Define prop types for IntegrationDeviceModelsCard if missing
+interface DeviceModelsCardProps {
+  deviceModels: any[];
+  sortField: string;
+  sortDirection: 'asc' | 'desc';
+  onSort: (field: string) => void;
+}
 
 const IntegrationCategoryPage = () => {
-  const { categoryId } = useParams<{ categoryId: string }>();
-  const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const { categoryId = 'all' } = useParams<{ categoryId: string }>();
   const [activeTab, setActiveTab] = useState('all');
   
   const {
-    devices,
+    devices: deviceModels,
+    isLoading,
+    error,
     sortField,
     sortDirection,
+    searchQuery,
+    setSearchQuery,
     handleSort,
     deviceCount,
-    error,
-  } = useDeviceModels(categoryId);
+    categoryName
+  } = useDeviceModels(categoryId !== 'all' ? categoryId : undefined);
   
-  // Filter devices based on search query and active tab
-  const filteredDevices = React.useMemo(() => {
-    if (!devices) return [];
-    
-    return devices.filter(device => {
-      // Search filter
-      const matchesSearch = !searchQuery || 
-        device.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        device.manufacturer.toLowerCase().includes(searchQuery.toLowerCase());
-      
-      // Tab filter (all, solar, wind, battery, etc.)
-      const matchesTab = activeTab === 'all' || device.type === activeTab;
-      
-      return matchesSearch && matchesTab;
-    });
-  }, [devices, searchQuery, activeTab]);
+  if (isLoading) {
+    return (
+      <AppLayout>
+        <div className="flex-1 p-6 flex items-center justify-center">
+          <LoadingSpinner size="lg" />
+        </div>
+      </AppLayout>
+    );
+  }
   
-  // Simulate loading delay
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 600);
-    
-    return () => clearTimeout(timer);
-  }, [categoryId]);
-  
-  // Redirect if category doesn't exist
-  useEffect(() => {
-    if (categoryId && !categoryNames[categoryId as keyof typeof categoryNames]) {
-      toast.error("Invalid device category");
-      navigate('/integrations', { replace: true });
-    }
-  }, [categoryId, navigate]);
-  
-  const categoryName = categoryId 
-    ? categoryNames[categoryId as keyof typeof categoryNames] || 'Devices' 
-    : 'Devices';
-  
+  if (error) {
+    return (
+      <AppLayout>
+        <div className="p-6">
+          <ErrorMessage message="Failed to load integrations" retryAction={() => window.location.reload()} />
+        </div>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
-      <div className="flex flex-col gap-6 p-6">
-        {/* Page Header */}
+      <div className="flex-1 p-6 space-y-6">
+        {/* Pass correct props based on the interfaces */}
         <PageHeader 
-          title={categoryName} 
-          description={`Browse and manage ${categoryName.toLowerCase()} for your energy management system.`}
+          title={categoryName}
+          description={`Browse and manage ${categoryName.toLowerCase()} integrations`}
           categoryId={categoryId}
         />
         
-        {/* Search and Filter Bar */}
         <SearchFilterBar 
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
@@ -82,20 +90,21 @@ const IntegrationCategoryPage = () => {
           deviceCount={deviceCount}
         />
         
-        {/* Device Models Grid */}
-        {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => (
-              <Skeleton key={i} className="h-[300px] rounded-xl" />
-            ))}
-          </div>
+        {deviceModels.length === 0 ? (
+          <NoResults message="No integrations found" suggestion="Try changing your search or filter criteria" />
         ) : (
-          <DeviceModelsCard 
-            deviceModels={filteredDevices} 
-            sortField={sortField}
-            sortDirection={sortDirection}
-            onSort={handleSort}
-          />
+          <div className="grid grid-cols-1 gap-6">
+            <IntegrationDeviceModelsCard 
+              deviceModels={deviceModels}
+              sortField={sortField}
+              sortDirection={sortDirection}
+              onSort={handleSort}
+            />
+            
+            <IntegrationInstallationCard
+              categoryId={categoryId}
+            />
+          </div>
         )}
       </div>
     </AppLayout>

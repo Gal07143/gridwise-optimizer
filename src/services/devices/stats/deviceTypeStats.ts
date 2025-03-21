@@ -1,11 +1,12 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { DeviceType, isValidDeviceType } from "@/types/energy";
+import { isFilterableDeviceType } from "../deviceCompatibility";
 
 /**
  * Get device type statistics for a site
  */
-export const getDeviceTypeStats = async (siteId?: string): Promise<Record<DeviceType, number>> => {
+export const getDeviceTypeStats = async (siteId?: string): Promise<Record<string, number>> => {
   try {
     // Base query
     let query = supabase
@@ -21,19 +22,21 @@ export const getDeviceTypeStats = async (siteId?: string): Promise<Record<Device
     
     if (error) throw error;
     
-    // Initialize all type counts
-    const stats: Record<DeviceType, number> = {
+    // Initialize all type counts with basic database types
+    const stats: Record<string, number> = {
       solar: 0,
       wind: 0,
       battery: 0,
       grid: 0,
       load: 0,
-      ev_charger: 0
+      ev_charger: 0,
+      inverter: 0,
+      meter: 0
     };
     
     // Count devices by type
     data?.forEach(device => {
-      const type = device.type as DeviceType;
+      const type = device.type as string;
       stats[type] = (stats[type] || 0) + 1;
     });
     
@@ -47,7 +50,9 @@ export const getDeviceTypeStats = async (siteId?: string): Promise<Record<Device
       battery: 0,
       grid: 0,
       load: 0,
-      ev_charger: 0
+      ev_charger: 0,
+      inverter: 0,
+      meter: 0
     };
   }
 };
@@ -62,9 +67,15 @@ export const getDevicesByType = async (type: DeviceType): Promise<number> => {
       throw new Error(`Invalid device type: ${type}`);
     }
     
+    // For non-standard types, we need to handle them differently
+    if (!isFilterableDeviceType(type)) {
+      // These types aren't in the database directly
+      return 0;
+    }
+    
     const { count, error } = await supabase
       .from('devices')
-      .select('*', { count: 'exact' })
+      .select('*', { count: 'exact', head: true })
       .eq('type', type);
     
     if (error) throw error;

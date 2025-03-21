@@ -300,7 +300,7 @@ const StatusOverview: React.FC<StatusOverviewProps> = ({ microgridState }) => {
         </div>
         <div className={cn(
           "flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium",
-          microgridState.operatingMode === 'automatic' ? "bg-green-500/10 text-green-700 dark:text-green-500" : 
+          microgridState.operatingMode === 'auto' ? "bg-green-500/10 text-green-700 dark:text-green-500" : 
           "bg-blue-500/10 text-blue-700 dark:text-blue-500"
         )}>
           <div className="h-1.5 w-1.5 rounded-full bg-current animate-pulse"></div>

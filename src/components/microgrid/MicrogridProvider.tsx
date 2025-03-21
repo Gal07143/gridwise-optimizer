@@ -102,6 +102,7 @@ const microgridReducer = (state: MicrogridState, action: MicrogridAction): Micro
 };
 
 interface MicrogridContextValues extends MicrogridContextType {
+  state: MicrogridState;
   alerts: AlertItem[];
   commandHistory: CommandHistoryItem[];
   settings: {

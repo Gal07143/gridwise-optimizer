@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { useMicrogrid } from './MicrogridProvider';
 
 const MicrogridHeader: React.FC = () => {
-  const { microgridState } = useMicrogrid();
+  const { state } = useMicrogrid();
 
   return (
     <Card className="p-6 mb-8 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 border-slate-200/60 dark:border-slate-800/60 shadow-lg">
@@ -21,13 +21,13 @@ const MicrogridHeader: React.FC = () => {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Badge className={`${microgridState.gridConnection ? 'bg-green-500 hover:bg-green-600' : 'bg-yellow-500 hover:bg-yellow-600'} text-white px-3 py-1.5 flex items-center gap-1`}>
+          <Badge className={`${state.gridConnection ? 'bg-green-500 hover:bg-green-600' : 'bg-yellow-500 hover:bg-yellow-600'} text-white px-3 py-1.5 flex items-center gap-1`}>
             <div className="h-1.5 w-1.5 rounded-full bg-white animate-pulse"></div>
-            {microgridState.gridConnection ? 'Grid Connected' : 'Island Mode'}
+            {state.gridConnection ? 'Grid Connected' : 'Island Mode'}
           </Badge>
           <Badge className="bg-primary hover:bg-primary/90 px-3 py-1.5 flex items-center gap-1">
             <div className="h-3 w-3"></div>
-            {microgridState.operatingMode.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+            {state.operatingMode.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
           </Badge>
         </div>
       </div>

@@ -7,6 +7,12 @@ export type AlertType = 'warning' | 'critical' | 'info';
 export type UserRole = 'admin' | 'operator' | 'viewer';
 export type ThemePreference = 'light' | 'dark' | 'system';
 
+// Database compatible subset of DeviceType
+export type DatabaseDeviceType = 'solar' | 'wind' | 'battery' | 'grid' | 'load' | 'ev_charger';
+
+// Database compatible subset of DeviceStatus
+export type DatabaseDeviceStatus = 'online' | 'offline' | 'maintenance' | 'error';
+
 export interface EnergyDevice {
   id: string;
   name: string;
@@ -24,6 +30,18 @@ export interface EnergyDevice {
   created_at: string;
   created_by?: string | null;
   installation_date?: string | null;
+}
+
+export interface DeviceModel {
+  id: string;
+  name: string;
+  manufacturer: string;
+  type: string;
+  version: string;
+  description?: string | null;
+  specs?: Record<string, any> | null;
+  created_at: string;
+  last_updated: string;
 }
 
 export interface EnergyReading {
@@ -194,6 +212,40 @@ export const isValidDeviceType = (type: string): type is DeviceType => {
 
 export const isValidDeviceStatus = (status: string): status is DeviceStatus => {
   return ['online', 'offline', 'maintenance', 'error', 'warning'].includes(status as DeviceStatus);
+};
+
+// Database compatibility helper functions
+export const isValidDatabaseDeviceType = (type: string): type is DatabaseDeviceType => {
+  return ['solar', 'wind', 'battery', 'grid', 'load', 'ev_charger'].includes(type as DatabaseDeviceType);
+};
+
+export const isValidDatabaseDeviceStatus = (status: string): type is DatabaseDeviceStatus => {
+  return ['online', 'offline', 'maintenance', 'error'].includes(status as DatabaseDeviceStatus);
+};
+
+// Conversion utilities
+export const convertToValidDatabaseType = (type: DeviceType): DatabaseDeviceType => {
+  if (isValidDatabaseDeviceType(type)) {
+    return type;
+  }
+  // Map non-database types to closest equivalents
+  if (type === 'inverter' || type === 'meter') {
+    return 'grid';
+  }
+  // Default fallback
+  return 'grid';
+};
+
+export const convertToValidDatabaseStatus = (status: DeviceStatus): DatabaseDeviceStatus => {
+  if (isValidDatabaseDeviceStatus(status)) {
+    return status;
+  }
+  // Map warning to maintenance as closest equivalent
+  if (status === 'warning') {
+    return 'maintenance';
+  }
+  // Default fallback
+  return 'offline';
 };
 
 // Site management utilities

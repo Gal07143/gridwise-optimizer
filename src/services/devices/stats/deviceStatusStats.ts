@@ -1,11 +1,12 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { DeviceStatus, isValidDeviceStatus } from "@/types/energy";
+import { isFilterableDeviceStatus } from "../deviceCompatibility";
 
 /**
  * Get device status statistics for a site
  */
-export const getDeviceStatusStats = async (siteId?: string): Promise<Record<DeviceStatus, number>> => {
+export const getDeviceStatusStats = async (siteId?: string): Promise<Record<string, number>> => {
   try {
     // Base query
     let query = supabase
@@ -22,16 +23,17 @@ export const getDeviceStatusStats = async (siteId?: string): Promise<Record<Devi
     if (error) throw error;
     
     // Initialize all status counts
-    const stats: Record<DeviceStatus, number> = {
+    const stats: Record<string, number> = {
       online: 0,
       offline: 0,
       maintenance: 0,
-      error: 0
+      error: 0,
+      warning: 0
     };
     
     // Count devices by status
     data?.forEach(device => {
-      const status = device.status as DeviceStatus;
+      const status = device.status as string;
       stats[status] = (stats[status] || 0) + 1;
     });
     
@@ -43,7 +45,8 @@ export const getDeviceStatusStats = async (siteId?: string): Promise<Record<Devi
       online: 0,
       offline: 0,
       maintenance: 0,
-      error: 0
+      error: 0,
+      warning: 0
     };
   }
 };
@@ -58,9 +61,15 @@ export const getDevicesByStatus = async (status: DeviceStatus): Promise<number> 
       throw new Error(`Invalid device status: ${status}`);
     }
     
+    // For non-standard statuses like 'warning', we need to handle them differently
+    if (!isFilterableDeviceStatus(status)) {
+      // Warning isn't in the database directly
+      return 0;
+    }
+    
     const { count, error } = await supabase
       .from('devices')
-      .select('*', { count: 'exact' })
+      .select('*', { count: 'exact', head: true })
       .eq('status', status);
     
     if (error) throw error;
