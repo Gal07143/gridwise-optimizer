@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { User, UserRole } from "@/types/energy";
 import { toast } from "sonner";
@@ -13,6 +12,7 @@ const mapDbRoleToAppRole = (dbRole: string): UserRole => {
   if (dbRole === 'admin') return 'admin';
   if (dbRole === 'installer') return 'installer';
   if (dbRole === 'user') return 'user';
+  if (dbRole === 'operator') return 'operator';
   // Default to viewer for any unrecognized role
   return 'viewer';
 };
@@ -24,6 +24,7 @@ const mapAppRoleToDbRole = (appRole: UserRole): DbUserRole => {
   if (appRole === 'admin') return 'admin';
   if (appRole === 'installer') return 'installer';
   if (appRole === 'user') return 'user';
+  if (appRole === 'operator') return 'operator';
   return 'viewer';
 };
 

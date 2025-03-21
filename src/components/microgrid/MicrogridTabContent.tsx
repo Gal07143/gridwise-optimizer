@@ -87,6 +87,7 @@ const MicrogridTabContent: React.FC<MicrogridTabContentProps> = ({ activeTab }) 
               settings={settings}
               onSettingsChange={handleSettingsChange}
               onSaveSettings={handleSaveSettings}
+              microgridState={microgridState} // Add the missing required prop
             />
             <MicrogridSystemInsights 
               microgridState={microgridState}
