@@ -1,7 +1,7 @@
-
 import React from 'react';
 import SettingsPageTemplate from '@/components/settings/SettingsPageTemplate';
 import { Lock } from 'lucide-react';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 
 const Authentication = () => {
   return (
