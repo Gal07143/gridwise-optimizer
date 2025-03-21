@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Settings, Save } from 'lucide-react';
-import { ControlSettings } from './types';
+import { ControlSettings, MicrogridState } from './types';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -11,12 +11,14 @@ import { Separator } from '@/components/ui/separator';
 
 interface AdvancedControlSettingsProps {
   settings: ControlSettings;
+  microgridState: MicrogridState; // Add this prop to match what's being passed in MicrogridTabContent
   onSettingsChange: (setting: keyof ControlSettings, value: any) => void;
   onSaveSettings: () => void;
 }
 
 const AdvancedControlSettings: React.FC<AdvancedControlSettingsProps> = ({
   settings,
+  microgridState,
   onSettingsChange,
   onSaveSettings
 }) => {

@@ -1,5 +1,4 @@
-
-export type UserRole = 'admin' | 'installer' | 'user' | 'viewer';
+export type UserRole = 'admin' | 'viewer' | 'operator' | 'installer' | 'user';
 
 export type ThemePreference = 'light' | 'dark' | 'system';
 
