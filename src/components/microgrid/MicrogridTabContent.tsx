@@ -23,7 +23,8 @@ const MicrogridTabContent: React.FC<MicrogridTabContentProps> = ({ activeTab }) 
     settings,
     handleAcknowledgeAlert,
     handleModeChange,
-    handleSettingsChange
+    handleSettingsChange,
+    handleSaveSettings
   } = useMicrogrid();
 
   // Render the active tab content
@@ -42,9 +43,12 @@ const MicrogridTabContent: React.FC<MicrogridTabContentProps> = ({ activeTab }) 
         return (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <MicrogridControls 
-              systemMode={microgridState.systemMode} 
-              // Cast the function to match the expected props type
-              onModeChange={handleModeChange as (mode: "manual" | "automatic" | "island" | "grid-connected") => void}
+              microgridState={microgridState}
+              minBatteryReserve={settings.minBatteryReserve}
+              onModeChange={handleModeChange}
+              onGridConnectionToggle={() => dispatch({ type: 'UPDATE_PRODUCTION', payload: { gridConnection: !microgridState.gridConnection } })}
+              onBatteryDischargeToggle={() => dispatch({ type: 'SET_BATTERY_DISCHARGE_ENABLED', payload: !microgridState.batteryDischargeEnabled })}
+              onBatteryReserveChange={(value) => handleSettingsChange('minBatteryReserve', value)}
             />
             <DeviceControlsPanel />
           </div>
@@ -53,10 +57,9 @@ const MicrogridTabContent: React.FC<MicrogridTabContentProps> = ({ activeTab }) 
         return (
           <div className="space-y-6">
             <AdvancedControlSettings 
-              // Make sure we pass props that match the component's interface
               settings={settings}
               onSettingsChange={handleSettingsChange}
-              microgridState={microgridState}
+              onSaveSettings={handleSaveSettings}
             />
             <MicrogridSystemInsights 
               microgridState={microgridState}

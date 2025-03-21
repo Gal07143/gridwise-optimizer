@@ -1,10 +1,30 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { User, UserRole } from "@/types/energy";
 import { toast } from "sonner";
 
 // Define the roles used in the database
 type DbUserRole = 'admin' | 'viewer' | 'operator' | 'installer' | 'user';
+
+/**
+ * Map database role to application role
+ */
+const mapDbRoleToAppRole = (dbRole: string): UserRole => {
+  if (dbRole === 'admin') return 'admin';
+  if (dbRole === 'installer') return 'installer';
+  if (dbRole === 'user') return 'user';
+  // Default to viewer for any unrecognized role
+  return 'viewer';
+};
+
+/**
+ * Map application role to database role
+ */
+const mapAppRoleToDbRole = (appRole: UserRole): DbUserRole => {
+  if (appRole === 'admin') return 'admin';
+  if (appRole === 'installer') return 'installer';
+  if (appRole === 'user') return 'user';
+  return 'viewer';
+};
 
 /**
  * Get all users (admin only)
@@ -20,20 +40,7 @@ export const getAllUsers = async (): Promise<Partial<User>[]> => {
     // Map Supabase profile data to User type
     return (data || []).map(profile => {
       // Convert role to ensure it matches UserRole type
-      let role: UserRole = 'viewer'; // Default
-      
-      if (profile.role === 'admin') {
-        role = 'admin';
-      } else if (profile.role === 'installer') {
-        role = 'installer';
-      } else if (profile.role === 'user') {
-        role = 'user';
-      } else if (profile.role === 'viewer') {
-        role = 'viewer';
-      } else if (profile.role === 'operator') {
-        // Map operator to installer as closest equivalent
-        role = 'installer';
-      }
+      const role = mapDbRoleToAppRole(profile.role);
       
       return {
         id: profile.id,
@@ -78,20 +85,7 @@ export const getUserById = async (userId: string): Promise<Partial<User> | null>
     if (!data) return null;
     
     // Convert role to ensure it matches UserRole type
-    let role: UserRole = 'viewer'; // Default
-    
-    if (data.role === 'admin') {
-      role = 'admin';
-    } else if (data.role === 'installer') {
-      role = 'installer';
-    } else if (data.role === 'user') {
-      role = 'user';
-    } else if (data.role === 'viewer') {
-      role = 'viewer';
-    } else if (data.role === 'operator') {
-      // Map operator to installer as closest equivalent
-      role = 'installer';
-    }
+    const role = mapDbRoleToAppRole(data.role);
     
     // Map Supabase profile data to User type
     return {
@@ -126,21 +120,7 @@ export const getUserById = async (userId: string): Promise<Partial<User> | null>
 export const updateUserRole = async (userId: string, role: UserRole): Promise<boolean> => {
   try {
     // Map UserRole to database role
-    let dbRole: DbUserRole;
-    
-    switch (role) {
-      case 'admin':
-        dbRole = 'admin';
-        break;
-      case 'installer':
-        dbRole = 'installer';
-        break;
-      case 'user':
-        dbRole = 'user';
-        break;
-      default:
-        dbRole = 'viewer';
-    }
+    const dbRole = mapAppRoleToDbRole(role);
     
     const { error } = await supabase
       .from('profiles')
