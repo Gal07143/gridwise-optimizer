@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { DeviceStatus, DeviceType, isValidDeviceStatus, isValidDeviceType } from "@/types/energy";
+import { DeviceStatus, DeviceType } from "@/types/energy";
+import { toDbDeviceStatus, toDbDeviceType } from "../deviceCompatibility";
 
 /**
  * Get count of devices by site
@@ -40,11 +41,15 @@ export const getDeviceCount = async (options?: {
     }
     
     if (options?.status) {
-      query = query.eq('status', options.status);
+      // Convert to DB-compatible status before querying
+      const dbStatus = toDbDeviceStatus(options.status);
+      query = query.eq('status', dbStatus);
     }
     
     if (options?.type) {
-      query = query.eq('type', options.type);
+      // Convert to DB-compatible type before querying
+      const dbType = toDbDeviceType(options.type);
+      query = query.eq('type', dbType);
     }
     
     if (options?.search) {

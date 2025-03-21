@@ -1,7 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { DeviceStatus, isValidDeviceStatus } from "@/types/energy";
-import { isFilterableDeviceStatus } from "../deviceCompatibility";
+import { DeviceStatus } from "@/types/energy";
+import { toDbDeviceStatus } from "../deviceCompatibility";
 
 /**
  * Get device status statistics for a site
@@ -56,21 +56,13 @@ export const getDeviceStatusStats = async (siteId?: string): Promise<Record<stri
  */
 export const getDevicesByStatus = async (status: DeviceStatus): Promise<number> => {
   try {
-    // Validate status before querying
-    if (!isValidDeviceStatus(status)) {
-      throw new Error(`Invalid device status: ${status}`);
-    }
-    
-    // For non-standard statuses like 'warning', we need to handle them differently
-    if (!isFilterableDeviceStatus(status)) {
-      // Warning isn't in the database directly
-      return 0;
-    }
-    
+    // For unsupported statuses like 'warning', use the appropriate mapping
+    const dbStatus = toDbDeviceStatus(status);
+
     const { count, error } = await supabase
       .from('devices')
       .select('*', { count: 'exact', head: true })
-      .eq('status', status);
+      .eq('status', dbStatus);
     
     if (error) throw error;
     

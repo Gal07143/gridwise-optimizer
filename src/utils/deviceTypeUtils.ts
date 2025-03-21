@@ -1,16 +1,13 @@
 
 import { DeviceStatus, DeviceType } from '@/types/energy';
+import { toDbDeviceType, toDbDeviceStatus } from '@/services/devices/deviceCompatibility';
 
 /**
  * Converts frontend DeviceType to database compatible string
  * This is necessary because the database enum might not support all frontend types
  */
 export const convertDeviceTypeForDb = (type: DeviceType): "solar" | "wind" | "battery" | "grid" | "load" | "ev_charger" => {
-  // Map frontend types to database-supported types
-  if (type === 'inverter' || type === 'meter') {
-    return 'grid'; // Default mapping for unsupported types
-  }
-  return type as "solar" | "wind" | "battery" | "grid" | "load" | "ev_charger";
+  return toDbDeviceType(type);
 };
 
 /**
@@ -18,11 +15,7 @@ export const convertDeviceTypeForDb = (type: DeviceType): "solar" | "wind" | "ba
  * This is necessary because the database enum might not support all frontend statuses
  */
 export const convertDeviceStatusForDb = (status: DeviceStatus): "online" | "offline" | "maintenance" | "error" => {
-  // Map frontend statuses to database-supported statuses
-  if (status === 'warning') {
-    return 'error'; // Map 'warning' to 'error' for database compatibility
-  }
-  return status as "online" | "offline" | "maintenance" | "error";
+  return toDbDeviceStatus(status);
 };
 
 /**

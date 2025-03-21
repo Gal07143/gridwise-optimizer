@@ -44,9 +44,11 @@ export const getAlerts = async (options?: {
       id: item.id,
       device_id: item.device_id,
       type: item.type as AlertType,
-      title: item.title || item.type, // Use type as title if not provided
+      // Add missing required properties
+      title: item.message || item.type, // Use message or type as title if not provided
       message: item.message,
-      severity: item.severity as AlertSeverity || 'medium', // Default to medium if not provided
+      severity: (item.type === 'warning' ? 'medium' : 
+                item.type === 'critical' ? 'high' : 'low') as AlertSeverity, // Map type to severity
       timestamp: item.timestamp,
       acknowledged: item.acknowledged,
       acknowledged_at: item.acknowledged_at,
@@ -99,9 +101,7 @@ export const createAlert = async (alert: Omit<Alert, 'id' | 'acknowledged' | 'ac
       .insert([{
         device_id: alert.device_id,
         type: alert.type,
-        title: alert.title,
         message: alert.message,
-        severity: alert.severity,
         timestamp: alert.timestamp,
         acknowledged: false
       }])
@@ -115,9 +115,10 @@ export const createAlert = async (alert: Omit<Alert, 'id' | 'acknowledged' | 'ac
       id: data.id,
       device_id: data.device_id,
       type: data.type,
-      title: data.title,
+      // Add missing required properties
+      title: alert.title || data.message || data.type,
       message: data.message,
-      severity: data.severity,
+      severity: alert.severity || 'medium',
       timestamp: data.timestamp,
       acknowledged: data.acknowledged,
       acknowledged_at: data.acknowledged_at,

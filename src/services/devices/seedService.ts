@@ -117,5 +117,36 @@ export const seedTestData = async (): Promise<boolean> => {
 };
 
 export const getOrCreateDummySite = async () => {
-  return { id: 'dummy-site-id' };
+  try {
+    // Check if we have any sites
+    const { data: sites, error: sitesError } = await supabase
+      .from('sites')
+      .select('id')
+      .limit(1);
+    
+    if (sitesError) throw sitesError;
+    
+    // If we have a site, use it
+    if (sites && sites.length > 0) {
+      return { id: sites[0].id };
+    }
+    
+    // Otherwise create a dummy site
+    const { data: newSite, error: createError } = await supabase
+      .from('sites')
+      .insert({
+        name: 'Dummy Test Site',
+        location: 'Test Location',
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+      })
+      .select()
+      .single();
+    
+    if (createError) throw createError;
+    
+    return { id: newSite.id };
+  } catch (error) {
+    console.error("Error getting or creating dummy site:", error);
+    return { id: 'dummy-site-id' }; // Fallback to a fake ID
+  }
 };

@@ -1,16 +1,20 @@
 
-import { DeviceType, DeviceStatus, DatabaseDeviceType, DatabaseDeviceStatus } from '@/types/energy';
+import { DeviceType, DeviceStatus } from '@/types/energy';
 
 /**
  * Helper functions to convert between frontend and database types
  */
 
+// Define database compatible types explicitly here
+export type DbDeviceType = 'solar' | 'wind' | 'battery' | 'grid' | 'load' | 'ev_charger';
+export type DbDeviceStatus = 'online' | 'offline' | 'maintenance' | 'error';
+
 // Convert a frontend device type to a database-compatible type
-export const toDbDeviceType = (type: DeviceType): DatabaseDeviceType => {
-  const dbDeviceTypes: DatabaseDeviceType[] = ['solar', 'wind', 'battery', 'grid', 'load', 'ev_charger'];
+export const toDbDeviceType = (type: DeviceType): DbDeviceType => {
+  const dbDeviceTypes: DbDeviceType[] = ['solar', 'wind', 'battery', 'grid', 'load', 'ev_charger'];
   
   if (dbDeviceTypes.includes(type as any)) {
-    return type as DatabaseDeviceType;
+    return type as DbDeviceType;
   }
   
   // Map unsupported types to compatible ones
@@ -24,11 +28,11 @@ export const toDbDeviceType = (type: DeviceType): DatabaseDeviceType => {
 };
 
 // Convert a frontend device status to a database-compatible status
-export const toDbDeviceStatus = (status: DeviceStatus): DatabaseDeviceStatus => {
-  const dbDeviceStatuses: DatabaseDeviceStatus[] = ['online', 'offline', 'maintenance', 'error'];
+export const toDbDeviceStatus = (status: DeviceStatus): DbDeviceStatus => {
+  const dbDeviceStatuses: DbDeviceStatus[] = ['online', 'offline', 'maintenance', 'error'];
   
   if (dbDeviceStatuses.includes(status as any)) {
-    return status as DatabaseDeviceStatus;
+    return status as DbDeviceStatus;
   }
   
   // Map unsupported statuses to compatible ones

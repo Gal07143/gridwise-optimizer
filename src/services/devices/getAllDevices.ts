@@ -2,6 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { EnergyDevice, DeviceType, DeviceStatus } from '@/types/energy';
 import { toast } from 'sonner';
+import { toDbDeviceType, toDbDeviceStatus } from './deviceCompatibility';
 
 interface DeviceQueryOptions {
   type?: DeviceType;
@@ -19,13 +20,15 @@ export const getAllDevices = async (options?: DeviceQueryOptions): Promise<Energ
     
     let query = supabase.from('devices').select('*');
     
-    // Apply filters
+    // Apply filters with proper type conversion
     if (options?.type) {
-      query = query.eq('type', options.type);
+      const dbType = toDbDeviceType(options.type);
+      query = query.eq('type', dbType);
     }
     
     if (options?.status) {
-      query = query.eq('status', options.status);
+      const dbStatus = toDbDeviceStatus(options.status);
+      query = query.eq('status', dbStatus);
     }
     
     if (options?.search) {
@@ -66,7 +69,7 @@ export const getAllDevices = async (options?: DeviceQueryOptions): Promise<Energ
       ...item,
       type: item.type as DeviceType,
       status: item.status as DeviceStatus,
-      metrics: item.metrics as Record<string, number> | null
+      metrics: item.metrics ? (typeof item.metrics === 'string' ? JSON.parse(item.metrics) : item.metrics) as Record<string, number>
     }));
     
     return devices;

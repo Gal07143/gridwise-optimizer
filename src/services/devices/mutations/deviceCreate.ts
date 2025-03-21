@@ -37,7 +37,14 @@ export const createDevice = async (
     if (error) throw error;
     
     toast.success(`Device ${device.name} created successfully`);
-    return data;
+    
+    // Cast and return the data with correct types
+    return {
+      ...data,
+      type: device.type, // Use original type
+      status: device.status, // Use original status
+      metrics: data.metrics ? (typeof data.metrics === 'string' ? JSON.parse(data.metrics) : data.metrics) as Record<string, any> : null
+    } as EnergyDevice;
   } catch (error) {
     console.error('Error creating device:', error);
     toast.error(`Failed to create device: ${error.message}`);
@@ -77,7 +84,14 @@ export const createDeviceBatch = async (
     if (error) throw error;
     
     toast.success(`${devices.length} devices created successfully`);
-    return data;
+    
+    // Return properly typed devices
+    return (data || []).map((item, index) => ({
+      ...item,
+      type: devices[index].type, // Use original type
+      status: devices[index].status, // Use original status
+      metrics: item.metrics ? (typeof item.metrics === 'string' ? JSON.parse(item.metrics) : item.metrics) as Record<string, any> : null
+    } as EnergyDevice));
   } catch (error) {
     console.error('Error creating devices batch:', error);
     toast.error(`Failed to create devices: ${error.message}`);

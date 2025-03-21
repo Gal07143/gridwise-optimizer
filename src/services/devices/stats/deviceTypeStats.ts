@@ -1,7 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { DeviceType, isValidDeviceType } from "@/types/energy";
-import { isFilterableDeviceType } from "../deviceCompatibility";
+import { DeviceType } from "@/types/energy";
+import { toDbDeviceType } from "../deviceCompatibility";
 
 /**
  * Get device type statistics for a site
@@ -62,21 +62,13 @@ export const getDeviceTypeStats = async (siteId?: string): Promise<Record<string
  */
 export const getDevicesByType = async (type: DeviceType): Promise<number> => {
   try {
-    // Validate type before querying
-    if (!isValidDeviceType(type)) {
-      throw new Error(`Invalid device type: ${type}`);
-    }
-    
-    // For non-standard types, we need to handle them differently
-    if (!isFilterableDeviceType(type)) {
-      // These types aren't in the database directly
-      return 0;
-    }
-    
+    // For types not directly supported in the database, use appropriate mapping
+    const dbType = toDbDeviceType(type);
+
     const { count, error } = await supabase
       .from('devices')
       .select('*', { count: 'exact', head: true })
-      .eq('type', type);
+      .eq('type', dbType);
     
     if (error) throw error;
     

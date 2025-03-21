@@ -1,7 +1,8 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { EnergyDevice, DeviceStatus, DeviceType, isValidDeviceStatus, isValidDeviceType } from "@/types/energy";
+import { EnergyDevice, DeviceStatus, DeviceType } from "@/types/energy";
 import { toast } from "sonner";
+import { toDbDeviceStatus, toDbDeviceType } from "../deviceCompatibility";
 
 interface DeviceQueryOptions {
   siteId?: string;
@@ -40,12 +41,16 @@ export const getAllDevices = async (options: DeviceQueryOptions = {}): Promise<E
       query = query.eq('site_id', siteId);
     }
     
-    if (status && isValidDeviceStatus(status)) {
-      query = query.eq('status', status);
+    if (status) {
+      // Convert to DB-compatible status before querying
+      const dbStatus = toDbDeviceStatus(status as DeviceStatus);
+      query = query.eq('status', dbStatus);
     }
     
-    if (type && isValidDeviceType(type)) {
-      query = query.eq('type', type);
+    if (type) {
+      // Convert to DB-compatible type before querying
+      const dbType = toDbDeviceType(type as DeviceType);
+      query = query.eq('type', dbType);
     }
     
     if (search) {
@@ -68,7 +73,7 @@ export const getAllDevices = async (options: DeviceQueryOptions = {}): Promise<E
       ...device,
       type: device.type as DeviceType,
       status: device.status as DeviceStatus,
-      metrics: device.metrics as Record<string, number> | null
+      metrics: device.metrics ? (typeof device.metrics === 'string' ? JSON.parse(device.metrics) : device.metrics) as Record<string, any> : null
     })) || [];
     
     return devices;
