@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import AppLayout from '@/components/layout/AppLayout';
-import LoadingSpinner from '@/components/ui/loading-spinner';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import ErrorMessage from '@/components/ui/error-message';
 import { useDeviceModels } from '@/hooks/useDeviceModels';
 import IntegrationDeviceModelsCard from '@/components/integrations/IntegrationDeviceModelsCard';
@@ -10,30 +10,6 @@ import IntegrationInstallationCard from '@/components/integrations/IntegrationIn
 import PageHeader from '@/components/pages/PageHeader';
 import NoResults from '@/components/ui/no-results';
 import SearchFilterBar from '@/components/ui/SearchFilterBar';
-
-// Define prop types for PageHeader if missing
-interface PageHeaderProps {
-  title: string;
-  description: string;
-  categoryId: string;
-}
-
-// Define prop types for SearchFilterBar if missing
-interface SearchFilterBarProps {
-  searchQuery: string;
-  onSearchChange: React.Dispatch<React.SetStateAction<string>>;
-  activeTab: string;
-  onTabChange: React.Dispatch<React.SetStateAction<string>>;
-  deviceCount: number;
-}
-
-// Define prop types for IntegrationDeviceModelsCard if missing
-interface DeviceModelsCardProps {
-  deviceModels: any[];
-  sortField: string;
-  sortDirection: 'asc' | 'desc';
-  onSort: (field: string) => void;
-}
 
 const IntegrationCategoryPage = () => {
   const { categoryId = 'all' } = useParams<{ categoryId: string }>();
@@ -75,7 +51,6 @@ const IntegrationCategoryPage = () => {
   return (
     <AppLayout>
       <div className="flex-1 p-6 space-y-6">
-        {/* Pass correct props based on the interfaces */}
         <PageHeader 
           title={categoryName}
           description={`Browse and manage ${categoryName.toLowerCase()} integrations`}

@@ -1,34 +1,18 @@
 
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { 
-  ChevronDown, 
-  ChevronUp, 
-  Edit, 
-  Eye, 
-  Trash2,
-  AlertTriangle,
-  Download
-} from 'lucide-react';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import { ArrowUpDown, CheckCircle, AlertCircle, BookOpen, Link } from 'lucide-react';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator
-} from "@/components/ui/dropdown-menu";
 import { Button } from '@/components/ui/button';
-import { BadgeExtended } from '@/components/ui/badge-extended';
-import { toast } from 'sonner';
-import { DeviceModel } from '@/hooks/useDeviceModels';
+import { Badge } from '@/components/ui/badge';
+import { useNavigate } from 'react-router-dom';
+import { DeviceModel } from '@/components/integrations/IntegrationDeviceModelsCard';
 
 interface DeviceModelsTableProps {
   devices: DeviceModel[];
@@ -45,216 +29,95 @@ const DeviceModelsTable: React.FC<DeviceModelsTableProps> = ({
 }) => {
   const navigate = useNavigate();
 
-  const getSortIcon = (field: string) => {
-    if (sortField !== field) return null;
-    return sortDirection === 'asc' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />;
+  const getSupportBadge = (supportLevel: 'full' | 'partial' | 'none') => {
+    switch (supportLevel) {
+      case 'full':
+        return (
+          <Badge className="bg-green-500 hover:bg-green-600 gap-1 flex items-center">
+            <CheckCircle className="h-3 w-3" />
+            Fully Supported
+          </Badge>
+        );
+      case 'partial':
+        return (
+          <Badge className="bg-amber-500 hover:bg-amber-600 gap-1 flex items-center">
+            <AlertCircle className="h-3 w-3" />
+            Partial Support
+          </Badge>
+        );
+      case 'none':
+        return (
+          <Badge variant="outline" className="gap-1 flex items-center text-muted-foreground">
+            <AlertCircle className="h-3 w-3" />
+            Not Supported
+          </Badge>
+        );
+    }
   };
 
-  const handleViewDevice = (deviceId: string) => {
-    navigate(`/integrations/device-models/${deviceId}`);
+  const handleClickRow = (deviceId: string) => {
+    navigate(`/integrations/device-model/${deviceId}`);
   };
 
-  const handleEditDevice = (deviceId: string) => {
-    navigate(`/integrations/edit-device-model/${deviceId}`);
-  };
-
-  const handleDeleteDevice = (deviceId: string, deviceName: string) => {
-    toast.error(`Delete selected: ${deviceName}`, {
-      description: "This action would permanently delete this device model.",
-      action: {
-        label: "Undo",
-        onClick: () => toast.info(`Deletion of ${deviceName} cancelled`)
-      }
-    });
-  };
-  
-  const handleDownloadDatasheet = (deviceName: string) => {
-    toast.success(`Downloading datasheet for ${deviceName}...`);
-    
-    // Create a sample PDF blob (in a real app, this would be actual PDF content)
-    setTimeout(() => {
-      const pdfContent = `This is a sample datasheet for ${deviceName}`;
-      const blob = new Blob([pdfContent], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
-      
-      // Create a temporary anchor element to download the file
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${deviceName.replace(/\s+/g, '-').toLowerCase()}-datasheet.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      
-      toast.info(`Datasheet for ${deviceName} downloaded successfully`);
-    }, 1500);
+  const getSortIndicator = (field: string) => {
+    if (sortField === field) {
+      return sortDirection === 'asc' ? '↑' : '↓';
+    }
+    return null;
   };
 
   return (
-    <div className="overflow-x-auto border rounded-md">
+    <div className="rounded-md border">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead 
-              className="cursor-pointer w-[250px]"
-              onClick={() => onSort('name')}
-            >
-              <div className="flex items-center space-x-1">
-                <span>Name</span>
-                {getSortIcon('name')}
-              </div>
+            <TableHead className="w-[250px]">
+              <Button variant="ghost" className="p-0 font-medium" onClick={() => onSort('name')}>
+                Device Name {getSortIndicator('name')}
+                <ArrowUpDown className="ml-2 h-3 w-3" />
+              </Button>
             </TableHead>
-            <TableHead 
-              className="cursor-pointer"
-              onClick={() => onSort('manufacturer')}
-            >
-              <div className="flex items-center space-x-1">
-                <span>Manufacturer</span>
-                {getSortIcon('manufacturer')}
-              </div>
+            <TableHead>
+              <Button variant="ghost" className="p-0 font-medium" onClick={() => onSort('manufacturer')}>
+                Manufacturer {getSortIndicator('manufacturer')}
+                <ArrowUpDown className="ml-2 h-3 w-3" />
+              </Button>
             </TableHead>
-            <TableHead 
-              className="cursor-pointer hidden md:table-cell"
-              onClick={() => onSort('power_rating')}
-            >
-              <div className="flex items-center space-x-1">
-                <span>Power Rating</span>
-                {getSortIcon('power_rating')}
-              </div>
+            <TableHead>
+              <Button variant="ghost" className="p-0 font-medium" onClick={() => onSort('protocol')}>
+                Protocol {getSortIndicator('protocol')}
+                <ArrowUpDown className="ml-2 h-3 w-3" />
+              </Button>
             </TableHead>
-            <TableHead 
-              className="cursor-pointer hidden lg:table-cell"
-              onClick={() => onSort('capacity')}
-            >
-              <div className="flex items-center space-x-1">
-                <span>Capacity</span>
-                {getSortIcon('capacity')}
-              </div>
-            </TableHead>
-            <TableHead 
-              className="cursor-pointer hidden lg:table-cell"
-              onClick={() => onSort('release_date')}
-            >
-              <div className="flex items-center space-x-1">
-                <span>Release Date</span>
-                {getSortIcon('release_date')}
-              </div>
-            </TableHead>
-            <TableHead className="text-right">Actions</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead className="text-center">Manual</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {devices.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={6} className="text-center p-4">
-                <div className="flex flex-col items-center justify-center space-y-2 py-4">
-                  <AlertTriangle className="h-6 w-6 text-muted-foreground" />
-                  <p className="text-muted-foreground">No device models found</p>
-                </div>
+          {devices.map((device) => (
+            <TableRow 
+              key={device.id} 
+              className="cursor-pointer hover:bg-muted/50"
+              onClick={() => handleClickRow(device.id)}
+            >
+              <TableCell className="font-medium">{device.name}</TableCell>
+              <TableCell>{device.manufacturer}</TableCell>
+              <TableCell>{device.protocol}</TableCell>
+              <TableCell>{getSupportBadge(device.support_level)}</TableCell>
+              <TableCell className="text-center">
+                {device.has_manual ? (
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={(e) => {
+                    e.stopPropagation();
+                    window.open(`/manuals/${device.id}.pdf`, '_blank');
+                  }}>
+                    <BookOpen className="h-4 w-4 text-muted-foreground" />
+                  </Button>
+                ) : (
+                  <span className="text-muted-foreground text-xs">—</span>
+                )}
               </TableCell>
             </TableRow>
-          ) : (
-            devices.map((device) => (
-              <TableRow key={device.id} className="cursor-pointer hover:bg-muted/50" onClick={() => handleViewDevice(device.id)}>
-                <TableCell className="font-medium">{device.name}</TableCell>
-                <TableCell>{device.manufacturer}</TableCell>
-                <TableCell className="hidden md:table-cell">{device.power_rating ? `${device.power_rating} kW` : "N/A"}</TableCell>
-                <TableCell className="hidden lg:table-cell">{device.capacity ? `${device.capacity} kW` : "N/A"}</TableCell>
-                <TableCell className="hidden lg:table-cell">{device.release_date || "N/A"}</TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end">
-                    <Button 
-                      size="sm" 
-                      variant="ghost" 
-                      className="h-8 w-8 p-0" 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleViewDevice(device.id);
-                      }}
-                    >
-                      <span className="sr-only">View</span>
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    
-                    <Button 
-                      size="sm" 
-                      variant="ghost" 
-                      className="h-8 w-8 p-0" 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDownloadDatasheet(device.name);
-                      }}
-                    >
-                      <span className="sr-only">Download</span>
-                      <Download className="h-4 w-4" />
-                    </Button>
-                    
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                          <span className="sr-only">Open menu</span>
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className="h-4 w-4"
-                          >
-                            <circle cx="12" cy="12" r="1" />
-                            <circle cx="12" cy="5" r="1" />
-                            <circle cx="12" cy="19" r="1" />
-                          </svg>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleViewDevice(device.id);
-                          }}
-                        >
-                          <Eye className="mr-2 h-4 w-4" />
-                          <span>View</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEditDevice(device.id);
-                          }}
-                        >
-                          <Edit className="mr-2 h-4 w-4" />
-                          <span>Edit</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDownloadDatasheet(device.name);
-                          }}
-                        >
-                          <Download className="mr-2 h-4 w-4" />
-                          <span>Download Datasheet</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          className="text-destructive focus:text-destructive"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteDevice(device.id, device.name);
-                          }}
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          <span>Delete</span>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))
-          )}
+          ))}
         </TableBody>
       </Table>
     </div>

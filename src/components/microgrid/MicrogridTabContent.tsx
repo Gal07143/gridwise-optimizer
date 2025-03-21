@@ -1,85 +1,70 @@
 
 import React from 'react';
+import { MicrogridControls } from './MicrogridControls';
+import { useMicrogrid } from './MicrogridProvider';
+import { MicrogridOperatingMode } from '@/types/energy';
 import StatusOverview from './StatusOverview';
 import AlertsPanel from './AlertsPanel';
 import CommandHistory from './CommandHistory';
-import MicrogridControls from './MicrogridControls';
-import AdvancedControlSettings from './AdvancedControlSettings';
 import DeviceControlsPanel from './DeviceControlsPanel';
 import EnergyFlowVisualization from './EnergyFlowVisualization';
 import MicrogridSystemInsights from './MicrogridSystemInsights';
-import { TabsContent } from '@/components/ui/tabs';
-import { useMicrogrid } from './MicrogridProvider';
 
 interface MicrogridTabContentProps {
   activeTab: string;
 }
 
+/**
+ * Component that renders the content for the selected microgrid tab
+ */
 const MicrogridTabContent: React.FC<MicrogridTabContentProps> = ({ activeTab }) => {
-  const { 
-    state, 
-    alerts, 
-    settings, 
-    commandHistory,
-    handleAcknowledgeAlert,
-    handleModeChange,
-    handleGridConnectionToggle,
-    handleBatteryDischargeToggle,
-    handleSettingsChange,
-    handleSaveSettings
-  } = useMicrogrid();
+  const { state, dispatch } = useMicrogrid();
+
+  const handleModeChange = (mode: MicrogridOperatingMode) => {
+    dispatch({ type: 'SET_OPERATING_MODE', payload: mode });
+  };
+
+  const handleGridConnectionToggle = () => {
+    dispatch({ type: 'TOGGLE_GRID_CONNECTION' });
+  };
 
   return (
-    <>
-      <TabsContent value="overview" className="space-y-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6" id="status">
-          <div className="lg:col-span-2 space-y-6">
-            <StatusOverview microgridState={state} />
+    <div className="space-y-6">
+      {activeTab === 'dashboard' && (
+        <>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <StatusOverview />
+            </div>
+            <div>
+              <MicrogridControls 
+                operatingMode={state.operatingMode}
+                onModeChange={handleModeChange}
+                gridConnected={state.gridConnection}
+                onGridConnectionToggle={handleGridConnectionToggle}
+              />
+            </div>
           </div>
-          
-          <div>
-            <AlertsPanel 
-              alerts={alerts}
-              onAcknowledge={handleAcknowledgeAlert}
-            />
+          <EnergyFlowVisualization />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <AlertsPanel alerts={state.alerts} />
+            </div>
+            <div>
+              <CommandHistory commandHistory={state.commandHistory} />
+            </div>
           </div>
-        </div>
-        
-        <CommandHistory history={commandHistory} />
-      </TabsContent>
-      
-      <TabsContent value="control" className="space-y-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" id="controls">
-          <MicrogridControls
-            microgridState={state}
-            minBatteryReserve={settings.minBatteryReserve}
-            onModeChange={handleModeChange}
-            onGridConnectionToggle={handleGridConnectionToggle}
-            onBatteryDischargeToggle={handleBatteryDischargeToggle}
-            onBatteryReserveChange={(value) => handleSettingsChange('minBatteryReserve', value)}
-          />
-          
-          <AdvancedControlSettings
-            settings={settings}
-            onSettingsChange={handleSettingsChange}
-            onSaveSettings={handleSaveSettings}
-          />
-        </div>
+        </>
+      )}
 
+      {activeTab === 'devices' && (
         <DeviceControlsPanel />
-      </TabsContent>
-      
-      <TabsContent value="flow" className="space-y-6">
-        <EnergyFlowVisualization microgridState={state} />
-      </TabsContent>
-      
-      <TabsContent value="insights" className="space-y-6">
-        <MicrogridSystemInsights 
-          microgridState={state}
-          minBatteryReserve={settings.minBatteryReserve}
-        />
-      </TabsContent>
-    </>
+      )}
+
+      {activeTab === 'analytics' && (
+        <MicrogridSystemInsights />
+      )}
+    </div>
   );
 };
 

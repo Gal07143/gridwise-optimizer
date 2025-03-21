@@ -2,7 +2,7 @@
 import React from 'react';
 import { Power } from 'lucide-react';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '@/components/ui/badge-extended';
 import { useMicrogrid } from './MicrogridProvider';
 
 const MicrogridHeader: React.FC = () => {
@@ -21,11 +21,11 @@ const MicrogridHeader: React.FC = () => {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Badge className={`${state.gridConnection ? 'bg-green-500 hover:bg-green-600' : 'bg-yellow-500 hover:bg-yellow-600'} text-white px-3 py-1.5 flex items-center gap-1`}>
+          <Badge className={`${state.gridConnection ? 'bg-green-500 hover:bg-green-600' : 'bg-yellow-500 hover:bg-yellow-600'} text-white px-3 py-1.5 flex items-center gap-1`} variant={state.gridConnection ? 'success' : 'default'}>
             <div className="h-1.5 w-1.5 rounded-full bg-white animate-pulse"></div>
             {state.gridConnection ? 'Grid Connected' : 'Island Mode'}
           </Badge>
-          <Badge className="bg-primary hover:bg-primary/90 px-3 py-1.5 flex items-center gap-1">
+          <Badge className="px-3 py-1.5 flex items-center gap-1" variant="default">
             <div className="h-3 w-3"></div>
             {state.operatingMode.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
           </Badge>
