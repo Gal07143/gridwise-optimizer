@@ -3,29 +3,28 @@ name: Deploy Supabase Edge Functions
 on:
   push:
     branches:
-      - main  # Adjust if you're deploying from a different branch
+      - main  # or the branch you use
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📥 Checkout Repository
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: 🧱 Setup Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
 
-      - name: 🧰 Install Supabase CLI Locally
-        run: npm install supabase --save-dev
+      - name: Install Supabase CLI (official method)
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
 
-      - name: ➕ Add Supabase CLI to PATH
-        run: echo "$(npm bin)" >> $GITHUB_PATH
-
-      - name: 🔐 Login to Supabase CLI
+      - name: Login to Supabase
         run: supabase login --token ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
-      - name: 🚀 Deploy Supabase Function
-        run: supabase functions deploy aggregate-daily-energy --project-ref xullgeycueouyxeirrqs
+      - name: Deploy aggregate-modbus function
+        run: supabase functions deploy aggregate-modbus --project-ref xullgeycueouyxeirrqs
