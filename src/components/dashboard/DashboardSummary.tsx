@@ -3,11 +3,12 @@ import { Zap, Battery, Sun, Wind } from 'lucide-react';
 import MetricsCard from '@/components/dashboard/MetricsCard';
 import TariffCard from './TariffCard';
 import TariffHistoryCard from './TariffHistoryCard';
-import ModbusCard from './ModbusCard'; // Import your new ModbusCard
+import ModbusCard from './ModbusCard';
 
 const DashboardSummary = () => {
   return (
-    <>
+    <div className="space-y-6">
+      {/* Section 1: Metrics Cards (Power Quality Metrics etc.) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <MetricsCard 
           title="Current Power Flow"
@@ -55,21 +56,24 @@ const DashboardSummary = () => {
         />
       </div>
 
-      {/* Tariff Overview (Live) */}
+      {/* Section 2: Power Quality & Modbus Data */}
+      <div className="space-y-4 mb-8">
+        {/* If you have a dedicated Power Quality Metrics card, include it here.
+            For this example, we assume your MetricsCards already cover Power Quality,
+            so we simply place the Modbus data card right below them. */}
+        <ModbusCard />
+      </div>
+
+      {/* Section 3: Tariff Overview (Live) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         <TariffCard />
       </div>
 
-      {/* Tariff Chart (History) */}
+      {/* Section 4: Tariff Chart (History) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <TariffHistoryCard />
       </div>
-
-      {/* Modbus Data Card */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <ModbusCard />
-      </div>
-    </>
+    </div>
   );
 };
 
