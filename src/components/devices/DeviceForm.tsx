@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { DeviceType, DeviceStatus } from '@/types/energy';
 import { Input } from '@/components/ui/input';
@@ -23,6 +22,14 @@ interface DeviceFormProps {
     firmware?: string;
     description?: string;
     site_id?: string;
+    integration_type?: string;
+    connection_info?: {
+      host?: string;
+      port?: string;
+      slave_id?: string;
+      topic?: string;
+      unit_id?: string;
+    };
   };
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   handleSelectChange: (field: string, value: string) => void;
@@ -59,7 +66,7 @@ const DeviceForm: React.FC<DeviceFormProps> = ({
               <p className="text-sm text-red-500">{validationErrors.name.message}</p>
             )}
           </div>
-          
+
           <div className="space-y-2">
             <FormLabel htmlFor="location">Location</FormLabel>
             <Input
@@ -75,7 +82,7 @@ const DeviceForm: React.FC<DeviceFormProps> = ({
               <p className="text-sm text-red-500">{validationErrors.location.message}</p>
             )}
           </div>
-          
+
           <div className="space-y-2">
             <FormLabel htmlFor="type">Type <span className="text-red-500">*</span></FormLabel>
             <Select
@@ -102,7 +109,7 @@ const DeviceForm: React.FC<DeviceFormProps> = ({
               <p className="text-sm text-red-500">{validationErrors.type.message}</p>
             )}
           </div>
-          
+
           <div className="space-y-2">
             <FormLabel htmlFor="status">Status <span className="text-red-500">*</span></FormLabel>
             <Select
@@ -125,7 +132,7 @@ const DeviceForm: React.FC<DeviceFormProps> = ({
               <p className="text-sm text-red-500">{validationErrors.status.message}</p>
             )}
           </div>
-          
+
           <div className="space-y-2">
             <FormLabel htmlFor="capacity">
               Capacity {device.type === 'battery' ? '(kWh)' : '(kW)'} <span className="text-red-500">*</span>
@@ -145,7 +152,7 @@ const DeviceForm: React.FC<DeviceFormProps> = ({
               <p className="text-sm text-red-500">{validationErrors.capacity.message}</p>
             )}
           </div>
-          
+
           <div className="space-y-2">
             <FormLabel htmlFor="firmware">Firmware Version</FormLabel>
             <Input
@@ -157,8 +164,7 @@ const DeviceForm: React.FC<DeviceFormProps> = ({
               disabled={isLoading}
             />
           </div>
-          
-          {/* Add site_id field if needed */}
+
           <div className="space-y-2">
             <FormLabel htmlFor="site_id">Site ID</FormLabel>
             <Input
@@ -170,8 +176,68 @@ const DeviceForm: React.FC<DeviceFormProps> = ({
               disabled={isLoading}
             />
           </div>
+
+          {/* Integration Protocol */}
+          <div className="space-y-2">
+            <FormLabel htmlFor="integration_type">Integration Type</FormLabel>
+            <Select
+              value={device.integration_type || ''}
+              onValueChange={(value) => handleSelectChange('integration_type', value)}
+              disabled={isLoading}
+            >
+              <SelectTrigger id="integration_type" className={validationErrors.integration_type ? 'border-red-500' : ''}>
+                <SelectValue placeholder="Select integration protocol" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="modbus">Modbus</SelectItem>
+                <SelectItem value="mqtt">MQTT</SelectItem>
+                <SelectItem value="opcua">OPC UA</SelectItem>
+                <SelectItem value="bacnet">BACnet</SelectItem>
+                <SelectItem value="ethernet_ip">EtherNet/IP</SelectItem>
+                <SelectItem value="bms">BMS</SelectItem>
+                <SelectItem value="manual">Manual Input</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-        
+
+        {/* Optional: Connection Info */}
+        {device.integration_type && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t pt-6 mt-6">
+            <FormLabel className="col-span-2">Connection Info</FormLabel>
+
+            <Input
+              name="connection_info.host"
+              placeholder="Host (e.g. 192.168.1.100)"
+              value={device.connection_info?.host || ''}
+              onChange={handleInputChange}
+              disabled={isLoading}
+            />
+            <Input
+              name="connection_info.port"
+              placeholder="Port (e.g. 502)"
+              value={device.connection_info?.port || ''}
+              onChange={handleInputChange}
+              disabled={isLoading}
+            />
+            <Input
+              name="connection_info.slave_id"
+              placeholder="Slave ID / Unit ID"
+              value={device.connection_info?.slave_id || ''}
+              onChange={handleInputChange}
+              disabled={isLoading}
+            />
+            <Input
+              name="connection_info.topic"
+              placeholder="MQTT Topic (if applicable)"
+              value={device.connection_info?.topic || ''}
+              onChange={handleInputChange}
+              disabled={isLoading}
+            />
+          </div>
+        )}
+
+        {/* Description */}
         <div className="space-y-2">
           <FormLabel htmlFor="description">Description</FormLabel>
           <Textarea
