@@ -2,6 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { EnergyDevice } from '@/types/energy';
 import { toast } from 'sonner';
+import { toDbDeviceType, toDbDeviceStatus } from '../deviceCompatibility';
 
 export type CreateDeviceInput = Omit<EnergyDevice, 'id'>;
 
@@ -10,13 +11,17 @@ export type CreateDeviceInput = Omit<EnergyDevice, 'id'>;
  */
 export const createDevice = async (deviceData: Omit<EnergyDevice, 'id'>): Promise<EnergyDevice> => {
   try {
+    // Convert frontend types to database types
+    const dbDeviceType = toDbDeviceType(deviceData.type);
+    const dbDeviceStatus = toDbDeviceStatus(deviceData.status);
+    
     // Create device in devices table
     const { data, error } = await supabase
       .from('devices')
       .insert({
         name: deviceData.name,
-        type: deviceData.type,
-        status: deviceData.status,
+        type: dbDeviceType,
+        status: dbDeviceStatus,
         location: deviceData.location,
         capacity: deviceData.capacity,
         firmware: deviceData.firmware,

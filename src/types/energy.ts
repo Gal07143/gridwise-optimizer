@@ -1,4 +1,3 @@
-
 export type DeviceType = 
   | 'battery' 
   | 'solar' 
@@ -52,14 +51,12 @@ export interface Site {
   updated_at: string;
 }
 
-// Function to create a new empty site with default values
 export const createEmptySite = (): Omit<Site, 'id' | 'created_at' | 'updated_at'> => ({
   name: "New Site",
   location: "Unknown",
   timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
 });
 
-// Types for user roles and user data
 export type UserRole = 'admin' | 'viewer' | 'operator' | 'installer' | 'user';
 export type ThemePreference = 'light' | 'dark' | 'system';
 
@@ -85,7 +82,6 @@ export interface UserPreferences {
   dashboardLayout: any;
 }
 
-// Types for energy forecasts
 export interface EnergyForecast {
   id: string;
   site_id: string;
@@ -102,7 +98,6 @@ export interface EnergyForecast {
   created_at?: string;
 }
 
-// Types for energy readings
 export interface EnergyReading {
   id: string;
   device_id: string;
@@ -121,7 +116,6 @@ export interface EnergyReading {
   created_at?: string;
 }
 
-// Device model types
 export interface DeviceModel {
   id: string;
   manufacturer: string;
@@ -137,7 +131,6 @@ export interface DeviceModel {
   category?: string;
 }
 
-// Alert types
 export type AlertType = 
   | 'system' 
   | 'device' 

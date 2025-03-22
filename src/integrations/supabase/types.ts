@@ -134,6 +134,13 @@ export type Database = {
             foreignKeyName: "alerts_device_id_fkey"
             columns: ["device_id"]
             isOneToOne: false
+            referencedRelation: "device_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alerts_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
             referencedRelation: "devices"
             referencedColumns: ["id"]
           },
@@ -347,6 +354,7 @@ export type Database = {
           capacity: number
           created_at: string
           created_by: string | null
+          description: string | null
           firmware: string | null
           id: string
           installation_date: string | null
@@ -364,6 +372,7 @@ export type Database = {
           capacity: number
           created_at?: string
           created_by?: string | null
+          description?: string | null
           firmware?: string | null
           id?: string
           installation_date?: string | null
@@ -381,6 +390,7 @@ export type Database = {
           capacity?: number
           created_at?: string
           created_by?: string | null
+          description?: string | null
           firmware?: string | null
           id?: string
           installation_date?: string | null
@@ -544,6 +554,13 @@ export type Database = {
             foreignKeyName: "energy_readings_device_id_fkey"
             columns: ["device_id"]
             isOneToOne: false
+            referencedRelation: "device_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "energy_readings_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
             referencedRelation: "devices"
             referencedColumns: ["id"]
           },
@@ -590,6 +607,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "maintenance_records_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "device_view"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "maintenance_records_device_id_fkey"
             columns: ["device_id"]
@@ -959,7 +983,31 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      device_view: {
+        Row: {
+          capacity: number | null
+          created_at: string | null
+          description: string | null
+          firmware: string | null
+          id: string | null
+          last_updated: string | null
+          location: string | null
+          name: string | null
+          site_id: string | null
+          site_name: string | null
+          status: Database["public"]["Enums"]["device_status"] | null
+          type: Database["public"]["Enums"]["device_type"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "devices_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       get_current_user_role: {

@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { EnergyDevice, DeviceStatus, DeviceType } from "@/types/energy";
 import { validateDeviceData } from "./deviceValidation";
 import { toast } from "sonner";
+import { toDbDeviceType, toDbDeviceStatus } from "../deviceCompatibility";
 
 /**
  * Update a device's properties
@@ -20,9 +21,18 @@ export const updateDevice = async (id: string, updates: Partial<EnergyDevice>): 
     
     console.log("Updating device with data:", updateData);
     
+    // Convert types for database compatibility if they exist in the updates
+    const dbUpdates = { ...updateData };
+    if (updateData.type) {
+      dbUpdates.type = toDbDeviceType(updateData.type);
+    }
+    if (updateData.status) {
+      dbUpdates.status = toDbDeviceStatus(updateData.status);
+    }
+    
     const { data, error } = await supabase
       .from('devices')
-      .update({ ...updateData, last_updated: new Date().toISOString() })
+      .update({ ...dbUpdates, last_updated: new Date().toISOString() })
       .eq('id', id)
       .select()
       .single();

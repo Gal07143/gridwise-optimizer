@@ -20,7 +20,13 @@ export const toDbDeviceType = (type: DeviceType): DbDeviceType => {
   // Map unsupported types to compatible ones
   switch (type) {
     case 'inverter':
+      return 'solar'; // Best match for inverter
     case 'meter':
+      return 'grid'; // Best match for meter
+    case 'light':
+      return 'load'; // Best match for light
+    case 'generator':
+    case 'hydro':
       return 'grid'; // Best match for these types
     default:
       return 'grid'; // Default fallback
@@ -39,6 +45,13 @@ export const toDbDeviceStatus = (status: DeviceStatus): DbDeviceStatus => {
   switch (status) {
     case 'warning':
       return 'maintenance'; // Best match for warning
+    case 'idle':
+      return 'online'; // An idle device is still online
+    case 'active':
+      return 'online'; // An active device is online
+    case 'charging':
+    case 'discharging':
+      return 'online'; // Charging/discharging devices are online
     default:
       return 'offline'; // Default fallback
   }
