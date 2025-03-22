@@ -67,6 +67,16 @@ const DeviceControls: React.FC<DeviceControlsProps> = ({ deviceId, deviceType, d
       return <GeneratorControls deviceId={deviceId} />;
     case 'hydro':
       return <HydroControls deviceId={deviceId} />;
+    case 'inverter':
+      return <InverterControls deviceId={deviceId} />;
+    case 'meter':
+      return <MeterControls deviceId={deviceId} />;
+    case 'light':
+      return <LightControls deviceId={deviceId} />;
+    case 'generator':
+      return <GeneratorControls deviceId={deviceId} />;
+    case 'hydro':
+      return <HydroControls deviceId={deviceId} />;
     default:
       return (
         <div className="p-8 bg-secondary/20 rounded-md text-center">
