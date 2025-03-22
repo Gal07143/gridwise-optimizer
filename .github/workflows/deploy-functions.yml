@@ -1,0 +1,28 @@
+name: Deploy Supabase Edge Functions
+
+on:
+  push:
+    branches:
+      - main  # Or your deploy branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install Supabase CLI
+        run: npm install -g supabase
+
+      - name: Login to Supabase CLI
+        run: supabase login --token ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      - name: Deploy function to Supabase
+        run: supabase functions deploy aggregate-daily-energy --project-ref xullgeycueouyxeirrqs
