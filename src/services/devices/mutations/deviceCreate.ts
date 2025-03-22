@@ -41,8 +41,12 @@ export const createDevice = async (deviceData: Omit<EnergyDevice, 'id'>): Promis
       throw new Error('No data returned from device creation');
     }
 
-    // Return the created device
-    return data as EnergyDevice;
+    // Return the created device, preserving the original frontend types
+    return {
+      ...data,
+      type: deviceData.type,
+      status: deviceData.status
+    } as EnergyDevice;
   } catch (error) {
     console.error('Error in createDevice:', error);
     toast.error('Failed to create device');

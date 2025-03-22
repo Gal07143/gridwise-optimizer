@@ -2,6 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { EnergyDevice, DeviceType, DeviceStatus } from '@/types/energy';
 import { toast } from 'sonner';
+import { toDbDeviceType, toDbDeviceStatus } from './deviceCompatibility';
 
 export const createDevice = async (deviceData: Omit<EnergyDevice, 'id' | 'created_at' | 'last_updated'>): Promise<EnergyDevice | null> => {
   try {
@@ -20,11 +21,15 @@ export const createDevice = async (deviceData: Omit<EnergyDevice, 'id' | 'create
       throw new Error('Capacity must be greater than 0');
     }
     
+    // Convert frontend types to database compatible types
+    const dbType = toDbDeviceType(deviceData.type);
+    const dbStatus = toDbDeviceStatus(deviceData.status || 'offline');
+    
     // Prepare insert data
     const insertData = {
       name: deviceData.name,
-      type: deviceData.type,
-      status: deviceData.status || 'offline',
+      type: dbType,
+      status: dbStatus,
       location: deviceData.location || null,
       capacity: deviceData.capacity,
       firmware: deviceData.firmware || null,
@@ -33,7 +38,8 @@ export const createDevice = async (deviceData: Omit<EnergyDevice, 'id' | 'create
       site_id: deviceData.site_id || null,
       metrics: deviceData.metrics || null,
       // Get current user's ID for created_by if available
-      created_by: (await supabase.auth.getUser()).data?.user?.id || null
+      created_by: (await supabase.auth.getUser()).data?.user?.id || null,
+      last_updated: new Date().toISOString()
     };
     
     const { data, error } = await supabase
@@ -52,8 +58,16 @@ export const createDevice = async (deviceData: Omit<EnergyDevice, 'id' | 'create
     
     console.log('Device created successfully:', data);
     
-    // Return the created device
-    return data as EnergyDevice;
+    // Convert DB types back to frontend types for return value
+    const device: EnergyDevice = {
+      ...data,
+      // Explicitly override the type and status with their frontend equivalents
+      type: deviceData.type,
+      status: deviceData.status || 'offline'
+    };
+    
+    toast.success('Device created successfully');
+    return device;
     
   } catch (error: any) {
     console.error('Error creating device:', error);

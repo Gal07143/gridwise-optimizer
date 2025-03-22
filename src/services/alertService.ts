@@ -3,6 +3,28 @@ import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertType, AlertSeverity } from "@/types/energy";
 import { toast } from "sonner";
 
+// Define the database alert types
+type DbAlertType = 'warning' | 'critical' | 'info';
+
+// Convert frontend AlertType to database-compatible type
+const toDbAlertType = (type: AlertType): DbAlertType => {
+  switch (type) {
+    case 'warning':
+      return 'warning';
+    case 'critical':
+      return 'critical';
+    case 'system':
+    case 'security':
+    case 'device':
+    case 'performance':
+    case 'forecast':
+    case 'info':
+      return 'info';
+    default:
+      return 'info';
+  }
+};
+
 /**
  * Get all alerts, with optional filtering
  */
@@ -27,10 +49,8 @@ export const getAlerts = async (options?: {
     
     if (options?.type) {
       // Convert type to match database expectations
-      // Only filter by type if it's one of the allowed types in the database
-      if (['warning', 'critical', 'info'].includes(options.type)) {
-        query = query.eq('type', options.type);
-      }
+      const dbType = toDbAlertType(options.type);
+      query = query.eq('type', dbType);
     }
     
     query = query.order('timestamp', { ascending: false });
@@ -47,17 +67,16 @@ export const getAlerts = async (options?: {
     const alerts: Alert[] = (data || []).map(item => ({
       id: item.id,
       device_id: item.device_id,
-      type: (item.type || 'system') as AlertType,
+      type: mapDbTypeToAlertType(item.type as DbAlertType),
       title: item.message || item.type, 
       message: item.message,
-      severity: (item.type === 'warning' ? 'medium' : 
-                item.type === 'critical' ? 'high' : 'low') as AlertSeverity,
+      severity: mapDbTypeToSeverity(item.type as DbAlertType),
       timestamp: item.timestamp,
       acknowledged: item.acknowledged,
       acknowledged_at: item.acknowledged_at,
       acknowledged_by: item.acknowledged_by,
       resolved_at: item.resolved_at,
-      source: item.source || 'system',
+      source: 'system',
       resolved: !!item.resolved_at,
       source_id: item.device_id
     }));
@@ -70,6 +89,26 @@ export const getAlerts = async (options?: {
     return [];
   }
 };
+
+// Map DB alert type to frontend alert type
+function mapDbTypeToAlertType(dbType: DbAlertType): AlertType {
+  switch(dbType) {
+    case 'warning': return 'warning';
+    case 'critical': return 'critical';
+    case 'info': return 'info';
+    default: return 'system';
+  }
+}
+
+// Map DB alert type to frontend severity
+function mapDbTypeToSeverity(dbType: DbAlertType): AlertSeverity {
+  switch(dbType) {
+    case 'critical': return 'critical';
+    case 'warning': return 'medium';
+    case 'info': return 'low';
+    default: return 'info';
+  }
+}
 
 /**
  * Acknowledge an alert
@@ -103,14 +142,7 @@ export const acknowledgeAlert = async (alertId: string): Promise<boolean> => {
 export const createAlert = async (alert: Omit<Alert, 'id' | 'acknowledged' | 'acknowledged_by' | 'acknowledged_at' | 'resolved_at'>): Promise<Alert | null> => {
   try {
     // Map our AlertType to the database's acceptable types
-    let dbType = 'info';
-    if (alert.type === 'warning' || alert.type === 'critical') {
-      dbType = alert.type;
-    } else if (alert.severity === 'critical' || alert.severity === 'high') {
-      dbType = 'critical';
-    } else if (alert.severity === 'medium') {
-      dbType = 'warning';
-    }
+    const dbType = toDbAlertType(alert.type);
     
     const { data, error } = await supabase
       .from('alerts')
@@ -118,8 +150,7 @@ export const createAlert = async (alert: Omit<Alert, 'id' | 'acknowledged' | 'ac
         device_id: alert.device_id,
         type: dbType,
         message: alert.message,
-        timestamp: alert.timestamp,
-        acknowledged: false
+        timestamp: alert.timestamp
       })
       .select()
       .single();
@@ -140,7 +171,8 @@ export const createAlert = async (alert: Omit<Alert, 'id' | 'acknowledged' | 'ac
       acknowledged_by: data.acknowledged_by,
       resolved_at: data.resolved_at,
       source: alert.source,
-      resolved: false
+      resolved: false,
+      source_id: alert.source_id
     };
     
     return createdAlert;

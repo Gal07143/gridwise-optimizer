@@ -90,7 +90,16 @@ const AddDevice = () => {
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <DeviceForm 
               isLoading={isPending}
-              device={form.watch()}
+              device={{
+                name: form.watch('name'),
+                type: form.watch('type') as DeviceType,
+                status: form.watch('status') as DeviceStatus,
+                location: form.watch('location'),
+                capacity: form.watch('capacity'),
+                firmware: form.watch('firmware'),
+                description: form.watch('description'),
+                site_id: form.watch('site_id')
+              }}
               handleInputChange={(e) => {
                 const { name, value, type } = e.target;
                 form.setValue(name as any, type === 'number' ? parseFloat(value) : value);

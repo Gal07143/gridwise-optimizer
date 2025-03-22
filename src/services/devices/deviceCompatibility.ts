@@ -57,6 +57,16 @@ export const toDbDeviceStatus = (status: DeviceStatus): DbDeviceStatus => {
   }
 };
 
+// Convert database device type to frontend device type
+export const fromDbDeviceType = (dbType: DbDeviceType): DeviceType => {
+  return dbType as DeviceType;
+};
+
+// Convert database device status to frontend device status
+export const fromDbDeviceStatus = (dbStatus: DbDeviceStatus): DeviceStatus => {
+  return dbStatus as DeviceStatus;
+};
+
 // Type checking utility for SQL filter conditions
 export function isFilterableDeviceType(type: DeviceType): boolean {
   return ['solar', 'wind', 'battery', 'grid', 'load', 'ev_charger'].includes(type as any);
