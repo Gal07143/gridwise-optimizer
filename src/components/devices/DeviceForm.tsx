@@ -11,7 +11,6 @@ import {
 } from '@/components/ui/select';
 import { FormLabel } from '@/components/ui/form';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { DatePicker } from '@/components/ui/datepicker'; // 👈 Add this component if not already
 
 interface DeviceFormProps {
   device: {
@@ -26,10 +25,10 @@ interface DeviceFormProps {
     installation_date?: string;
     lat?: number;
     lng?: number;
+    metrics?: Record<string, number> | null;
   };
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   handleSelectChange: (field: string, value: string) => void;
-  handleDateChange?: (field: string, date: Date | null) => void;
   validationErrors: Record<string, any>;
   isLoading?: boolean;
 }
@@ -38,7 +37,6 @@ const DeviceForm: React.FC<DeviceFormProps> = ({
   device,
   handleInputChange,
   handleSelectChange,
-  handleDateChange,
   validationErrors,
   isLoading
 }) => {
@@ -61,9 +59,21 @@ const DeviceForm: React.FC<DeviceFormProps> = ({
               className={validationErrors.name ? 'border-red-500' : ''}
               disabled={isLoading}
             />
-            {validationErrors.name && (
-              <p className="text-sm text-red-500">{validationErrors.name.message}</p>
-            )}
+            {validationErrors.name && <p className="text-sm text-red-500">{validationErrors.name.message}</p>}
+          </div>
+
+          {/* Location */}
+          <div className="space-y-2">
+            <FormLabel htmlFor="location">Location</FormLabel>
+            <Input
+              id="location"
+              name="location"
+              value={device.location || ''}
+              onChange={handleInputChange}
+              placeholder="Enter location"
+              className={validationErrors.location ? 'border-red-500' : ''}
+              disabled={isLoading}
+            />
           </div>
 
           {/* Type */}
@@ -78,11 +88,16 @@ const DeviceForm: React.FC<DeviceFormProps> = ({
                 <SelectValue placeholder="Select device type" />
               </SelectTrigger>
               <SelectContent>
-                {['solar', 'wind', 'battery', 'grid', 'load', 'ev_charger', 'inverter', 'meter', 'light', 'generator', 'hydro'].map((type) => (
-                  <SelectItem key={type} value={type}>{type.replace('_', ' ')}</SelectItem>
+                {[
+                  'solar', 'wind', 'battery', 'grid', 'load',
+                  'ev_charger', 'inverter', 'meter', 'light',
+                  'generator', 'hydro',
+                ].map((type) => (
+                  <SelectItem key={type} value={type}>{type}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {validationErrors.type && <p className="text-sm text-red-500">{validationErrors.type.message}</p>}
           </div>
 
           {/* Status */}
@@ -94,21 +109,23 @@ const DeviceForm: React.FC<DeviceFormProps> = ({
               disabled={isLoading}
             >
               <SelectTrigger id="status" className={validationErrors.status ? 'border-red-500' : ''}>
-                <SelectValue placeholder="Select device status" />
+                <SelectValue placeholder="Select status" />
               </SelectTrigger>
               <SelectContent>
-                {['online', 'offline', 'maintenance', 'error', 'warning', 'idle', 'active', 'charging', 'discharging'].map((status) => (
+                {[
+                  'online', 'offline', 'maintenance', 'error',
+                  'warning', 'idle', 'active', 'charging', 'discharging',
+                ].map((status) => (
                   <SelectItem key={status} value={status}>{status}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {validationErrors.status && <p className="text-sm text-red-500">{validationErrors.status.message}</p>}
           </div>
 
           {/* Capacity */}
           <div className="space-y-2">
-            <FormLabel htmlFor="capacity">
-              Capacity {device.type === 'battery' ? '(kWh)' : '(kW)'} <span className="text-red-500">*</span>
-            </FormLabel>
+            <FormLabel htmlFor="capacity">Capacity {device.type === 'battery' ? '(kWh)' : '(kW)'}</FormLabel>
             <Input
               id="capacity"
               name="capacity"
@@ -120,19 +137,7 @@ const DeviceForm: React.FC<DeviceFormProps> = ({
               className={validationErrors.capacity ? 'border-red-500' : ''}
               disabled={isLoading}
             />
-          </div>
-
-          {/* Location */}
-          <div className="space-y-2">
-            <FormLabel htmlFor="location">Location</FormLabel>
-            <Input
-              id="location"
-              name="location"
-              value={device.location || ''}
-              onChange={handleInputChange}
-              placeholder="Physical location"
-              disabled={isLoading}
-            />
+            {validationErrors.capacity && <p className="text-sm text-red-500">{validationErrors.capacity.message}</p>}
           </div>
 
           {/* Firmware */}
@@ -143,7 +148,7 @@ const DeviceForm: React.FC<DeviceFormProps> = ({
               name="firmware"
               value={device.firmware || ''}
               onChange={handleInputChange}
-              placeholder="Firmware version"
+              placeholder="Enter firmware version"
               disabled={isLoading}
             />
           </div>
@@ -156,7 +161,7 @@ const DeviceForm: React.FC<DeviceFormProps> = ({
               name="site_id"
               value={device.site_id || ''}
               onChange={handleInputChange}
-              placeholder="Optional site ID"
+              placeholder="Enter site ID"
               disabled={isLoading}
             />
           </div>
@@ -181,10 +186,10 @@ const DeviceForm: React.FC<DeviceFormProps> = ({
               id="lat"
               name="lat"
               type="number"
-              step="0.00001"
+              step="0.0001"
               value={device.lat ?? ''}
               onChange={handleInputChange}
-              placeholder="e.g. 32.12345"
+              placeholder="e.g., 32.1093"
               disabled={isLoading}
             />
           </div>
@@ -196,10 +201,10 @@ const DeviceForm: React.FC<DeviceFormProps> = ({
               id="lng"
               name="lng"
               type="number"
-              step="0.00001"
+              step="0.0001"
               value={device.lng ?? ''}
               onChange={handleInputChange}
-              placeholder="e.g. 34.98765"
+              placeholder="e.g., 34.8555"
               disabled={isLoading}
             />
           </div>
@@ -218,6 +223,9 @@ const DeviceForm: React.FC<DeviceFormProps> = ({
             disabled={isLoading}
           />
         </div>
+
+        {/* Optional Metrics (hidden or debug-only) */}
+        {/* <pre className="text-xs bg-muted rounded p-2">{JSON.stringify(device.metrics, null, 2)}</pre> */}
       </CardContent>
     </Card>
   );
