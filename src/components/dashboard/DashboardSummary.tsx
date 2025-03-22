@@ -4,6 +4,7 @@ import { Zap, Battery, Sun, Wind } from 'lucide-react';
 import MetricsCard from '@/components/dashboard/MetricsCard';
 import { useLatestTariff } from '@/hooks/useLatestTariff';
 import TariffCard from './TariffCard';
+import TariffHistoryCard from './TariffHistoryCard';
 
 const DashboardSummary = () => {
   return (
