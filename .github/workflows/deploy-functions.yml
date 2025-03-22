@@ -23,8 +23,9 @@ jobs:
         with:
           version: latest
 
-      - name: 🔐 Login to Supabase CLI
+      - name: Login to Supabase CLI
         run: supabase login --token ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
 
       - name: 🚀 Deploy Edge Function (aggregate-modbus)
         run: supabase functions deploy aggregate-modbus --project-ref xullgeycueouyxeirrqs
