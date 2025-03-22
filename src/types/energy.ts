@@ -1,8 +1,9 @@
+// Device-related Types
 export type DeviceType = 
-  | 'battery' 
-  | 'solar' 
-  | 'wind' 
-  | 'grid' 
+  | 'battery'
+  | 'solar'
+  | 'wind'
+  | 'grid'
   | 'load'
   | 'ev_charger'
   | 'inverter'
@@ -12,9 +13,9 @@ export type DeviceType =
   | 'hydro';
 
 export type DeviceStatus = 
-  | 'online' 
-  | 'offline' 
-  | 'maintenance' 
+  | 'online'
+  | 'offline'
+  | 'maintenance'
   | 'error'
   | 'warning'
   | 'idle'
@@ -40,6 +41,7 @@ export interface EnergyDevice {
   created_by?: string;
 }
 
+// Site
 export interface Site {
   id: string;
   name: string;
@@ -52,13 +54,24 @@ export interface Site {
 }
 
 export const createEmptySite = (): Omit<Site, 'id' | 'created_at' | 'updated_at'> => ({
-  name: "New Site",
-  location: "Unknown",
+  name: 'New Site',
+  location: 'Unknown',
   timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
 });
 
+// User & Roles
 export type UserRole = 'admin' | 'viewer' | 'operator' | 'installer' | 'user';
 export type ThemePreference = 'light' | 'dark' | 'system';
+
+export interface UserPreferences {
+  theme: ThemePreference;
+  notifications: {
+    email: boolean;
+    push: boolean;
+    sms: boolean;
+  };
+  dashboardLayout: any;
+}
 
 export interface User {
   id: string;
@@ -72,16 +85,7 @@ export interface User {
   sites?: Site[];
 }
 
-export interface UserPreferences {
-  theme: ThemePreference;
-  notifications: {
-    email: boolean;
-    push: boolean;
-    sms: boolean;
-  };
-  dashboardLayout: any;
-}
-
+// Forecasting
 export interface EnergyForecast {
   id: string;
   site_id: string;
@@ -98,6 +102,7 @@ export interface EnergyForecast {
   created_at?: string;
 }
 
+// Energy Readings
 export interface EnergyReading {
   id: string;
   device_id: string;
@@ -116,6 +121,7 @@ export interface EnergyReading {
   created_at?: string;
 }
 
+// Device Models
 export interface DeviceModel {
   id: string;
   manufacturer: string;
@@ -131,21 +137,22 @@ export interface DeviceModel {
   category?: string;
 }
 
+// Alerts
 export type AlertType = 
-  | 'system' 
-  | 'device' 
-  | 'security' 
-  | 'performance' 
+  | 'system'
+  | 'device'
+  | 'security'
+  | 'performance'
   | 'forecast'
   | 'warning'
   | 'critical'
   | 'info';
 
 export type AlertSeverity = 
-  | 'critical' 
-  | 'high' 
-  | 'medium' 
-  | 'low' 
+  | 'critical'
+  | 'high'
+  | 'medium'
+  | 'low'
   | 'info';
 
 export interface Alert {
