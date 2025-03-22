@@ -17,13 +17,13 @@ import { DeviceType, DeviceStatus } from '@/types/energy';
 // Form schema for device creation
 const deviceSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters'),
-  type: z.enum(['battery', 'solar', 'wind', 'grid', 'load', 'ev_charger', 'inverter', 'meter', 'light'] as const),
-  status: z.enum(['online', 'offline', 'maintenance', 'error', 'warning'] as const).default('offline'),
+  type: z.enum(['battery', 'solar', 'wind', 'grid', 'load', 'ev_charger', 'inverter', 'meter', 'light', 'generator', 'hydro'] as const),
+  status: z.enum(['online', 'offline', 'maintenance', 'error', 'warning', 'idle', 'active', 'charging', 'discharging'] as const).default('offline'),
   location: z.string().optional(),
   capacity: z.number().positive('Capacity must be positive'),
   description: z.string().optional(),
   firmware: z.string().optional(),
-  site_id: z.string().uuid().optional(),
+  site_id: z.string().optional(),
 });
 
 type DeviceFormValues = z.infer<typeof deviceSchema>;
@@ -67,7 +67,7 @@ const AddDevice = () => {
       capacity: data.capacity,
       firmware: data.firmware || '',
       description: data.description || '',
-      site_id: data.site_id || undefined,
+      site_id: data.site_id,
       last_updated: new Date().toISOString()
     };
     

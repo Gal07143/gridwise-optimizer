@@ -1,7 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { DeviceType, DeviceStatus } from '@/types/energy';
+import { toDbDeviceType, toDbDeviceStatus } from './devices/deviceCompatibility';
 
 // Re-export other device services
 export * from './devices';
@@ -59,8 +59,8 @@ export const seedTestData = async (): Promise<boolean> => {
     const testDevices = [
       {
         name: "Rooftop Solar Array",
-        type: "solar" as const,
-        status: "online" as const,
+        type: toDbDeviceType("solar"),
+        status: toDbDeviceStatus("online"),
         location: "Main Building",
         capacity: 50,
         site_id: siteId,
@@ -73,8 +73,8 @@ export const seedTestData = async (): Promise<boolean> => {
       },
       {
         name: "Primary Storage System",
-        type: "battery" as const,
-        status: "online" as const,
+        type: toDbDeviceType("battery"),
+        status: toDbDeviceStatus("online"),
         location: "Utility Room",
         capacity: 120,
         site_id: siteId,
@@ -87,8 +87,8 @@ export const seedTestData = async (): Promise<boolean> => {
       },
       {
         name: "Wind Turbine Array",
-        type: "wind" as const,
-        status: "online" as const,
+        type: toDbDeviceType("wind"),
+        status: toDbDeviceStatus("online"),
         location: "North Field",
         capacity: 30,
         site_id: siteId,
@@ -101,8 +101,8 @@ export const seedTestData = async (): Promise<boolean> => {
       },
       {
         name: "EV Charging Station 1",
-        type: "ev_charger" as const,
-        status: "online" as const,
+        type: toDbDeviceType("ev_charger"),
+        status: toDbDeviceStatus("online"),
         location: "Parking Level 1",
         capacity: 22,
         site_id: siteId,
@@ -115,8 +115,8 @@ export const seedTestData = async (): Promise<boolean> => {
       },
       {
         name: "Grid Connection Point",
-        type: "grid" as const,
-        status: "online" as const,
+        type: toDbDeviceType("grid"),
+        status: toDbDeviceStatus("online"),
         location: "Main Distribution",
         capacity: 200,
         site_id: siteId,

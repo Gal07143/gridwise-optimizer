@@ -1,7 +1,8 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { DeviceType, DeviceStatus } from '@/types/energy';
-import { convertDeviceTypeForDb, convertDeviceStatusForDb } from '@/utils/deviceTypeUtils';
+import { toDbDeviceType, toDbDeviceStatus } from '@/services/devices/deviceCompatibility';
 
 /**
  * Helper functions to seed test data if needed
@@ -30,8 +31,8 @@ export const seedTestData = async (): Promise<boolean> => {
     const testDevices = [
       {
         name: "Rooftop Solar Array",
-        type: convertDeviceTypeForDb("solar" as DeviceType),
-        status: convertDeviceStatusForDb("online" as DeviceStatus),
+        type: toDbDeviceType("solar" as DeviceType),
+        status: toDbDeviceStatus("online" as DeviceStatus),
         location: "Main Building",
         capacity: 50,
         site_id: site.id,
@@ -44,8 +45,8 @@ export const seedTestData = async (): Promise<boolean> => {
       },
       {
         name: "Primary Storage System",
-        type: convertDeviceTypeForDb("battery" as DeviceType),
-        status: convertDeviceStatusForDb("online" as DeviceStatus),
+        type: toDbDeviceType("battery" as DeviceType),
+        status: toDbDeviceStatus("online" as DeviceStatus),
         location: "Utility Room",
         capacity: 120,
         site_id: site.id,
@@ -58,8 +59,8 @@ export const seedTestData = async (): Promise<boolean> => {
       },
       {
         name: "Wind Turbine Array",
-        type: convertDeviceTypeForDb("wind" as DeviceType),
-        status: convertDeviceStatusForDb("online" as DeviceStatus),
+        type: toDbDeviceType("wind" as DeviceType),
+        status: toDbDeviceStatus("online" as DeviceStatus),
         location: "North Field",
         capacity: 30,
         site_id: site.id,
@@ -72,8 +73,8 @@ export const seedTestData = async (): Promise<boolean> => {
       },
       {
         name: "EV Charging Station 1",
-        type: convertDeviceTypeForDb("ev_charger" as DeviceType),
-        status: convertDeviceStatusForDb("online" as DeviceStatus),
+        type: toDbDeviceType("ev_charger" as DeviceType),
+        status: toDbDeviceStatus("online" as DeviceStatus),
         location: "Parking Level 1",
         capacity: 22,
         site_id: site.id,
@@ -86,8 +87,8 @@ export const seedTestData = async (): Promise<boolean> => {
       },
       {
         name: "Grid Connection Point",
-        type: convertDeviceTypeForDb("grid" as DeviceType),
-        status: convertDeviceStatusForDb("online" as DeviceStatus),
+        type: toDbDeviceType("grid" as DeviceType),
+        status: toDbDeviceStatus("online" as DeviceStatus),
         location: "Main Distribution",
         capacity: 200,
         site_id: site.id,
@@ -147,6 +148,6 @@ export const getOrCreateDummySite = async () => {
     return { id: newSite.id };
   } catch (error) {
     console.error("Error getting or creating dummy site:", error);
-    return { id: 'dummy-site-id' }; // Fallback to a fake ID
+    return null; // Changed to return null instead of a fake ID
   }
 };

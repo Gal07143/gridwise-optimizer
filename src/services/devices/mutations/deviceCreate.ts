@@ -28,6 +28,7 @@ export const createDevice = async (deviceData: Omit<EnergyDevice, 'id'>): Promis
         site_id: deviceData.site_id,
         description: deviceData.description,
         last_updated: deviceData.last_updated || new Date().toISOString(),
+        metrics: deviceData.metrics
       })
       .select()
       .single();
