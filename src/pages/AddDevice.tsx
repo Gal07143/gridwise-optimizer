@@ -41,6 +41,7 @@ const AddDevice = () => {
       capacity: 0,
       description: '',
       firmware: '',
+      site_id: '',
     },
   });
   

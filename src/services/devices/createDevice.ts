@@ -58,12 +58,20 @@ export const createDevice = async (deviceData: Omit<EnergyDevice, 'id' | 'create
     
     console.log('Device created successfully:', data);
     
+    // Convert metrics from JSON to Record<string, number> if needed
+    const metrics = data.metrics ? 
+      (typeof data.metrics === 'string' ? 
+        JSON.parse(data.metrics) : 
+        data.metrics as Record<string, number>) : 
+      null;
+    
     // Convert DB types back to frontend types for return value
     const device: EnergyDevice = {
       ...data,
       // Explicitly override the type and status with their frontend equivalents
       type: deviceData.type,
-      status: deviceData.status || 'offline'
+      status: deviceData.status || 'offline',
+      metrics: metrics
     };
     
     toast.success('Device created successfully');

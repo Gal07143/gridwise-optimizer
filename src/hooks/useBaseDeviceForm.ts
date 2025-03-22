@@ -11,7 +11,7 @@ export interface DeviceFormState {
   capacity: number;
   firmware: string;
   description: string;
-  site_id?: string; // Added site_id as optional property
+  site_id?: string;
 }
 
 export interface UseBaseDeviceFormProps {
@@ -44,14 +44,12 @@ export const useBaseDeviceForm = ({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     
-    // Convert capacity to number if it's the capacity field
     if (name === 'capacity') {
       setDevice(prev => ({ ...prev, [name]: value === '' ? 0 : Number(value) }));
     } else {
       setDevice(prev => ({ ...prev, [name]: value }));
     }
     
-    // Clear validation error for this field
     if (validationErrors[name]) {
       setValidationErrors(prev => {
         const updated = { ...prev };
@@ -64,7 +62,6 @@ export const useBaseDeviceForm = ({
   const handleSelectChange = (field: keyof DeviceFormState, value: string) => {
     setDevice(prev => ({ ...prev, [field]: value }));
     
-    // Clear validation error for this field
     if (validationErrors[field]) {
       setValidationErrors(prev => {
         const updated = { ...prev };
@@ -77,7 +74,6 @@ export const useBaseDeviceForm = ({
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
     
-    // Basic validation
     if (!device.name.trim()) {
       errors.name = "Device name is required";
     }
@@ -99,7 +95,6 @@ export const useBaseDeviceForm = ({
       e.preventDefault();
     }
     
-    // Validate form
     if (!validateForm()) {
       return;
     }
@@ -107,10 +102,8 @@ export const useBaseDeviceForm = ({
     try {
       setIsSubmitting(true);
       
-      // Check network connection
       if (!navigator.onLine) {
         toast.warning("You are offline. Changes will be saved when you're back online.");
-        // In a real app, we would implement offline storage and sync here
       }
       
       const result = await onSubmit(device);
@@ -125,7 +118,6 @@ export const useBaseDeviceForm = ({
       console.error('Error saving device:', error);
       toast.error(`An error occurred: ${error.message || 'Unknown error'}`);
       
-      // Parse error message for field-specific errors
       if (error.message) {
         const errorMessages = error.message.split(', ');
         const fieldErrors: Record<string, string> = {};

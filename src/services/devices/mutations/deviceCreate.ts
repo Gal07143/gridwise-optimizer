@@ -28,7 +28,7 @@ export const createDevice = async (deviceData: Omit<EnergyDevice, 'id'>): Promis
         site_id: deviceData.site_id,
         description: deviceData.description,
         last_updated: deviceData.last_updated || new Date().toISOString(),
-        metrics: deviceData.metrics
+        metrics: deviceData.metrics || null
       })
       .select()
       .single();
@@ -41,11 +41,19 @@ export const createDevice = async (deviceData: Omit<EnergyDevice, 'id'>): Promis
       throw new Error('No data returned from device creation');
     }
 
+    // Convert metrics from JSON to Record<string, number> if needed
+    const metrics = data.metrics ? 
+      (typeof data.metrics === 'string' ? 
+        JSON.parse(data.metrics) : 
+        data.metrics as Record<string, number>) : 
+      null;
+
     // Return the created device, preserving the original frontend types
     return {
       ...data,
       type: deviceData.type,
-      status: deviceData.status
+      status: deviceData.status,
+      metrics: metrics
     } as EnergyDevice;
   } catch (error) {
     console.error('Error in createDevice:', error);
