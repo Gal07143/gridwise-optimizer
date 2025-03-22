@@ -1,7 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ReportData } from "./reportService";
 
 /**
  * Get all report templates
@@ -27,12 +26,12 @@ export const getReportTemplates = async (): Promise<any[]> => {
 /**
  * Get a specific report template by ID
  */
-export const getReportTemplateById = async (templateId: string): Promise<any> => {
+export const getReportTemplateById = async (id: string): Promise<any> => {
   try {
     const { data, error } = await supabase
       .from('reports')
       .select('*')
-      .eq('id', templateId)
+      .eq('id', id)
       .eq('is_template', true)
       .single();
     
@@ -40,42 +39,43 @@ export const getReportTemplateById = async (templateId: string): Promise<any> =>
     return data;
     
   } catch (error) {
-    console.error(`Error fetching report template ${templateId}:`, error);
+    console.error(`Error fetching template ${id}:`, error);
     toast.error("Failed to load report template");
     return null;
   }
 };
 
 /**
- * Create a report from a template
+ * Create a new report based on a template
  */
 export const createReportFromTemplate = async (
   templateId: string, 
-  siteId: string,
-  overrides: Partial<ReportData>
+  siteId: string, 
+  customizations: any
 ): Promise<any> => {
   try {
-    // First, get the template
+    // First get the template
     const template = await getReportTemplateById(templateId);
-    if (!template) throw new Error("Template not found");
+    
+    if (!template) {
+      throw new Error("Template not found");
+    }
     
     // Create a new report based on the template
-    const reportData = {
-      title: template.title,
-      description: template.description,
-      type: template.type,
-      is_template: false,
+    const newReport = {
       site_id: siteId,
       created_by: 'current-user',
-      parameters: template.parameters,
-      schedule: null,
-      ...overrides
+      type: customizations.type || template.type,
+      title: customizations.title || template.title,
+      description: customizations.description || template.description,
+      is_template: false,
+      schedule: customizations.schedule,
+      parameters: customizations.parameters || template.parameters || {},
     };
     
-    // Insert the new report
     const { data, error } = await supabase
       .from('reports')
-      .insert([reportData])
+      .insert([newReport])
       .select()
       .single();
     

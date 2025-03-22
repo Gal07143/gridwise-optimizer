@@ -5,89 +5,98 @@ import { toast } from 'sonner';
 // Mock security audit data
 export const securityAudits = [
   {
-    id: 1,
-    event: "User Login Attempt",
-    user: "admin@example.com",
-    ip: "192.168.1.105",
-    timestamp: new Date(Date.now() - 1000 * 60 * 5),
-    status: "success"
-  },
-  {
-    id: 2,
-    event: "Password Changed",
-    user: "operator@example.com",
-    ip: "192.168.1.120",
+    id: 'audit1',
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
-    status: "success"
+    action: 'Login attempt',
+    status: 'success',
+    actor: 'admin@example.com',
+    details: 'Successful login from IP 192.168.1.1',
+    source_ip: '192.168.1.1'
   },
   {
-    id: 3,
-    event: "Failed Login Attempt",
-    user: "unknown",
-    ip: "203.0.113.42",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 6),
-    status: "failure"
+    id: 'audit2',
+    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 3),
+    action: 'Password change',
+    status: 'success',
+    actor: 'john@example.com',
+    details: 'User changed their password',
+    source_ip: '192.168.1.2'
   },
   {
-    id: 4,
-    event: "User Role Modified",
-    user: "technician@example.com",
-    ip: "192.168.1.110",
+    id: 'audit3',
+    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5),
+    action: 'Login attempt',
+    status: 'failure',
+    actor: 'unknown',
+    details: 'Failed login attempt for user admin@example.com',
+    source_ip: '10.0.0.5'
+  },
+  {
+    id: 'audit4',
+    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 12),
+    action: 'Permission change',
+    status: 'success',
+    actor: 'admin@example.com',
+    details: 'Changed user role from viewer to editor',
+    source_ip: '192.168.1.1'
+  },
+  {
+    id: 'audit5',
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24),
-    status: "success"
-  },
-  {
-    id: 5,
-    event: "API Key Generated",
-    user: "admin@example.com",
-    ip: "192.168.1.105",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2),
-    status: "success"
+    action: 'API key created',
+    status: 'success',
+    actor: 'admin@example.com',
+    details: 'Created new API key for integration',
+    source_ip: '192.168.1.1'
   }
 ];
 
-// Security score details
-export const securityScores = [
-  { name: "Access Controls", score: 85, recommendation: "Enable multi-factor authentication for all admin accounts" },
-  { name: "Data Encryption", score: 92, recommendation: null },
-  { name: "User Permissions", score: 78, recommendation: "Review role-based access control settings for operator accounts" },
-  { name: "System Updates", score: 95, recommendation: null },
-  { name: "Vulnerability Management", score: 70, recommendation: "Schedule a security audit for API endpoints" }
-];
+// Mock security scores
+export const securityScores = {
+  accessControl: 85,
+  dataEncryption: 92,
+  apiSecurity: 78,
+  userAuthentication: 88,
+  networkSecurity: 75,
+  vulnerabilities: 90,
+  malwareProtection: 95
+};
 
 export const useSecurityStatus = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  
-  // Calculate overall security score
+  const [isScanning, setIsScanning] = useState(false);
+
+  // Calculate overall security score based on component scores
   const overallScore = Math.round(
-    securityScores.reduce((sum, item) => sum + item.score, 0) / securityScores.length
+    Object.values(securityScores).reduce((sum, score) => sum + score, 0) / 
+    Object.values(securityScores).length
   );
 
   const getScoreColor = (score: number) => {
-    if (score >= 90) return "text-green-500";
-    if (score >= 70) return "text-amber-500";
-    return "text-red-500";
+    if (score >= 90) return 'text-green-500';
+    if (score >= 75) return 'text-amber-500';
+    return 'text-red-500';
   };
 
   const getProgressColor = (score: number) => {
-    if (score >= 90) return "bg-green-500";
-    if (score >= 70) return "bg-amber-500";
-    return "bg-red-500";
+    if (score >= 90) return 'bg-green-500';
+    if (score >= 75) return 'bg-amber-500';
+    return 'bg-red-500';
   };
 
   const handleRunScan = () => {
-    setIsLoading(true);
-    toast.info("Security scan started. This may take a few minutes.");
+    setIsScanning(true);
     
-    // Simulate scan completion
+    // Simulate security scan
+    toast.info('Security scan initiated...');
+    
     setTimeout(() => {
-      setIsLoading(false);
-      toast.success("Security scan completed successfully.");
+      setIsScanning(false);
+      toast.success('Security scan completed successfully');
     }, 3000);
   };
 
   return {
-    isLoading,
+    isLoading: isScanning,
     overallScore,
     getScoreColor,
     getProgressColor,

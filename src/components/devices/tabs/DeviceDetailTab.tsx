@@ -1,325 +1,200 @@
 
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import React from 'react';
+import { 
+  Battery, 
+  Sun, 
+  Wind, 
+  Zap, 
+  Activity, 
+  BatteryCharging,
+  Settings,
+  MapPin,
+  Calendar,
+  Info,
+  BarChart3,
+  AlertTriangle,
+  Clock
+} from 'lucide-react';
+import { DeviceStatus, DeviceType } from '@/types/energy';
 import { Separator } from '@/components/ui/separator';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select';
-import { toast } from 'sonner';
-import { EnergyDevice, DeviceType, DeviceStatus } from '@/types/energy';
-import { updateDevice } from '@/services/devices/mutations';
+import { Badge } from '@/components/ui/badge';
 
 interface DeviceDetailProps {
   device: {
     id: string;
     name: string;
-    location: string;
     type: DeviceType;
     status: DeviceStatus;
     capacity: number;
     firmware?: string;
+    location: string;
     description?: string;
   };
 }
 
-const DeviceDetailTab = ({ device }: DeviceDetailProps) => {
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [editedDevice, setEditedDevice] = useState({
-    name: device.name,
-    location: device.location,
-    type: device.type,
-    status: device.status,
-    capacity: device.capacity,
-    firmware: device.firmware || '',
-    description: device.description || '',
-  });
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setEditedDevice(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleSelectChange = (name: string, value: string) => {
-    setEditedDevice(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleFormSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    try {
-      const updates = {
-        name: editedDevice.name,
-        location: editedDevice.location,
-        type: editedDevice.type as DeviceType,
-        status: editedDevice.status as DeviceStatus,
-        capacity: Number(editedDevice.capacity),
-        firmware: editedDevice.firmware || null,
-        description: editedDevice.description || null
-      };
-      
-      // Call the update function from your service
-      const result = await updateDevice(device.id, updates);
-      
-      if (result) {
-        toast.success("Device updated successfully");
-        setIsEditDialogOpen(false);
-        // You might want to refresh your data or update the UI here
-      } else {
-        toast.error("Failed to update device");
-      }
-    } catch (error) {
-      console.error("Error updating device:", error);
-      toast.error("Failed to update device");
-    }
-  };
-
-  const getStatusLabel = (status: DeviceStatus) => {
-    switch (status) {
-      case 'online': return 'Online';
-      case 'offline': return 'Offline';
-      case 'maintenance': return 'Maintenance';
-      case 'error': return 'Error';
-      case 'warning': return 'Warning';
-      default: return status;
-    }
-  };
-
-  const getTypeLabel = (type: DeviceType) => {
+const DeviceDetailTab: React.FC<DeviceDetailProps> = ({ device }) => {
+  const getDeviceTypeIcon = (type: DeviceType) => {
     switch (type) {
-      case 'solar': return 'Solar Panel';
-      case 'wind': return 'Wind Turbine';
-      case 'battery': return 'Battery Storage';
-      case 'grid': return 'Grid Connection';
-      case 'load': return 'Load';
-      case 'ev_charger': return 'EV Charger';
-      case 'inverter': return 'Inverter';
-      case 'meter': return 'Smart Meter';
-      default: return type;
+      case 'battery':
+        return <Battery className="h-5 w-5 text-blue-500" />;
+      case 'solar':
+        return <Sun className="h-5 w-5 text-yellow-500" />;
+      case 'wind':
+        return <Wind className="h-5 w-5 text-teal-500" />;
+      case 'grid':
+        return <Zap className="h-5 w-5 text-purple-500" />;
+      case 'load':
+        return <Activity className="h-5 w-5 text-red-500" />;
+      case 'ev_charger':
+        return <BatteryCharging className="h-5 w-5 text-green-500" />;
+      case 'inverter':
+        return <Settings className="h-5 w-5 text-indigo-500" />;
+      case 'meter':
+        return <BarChart3 className="h-5 w-5 text-orange-500" />;
+      default:
+        return <Settings className="h-5 w-5 text-gray-500" />;
     }
+  };
+
+  const getDeviceStatusIcon = (status: DeviceStatus) => {
+    switch (status) {
+      case 'online':
+        return <Badge className="bg-green-500">Online</Badge>;
+      case 'offline':
+        return <Badge variant="outline" className="text-gray-500 border-gray-300">Offline</Badge>;
+      case 'maintenance':
+        return <Badge className="bg-blue-500">Maintenance</Badge>;
+      case 'error':
+        return <Badge variant="destructive">Error</Badge>;
+      case 'warning':
+        return <Badge className="bg-amber-500">Warning</Badge>;
+      default:
+        return <Badge variant="secondary">Unknown</Badge>;
+    }
+  };
+
+  const getDeviceTypeLabel = (type: DeviceType) => {
+    return type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between">
-        <div>
-          <h3 className="text-lg font-medium">Device Information</h3>
-          <p className="text-sm text-muted-foreground">
-            View and edit the device details
-          </p>
-        </div>
-        <Button 
-          variant="outline" 
-          onClick={() => setIsEditDialogOpen(true)}
-          className="mt-2 md:mt-0"
-        >
-          Edit Details
-        </Button>
-      </div>
-      
-      <Separator />
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-1">
-          <h4 className="text-sm font-medium text-muted-foreground">Device Name</h4>
-          <p>{device.name}</p>
-        </div>
-        
-        <div className="space-y-1">
-          <h4 className="text-sm font-medium text-muted-foreground">Location</h4>
-          <p>{device.location || 'Not specified'}</p>
-        </div>
-        
-        <div className="space-y-1">
-          <h4 className="text-sm font-medium text-muted-foreground">Type</h4>
-          <p>{getTypeLabel(device.type)}</p>
-        </div>
-        
-        <div className="space-y-1">
-          <h4 className="text-sm font-medium text-muted-foreground">Status</h4>
-          <p>{getStatusLabel(device.status)}</p>
-        </div>
-        
-        <div className="space-y-1">
-          <h4 className="text-sm font-medium text-muted-foreground">Capacity</h4>
-          <p>{device.capacity} {device.type === 'battery' ? 'kWh' : 'kW'}</p>
-        </div>
-        
-        <div className="space-y-1">
-          <h4 className="text-sm font-medium text-muted-foreground">Firmware</h4>
-          <p>{device.firmware || 'Not specified'}</p>
-        </div>
-      </div>
-      
-      {device.description && (
-        <>
-          <Separator />
-          <div className="space-y-1">
-            <h4 className="text-sm font-medium text-muted-foreground">Description</h4>
-            <p className="text-sm">{device.description}</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-4">
+          <div className="flex items-center space-x-2 text-muted-foreground">
+            {getDeviceTypeIcon(device.type)}
+            <span className="capitalize">{getDeviceTypeLabel(device.type)}</span>
           </div>
-        </>
-      )}
-      
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Edit Device</DialogTitle>
-            <DialogDescription>
-              Make changes to the device information here.
-            </DialogDescription>
-          </DialogHeader>
           
-          <form onSubmit={handleFormSubmit}>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name" className="text-right">
-                  Name
-                </Label>
-                <Input
-                  id="name"
-                  name="name"
-                  value={editedDevice.name}
-                  onChange={handleInputChange}
-                  className="col-span-3"
-                />
-              </div>
-              
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="location" className="text-right">
-                  Location
-                </Label>
-                <Input
-                  id="location"
-                  name="location"
-                  value={editedDevice.location}
-                  onChange={handleInputChange}
-                  className="col-span-3"
-                />
-              </div>
-              
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="type" className="text-right">
-                  Type
-                </Label>
-                <Select
-                  value={editedDevice.type}
-                  onValueChange={(value) => handleSelectChange('type', value)}
-                >
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="solar">Solar Panel</SelectItem>
-                    <SelectItem value="wind">Wind Turbine</SelectItem>
-                    <SelectItem value="battery">Battery Storage</SelectItem>
-                    <SelectItem value="grid">Grid Connection</SelectItem>
-                    <SelectItem value="load">Load</SelectItem>
-                    <SelectItem value="ev_charger">EV Charger</SelectItem>
-                    <SelectItem value="inverter">Inverter</SelectItem>
-                    <SelectItem value="meter">Smart Meter</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="status" className="text-right">
-                  Status
-                </Label>
-                <Select
-                  value={editedDevice.status}
-                  onValueChange={(value) => handleSelectChange('status', value)}
-                >
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="online">Online</SelectItem>
-                    <SelectItem value="offline">Offline</SelectItem>
-                    <SelectItem value="maintenance">Maintenance</SelectItem>
-                    <SelectItem value="error">Error</SelectItem>
-                    <SelectItem value="warning">Warning</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="capacity" className="text-right">
-                  Capacity
-                </Label>
-                <Input
-                  id="capacity"
-                  name="capacity"
-                  type="number"
-                  value={editedDevice.capacity}
-                  onChange={handleInputChange}
-                  className="col-span-3"
-                />
-              </div>
-              
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="firmware" className="text-right">
-                  Firmware
-                </Label>
-                <Input
-                  id="firmware"
-                  name="firmware"
-                  value={editedDevice.firmware}
-                  onChange={handleInputChange}
-                  className="col-span-3"
-                />
-              </div>
-              
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="description" className="text-right">
-                  Description
-                </Label>
-                <Input
-                  id="description"
-                  name="description"
-                  value={editedDevice.description}
-                  onChange={handleInputChange}
-                  className="col-span-3"
-                />
+          <h2 className="text-xl font-semibold">{device.name}</h2>
+          
+          <div className="flex items-center space-x-2">
+            <MapPin className="h-4 w-4 text-muted-foreground" />
+            <span>{device.location || 'No location set'}</span>
+          </div>
+          
+          <p className="text-muted-foreground">
+            {device.description || `No description available for this ${device.type.replace(/_/g, ' ')}.`}
+          </p>
+          
+          <Separator className="my-4" />
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <div className="text-sm text-muted-foreground">Status</div>
+              <div className="flex items-center mt-1">
+                {getDeviceStatusIcon(device.status)}
               </div>
             </div>
             
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" type="button" onClick={() => setIsEditDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button type="submit">Save Changes</Button>
+            <div>
+              <div className="text-sm text-muted-foreground">Capacity</div>
+              <div className="font-medium mt-1">
+                {device.capacity} {device.type === 'battery' ? 'kWh' : 'kW'}
+              </div>
             </div>
-          </form>
-        </DialogContent>
-      </Dialog>
+            
+            <div>
+              <div className="text-sm text-muted-foreground">Firmware</div>
+              <div className="font-medium mt-1">
+                {device.firmware || 'Not available'}
+              </div>
+            </div>
+            
+            <div>
+              <div className="text-sm text-muted-foreground">ID</div>
+              <div className="font-mono text-xs truncate mt-1">
+                {device.id}
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="space-y-4">
+          <div className="rounded-md border p-4 bg-muted/10">
+            <h3 className="text-lg font-medium mb-2 flex items-center gap-2">
+              <Info className="h-5 w-5 text-primary" />
+              Device Information
+            </h3>
+            
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Type:</span>
+                <span className="font-medium">{getDeviceTypeLabel(device.type)}</span>
+              </div>
+              
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Model:</span>
+                <span className="font-medium">Standard {getDeviceTypeLabel(device.type)}</span>
+              </div>
+              
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Manufacturer:</span>
+                <span className="font-medium">Generic</span>
+              </div>
+              
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Capacity:</span>
+                <span className="font-medium">{device.capacity} {device.type === 'battery' ? 'kWh' : 'kW'}</span>
+              </div>
+              
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Firmware:</span>
+                <span className="font-medium">{device.firmware || 'Not available'}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="rounded-md border p-4 bg-muted/10">
+            <h3 className="text-lg font-medium mb-2 flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              Status Information
+            </h3>
+            
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Current Status:</span>
+                <span className="font-medium">{device.status}</span>
+              </div>
+              
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Last Maintenance:</span>
+                <span className="font-medium">Not recorded</span>
+              </div>
+              
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Warranty Status:</span>
+                <span className="font-medium">Active</span>
+              </div>
+              
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Next Scheduled Check:</span>
+                <span className="font-medium">Not scheduled</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

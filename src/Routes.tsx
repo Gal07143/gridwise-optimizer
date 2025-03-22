@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
 // Public pages
@@ -163,9 +163,8 @@ const AppRoutes: React.FC = () => {
       
       {/* Support for legacy route that may be linked in other places */}
       <Route path="/device-view/:deviceId" element={
-        <Navigate to={(location) => {
-          // Extract the deviceId from the current location
-          const deviceId = location.pathname.split('/').pop();
+        <Navigate to={({ pathname }) => {
+          const deviceId = pathname.split('/').pop();
           return `/devices/${deviceId}`; 
         }} replace />
       } />
