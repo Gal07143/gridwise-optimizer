@@ -7,7 +7,8 @@ export type DeviceType =
   | 'load'
   | 'ev_charger'
   | 'inverter'
-  | 'meter';
+  | 'meter'
+  | 'light';
 
 export type DeviceStatus = 
   | 'online' 
@@ -102,6 +103,14 @@ export interface EnergyReading {
   reading_type: string;
   unit: string;
   quality: number;
+  power?: number;
+  energy?: number;
+  voltage?: number;
+  current?: number;
+  frequency?: number;
+  temperature?: number;
+  state_of_charge?: number;
+  created_at?: string;
 }
 
 // Device model types
@@ -109,6 +118,7 @@ export interface DeviceModel {
   id: string;
   manufacturer: string;
   model_name: string;
+  name?: string;
   device_type: DeviceType;
   specifications: Record<string, any>;
   compatible_with: string[];
@@ -123,7 +133,10 @@ export type AlertType =
   | 'device' 
   | 'security' 
   | 'performance' 
-  | 'forecast';
+  | 'forecast'
+  | 'warning'
+  | 'critical'
+  | 'info';
 
 export type AlertSeverity = 
   | 'critical' 
@@ -145,4 +158,8 @@ export interface Alert {
   resolved: boolean;
   assigned_to?: string;
   resolution_notes?: string;
+  device_id?: string;
+  acknowledged_at?: string;
+  acknowledged_by?: string;
+  resolved_at?: string;
 }

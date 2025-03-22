@@ -1,100 +1,49 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { EnergyDevice, DeviceType, DeviceStatus } from '@/types/energy';
+import { EnergyDevice } from '@/types/energy';
 import { toast } from 'sonner';
-import { convertDeviceTypeForDb, convertDeviceStatusForDb } from '@/utils/deviceTypeUtils';
+
+export type CreateDeviceInput = Omit<EnergyDevice, 'id'>;
 
 /**
- * Create a new device in the database
+ * Creates a new device in the database
  */
-export const createDevice = async (
-  device: Omit<EnergyDevice, 'id' | 'created_at' | 'last_updated'>
-): Promise<EnergyDevice | null> => {
+export const createDevice = async (deviceData: Omit<EnergyDevice, 'id'>): Promise<EnergyDevice> => {
   try {
-    // Prepare the device data with proper type conversions for database compatibility
-    const deviceData = {
-      name: device.name,
-      type: convertDeviceTypeForDb(device.type),
-      status: convertDeviceStatusForDb(device.status),
-      location: device.location,
-      capacity: device.capacity,
-      site_id: device.site_id,
-      created_by: device.created_by,
-      firmware: device.firmware,
-      lat: device.lat,
-      lng: device.lng,
-      metrics: device.metrics,
-      installation_date: device.installation_date,
-      last_updated: new Date().toISOString()
-    };
-
+    // Create device in devices table
     const { data, error } = await supabase
       .from('devices')
-      .insert(deviceData)
+      .insert([
+        {
+          name: deviceData.name,
+          type: deviceData.type,
+          status: deviceData.status,
+          location: deviceData.location,
+          capacity: deviceData.capacity,
+          firmware: deviceData.firmware,
+          site_id: deviceData.site_id,
+          description: deviceData.description,
+          last_updated: deviceData.last_updated || new Date().toISOString(),
+        }
+      ])
       .select()
       .single();
 
-    if (error) throw error;
-    
-    toast.success(`Device ${device.name} created successfully`);
-    
-    // Cast and return the data with correct types
-    return {
-      ...data,
-      type: device.type, // Use original type
-      status: device.status, // Use original status
-      metrics: data.metrics ? (typeof data.metrics === 'string' ? JSON.parse(data.metrics) : data.metrics) as Record<string, any> : null
-    } as EnergyDevice;
+    if (error) {
+      throw new Error(`Error creating device: ${error.message}`);
+    }
+
+    if (!data) {
+      throw new Error('No data returned from device creation');
+    }
+
+    // Return the created device
+    return data as EnergyDevice;
   } catch (error) {
-    console.error('Error creating device:', error);
-    toast.error(`Failed to create device: ${error.message}`);
-    return null;
+    console.error('Error in createDevice:', error);
+    toast.error('Failed to create device');
+    throw error;
   }
 };
 
-/**
- * Create multiple devices in a batch
- */
-export const createDeviceBatch = async (
-  devices: Omit<EnergyDevice, 'id' | 'created_at' | 'last_updated'>[]
-): Promise<EnergyDevice[]> => {
-  try {
-    // Convert array of devices to database-compatible format
-    const deviceData = devices.map(device => ({
-      name: device.name,
-      type: convertDeviceTypeForDb(device.type),
-      status: convertDeviceStatusForDb(device.status),
-      location: device.location,
-      capacity: device.capacity,
-      site_id: device.site_id,
-      created_by: device.created_by,
-      firmware: device.firmware,
-      lat: device.lat,
-      lng: device.lng,
-      metrics: device.metrics,
-      installation_date: device.installation_date,
-      last_updated: new Date().toISOString()
-    }));
-
-    const { data, error } = await supabase
-      .from('devices')
-      .insert(deviceData)
-      .select();
-
-    if (error) throw error;
-    
-    toast.success(`${devices.length} devices created successfully`);
-    
-    // Return properly typed devices
-    return (data || []).map((item, index) => ({
-      ...item,
-      type: devices[index].type, // Use original type
-      status: devices[index].status, // Use original status
-      metrics: item.metrics ? (typeof item.metrics === 'string' ? JSON.parse(item.metrics) : item.metrics) as Record<string, any> : null
-    } as EnergyDevice));
-  } catch (error) {
-    console.error('Error creating devices batch:', error);
-    toast.error(`Failed to create devices: ${error.message}`);
-    return [];
-  }
-};
+export default createDevice;

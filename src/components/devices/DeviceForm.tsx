@@ -16,16 +16,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 interface DeviceFormProps {
   device: {
     name: string;
-    location: string;
+    location?: string;
     type: DeviceType;
     status: DeviceStatus;
     capacity: number;
-    firmware: string;
-    description: string;
+    firmware?: string;
+    description?: string;
   };
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   handleSelectChange: (field: string, value: string) => void;
-  validationErrors: Record<string, string>;
+  validationErrors: Record<string, any>;
+  isLoading?: boolean;
 }
 
 const DeviceForm: React.FC<DeviceFormProps> = ({
@@ -33,6 +34,7 @@ const DeviceForm: React.FC<DeviceFormProps> = ({
   handleInputChange,
   handleSelectChange,
   validationErrors,
+  isLoading
 }) => {
   return (
     <Card>
@@ -50,24 +52,26 @@ const DeviceForm: React.FC<DeviceFormProps> = ({
               onChange={handleInputChange}
               placeholder="Enter device name"
               className={validationErrors.name ? 'border-red-500' : ''}
+              disabled={isLoading}
             />
             {validationErrors.name && (
-              <p className="text-sm text-red-500">{validationErrors.name}</p>
+              <p className="text-sm text-red-500">{validationErrors.name.message}</p>
             )}
           </div>
           
           <div className="space-y-2">
-            <FormLabel htmlFor="location">Location <span className="text-red-500">*</span></FormLabel>
+            <FormLabel htmlFor="location">Location</FormLabel>
             <Input
               id="location"
               name="location"
-              value={device.location}
+              value={device.location || ''}
               onChange={handleInputChange}
               placeholder="Enter device location"
               className={validationErrors.location ? 'border-red-500' : ''}
+              disabled={isLoading}
             />
             {validationErrors.location && (
-              <p className="text-sm text-red-500">{validationErrors.location}</p>
+              <p className="text-sm text-red-500">{validationErrors.location.message}</p>
             )}
           </div>
           
@@ -76,6 +80,7 @@ const DeviceForm: React.FC<DeviceFormProps> = ({
             <Select
               value={device.type}
               onValueChange={(value) => handleSelectChange('type', value)}
+              disabled={isLoading}
             >
               <SelectTrigger id="type" className={validationErrors.type ? 'border-red-500' : ''}>
                 <SelectValue placeholder="Select device type" />
@@ -93,7 +98,7 @@ const DeviceForm: React.FC<DeviceFormProps> = ({
               </SelectContent>
             </Select>
             {validationErrors.type && (
-              <p className="text-sm text-red-500">{validationErrors.type}</p>
+              <p className="text-sm text-red-500">{validationErrors.type.message}</p>
             )}
           </div>
           
@@ -102,6 +107,7 @@ const DeviceForm: React.FC<DeviceFormProps> = ({
             <Select
               value={device.status}
               onValueChange={(value) => handleSelectChange('status', value)}
+              disabled={isLoading}
             >
               <SelectTrigger id="status" className={validationErrors.status ? 'border-red-500' : ''}>
                 <SelectValue placeholder="Select device status" />
@@ -115,7 +121,7 @@ const DeviceForm: React.FC<DeviceFormProps> = ({
               </SelectContent>
             </Select>
             {validationErrors.status && (
-              <p className="text-sm text-red-500">{validationErrors.status}</p>
+              <p className="text-sm text-red-500">{validationErrors.status.message}</p>
             )}
           </div>
           
@@ -132,9 +138,10 @@ const DeviceForm: React.FC<DeviceFormProps> = ({
               onChange={handleInputChange}
               placeholder="Enter device capacity"
               className={validationErrors.capacity ? 'border-red-500' : ''}
+              disabled={isLoading}
             />
             {validationErrors.capacity && (
-              <p className="text-sm text-red-500">{validationErrors.capacity}</p>
+              <p className="text-sm text-red-500">{validationErrors.capacity.message}</p>
             )}
           </div>
           
@@ -146,6 +153,7 @@ const DeviceForm: React.FC<DeviceFormProps> = ({
               value={device.firmware || ''}
               onChange={handleInputChange}
               placeholder="Enter firmware version"
+              disabled={isLoading}
             />
           </div>
         </div>
@@ -159,6 +167,7 @@ const DeviceForm: React.FC<DeviceFormProps> = ({
             onChange={handleInputChange}
             placeholder="Enter device description"
             rows={4}
+            disabled={isLoading}
           />
         </div>
       </CardContent>
