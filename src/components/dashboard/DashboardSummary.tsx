@@ -4,6 +4,9 @@ import MetricsCard from '@/components/dashboard/MetricsCard';
 import TariffCard from './TariffCard';
 import TariffHistoryCard from './TariffHistoryCard';
 import ModbusCard from './ModbusCard';
+import DeviceManagement from './DeviceManagement';
+
+export default DashboardSummary;
 
 const DashboardSummary = () => {
   return (
@@ -73,7 +76,10 @@ const DashboardSummary = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <TariffHistoryCard />
       </div>
-    </div>
+     <div className="mt-8">
+        <DeviceManagement />
+      </div>
+    </>
   );
 };
 
