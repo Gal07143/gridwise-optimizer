@@ -8,6 +8,7 @@ import DeviceManagement from './DeviceManagement';
 import FaultSummaryCard from './FaultSummaryCard';
 import { useFaults } from '@/hooks/useFaults';
 import { createClient } from '@supabase/supabase-js';
+import LiveTelemetryChart from './LiveTelemetryChart';
 
 // ✅ Supabase client init (you can move this to a utils/supabase.ts)
 const supabase = createClient(
@@ -127,7 +128,14 @@ const DashboardSummary = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <FaultSummaryCard faults={faults} />
       </div>
+      {/* Section: Live Charts (Power, Voltage, etc.) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <LiveTelemetryChart deviceId="your-device-id" metric="power" unit="kW" />
+        <LiveTelemetryChart deviceId="your-device-id" metric="voltage" unit="V" />
+      </div>
 
+
+      
       {/* Modbus / Quality */}
       <div className="space-y-4 mb-8">
         <ModbusCard />
