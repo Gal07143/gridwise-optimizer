@@ -22,6 +22,13 @@ import MicrogridControl from '@/pages/MicrogridControl';
 import SystemStatus from '@/pages/SystemStatus';
 import Security from '@/pages/Security';
 
+// Integration pages
+import IntegrationsHome from '@/pages/integrations/IntegrationsHome';
+import IntegrationCategoryPage from '@/pages/integrations/IntegrationCategoryPage';
+import DeviceModelDetailPage from '@/pages/integrations/DeviceModelDetailPage';
+import AddDeviceModelPage from '@/pages/integrations/AddDeviceModelPage';
+import EditDeviceModelPage from '@/pages/integrations/EditDeviceModelPage';
+
 // Settings pages
 import Settings from '@/pages/Settings';
 import UserSettings from '@/pages/settings/UserSettings';
@@ -69,6 +76,11 @@ const AppRoutes: React.FC = () => {
           <AddDevice />
         </ProtectedRoute>
       } />
+      <Route path="/add-device" element={
+        <ProtectedRoute>
+          <Navigate to="/devices/add" replace />
+        </ProtectedRoute>
+      } />
       <Route path="/devices/:deviceId" element={
         <ProtectedRoute>
           <DeviceView />
@@ -77,6 +89,33 @@ const AppRoutes: React.FC = () => {
       <Route path="/devices/:deviceId/edit" element={
         <ProtectedRoute>
           <EditDevice />
+        </ProtectedRoute>
+      } />
+      
+      {/* Integration routes */}
+      <Route path="/integrations" element={
+        <ProtectedRoute>
+          <IntegrationsHome />
+        </ProtectedRoute>
+      } />
+      <Route path="/integrations/:categoryId" element={
+        <ProtectedRoute>
+          <IntegrationCategoryPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/integrations/model/:modelId" element={
+        <ProtectedRoute>
+          <DeviceModelDetailPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/integrations/model/add" element={
+        <ProtectedRoute>
+          <AddDeviceModelPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/integrations/model/:modelId/edit" element={
+        <ProtectedRoute>
+          <EditDeviceModelPage />
         </ProtectedRoute>
       } />
       

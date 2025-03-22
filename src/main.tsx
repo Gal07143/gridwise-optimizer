@@ -4,7 +4,7 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import './App.css';
 import './index.css';
-import { seedTestData } from './services/deviceService';
+import { seedTestData } from './services/devices/seedService';
 
 // Initialize data if needed
 seedTestData().catch(console.error);

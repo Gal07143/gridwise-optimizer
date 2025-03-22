@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -33,7 +32,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 
-// Mock device data
 const mockDevices = [
   { 
     id: 'dev1', 
@@ -126,27 +124,21 @@ const Devices = () => {
   };
 
   const handleDownloadSpecs = (deviceName: string) => {
-    // In a real app, this would initiate a file download
     toast.success(`Downloading specifications for ${deviceName}...`);
-    // Simulate download completion
     setTimeout(() => {
       toast.info(`${deviceName} specifications downloaded successfully`);
     }, 1500);
   };
 
   const handleDownloadManual = (deviceName: string) => {
-    // In a real app, this would initiate a file download
     toast.success(`Downloading user manual for ${deviceName}...`);
-    // Simulate download completion
     setTimeout(() => {
       toast.info(`${deviceName} user manual downloaded successfully`);
     }, 1500);
   };
 
   const handleExportData = (deviceName: string) => {
-    // In a real app, this would initiate a file download
     toast.success(`Exporting data for ${deviceName}...`);
-    // Simulate download completion
     setTimeout(() => {
       toast.info(`${deviceName} data exported successfully as CSV`);
     }, 1500);
@@ -168,7 +160,7 @@ const Devices = () => {
               </Link>
             </Button>
             <Button asChild>
-              <Link to="/add-device">
+              <Link to="/devices/add">
                 <Plus className="mr-2 h-4 w-4" />
                 Add Device
               </Link>
@@ -291,7 +283,7 @@ const Devices = () => {
                 : "You haven't added any devices yet. Start by adding your first device."}
             </p>
             <Button variant="outline" className="mt-6" asChild>
-              <Link to="/add-device">
+              <Link to="/devices/add">
                 <Plus className="mr-2 h-4 w-4" />
                 Add Your First Device
               </Link>

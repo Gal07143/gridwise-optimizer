@@ -58,11 +58,11 @@ const AddDevice = () => {
   });
   
   const onSubmit = (data: DeviceFormValues) => {
-    // Make sure all required fields have valid values
+    // Make sure all required fields have valid values and types are correct
     const deviceData = {
       name: data.name,
-      type: data.type,
-      status: data.status,
+      type: data.type as DeviceType,
+      status: data.status as DeviceStatus,
       location: data.location || '',
       capacity: data.capacity,
       firmware: data.firmware || '',
