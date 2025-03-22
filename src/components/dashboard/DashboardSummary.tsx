@@ -2,6 +2,24 @@
 import React from 'react';
 import { Zap, Battery, Sun, Wind } from 'lucide-react';
 import MetricsCard from '@/components/dashboard/MetricsCard';
+import { useLatestTariff } from '@/hooks/useLatestTariff';
+
+function TariffCard() {
+  const { tariff, loading } = useLatestTariff();
+
+  return (
+    <div className="rounded-xl border p-4 shadow bg-white">
+      <h2 className="text-lg font-semibold mb-2">Current Tariff</h2>
+      {loading ? (
+        <p>Loading...</p>
+      ) : tariff ? (
+        <p>€{tariff.price_eur_kwh?.toFixed(3)} / kWh</p>
+      ) : (
+        <p>No tariff data available.</p>
+      )}
+    </div>
+  );
+}
 
 const DashboardSummary = () => {
   return (
