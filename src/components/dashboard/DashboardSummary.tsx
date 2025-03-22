@@ -1,16 +1,9 @@
 import React from 'react';
 import { Zap, Battery, Sun, Wind } from 'lucide-react';
 import MetricsCard from '@/components/dashboard/MetricsCard';
-import { useLatestTariff } from '@/hooks/useLatestTariff';
 import TariffCard from './TariffCard';
-import TariffHistoryCard from './TariffHistoryCard'; // ✅ Add this line
-import ModbusCard from './ModbusCard';
-
-// inside your return:
-<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-  {/* other cards */}
-  <ModbusCard />
-</div>
+import TariffHistoryCard from './TariffHistoryCard';
+import ModbusCard from './ModbusCard'; // Import your new ModbusCard
 
 const DashboardSummary = () => {
   return (
@@ -62,14 +55,19 @@ const DashboardSummary = () => {
         />
       </div>
 
-      {/* ✅ Tariff Overview (Live) */}
+      {/* Tariff Overview (Live) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         <TariffCard />
       </div>
 
-      {/* ✅ Tariff Chart (History) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Tariff Chart (History) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <TariffHistoryCard />
+      </div>
+
+      {/* Modbus Data Card */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <ModbusCard />
       </div>
     </>
   );
