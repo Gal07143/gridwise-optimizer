@@ -1,30 +1,26 @@
 name: Run Modbus Agent
 
 on:
-  workflow_dispatch:  # Manual trigger from GitHub Actions tab
+  workflow_dispatch:
+  schedule:
+    - cron: '*/5 * * * *' # runs every 5 minutes
 
 jobs:
-  run-agent:
+  modbus-agent:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-      - name: Set Up Node.js
-        uses: actions/setup-node@v2
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: 20
 
-      - name: Install Dependencies
-        run: |
-          cd modbus-agent
-          npm install dotenv @supabase/supabase-js
+      - name: Install dependencies
+        run: npm install dotenv @supabase/supabase-js jsmodbus
 
       - name: Run Modbus Agent
-        run: |
-          cd modbus-agent
-          node index.js
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_API_KEY: ${{ secrets.SUPABASE_API_KEY }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: node modbus-agent/index.js
