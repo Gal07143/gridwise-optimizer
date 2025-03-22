@@ -2,8 +2,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { EnergyDevice, DeviceType, DeviceStatus } from '@/types/energy';
 import { toast } from 'sonner';
-import { toDbDeviceType, toDbDeviceStatus } from './deviceCompatibility';
-import { executeSql } from '../sqlExecutor';
 
 export const createDevice = async (deviceData: Omit<EnergyDevice, 'id' | 'created_at' | 'last_updated'>): Promise<EnergyDevice | null> => {
   try {
@@ -22,14 +20,11 @@ export const createDevice = async (deviceData: Omit<EnergyDevice, 'id' | 'create
       throw new Error('Capacity must be greater than 0');
     }
     
-    // Convert frontend types to database-compatible types
-    const dbDeviceType = toDbDeviceType(deviceData.type);
-    const dbDeviceStatus = toDbDeviceStatus(deviceData.status || 'offline');
-    
+    // Prepare insert data
     const insertData = {
       name: deviceData.name,
-      type: dbDeviceType,
-      status: dbDeviceStatus,
+      type: deviceData.type,
+      status: deviceData.status || 'offline',
       location: deviceData.location || null,
       capacity: deviceData.capacity,
       firmware: deviceData.firmware || null,
@@ -37,7 +32,8 @@ export const createDevice = async (deviceData: Omit<EnergyDevice, 'id' | 'create
       installation_date: deviceData.installation_date || null,
       site_id: deviceData.site_id || null,
       metrics: deviceData.metrics || null,
-      created_by: deviceData.created_by || null,
+      // Get current user's ID for created_by if available
+      created_by: (await supabase.auth.getUser()).data?.user?.id || null
     };
     
     const { data, error } = await supabase
@@ -56,16 +52,8 @@ export const createDevice = async (deviceData: Omit<EnergyDevice, 'id' | 'create
     
     console.log('Device created successfully:', data);
     
-    // Convert to our application's device type
-    const device: EnergyDevice = {
-      ...data,
-      type: deviceData.type, // Use original type from frontend
-      status: deviceData.status || 'offline', // Use original status from frontend
-      metrics: data.metrics as Record<string, number> | null
-    };
-    
-    toast.success('Device created successfully');
-    return device;
+    // Return the created device
+    return data as EnergyDevice;
     
   } catch (error: any) {
     console.error('Error creating device:', error);

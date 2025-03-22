@@ -1,5 +1,5 @@
 
-// Just updating the addDeviceReading function to fix the type issue
+// Update the addDeviceReading function to fix the type issue
 import { supabase } from "@/integrations/supabase/client";
 import { EnergyReading } from "@/types/energy";
 import { toast } from "sonner";
@@ -7,6 +7,42 @@ import { toast } from "sonner";
 // Ampeco API integration configuration
 const AMPECO_API_URL = "https://api.ampeco.com/v1";
 const POLLING_INTERVAL = 30000; // 30 seconds
+
+// Interface to represent database readings structure
+interface DbEnergyReading {
+  id: string;
+  device_id: string;
+  timestamp: string;
+  power: number;
+  energy: number;
+  voltage: number;
+  current: number;
+  frequency: number;
+  temperature: number;
+  state_of_charge: number | null;
+  created_at: string;
+}
+
+// Convert database reading to application EnergyReading
+const mapDbToEnergyReading = (dbReading: DbEnergyReading): EnergyReading => {
+  return {
+    id: dbReading.id,
+    device_id: dbReading.device_id,
+    timestamp: dbReading.timestamp,
+    value: dbReading.power, // Use power as the primary value
+    reading_type: 'power',
+    unit: 'W',
+    quality: 100, // Assume good quality for now
+    power: dbReading.power,
+    energy: dbReading.energy,
+    voltage: dbReading.voltage,
+    current: dbReading.current,
+    frequency: dbReading.frequency,
+    temperature: dbReading.temperature,
+    state_of_charge: dbReading.state_of_charge || undefined,
+    created_at: dbReading.created_at
+  };
+};
 
 /**
  * Get the latest readings for a device from the database
@@ -40,7 +76,9 @@ export const getDeviceReadings = async (deviceId: string, limit = 24, realtime =
       .limit(limit);
     
     if (error) throw error;
-    return data || [];
+
+    // Map database results to EnergyReading objects
+    return (data || []).map(mapDbToEnergyReading);
     
   } catch (error) {
     console.error(`Error fetching readings for device ${deviceId}:`, error);
@@ -73,20 +111,12 @@ export const fetchRealtimeReadingsFromDevice = async (deviceId: string): Promise
     }
     
     const now = new Date();
-    const reading: Omit<EnergyReading, 'id' | 'created_at'> = {
-      device_id: deviceId,
-      timestamp: now.toISOString(),
-      power: generateRealisticPower(deviceData.type, deviceData.capacity),
-      energy: 0, // Will be calculated based on previous readings
-      voltage: 220 + (Math.random() * 10 - 5),
-      current: 0, // Will be calculated
-      frequency: 50 + (Math.random() * 0.5 - 0.25),
-      temperature: 25 + (Math.random() * 10 - 5),
-      state_of_charge: deviceData.type === 'battery' ? 20 + Math.floor(Math.random() * 80) : null
-    };
-
-    // Calculate derived values
-    reading.current = reading.power / reading.voltage;
+    const power = generateRealisticPower(deviceData.type, deviceData.capacity);
+    const voltage = 220 + (Math.random() * 10 - 5);
+    const current = power / voltage;
+    const frequency = 50 + (Math.random() * 0.5 - 0.25);
+    const temperature = 25 + (Math.random() * 10 - 5);
+    const state_of_charge = deviceData.type === 'battery' ? 20 + Math.floor(Math.random() * 80) : null;
     
     // Get previous reading to calculate energy
     const { data: prevReadings } = await supabase
@@ -96,6 +126,7 @@ export const fetchRealtimeReadingsFromDevice = async (deviceId: string): Promise
       .order('timestamp', { ascending: false })
       .limit(1);
     
+    let energy = 0;
     if (prevReadings && prevReadings.length > 0) {
       const prevReading = prevReadings[0];
       const prevTime = new Date(prevReading.timestamp).getTime();
@@ -103,13 +134,29 @@ export const fetchRealtimeReadingsFromDevice = async (deviceId: string): Promise
       const hoursDiff = (currentTime - prevTime) / (1000 * 60 * 60);
       
       // Energy (kWh) = Previous Energy + Power (kW) * Time (hours)
-      reading.energy = prevReading.energy + (reading.power * hoursDiff);
-    } else {
-      // No previous reading, start at 0
-      reading.energy = 0;
+      energy = prevReading.energy + (power * hoursDiff);
     }
     
-    return [reading as EnergyReading];
+    // Create a reading with all required EnergyReading fields
+    const reading: EnergyReading = {
+      id: `tmp-${Date.now()}`,
+      device_id: deviceId,
+      timestamp: now.toISOString(),
+      value: power,
+      reading_type: 'power',
+      unit: 'W',
+      quality: 100,
+      power,
+      energy,
+      voltage,
+      current,
+      frequency,
+      temperature,
+      state_of_charge: state_of_charge || undefined,
+      created_at: now.toISOString()
+    };
+    
+    return [reading];
   } catch (error) {
     console.error("Error fetching real-time device readings:", error);
     throw error;
@@ -166,17 +213,17 @@ function generateRealisticPower(deviceType: string, capacity: number): number {
  */
 export const addDeviceReading = async (reading: Omit<EnergyReading, 'id' | 'created_at'>): Promise<EnergyReading | null> => {
   try {
-    // Ensure all required fields are present
+    // Transform from application model to database model
     const readingData = {
       device_id: reading.device_id,
       timestamp: reading.timestamp,
-      power: reading.power,
-      energy: reading.energy,
-      voltage: reading.voltage,
-      current: reading.current,
-      frequency: reading.frequency,
-      temperature: reading.temperature,
-      state_of_charge: reading.state_of_charge
+      power: reading.power || reading.value,
+      energy: reading.energy || 0,
+      voltage: reading.voltage || 0,
+      current: reading.current || 0,
+      frequency: reading.frequency || 0,
+      temperature: reading.temperature || 0,
+      state_of_charge: reading.state_of_charge || null
     };
 
     const { data, error } = await supabase
@@ -186,7 +233,9 @@ export const addDeviceReading = async (reading: Omit<EnergyReading, 'id' | 'crea
       .single();
     
     if (error) throw error;
-    return data;
+    
+    // Map database result back to EnergyReading
+    return data ? mapDbToEnergyReading(data as DbEnergyReading) : null;
     
   } catch (error) {
     console.error("Error adding device reading:", error);
@@ -250,7 +299,9 @@ export const setupRealtimeUpdates = (deviceId: string, onUpdate: (reading: Energ
         filter: `device_id=eq.${deviceId}`
       }, 
       payload => {
-        onUpdate(payload.new as EnergyReading);
+        // Convert database reading to app model
+        const dbReading = payload.new as DbEnergyReading;
+        onUpdate(mapDbToEnergyReading(dbReading));
       }
     )
     .subscribe();

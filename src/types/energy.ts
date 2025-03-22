@@ -8,14 +8,20 @@ export type DeviceType =
   | 'ev_charger'
   | 'inverter'
   | 'meter'
-  | 'light';
+  | 'light'
+  | 'generator'
+  | 'hydro';
 
 export type DeviceStatus = 
   | 'online' 
   | 'offline' 
   | 'maintenance' 
   | 'error'
-  | 'warning';
+  | 'warning'
+  | 'idle'
+  | 'active'
+  | 'charging'
+  | 'discharging';
 
 export interface EnergyDevice {
   id: string;
@@ -32,6 +38,7 @@ export interface EnergyDevice {
   lng?: number;
   metrics?: Record<string, number> | null;
   description?: string;
+  created_by?: string;
 }
 
 export interface Site {
@@ -54,6 +61,7 @@ export const createEmptySite = (): Omit<Site, 'id' | 'created_at' | 'updated_at'
 
 // Types for user roles and user data
 export type UserRole = 'admin' | 'viewer' | 'operator' | 'installer' | 'user';
+export type ThemePreference = 'light' | 'dark' | 'system';
 
 export interface User {
   id: string;
@@ -68,7 +76,7 @@ export interface User {
 }
 
 export interface UserPreferences {
-  theme: string;
+  theme: ThemePreference;
   notifications: {
     email: boolean;
     push: boolean;
@@ -120,11 +128,13 @@ export interface DeviceModel {
   model_name: string;
   name?: string;
   device_type: DeviceType;
-  specifications: Record<string, any>;
-  compatible_with: string[];
-  firmware_versions: string[];
+  description?: string;
+  specifications?: Record<string, any>;
+  compatible_with?: string[];
+  firmware_versions?: string[];
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
+  category?: string;
 }
 
 // Alert types
@@ -156,8 +166,6 @@ export interface Alert {
   timestamp: string;
   acknowledged: boolean;
   resolved: boolean;
-  assigned_to?: string;
-  resolution_notes?: string;
   device_id?: string;
   acknowledged_at?: string;
   acknowledged_by?: string;

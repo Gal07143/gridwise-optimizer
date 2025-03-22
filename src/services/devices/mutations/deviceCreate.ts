@@ -13,19 +13,17 @@ export const createDevice = async (deviceData: Omit<EnergyDevice, 'id'>): Promis
     // Create device in devices table
     const { data, error } = await supabase
       .from('devices')
-      .insert([
-        {
-          name: deviceData.name,
-          type: deviceData.type,
-          status: deviceData.status,
-          location: deviceData.location,
-          capacity: deviceData.capacity,
-          firmware: deviceData.firmware,
-          site_id: deviceData.site_id,
-          description: deviceData.description,
-          last_updated: deviceData.last_updated || new Date().toISOString(),
-        }
-      ])
+      .insert({
+        name: deviceData.name,
+        type: deviceData.type,
+        status: deviceData.status,
+        location: deviceData.location,
+        capacity: deviceData.capacity,
+        firmware: deviceData.firmware,
+        site_id: deviceData.site_id,
+        description: deviceData.description,
+        last_updated: deviceData.last_updated || new Date().toISOString(),
+      })
       .select()
       .single();
 

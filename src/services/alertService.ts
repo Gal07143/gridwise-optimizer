@@ -26,7 +26,11 @@ export const getAlerts = async (options?: {
     }
     
     if (options?.type) {
-      query = query.eq('type', options.type);
+      // Convert type to match database expectations
+      // Only filter by type if it's one of the allowed types in the database
+      if (['warning', 'critical', 'info'].includes(options.type)) {
+        query = query.eq('type', options.type);
+      }
     }
     
     query = query.order('timestamp', { ascending: false });
@@ -43,17 +47,19 @@ export const getAlerts = async (options?: {
     const alerts: Alert[] = (data || []).map(item => ({
       id: item.id,
       device_id: item.device_id,
-      type: item.type as AlertType,
-      // Add missing required properties
-      title: item.message || item.type, // Use message or type as title if not provided
+      type: (item.type || 'system') as AlertType,
+      title: item.message || item.type, 
       message: item.message,
       severity: (item.type === 'warning' ? 'medium' : 
-                item.type === 'critical' ? 'high' : 'low') as AlertSeverity, // Map type to severity
+                item.type === 'critical' ? 'high' : 'low') as AlertSeverity,
       timestamp: item.timestamp,
       acknowledged: item.acknowledged,
       acknowledged_at: item.acknowledged_at,
       acknowledged_by: item.acknowledged_by,
-      resolved_at: item.resolved_at
+      resolved_at: item.resolved_at,
+      source: item.source || 'system',
+      resolved: !!item.resolved_at,
+      source_id: item.device_id
     }));
     
     return alerts;
@@ -96,15 +102,25 @@ export const acknowledgeAlert = async (alertId: string): Promise<boolean> => {
  */
 export const createAlert = async (alert: Omit<Alert, 'id' | 'acknowledged' | 'acknowledged_by' | 'acknowledged_at' | 'resolved_at'>): Promise<Alert | null> => {
   try {
+    // Map our AlertType to the database's acceptable types
+    let dbType = 'info';
+    if (alert.type === 'warning' || alert.type === 'critical') {
+      dbType = alert.type;
+    } else if (alert.severity === 'critical' || alert.severity === 'high') {
+      dbType = 'critical';
+    } else if (alert.severity === 'medium') {
+      dbType = 'warning';
+    }
+    
     const { data, error } = await supabase
       .from('alerts')
-      .insert([{
+      .insert({
         device_id: alert.device_id,
-        type: alert.type,
+        type: dbType,
         message: alert.message,
         timestamp: alert.timestamp,
         acknowledged: false
-      }])
+      })
       .select()
       .single();
     
@@ -114,8 +130,7 @@ export const createAlert = async (alert: Omit<Alert, 'id' | 'acknowledged' | 'ac
     const createdAlert: Alert = {
       id: data.id,
       device_id: data.device_id,
-      type: data.type,
-      // Add missing required properties
+      type: alert.type,
       title: alert.title || data.message || data.type,
       message: data.message,
       severity: alert.severity || 'medium',
@@ -123,7 +138,9 @@ export const createAlert = async (alert: Omit<Alert, 'id' | 'acknowledged' | 'ac
       acknowledged: data.acknowledged,
       acknowledged_at: data.acknowledged_at,
       acknowledged_by: data.acknowledged_by,
-      resolved_at: data.resolved_at
+      resolved_at: data.resolved_at,
+      source: alert.source,
+      resolved: false
     };
     
     return createdAlert;

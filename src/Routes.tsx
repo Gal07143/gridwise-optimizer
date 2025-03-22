@@ -163,10 +163,7 @@ const AppRoutes: React.FC = () => {
       
       {/* Support for legacy route that may be linked in other places */}
       <Route path="/device-view/:deviceId" element={
-        <Navigate to={({ pathname }) => {
-          const deviceId = pathname.split('/').pop();
-          return `/devices/${deviceId}`; 
-        }} replace />
+        <Navigate to={`/devices/${window.location.pathname.split('/').pop()}`} replace />
       } />
       
       {/* 404 route - must be last */}

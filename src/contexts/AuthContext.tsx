@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
-import { User, UserRole } from '@/types/energy';
+import { User, UserRole, ThemePreference } from '@/types/energy';
 import { toast } from 'sonner';
 
 interface AuthContextType {
@@ -114,8 +114,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           lastName: authUser.user_metadata?.last_name,
           role: 'viewer' as UserRole,
           createdAt: new Date().toISOString(),
+          lastLogin: new Date().toISOString(),
           preferences: {
-            theme: 'system',
+            theme: 'system' as ThemePreference,
             notifications: {
               email: true,
               push: false,
@@ -139,9 +140,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           lastName: data.last_name || undefined,
           role: data.role as UserRole,
           createdAt: data.created_at,
-          lastLogin: data.last_login,
+          lastLogin: data.last_login || new Date().toISOString(),
           preferences: {
-            theme: data.theme_preference,
+            theme: (data.theme_preference || 'system') as ThemePreference,
             notifications: {
               email: data.email_notifications,
               push: data.push_notifications,
@@ -164,8 +165,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         lastName: authUser.user_metadata?.last_name,
         role: 'viewer' as UserRole,
         createdAt: new Date().toISOString(),
+        lastLogin: new Date().toISOString(),
         preferences: {
-          theme: 'system',
+          theme: 'system' as ThemePreference,
           notifications: {
             email: true,
             push: false,
@@ -206,8 +208,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           lastName: authUser.user_metadata?.last_name,
           role: 'viewer' as UserRole,
           createdAt: new Date().toISOString(),
+          lastLogin: new Date().toISOString(),
           preferences: {
-            theme: 'system',
+            theme: 'system' as ThemePreference,
             notifications: {
               email: true,
               push: false,
@@ -366,7 +369,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           email_notifications: updates.preferences?.notifications?.email,
           push_notifications: updates.preferences?.notifications?.push,
           sms_notifications: updates.preferences?.notifications?.sms,
-          theme_preference: updates.preferences?.theme,
+          theme_preference: updates.preferences?.theme as ThemePreference,
           dashboard_layout: updates.preferences?.dashboardLayout
         })
         .eq('id', user.id)
