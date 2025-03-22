@@ -5,6 +5,8 @@ import TariffCard from './TariffCard';
 import TariffHistoryCard from './TariffHistoryCard';
 import ModbusCard from './ModbusCard';
 import DeviceManagement from './DeviceManagement';
+import FaultSummaryCard from './FaultSummaryCard';
+import { useFaults } from '@/hooks/useFaults';
 
 export default DashboardSummary;
 
@@ -58,7 +60,12 @@ const DashboardSummary = () => {
           className="shadow-md"
         />
       </div>
-
+      
+      {/* Add Fault Summary Card */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <FaultSummaryCard faults={faults} />
+      </div>
+      
       {/* Section 2: Power Quality & Modbus Data */}
       <div className="space-y-4 mb-8">
         {/* If you have a dedicated Power Quality Metrics card, include it here.
