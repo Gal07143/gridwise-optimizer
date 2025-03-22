@@ -1,5 +1,5 @@
-import React from 'react';
-import { Zap, Battery, Sun, Wind } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Zap, Battery, Sun, Wind, Activity } from 'lucide-react';
 import MetricsCard from '@/components/dashboard/MetricsCard';
 import TariffCard from './TariffCard';
 import TariffHistoryCard from './TariffHistoryCard';
@@ -7,13 +7,42 @@ import ModbusCard from './ModbusCard';
 import DeviceManagement from './DeviceManagement';
 import FaultSummaryCard from './FaultSummaryCard';
 import { useFaults } from '@/hooks/useFaults';
+import { createClient } from '@supabase/supabase-js';
 
-export default DashboardSummary;
+// ✅ Supabase client init (you can move this to a utils/supabase.ts)
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 const DashboardSummary = () => {
+  const { faults } = useFaults();
+  const [telemetry, setTelemetry] = useState<any | null>(null);
+
+  useEffect(() => {
+    // ✅ Fetch latest telemetry_log record
+    const fetchTelemetry = async () => {
+      const { data, error } = await supabase
+        .from('telemetry_log')
+        .select('*')
+        .order('timestamp', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (!error) {
+        setTelemetry(data);
+      }
+    };
+
+    fetchTelemetry();
+    const interval = setInterval(fetchTelemetry, 5000); // Refresh every 5 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="space-y-6">
-      {/* Section 1: Metrics Cards (Power Quality Metrics etc.) */}
+      {/* Section 1: Metrics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <MetricsCard 
           title="Current Power Flow"
@@ -60,33 +89,63 @@ const DashboardSummary = () => {
           className="shadow-md"
         />
       </div>
-      
-      {/* Add Fault Summary Card */}
+
+      {/* Section 1.5: Live Telemetry Log Widget */}
+      {telemetry && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          <MetricsCard 
+            title="Live Voltage"
+            value={telemetry.voltage}
+            unit="V"
+            description="Latest voltage reading"
+            icon={<Activity className="h-5 w-5 text-blue-500" />}
+            animationDelay="250ms"
+            className="shadow-md"
+          />
+          <MetricsCard 
+            title="Live Current"
+            value={telemetry.current}
+            unit="A"
+            description="Latest current reading"
+            icon={<Activity className="h-5 w-5 text-green-500" />}
+            animationDelay="300ms"
+            className="shadow-md"
+          />
+          <MetricsCard 
+            title="Live Power"
+            value={telemetry.power}
+            unit="kW"
+            description="Real-time power"
+            icon={<Zap className="h-5 w-5 text-yellow-500" />}
+            animationDelay="350ms"
+            className="shadow-md"
+          />
+        </div>
+      )}
+
+      {/* Fault Summary */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <FaultSummaryCard faults={faults} />
       </div>
-      
-      {/* Section 2: Power Quality & Modbus Data */}
+
+      {/* Modbus / Quality */}
       <div className="space-y-4 mb-8">
-        {/* If you have a dedicated Power Quality Metrics card, include it here.
-            For this example, we assume your MetricsCards already cover Power Quality,
-            so we simply place the Modbus data card right below them. */}
         <ModbusCard />
       </div>
 
-      {/* Section 3: Tariff Overview (Live) */}
+      {/* Tariff Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         <TariffCard />
       </div>
 
-      {/* Section 4: Tariff Chart (History) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <TariffHistoryCard />
       </div>
-     <div className="mt-8">
+
+      <div className="mt-8">
         <DeviceManagement />
       </div>
-    </>
+    </div>
   );
 };
 
