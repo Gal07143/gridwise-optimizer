@@ -7,6 +7,7 @@ import TariffCard from './TariffCard';
 
 const DashboardSummary = () => {
   return (
+  <>
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       <MetricsCard 
         title="Current Power Flow"
@@ -53,7 +54,13 @@ const DashboardSummary = () => {
         className="shadow-md"
       />
     </div>
-  );
+
+    {/* New Row with Tariff Card */}
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <TariffCard />
+    </div>
+  </>
+);
 };
 
 export default DashboardSummary;
