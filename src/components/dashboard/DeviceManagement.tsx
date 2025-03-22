@@ -6,17 +6,20 @@ const supabase = createClient('https://xullgeycueouyxeirrqs.supabase.co', 'eyJhb
 const DeviceManagement = () => {
   const [devices, setDevices] = useState([]);
   const [newDevice, setNewDevice] = useState({
-    device_name: '',
-    device_type: '',
-    ip_address: '',
-    port: '',
-    protocol: 'Modbus',
+    name: '',
+    type: '',
+    status: 'offline',
     location: '',
+    capacity: 0,
+    firmware: '',
+    lat: 0,
+    lng: 0,
+    installation_date: new Date().toISOString().slice(0,10),
   });
 
   const fetchDevices = async () => {
     const { data } = await supabase.from('devices').select('*');
-    setDevices(data);
+    setDevices(data || []);
   };
 
   useEffect(() => {
@@ -30,78 +33,66 @@ const DeviceManagement = () => {
 
   return (
     <div className="p-4">
-      <h2 className="font-semibold text-lg">Device Management</h2>
+      <h2 className="font-semibold text-lg mb-4">Device Management</h2>
       
-      <div className="mb-4">
+      <div className="mb-4 grid grid-cols-3 gap-4">
         <input
           type="text"
           placeholder="Device Name"
-          value={newDevice.device_name}
-          onChange={(e) => setNewDevice({ ...newDevice, device_name: e.target.value })}
+          value={newDevice.name}
+          onChange={(e) => setNewDevice({ ...newDevice, name: e.target.value })}
           className="border p-2 rounded"
         />
         <input
           type="text"
           placeholder="Device Type"
-          value={newDevice.device_type}
-          onChange={(e) => setNewDevice({ ...newDevice, device_type: e.target.value })}
-          className="border p-2 rounded ml-2"
-        />
-        <input
-          type="text"
-          placeholder="IP Address"
-          value={newDevice.ip_address}
-          onChange={(e) => setNewDevice({ ...newDevice, ip_address: e.target.value })}
-          className="border p-2 rounded ml-2"
-        />
-        <input
-          type="number"
-          placeholder="Port"
-          value={newDevice.port}
-          onChange={(e) => setNewDevice({ ...newDevice, port: parseInt(e.target.value) })}
-          className="border p-2 rounded ml-2"
+          value={newDevice.type}
+          onChange={(e) => setNewDevice({ ...newDevice, type: e.target.value })}
+          className="border p-2 rounded"
         />
         <input
           type="text"
           placeholder="Location"
           value={newDevice.location}
           onChange={(e) => setNewDevice({ ...newDevice, location: e.target.value })}
-          className="border p-2 rounded ml-2"
+          className="border p-2 rounded"
         />
-        <button
-          onClick={handleAddDevice}
-          className="bg-blue-500 text-white p-2 rounded ml-2"
-        >
-          Add Device
-        </button>
+        <input
+          type="number"
+          placeholder="Capacity"
+          value={newDevice.capacity}
+          onChange={(e) => setNewDevice({ ...newDevice, capacity: parseFloat(e.target.value) })}
+          className="border p-2 rounded"
+        />
+        <input
+          type="text"
+          placeholder="Firmware"
+          value={newDevice.firmware}
+          onChange={(e) => setNewDevice({ ...newDevice, firmware: e.target.value })}
+          className="border p-2 rounded"
+        />
+        <input
+          type="date"
+          placeholder="Installation Date"
+          value={newDevice.installation_date}
+          onChange={(e) => setNewDevice({ ...newDevice, installation_date: e.target.value })}
+          className="border p-2 rounded"
+        />
       </div>
+
+      <button
+        onClick={handleAddDevice}
+        className="bg-blue-500 text-white p-2 rounded mb-4"
+      >
+        Add Device
+      </button>
 
       <table className="w-full text-left border-collapse">
         <thead>
           <tr>
             <th className="border p-2">Device Name</th>
             <th className="border p-2">Type</th>
-            <th className="border p-2">IP</th>
-            <th className="border p-2">Port</th>
-            <th className="border p-2">Protocol</th>
+            <th className="border p-2">Status</th>
             <th className="border p-2">Location</th>
-          </tr>
-        </thead>
-        <tbody>
-          {devices.map((device) => (
-            <tr key={device.id}>
-              <td className="border p-2">{device.device_name}</td>
-              <td className="border p-2">{device.device_type}</td>
-              <td className="border p-2">{device.ip_address}</td>
-              <td className="border p-2">{device.port}</td>
-              <td className="border p-2">{device.protocol}</td>
-              <td className="border p-2">{device.location}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-};
-
-export default DeviceManagement;
+            <th className="border p-2">Capacity</th>
+            <th className="border p
