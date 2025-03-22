@@ -14,7 +14,7 @@ export function useTariffHistory(hoursBack = 48) {
           'https://xullgeycueouyxeirrqs.supabase.co/rest/v1/tariffs?timestamp=gt.' + start.toISOString() + '&order=timestamp.asc',
           {
             headers: {
-              apikey: '<YOUR_SUPABASE_ANON_KEY>',
+              apikey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh1bGxnZXljdWVvdXl4ZWlycnFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDIzMjE2NDQsImV4cCI6MjA1Nzg5NzY0NH0.n5z7ce0elijXBkrpgW_RhTAASKKe3vmzYHxwl8f2KRg',
               Authorization: 'Bearer <YOUR_SUPABASE_ANON_KEY>',
             },
           }
