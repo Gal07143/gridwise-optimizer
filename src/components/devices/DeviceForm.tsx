@@ -22,6 +22,7 @@ interface DeviceFormProps {
     capacity: number;
     firmware?: string;
     description?: string;
+    site_id?: string;
   };
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   handleSelectChange: (field: string, value: string) => void;
@@ -153,6 +154,19 @@ const DeviceForm: React.FC<DeviceFormProps> = ({
               value={device.firmware || ''}
               onChange={handleInputChange}
               placeholder="Enter firmware version"
+              disabled={isLoading}
+            />
+          </div>
+          
+          {/* Add site_id field if needed */}
+          <div className="space-y-2">
+            <FormLabel htmlFor="site_id">Site ID</FormLabel>
+            <Input
+              id="site_id"
+              name="site_id"
+              value={device.site_id || ''}
+              onChange={handleInputChange}
+              placeholder="Enter site ID"
               disabled={isLoading}
             />
           </div>

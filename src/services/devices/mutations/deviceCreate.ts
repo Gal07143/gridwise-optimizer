@@ -22,11 +22,11 @@ export const createDevice = async (deviceData: Omit<EnergyDevice, 'id'>): Promis
         name: deviceData.name,
         type: dbDeviceType,
         status: dbDeviceStatus,
-        location: deviceData.location,
+        location: deviceData.location || null,
         capacity: deviceData.capacity,
-        firmware: deviceData.firmware,
-        site_id: deviceData.site_id,
-        description: deviceData.description,
+        firmware: deviceData.firmware || null,
+        site_id: deviceData.site_id || null,
+        description: deviceData.description || null,
         last_updated: deviceData.last_updated || new Date().toISOString(),
         metrics: deviceData.metrics || null
       })
@@ -42,18 +42,22 @@ export const createDevice = async (deviceData: Omit<EnergyDevice, 'id'>): Promis
     }
 
     // Convert metrics from JSON to Record<string, number> if needed
-    const metrics = data.metrics ? 
-      (typeof data.metrics === 'string' ? 
-        JSON.parse(data.metrics) : 
-        data.metrics as Record<string, number>) : 
-      null;
+    let processedMetrics: Record<string, number> | null = null;
+    
+    if (data.metrics) {
+      if (typeof data.metrics === 'string') {
+        processedMetrics = JSON.parse(data.metrics);
+      } else if (typeof data.metrics === 'object') {
+        processedMetrics = data.metrics as Record<string, number>;
+      }
+    }
 
     // Return the created device, preserving the original frontend types
     return {
       ...data,
       type: deviceData.type,
       status: deviceData.status,
-      metrics: metrics
+      metrics: processedMetrics
     } as EnergyDevice;
   } catch (error) {
     console.error('Error in createDevice:', error);

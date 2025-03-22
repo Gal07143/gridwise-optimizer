@@ -59,11 +59,15 @@ export const createDevice = async (deviceData: Omit<EnergyDevice, 'id' | 'create
     console.log('Device created successfully:', data);
     
     // Convert metrics from JSON to Record<string, number> if needed
-    const metrics = data.metrics ? 
-      (typeof data.metrics === 'string' ? 
-        JSON.parse(data.metrics) : 
-        data.metrics as Record<string, number>) : 
-      null;
+    let processedMetrics: Record<string, number> | null = null;
+    
+    if (data.metrics) {
+      if (typeof data.metrics === 'string') {
+        processedMetrics = JSON.parse(data.metrics);
+      } else if (typeof data.metrics === 'object') {
+        processedMetrics = data.metrics as Record<string, number>;
+      }
+    }
     
     // Convert DB types back to frontend types for return value
     const device: EnergyDevice = {
@@ -71,7 +75,7 @@ export const createDevice = async (deviceData: Omit<EnergyDevice, 'id' | 'create
       // Explicitly override the type and status with their frontend equivalents
       type: deviceData.type,
       status: deviceData.status || 'offline',
-      metrics: metrics
+      metrics: processedMetrics
     };
     
     toast.success('Device created successfully');

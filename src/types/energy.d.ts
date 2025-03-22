@@ -1,3 +1,4 @@
+
 export type UserRole = 'admin' | 'viewer' | 'operator' | 'installer' | 'user';
 
 export interface User {
@@ -44,19 +45,19 @@ export interface EnergyDevice {
   name: string;
   type: DeviceType;
   status: DeviceStatus;
-  site_id: string;
+  site_id?: string;
   metrics: Record<string, number> | null;
   location?: string;
   description?: string;
   manufacturer?: string;
   model?: string;
   serialNumber?: string;
-  firmwareVersion?: string;
-  installationDate?: string;
+  firmware?: string;
+  installation_date?: string;
   lastMaintenanceDate?: string;
   latitude?: number;
   longitude?: number;
-  powerRating?: number;
+  capacity: number;
   energyCapacity?: number;
   efficiency?: number;
   maxVoltage?: number;
@@ -67,8 +68,8 @@ export interface EnergyDevice {
   nominalCurrent?: number;
   communicationProtocol?: string;
   dataUpdateFrequency?: number;
-  createdAt?: string;
-  updatedAt?: string;
+  created_at?: string;
+  last_updated?: string;
 }
 
 export type DeviceType =
@@ -79,7 +80,10 @@ export type DeviceType =
   | 'load'
   | 'ev_charger'
   | 'generator'
-  | 'hydro';
+  | 'hydro'
+  | 'inverter'
+  | 'meter'
+  | 'light';
 
 export type DeviceStatus =
   | 'online'
@@ -89,4 +93,5 @@ export type DeviceStatus =
   | 'charging'
   | 'discharging'
   | 'maintenance'
-  | 'error';
+  | 'error'
+  | 'warning';
