@@ -95,4 +95,26 @@ const DeviceManagement = () => {
             <th className="border p-2">Status</th>
             <th className="border p-2">Location</th>
             <th className="border p-2">Capacity</th>
-            <th className="border p
+            <th className="border p-2">Firmware</th>
+            <th className="border p-2">Installation Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {devices.map((device) => (
+            <tr key={device.id}>
+              <td className="border p-2">{device.name}</td>
+              <td className="border p-2">{device.type}</td>
+              <td className="border p-2">{device.status}</td>
+              <td className="border p-2">{device.location}</td>
+              <td className="border p-2">{device.capacity}</td>
+              <td className="border p-2">{device.firmware}</td>
+              <td className="border p-2">{device.installation_date}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
+export default DeviceManagement;
