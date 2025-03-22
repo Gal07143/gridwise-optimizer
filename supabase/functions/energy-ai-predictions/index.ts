@@ -23,9 +23,10 @@ serve(async (req) => {
     console.log(`Generating energy predictions for site: ${siteId}, days: ${days}, detailed: ${detailed}`);
 
     // Create a Supabase client
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    const supabaseUrl = Deno.env.get("PUBLIC_SUPABASE_URL") || "";
+    const supabaseKey = Deno.env.get("SERVICE_ROLE_KEY") || "";
     const supabase = createClient(supabaseUrl, supabaseKey);
+
 
     // Check if we already have forecasts in the database
     const { data: existingForecasts, error: forecastError } = await supabase
