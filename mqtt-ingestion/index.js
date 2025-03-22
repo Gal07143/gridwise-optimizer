@@ -1,71 +1,69 @@
+// mqtt-ingestion/index.js
 import mqtt from 'mqtt';
-import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
 
-// Load environment variables
+dotenv.config();
+
 const MQTT_BROKER_URL = process.env.MQTT_BROKER_URL;
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_API_KEY = process.env.SUPABASE_API_KEY;
 
-if (!MQTT_BROKER_URL || !SUPABASE_URL || !SUPABASE_API_KEY) {
-  console.error('Missing required environment variables');
-  process.exit(1);
-}
-
-// Connect to Supabase
 const supabase = createClient(SUPABASE_URL, SUPABASE_API_KEY);
-
-// Connect to MQTT broker
 const client = mqtt.connect(MQTT_BROKER_URL);
 
 client.on('connect', () => {
-  console.log('✅ Connected to MQTT broker');
-  client.subscribe('telemetry/#', (err) => {
-    if (err) {
-      console.error('❌ MQTT Subscription error:', err.message);
-    } else {
-      console.log('📡 Subscribed to topic: telemetry/#');
-    }
-  });
+  console.log('MQTT Connected');
+  client.subscribe('telemetry/devices/+');
 });
 
-// On message received
-client.on('message', async (topic, payload) => {
+client.on('message', async (topic, message) => {
   try {
-    const message = payload.toString();
-    const data = JSON.parse(message);
+    const payload = JSON.parse(message.toString());
 
-    const deviceId = data.device_id || null;
-    const severity = determineSeverity(data); // Optional logic
-    const source = 'mqtt';
+    const { device_id, timestamp, metrics } = payload;
 
-    const { error } = await supabase.from('telemetry_log').insert([
-      {
-        device_id: deviceId,
-        topic,
-        message: data,
-        severity,
-        source,
-      },
-    ]);
-
-    if (error) {
-      console.error('❌ Error inserting log into Supabase:', error.message);
-    } else {
-      console.log(`✅ Logged message from ${deviceId || 'unknown'} at ${new Date().toISOString()}`);
+    if (!device_id || !metrics) {
+      console.warn('Missing device_id or metrics in message:', payload);
+      return;
     }
-  } catch (err) {
-    console.error('❌ Failed to process MQTT message:', err.message);
+
+    // Optional: verify device exists
+    const { data: device, error: deviceError } = await supabase
+      .from('devices')
+      .select('id')
+      .eq('id', device_id)
+      .single();
+
+    if (deviceError || !device) {
+      console.warn(`Device not found: ${device_id}`);
+      return;
+    }
+
+    const reading = {
+      device_id,
+      timestamp: timestamp || new Date().toISOString(),
+      voltage: metrics.voltage || null,
+      current: metrics.current || null,
+      power: metrics.power || null,
+      temperature: metrics.temperature || null,
+      energy: metrics.energy || null,
+      state_of_charge: metrics.state_of_charge || null,
+      reading_type: 'mqtt',
+      unit: 'auto',
+      quality: 1
+    };
+
+    const { error: insertError } = await supabase
+      .from('modbus_readings')
+      .insert([reading]);
+
+    if (insertError) {
+      console.error('Error inserting device data:', insertError.message);
+    } else {
+      console.log(`Inserted reading for device ${device_id}`);
+    }
+  } catch (error) {
+    console.error('Error handling MQTT message:', error);
   }
 });
-
-// Optional: Severity rule engine
-function determineSeverity(data) {
-  if (data?.voltage && (data.voltage < 180 || data.voltage > 260)) {
-    return 'warning';
-  }
-  if (data?.error || data?.status === 'error') {
-    return 'error';
-  }
-  return 'info';
-}
