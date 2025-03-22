@@ -1,0 +1,16 @@
+name: Daily Energy Aggregation
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Every day at midnight UTC
+  workflow_dispatch:
+
+jobs:
+  run-aggregation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call Supabase Edge Function
+        run: |
+          curl -L -X POST 'https://xullgeycueouyxeirrqs.supabase.co/functions/v1/aggregate-daily-energy' \
+          -H 'Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}' \
+          -H 'Content-Type: application/json'
