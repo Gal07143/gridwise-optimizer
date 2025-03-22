@@ -20,7 +20,7 @@ export function useModbusReadings(limit = 20) {
       try {
         // Replace with your actual Supabase REST endpoint
         // or use supabase-js client if you have it set up in the frontend
-        const url = `https://xullgeycueouyxeirrqs.supabase.co/rest/v1/modbus_readings?order=timestamp.desc&limit=${limit}`;
+        const url = `https://xullgeycueouyxeirrqs.supabase.co/rest/v1/modbus_readings?select=*&order=timestamp.desc&limit=${limit}`;
         
         const res = await fetch(url, {
           headers: {
