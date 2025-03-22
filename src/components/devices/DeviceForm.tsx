@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/select';
 import { FormLabel } from '@/components/ui/form';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { DatePicker } from '@/components/ui/datepicker'; // 👈 Add this component if not already
 
 interface DeviceFormProps {
   device: {
@@ -22,17 +23,13 @@ interface DeviceFormProps {
     firmware?: string;
     description?: string;
     site_id?: string;
-    integration_type?: string;
-    connection_info?: {
-      host?: string;
-      port?: string;
-      slave_id?: string;
-      topic?: string;
-      unit_id?: string;
-    };
+    installation_date?: string;
+    lat?: number;
+    lng?: number;
   };
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   handleSelectChange: (field: string, value: string) => void;
+  handleDateChange?: (field: string, date: Date | null) => void;
   validationErrors: Record<string, any>;
   isLoading?: boolean;
 }
@@ -41,6 +38,7 @@ const DeviceForm: React.FC<DeviceFormProps> = ({
   device,
   handleInputChange,
   handleSelectChange,
+  handleDateChange,
   validationErrors,
   isLoading
 }) => {
@@ -51,6 +49,7 @@ const DeviceForm: React.FC<DeviceFormProps> = ({
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Name */}
           <div className="space-y-2">
             <FormLabel htmlFor="name">Name <span className="text-red-500">*</span></FormLabel>
             <Input
@@ -67,22 +66,7 @@ const DeviceForm: React.FC<DeviceFormProps> = ({
             )}
           </div>
 
-          <div className="space-y-2">
-            <FormLabel htmlFor="location">Location</FormLabel>
-            <Input
-              id="location"
-              name="location"
-              value={device.location || ''}
-              onChange={handleInputChange}
-              placeholder="Enter device location"
-              className={validationErrors.location ? 'border-red-500' : ''}
-              disabled={isLoading}
-            />
-            {validationErrors.location && (
-              <p className="text-sm text-red-500">{validationErrors.location.message}</p>
-            )}
-          </div>
-
+          {/* Type */}
           <div className="space-y-2">
             <FormLabel htmlFor="type">Type <span className="text-red-500">*</span></FormLabel>
             <Select
@@ -94,22 +78,14 @@ const DeviceForm: React.FC<DeviceFormProps> = ({
                 <SelectValue placeholder="Select device type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="solar">Solar</SelectItem>
-                <SelectItem value="wind">Wind</SelectItem>
-                <SelectItem value="battery">Battery</SelectItem>
-                <SelectItem value="grid">Grid</SelectItem>
-                <SelectItem value="load">Load</SelectItem>
-                <SelectItem value="ev_charger">EV Charger</SelectItem>
-                <SelectItem value="inverter">Inverter</SelectItem>
-                <SelectItem value="meter">Meter</SelectItem>
-                <SelectItem value="light">Light/Illumination</SelectItem>
+                {['solar', 'wind', 'battery', 'grid', 'load', 'ev_charger', 'inverter', 'meter', 'light', 'generator', 'hydro'].map((type) => (
+                  <SelectItem key={type} value={type}>{type.replace('_', ' ')}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
-            {validationErrors.type && (
-              <p className="text-sm text-red-500">{validationErrors.type.message}</p>
-            )}
           </div>
 
+          {/* Status */}
           <div className="space-y-2">
             <FormLabel htmlFor="status">Status <span className="text-red-500">*</span></FormLabel>
             <Select
@@ -121,18 +97,14 @@ const DeviceForm: React.FC<DeviceFormProps> = ({
                 <SelectValue placeholder="Select device status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="online">Online</SelectItem>
-                <SelectItem value="offline">Offline</SelectItem>
-                <SelectItem value="maintenance">Maintenance</SelectItem>
-                <SelectItem value="error">Error</SelectItem>
-                <SelectItem value="warning">Warning</SelectItem>
+                {['online', 'offline', 'maintenance', 'error', 'warning', 'idle', 'active', 'charging', 'discharging'].map((status) => (
+                  <SelectItem key={status} value={status}>{status}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
-            {validationErrors.status && (
-              <p className="text-sm text-red-500">{validationErrors.status.message}</p>
-            )}
           </div>
 
+          {/* Capacity */}
           <div className="space-y-2">
             <FormLabel htmlFor="capacity">
               Capacity {device.type === 'battery' ? '(kWh)' : '(kW)'} <span className="text-red-500">*</span>
@@ -142,29 +114,41 @@ const DeviceForm: React.FC<DeviceFormProps> = ({
               name="capacity"
               type="number"
               step="0.01"
-              value={device.capacity || ''}
+              value={device.capacity}
               onChange={handleInputChange}
-              placeholder="Enter device capacity"
+              placeholder="Enter capacity"
               className={validationErrors.capacity ? 'border-red-500' : ''}
               disabled={isLoading}
             />
-            {validationErrors.capacity && (
-              <p className="text-sm text-red-500">{validationErrors.capacity.message}</p>
-            )}
           </div>
 
+          {/* Location */}
           <div className="space-y-2">
-            <FormLabel htmlFor="firmware">Firmware Version</FormLabel>
+            <FormLabel htmlFor="location">Location</FormLabel>
+            <Input
+              id="location"
+              name="location"
+              value={device.location || ''}
+              onChange={handleInputChange}
+              placeholder="Physical location"
+              disabled={isLoading}
+            />
+          </div>
+
+          {/* Firmware */}
+          <div className="space-y-2">
+            <FormLabel htmlFor="firmware">Firmware</FormLabel>
             <Input
               id="firmware"
               name="firmware"
               value={device.firmware || ''}
               onChange={handleInputChange}
-              placeholder="Enter firmware version"
+              placeholder="Firmware version"
               disabled={isLoading}
             />
           </div>
 
+          {/* Site ID */}
           <div className="space-y-2">
             <FormLabel htmlFor="site_id">Site ID</FormLabel>
             <Input
@@ -172,70 +156,54 @@ const DeviceForm: React.FC<DeviceFormProps> = ({
               name="site_id"
               value={device.site_id || ''}
               onChange={handleInputChange}
-              placeholder="Enter site ID"
+              placeholder="Optional site ID"
               disabled={isLoading}
             />
           </div>
 
-          {/* Integration Protocol */}
+          {/* Installation Date */}
           <div className="space-y-2">
-            <FormLabel htmlFor="integration_type">Integration Type</FormLabel>
-            <Select
-              value={device.integration_type || ''}
-              onValueChange={(value) => handleSelectChange('integration_type', value)}
+            <FormLabel htmlFor="installation_date">Installation Date</FormLabel>
+            <Input
+              id="installation_date"
+              name="installation_date"
+              type="date"
+              value={device.installation_date || ''}
+              onChange={handleInputChange}
               disabled={isLoading}
-            >
-              <SelectTrigger id="integration_type" className={validationErrors.integration_type ? 'border-red-500' : ''}>
-                <SelectValue placeholder="Select integration protocol" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="modbus">Modbus</SelectItem>
-                <SelectItem value="mqtt">MQTT</SelectItem>
-                <SelectItem value="opcua">OPC UA</SelectItem>
-                <SelectItem value="bacnet">BACnet</SelectItem>
-                <SelectItem value="ethernet_ip">EtherNet/IP</SelectItem>
-                <SelectItem value="bms">BMS</SelectItem>
-                <SelectItem value="manual">Manual Input</SelectItem>
-              </SelectContent>
-            </Select>
+            />
+          </div>
+
+          {/* Latitude */}
+          <div className="space-y-2">
+            <FormLabel htmlFor="lat">Latitude</FormLabel>
+            <Input
+              id="lat"
+              name="lat"
+              type="number"
+              step="0.00001"
+              value={device.lat ?? ''}
+              onChange={handleInputChange}
+              placeholder="e.g. 32.12345"
+              disabled={isLoading}
+            />
+          </div>
+
+          {/* Longitude */}
+          <div className="space-y-2">
+            <FormLabel htmlFor="lng">Longitude</FormLabel>
+            <Input
+              id="lng"
+              name="lng"
+              type="number"
+              step="0.00001"
+              value={device.lng ?? ''}
+              onChange={handleInputChange}
+              placeholder="e.g. 34.98765"
+              disabled={isLoading}
+            />
           </div>
         </div>
-
-        {/* Optional: Connection Info */}
-        {device.integration_type && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t pt-6 mt-6">
-            <FormLabel className="col-span-2">Connection Info</FormLabel>
-
-            <Input
-              name="connection_info.host"
-              placeholder="Host (e.g. 192.168.1.100)"
-              value={device.connection_info?.host || ''}
-              onChange={handleInputChange}
-              disabled={isLoading}
-            />
-            <Input
-              name="connection_info.port"
-              placeholder="Port (e.g. 502)"
-              value={device.connection_info?.port || ''}
-              onChange={handleInputChange}
-              disabled={isLoading}
-            />
-            <Input
-              name="connection_info.slave_id"
-              placeholder="Slave ID / Unit ID"
-              value={device.connection_info?.slave_id || ''}
-              onChange={handleInputChange}
-              disabled={isLoading}
-            />
-            <Input
-              name="connection_info.topic"
-              placeholder="MQTT Topic (if applicable)"
-              value={device.connection_info?.topic || ''}
-              onChange={handleInputChange}
-              disabled={isLoading}
-            />
-          </div>
-        )}
 
         {/* Description */}
         <div className="space-y-2">
@@ -245,7 +213,7 @@ const DeviceForm: React.FC<DeviceFormProps> = ({
             name="description"
             value={device.description || ''}
             onChange={handleInputChange}
-            placeholder="Enter device description"
+            placeholder="Describe this device"
             rows={4}
             disabled={isLoading}
           />
