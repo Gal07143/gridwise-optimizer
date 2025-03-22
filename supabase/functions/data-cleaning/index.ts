@@ -7,57 +7,82 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Load environment variables (make sure these are set in Supabase Studio)
-    const supabaseUrl = Deno.env.get("PUBLIC_SUPABASE_URL") || "";
-    const supabaseKey = Deno.env.get("SERVICE_ROLE_KEY") || "";
+    const supabaseUrl = Deno.env.get("PUBLIC_SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Define the time window for new raw readings (last 5 minutes)
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
 
-    // Fetch raw readings from the "modbus_raw" table
+    // Fetch recent raw readings
     const { data: rawReadings, error: rawError } = await supabase
       .from("modbus_raw")
       .select("*")
       .gte("timestamp", fiveMinutesAgo);
 
     if (rawError) {
-      throw new Error("Error fetching raw readings: " + rawError.message);
+      throw new Error(`Error fetching raw readings: ${rawError.message}`);
     }
 
-    // Apply cleaning rules: for example, filter out invalid voltage readings
-    const cleanedReadings = (rawReadings || []).filter((reading: any) => {
-      // Example rule: voltage should be between 0 and 1000
-      return reading.voltage >= 0 && reading.voltage <= 1000;
-      // You can add additional rules here as needed
-    });
-
-    // If there are any cleaned readings, insert them into the "modbus_cleaned" table
-    if (cleanedReadings.length > 0) {
-      const { error: insertError } = await supabase
-        .from("modbus_cleaned")
-        .insert(cleanedReadings);
-      if (insertError) {
-        throw new Error("Error inserting cleaned readings: " + insertError.message);
-      }
+    if (!rawReadings?.length) {
       return new Response(
-        JSON.stringify({ message: `Cleaned and inserted ${cleanedReadings.length} readings` }),
+        JSON.stringify({ message: "No new raw readings found." }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
       );
     }
 
+    // Enhanced Data Cleaning Logic
+    const cleanedReadings = rawReadings.filter((reading: any) => {
+      const voltageValid = reading.voltage >= 100 && reading.voltage <= 500;
+      const currentValid = reading.current >= 0 && reading.current <= 200;
+      const powerValid = reading.power_kw >= 0 && reading.power_kw <= 1000;
+      const energyValid = reading.energy_kwh >= 0;
+      const timestampValid = new Date(reading.timestamp).getTime() <= Date.now();
+
+      return voltageValid && currentValid && powerValid && energyValid && timestampValid;
+    });
+
+    if (!cleanedReadings.length) {
+      return new Response(
+        JSON.stringify({ message: "No valid readings after cleaning." }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+      );
+    }
+
+    // Check for duplicates before insertion
+    const insertedReadings: any[] = [];
+    for (const reading of cleanedReadings) {
+      const { data: exists } = await supabase
+        .from("modbus_cleaned")
+        .select("id")
+        .eq("device_id", reading.device_id)
+        .eq("timestamp", reading.timestamp)
+        .single();
+
+      if (!exists) {
+        const { error: insertError } = await supabase
+          .from("modbus_cleaned")
+          .insert(reading);
+
+        if (insertError) {
+          console.error(`Failed to insert reading for device ${reading.device_id}: ${insertError.message}`);
+        } else {
+          insertedReadings.push(reading);
+        }
+      }
+    }
+
     return new Response(
-      JSON.stringify({ message: "No new valid readings found" }),
+      JSON.stringify({ message: `Cleaned and inserted ${insertedReadings.length} new readings.` }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
+
   } catch (error) {
-    console.error("Error in data-cleaning function:", error);
+    console.error("Data cleaning error:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
