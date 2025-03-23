@@ -1,0 +1,28 @@
+name: Run Daily Data Cleaning
+
+on:
+  schedule:
+    - cron: '0 3 * * *'  # every day at 3:00 AM UTC
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⬇️ Checkout
+        uses: actions/checkout@v3
+
+      - name: ⚙️ Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: 🔐 Auth Supabase CLI
+        run: |
+          mkdir -p ~/.supabase
+          echo "${{ secrets.SUPABASE_ACCESS_TOKEN }}" > ~/.supabase/access-token
+
+      - name: 🚀 Call data-cleaning Function
+        run: |
+          curl -X POST "https://${{ secrets.SUPABASE_PROJECT_REF }}.supabase.co/functions/v1/data-cleaning" \
+          -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}"
