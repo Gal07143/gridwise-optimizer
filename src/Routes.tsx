@@ -1,8 +1,6 @@
-
-import React, { Suspense } from 'react';
+import React from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { BrowserRouter } from 'react-router-dom';
 
 // Public pages
 import Auth from '@/pages/Auth';

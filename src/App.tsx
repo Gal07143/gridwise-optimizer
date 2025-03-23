@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter as Router } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { SiteProvider } from '@/contexts/SiteContext';
@@ -24,13 +24,15 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-        <AuthProvider>
-          <SiteProvider>
-            <AppRoutes />
-            <Toaster />
-            <SonnerToaster position="top-right" />
-          </SiteProvider>
-        </AuthProvider>
+        <Router>
+          <AuthProvider>
+            <SiteProvider>
+              <AppRoutes />
+              <Toaster />
+              <SonnerToaster position="top-right" />
+            </SiteProvider>
+          </AuthProvider>
+        </Router>
       </ThemeProvider>
     </QueryClientProvider>
   );
