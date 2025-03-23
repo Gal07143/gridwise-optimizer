@@ -1,6 +1,5 @@
 
 import { useState, useEffect } from 'react';
-import { executeSql } from '@/services/sqlExecutor';
 import { toast } from 'sonner';
 
 // Export the DeviceModel interface
@@ -53,17 +52,6 @@ export const useDeviceModels = (categoryId?: string) => {
         setIsLoading(true);
         setError(null);
         
-        // In a real app this would be a SQL query filtered by category
-        let query = `
-          SELECT * FROM device_models
-          ${categoryId && categoryId !== 'all' ? `WHERE device_type = '${categoryId}'` : ''}
-          ${searchQuery ? `AND (name ILIKE '%${searchQuery}%' OR manufacturer ILIKE '%${searchQuery}%')` : ''}
-          ORDER BY ${sortField} ${sortDirection}
-        `;
-        
-        // This would perform the SQL query via the secure edge function
-        const data = await executeSql<DeviceModel>(query);
-        
         // For demo purposes, creating mock data
         const mockData: DeviceModel[] = [];
         const deviceTypes = ['battery', 'inverter', 'meter', 'controller', 'ev-charger'];
@@ -73,8 +61,17 @@ export const useDeviceModels = (categoryId?: string) => {
           const deviceType = deviceTypes[Math.floor(Math.random() * deviceTypes.length)];
           
           // Filter by category if provided
-          if (categoryId && categoryId !== 'all' && deviceType !== categoryId.replace('-', '')) {
-            continue;
+          if (categoryId && categoryId !== 'all') {
+            // Convert categoryId format (ev-chargers) to deviceType format (ev-charger)
+            const categoryType = categoryId === 'ev-chargers' ? 'ev-charger' : 
+                               categoryId === 'controllers' ? 'controller' :
+                               categoryId === 'meters' ? 'meter' :
+                               categoryId === 'batteries' ? 'battery' :
+                               categoryId === 'inverters' ? 'inverter' : categoryId;
+                               
+            if (deviceType !== categoryType.replace('-s', '')) {
+              continue;
+            }
           }
           
           mockData.push({

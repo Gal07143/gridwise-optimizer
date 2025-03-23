@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client'; // Use the shared client
 
-interface TelemetryHistoryItem {
+export interface TelemetryHistoryItem {
   id: string;
   device_id: string;
   timestamp: string;
@@ -12,6 +12,7 @@ interface TelemetryHistoryItem {
   current?: number;
   power?: number;
   temperature?: number;
+  state_of_charge?: number;
   [key: string]: any; // Allow for dynamic properties from message
 }
 
@@ -30,17 +31,23 @@ export const useTelemetryHistory = (deviceId: string, limitMinutes = 60) => {
           .from('telemetry_log')
           .select('*')
           .eq('device_id', deviceId)
-          .gte('timestamp', since)
-          .order('timestamp', { ascending: true });
+          .gte('created_at', since)
+          .order('created_at', { ascending: true });
 
         if (supabaseError) {
           throw new Error(supabaseError.message);
         }
 
-        // Process each record to extract telemetry values from message
+        // Process each record to extract telemetry values from message and ensure timestamp field
         const processedData = historyData?.map(record => {
-          let enhancedRecord = { ...record };
+          // Create a base record with timestamp field
+          let enhancedRecord: TelemetryHistoryItem = { 
+            ...record,
+            // Ensure timestamp exists, falling back to other available time fields
+            timestamp: record.timestamp || record.received_at || record.created_at
+          };
           
+          // Process message field if it exists
           if (record.message) {
             if (typeof record.message === 'string') {
               try {
@@ -62,6 +69,7 @@ export const useTelemetryHistory = (deviceId: string, limitMinutes = 60) => {
       } catch (err) {
         console.error('Error fetching telemetry history:', err);
         setError(err instanceof Error ? err : new Error('Unknown error fetching telemetry history'));
+        setData([]); // Ensure data is empty when there's an error
       } finally {
         setLoading(false);
       }

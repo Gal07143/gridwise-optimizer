@@ -1,62 +1,7 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
- 
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 224 71.4% 4.1%;
-    --card: 0 0% 100%;
-    --card-foreground: 224 71.4% 4.1%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 224 71.4% 4.1%;
-    --primary: 262.1 83.3% 57.8%;
-    --primary-foreground: 210 20% 98%;
-    --secondary: 220 14.3% 95.9%;
-    --secondary-foreground: 220.9 39.3% 11%;
-    --muted: 220 14.3% 95.9%;
-    --muted-foreground: 220 8.9% 46.1%;
-    --accent: 220 14.3% 95.9%;
-    --accent-foreground: 220.9 39.3% 11%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 20% 98%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 262.1 83.3% 57.8%;
-    --radius: 0.5rem;
-    --energy-green: #2dd36f;
-    --energy-red: #eb445a;
-    --energy-purple: #7a5af8;
-    --success: 142.1 70.6% 45.3%;
-    --success-foreground: 210 20% 98%;
-  }
- 
-  .dark {
-    --background: 224 71.4% 4.1%;
-    --foreground: 210 20% 98%;
-    --card: 224 71.4% 4.1%;
-    --card-foreground: 210 20% 98%;
-    --popover: 224 71.4% 4.1%;
-    --popover-foreground: 210 20% 98%;
-    --primary: 263.4 70% 50.4%;
-    --primary-foreground: 210 20% 98%;
-    --secondary: 215 27.9% 16.9%;
-    --secondary-foreground: 210 20% 98%;
-    --muted: 215 27.9% 16.9%;
-    --muted-foreground: 217.9 10.6% 64.9%;
-    --accent: 215 27.9% 16.9%;
-    --accent-foreground: 210 20% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 20% 98%;
-    --border: 215 27.9% 16.9%;
-    --input: 215 27.9% 16.9%;
-    --ring: 263.4 70% 50.4%;
-    --success: 142.1 70.6% 45.3%;
-    --success-foreground: 210 20% 98%;
-  }
-}
- 
+
 @layer base {
   * {
     @apply border-border;
@@ -66,55 +11,113 @@
   }
 }
 
-@layer components {
-  .glass-panel {
-    @apply bg-white/40 dark:bg-slate-800/40 backdrop-blur-sm border border-white/20 dark:border-slate-700/50;
+.bg-grid-pattern {
+  background-image: url("data:image/svg+xml,%3Csvg width='42' height='44' viewBox='0 0 42 44' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 22H42' stroke='%23E2E8F0' stroke-width='2'/%3E%3Cpath d='M0 43H42' stroke='%23E2E8F0' stroke-width='2'/%3E%3Cpath d='M0 1H42' stroke='%23E2E8F0' stroke-width='2'/%3E%3Cpath d='M21 44V0' stroke='%23E2E8F0' stroke-width='2'/%3E%3C/svg%3E");
+  @apply dark:bg-muted/5;
+}
+
+.grid-pattern {
+  background-image: url("data:image/svg+xml,%3Csvg width='32' height='32' viewBox='0 0 32 32' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 16H32' stroke='%23E2E8F0' stroke-width='1'/%3E%3Cpath d='M16 32V0' stroke='%23E2E8F0' stroke-width='1'/%3E%3C/svg%3E");
+  @apply dark:bg-muted/5;
+}
+
+.animate-flow {
+  animation: flow 2s linear infinite;
+}
+
+.animate-flow-reverse {
+  animation: flow-reverse 2s linear infinite;
+}
+
+@keyframes flow {
+  0% {
+    stroke-dashoffset: 20;
   }
-  
-  .text-energy-green {
-    @apply text-[color:var(--energy-green)];
-  }
-  
-  .text-energy-red {
-    @apply text-[color:var(--energy-red)];
-  }
-  
-  .text-energy-purple {
-    @apply text-[color:var(--energy-purple)];
+  100% {
+    stroke-dashoffset: 0;
   }
 }
 
-@layer utilities {
-  .bg-grid-pattern {
-    background-image: linear-gradient(to right, rgba(100, 116, 139, 0.1) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(100, 116, 139, 0.1) 1px, transparent 1px);
-    background-size: 20px 20px;
+@keyframes flow-reverse {
+  0% {
+    stroke-dashoffset: -20;
   }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+:root {
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+ 
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
+
+  --primary: 222.1 83.2% 9.8%;
+  --primary-foreground: 210 40% 98%;
+
+  --secondary: 210 40% 96.1%;
+  --secondary-foreground: 222.2 47.4% 11.2%;
+
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+
+  --accent: 210 40% 96.1%;
+  --accent-foreground: 222.2 47.4% 11.2%;
+
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 222.2 84% 4.9%;
+
+  --radius: 0.5rem;
+
+  /* Energy flow colors */
+  --energy-green: #22c55e;
+  --energy-blue: #3b82f6;
+  --energy-purple: #8b5cf6;
+  --energy-orange: #f97316;
+  --energy-yellow: #eab308;
+  --energy-red: #ef4444;
+  --energy-grid: rgba(220, 38, 38, 0.6);
+  --energy-solar: rgba(234, 179, 8, 0.6);
+  --energy-wind: rgba(59, 130, 246, 0.6);
+  --energy-battery: rgba(168, 85, 247, 0.6);
+  --energy-load: rgba(34, 197, 94, 0.6);
+}
+
+.dark {
+  --background: 222.2 84% 4.9%;
+  --foreground: 210 40% 98%;
+
+  --card: 222.2 84% 4.9%;
+  --card-foreground: 210 40% 98%;
+ 
+  --popover: 222.2 84% 4.9%;
+  --popover-foreground: 210 40% 98%;
+
+  --primary: 210 40% 98%;
+  --primary-foreground: 222.1 83.2% 9.8%;
+
+  --secondary: 217.2 32.6% 17.5%;
+  --secondary-foreground: 210 40% 98%;
+
+  --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 215 20.2% 65.1%;
+
+  --accent: 217.2 32.6% 17.5%;
+  --accent-foreground: 210 40% 98%;
+
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
   
-  /* Energy flow animations */
-  .animate-flow {
-    animation: flow 3s linear infinite;
-  }
-  
-  .animate-flow-reverse {
-    animation: flow-reverse 3s linear infinite;
-  }
-  
-  @keyframes flow {
-    0% {
-      stroke-dashoffset: 100;
-    }
-    100% {
-      stroke-dashoffset: 0;
-    }
-  }
-  
-  @keyframes flow-reverse {
-    0% {
-      stroke-dashoffset: 0;
-    }
-    100% {
-      stroke-dashoffset: 100;
-    }
-  }
+  --border: 217.2 32.6% 17.5%;
+  --input: 217.2 32.6% 17.5%;
+  --ring: 212.7 26.8% 8.8%;
 }

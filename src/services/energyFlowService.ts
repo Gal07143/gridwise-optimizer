@@ -52,18 +52,39 @@ const defaultNodes: EnergyNode[] = [
     power: 1.5,
     status: 'active',
     deviceType: 'ev'
+  },
+  {
+    id: 'devices',
+    label: 'Smart Devices',
+    type: 'consumption',
+    power: 1.2,
+    status: 'active',
+    deviceType: 'load'
   }
 ];
 
 const defaultConnections: EnergyConnection[] = [
+  // Solar connections
   { from: 'solar', to: 'home', value: 2.5, active: true },
   { from: 'solar', to: 'battery', value: 1.2, active: true },
   { from: 'solar', to: 'grid', value: 1.5, active: true },
+  { from: 'solar', to: 'devices', value: 0.8, active: true },
+  
+  // Wind connections
   { from: 'wind', to: 'home', value: 0.8, active: true },
   { from: 'wind', to: 'battery', value: 1.0, active: true },
-  { from: 'battery', to: 'home', value: 0.5, active: true },
-  { from: 'grid', to: 'home', value: 0.0, active: false },
-  { from: 'grid', to: 'ev', value: 1.5, active: true }
+  { from: 'wind', to: 'devices', value: 0.5, active: true },
+  
+  // Battery connections
+  { from: 'battery', to: 'home', value: 1.2, active: true },
+  { from: 'battery', to: 'devices', value: 0.8, active: true },
+  { from: 'battery', to: 'ev', value: 1.5, active: true },
+  
+  // Grid connections
+  { from: 'grid', to: 'home', value: 0.3, active: true },
+  { from: 'grid', to: 'devices', value: 0.2, active: true },
+  { from: 'grid', to: 'ev', value: 1.5, active: true },
+  { from: 'grid', to: 'battery', value: 0.5, active: true }
 ];
 
 export interface EnergyFlowData {
@@ -128,7 +149,7 @@ export async function fetchEnergyFlowData(siteId: string): Promise<EnergyFlowDat
       connections: defaultConnections,
       timestamp: new Date().toISOString(),
       totalGeneration: 7.0,
-      totalConsumption: 5.3,
+      totalConsumption: 6.5,
       batteryPercentage: 65,
       selfConsumptionRate: 75,
       gridDependencyRate: 25

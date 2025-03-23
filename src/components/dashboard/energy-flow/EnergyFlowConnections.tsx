@@ -15,14 +15,32 @@ const EnergyFlowConnections: React.FC<EnergyFlowConnectionsProps> = ({ connectio
         return "M110,80 C160,80 160,160 210,160";
       case 'solar-building':
         return "M110,80 C200,50 350,50 410,120";
+      case 'solar-home':
+        return "M110,80 C200,50 350,50 410,120";
       case 'wind-battery':
         return "M110,240 C135,240 185,200 210,180";
       case 'wind-building':
         return "M110,240 C180,240 270,200 410,160";
+      case 'wind-home':
+        return "M110,240 C180,240 270,200 410,160";
       case 'battery-building':
+        return "M290,160 C320,160 390,140 410,140";
+      case 'battery-home':
         return "M290,160 C320,160 390,140 410,140";
       case 'battery-devices':
         return "M290,160 C320,170 350,220 410,220";
+      case 'battery-ev':
+        return "M290,160 C320,190 350,260 410,280";
+      case 'grid-building':
+        return "M110,320 C180,320 270,200 410,180";
+      case 'grid-home':
+        return "M110,320 C180,320 270,200 410,180";
+      case 'grid-battery':
+        return "M110,320 C140,320 180,240 210,200";
+      case 'grid-devices':
+        return "M110,320 C200,320 300,260 410,240";
+      case 'grid-ev':
+        return "M110,320 C200,320 300,280 410,290";
       default:
         return "";
     }
@@ -45,6 +63,8 @@ const EnergyFlowConnections: React.FC<EnergyFlowConnectionsProps> = ({ connectio
         return "var(--energy-wind, rgba(59, 130, 246, 0.6))";
       case 'battery':
         return "var(--energy-battery, rgba(168, 85, 247, 0.6))";
+      case 'grid':
+        return "var(--energy-grid, rgba(220, 38, 38, 0.6))";
       default:
         return "rgba(100, 116, 139, 0.6)";
     }
@@ -60,7 +80,7 @@ const EnergyFlowConnections: React.FC<EnergyFlowConnectionsProps> = ({ connectio
         if (!path || !connection.active) return null;
         
         return (
-          <g key={`${connection.from}-${connection.to}`}>
+          <g key={`${connection.from}-${connection.to}-${index}`}>
             {/* Background connection line */}
             <path
               d={path}
@@ -85,14 +105,14 @@ const EnergyFlowConnections: React.FC<EnergyFlowConnectionsProps> = ({ connectio
             {connection.value > 0.5 && (
               <>
                 <path
-                  id={`flow-path-${connection.from}-${connection.to}`}
+                  id={`flow-path-${connection.from}-${connection.to}-${index}`}
                   d={path}
                   fill="none"
                   stroke="none"
                 />
                 <text dy={-5} className="text-[10px] font-medium fill-slate-700 dark:fill-slate-200">
                   <textPath
-                    href={`#flow-path-${connection.from}-${connection.to}`}
+                    href={`#flow-path-${connection.from}-${connection.to}-${index}`}
                     startOffset="50%"
                     textAnchor="middle"
                   >
