@@ -1,22 +1,14 @@
 {
   "name": "modbus-agent",
   "version": "1.0.0",
-  "description": "Agent that reads data from Modbus TCP and uploads it to Supabase",
-  "type": "module",
   "main": "index.js",
+  "type": "module",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js"
+    "start": "node index.js"
   },
-  "keywords": ["modbus", "supabase", "ems", "iot"],
-  "author": "EdgeControl",
-  "license": "MIT",
   "dependencies": {
-    "dotenv": "^16.4.5",
-    "modbus-serial": "^9.3.5",
-    "@supabase/supabase-js": "^2.49.1"
-  },
-  "devDependencies": {
-    "nodemon": "^3.0.2"
+    "dotenv": "^16.3.1",
+    "modbus-serial": "^9.0.6",
+    "@supabase/supabase-js": "^2.39.7"
   }
 }
