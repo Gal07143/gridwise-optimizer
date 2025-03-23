@@ -1,0 +1,31 @@
+name: Deploy optimize-energy Function
+
+on:
+  push:
+    paths:
+      - 'supabase/functions/optimize-energy/**'
+      - '.github/workflows/deploy-optimize-energy.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: ⬇️ Checkout Code
+        uses: actions/checkout@v3
+
+      - name: ⚙️ Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: 🔐 Create Supabase Config
+        run: |
+          mkdir -p ~/.supabase
+          echo "${{ secrets.SUPABASE_ACCESS_TOKEN }}" > ~/.supabase/access-token
+
+      - name: 🚀 Deploy Function
+        run: |
+          npx supabase functions deploy optimize-energy --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
