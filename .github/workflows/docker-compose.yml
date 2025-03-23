@@ -1,0 +1,10 @@
+version: "3.8"
+services:
+  modbus-agent:
+    build: .
+    container_name: modbus-agent
+    env_file:
+      - .env
+    ports:
+      - "502:502"
+    restart: always
