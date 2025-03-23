@@ -1,89 +1,94 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { useToast } from '@/components/ui/use-toast';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from '@/components/ui/use-toast';
 
 interface InverterControlsProps {
   deviceId: string;
 }
 
 const InverterControls: React.FC<InverterControlsProps> = ({ deviceId }) => {
-  const [isOn, setIsOn] = useState<boolean>(true);
-  const [mode, setMode] = useState<string>('grid-tied');
-  const [power, setPower] = useState<number>(5);
-  const { toast } = useToast();
+  const [mode, setMode] = useState('grid-tie');
+  const [powerFactor, setPowerFactor] = useState('1.0');
+  const [outputPower, setOutputPower] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleToggle = () => {
-    setIsOn(!isOn);
-    toast({
-      title: `Inverter ${isOn ? 'turned off' : 'turned on'}`,
-      description: `Device ID: ${deviceId}`,
-    });
-  };
+  useEffect(() => {
+    // Simulated fetch logic (replace with Supabase or API call)
+    const fetchData = async () => {
+      setIsLoading(true);
+      setTimeout(() => {
+        setOutputPower(6200); // Simulate 6.2kW output
+        setMode('grid-tie');
+        setPowerFactor('0.98');
+        setIsLoading(false);
+      }, 800);
+    };
+
+    fetchData();
+  }, [deviceId]);
 
   const handleModeChange = (value: string) => {
     setMode(value);
-    toast({
-      title: 'Inverter mode changed',
-      description: `Mode set to ${value}`,
-    });
+    toast({ title: 'Inverter mode updated', description: `New mode: ${value}` });
   };
 
-  const handlePowerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPower(Number(e.target.value));
+  const handlePowerFactorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setPowerFactor(value);
   };
 
-  const handleReset = () => {
-    toast({
-      title: 'Fault Reset',
-      description: 'Inverter fault has been reset',
-    });
+  const handleApply = () => {
+    toast({ title: 'Settings applied', description: `Mode: ${mode}, Power Factor: ${powerFactor}` });
   };
 
   return (
-    <Card className="shadow-md">
+    <Card className="w-full">
       <CardHeader>
         <CardTitle>Inverter Controls</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="flex items-center justify-between">
-          <Label>Power Switch</Label>
-          <Switch checked={isOn} onCheckedChange={handleToggle} />
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="mode">Operating Mode</Label>
+            <Select value={mode} onValueChange={handleModeChange} disabled={isLoading}>
+              <SelectTrigger id="mode">
+                <SelectValue placeholder="Select mode" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="grid-tie">Grid-Tie</SelectItem>
+                <SelectItem value="off-grid">Off-Grid</SelectItem>
+                <SelectItem value="hybrid">Hybrid</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="powerFactor">Power Factor</Label>
+            <Input
+              id="powerFactor"
+              type="number"
+              step="0.01"
+              max="1.0"
+              min="0.8"
+              value={powerFactor}
+              onChange={handlePowerFactorChange}
+              disabled={isLoading}
+            />
+          </div>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="mode">Operation Mode</Label>
-          <Select value={mode} onValueChange={handleModeChange}>
-            <SelectTrigger id="mode">
-              <SelectValue placeholder="Select mode" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="grid-tied">Grid-Tied</SelectItem>
-              <SelectItem value="off-grid">Off-Grid</SelectItem>
-              <SelectItem value="hybrid">Hybrid</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="power">Power Output (kW)</Label>
-          <Input
-            id="power"
-            type="number"
-            min={0}
-            step={0.1}
-            value={power}
-            onChange={handlePowerChange}
-          />
-        </div>
-
-        <Button variant="destructive" onClick={handleReset}>
-          Reset Fault
+        <Button onClick={handleApply} disabled={isLoading}>
+          Apply Settings
         </Button>
+
+        <div className="text-sm text-muted-foreground">
+          <strong>Current Output Power:</strong>{' '}
+          {outputPower !== null ? `${outputPower} W` : 'Loading...'}
+        </div>
       </CardContent>
     </Card>
   );
