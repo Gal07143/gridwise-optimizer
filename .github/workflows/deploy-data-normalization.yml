@@ -26,6 +26,7 @@ jobs:
 
       - name: 🚀 Deploy Function via npx
         run: |
+          echo "Supabase Project Ref: ${{ secrets.SUPABASE_PROJECT_REF }}"
           npx supabase functions deploy data-normalization \
             --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
         env:
