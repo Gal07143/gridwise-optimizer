@@ -1,3 +1,4 @@
+// src/components/device/controls/LightControls.tsx
 
 import React from 'react';
 import ControlDialog from './ControlDialog';
@@ -9,21 +10,21 @@ interface LightControlsProps {
 const LightControls: React.FC<LightControlsProps> = ({ deviceId }) => {
   return (
     <ControlDialog
-      title="Lighting Controls"
-      description="Turn lights on/off or set brightness"
+      title="Lighting Control"
+      description="Toggle lights and adjust brightness"
       actions={[
         {
           label: 'Turn On',
-          onSubmit: () => console.log(`Turned on lights ${deviceId}`),
+          onSubmit: () => console.log(`Turning on lights for ${deviceId}`),
         },
         {
           label: 'Turn Off',
-          onSubmit: () => console.log(`Turned off lights ${deviceId}`),
+          onSubmit: () => console.log(`Turning off lights for ${deviceId}`),
         },
         {
           label: 'Set Brightness (%)',
           inputType: 'number',
-          onSubmit: (value) => console.log(`Set brightness of lights ${deviceId} to ${value}%`),
+          onSubmit: (value) => console.log(`Set brightness for ${deviceId} to ${value}%`),
         }
       ]}
     />
