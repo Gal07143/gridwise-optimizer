@@ -19,9 +19,6 @@ jobs:
         with:
           node-version: 18
 
-      - name: 📦 Install Supabase CLI
-        run: npm install -g supabase
-
       - name: 🔐 Create Supabase Config
         run: |
           mkdir -p ~/.supabase
@@ -29,8 +26,7 @@ jobs:
 
       - name: 🚀 Deploy evaluate-alert-rules Function
         run: |
-          supabase functions deploy evaluate-alert-rules \
+          npx supabase functions deploy evaluate-alert-rules \
             --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
-
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
