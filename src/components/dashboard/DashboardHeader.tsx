@@ -1,28 +1,44 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Activity, Bell } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { useSite } from '@/contexts/SiteContext';
 import { useAlertSubscription } from '@/hooks/useAlertSubscription';
 import { toast } from 'sonner';
 import { useRouter } from 'next/router';
+import { supabase } from '@/integrations/supabase/client';
+import { AlertItem } from '@/components/microgrid/types';
 
 interface DashboardHeaderProps {
   siteName: string;
 }
 
 const DashboardHeader = ({ siteName }: DashboardHeaderProps) => {
-  const [newAlert, setNewAlert] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const router = useRouter();
 
-  // 👇 Enable realtime alert badge and toast
-  useAlertSubscription((alert) => {
+  // 🔁 Load unacknowledged alerts on first render
+  useEffect(() => {
+    const fetchUnacknowledgedCount = async () => {
+      const { count, error } = await supabase
+        .from('alerts')
+        .select('*', { count: 'exact', head: true })
+        .eq('acknowledged', false);
+
+      if (!error && typeof count === 'number') {
+        setUnreadCount(count);
+      }
+    };
+
+    fetchUnacknowledgedCount();
+  }, []);
+
+  // 🔴 Live alert subscription
+  useAlertSubscription((alert: AlertItem) => {
     toast.warning(`🔔 ${alert.title}`, {
       description: alert.message,
     });
-    setNewAlert(true);
 
-    // Auto-hide badge after 10 seconds
-    setTimeout(() => setNewAlert(false), 10000);
+    setUnreadCount((prev) => prev + 1);
   });
 
   return (
@@ -36,19 +52,21 @@ const DashboardHeader = ({ siteName }: DashboardHeaderProps) => {
         </div>
 
         <div className="flex items-center gap-4">
-          {/* 🔔 Bell Icon with red badge */}
+          {/* 🔔 Bell icon with count */}
           <button
             className="relative focus:outline-none"
             onClick={() => router.push('/alerts')}
             aria-label="Go to alerts"
           >
             <Bell className="h-6 w-6 text-muted-foreground" />
-            {newAlert && (
-              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-white dark:ring-slate-900 animate-ping" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1.5 -right-2 bg-red-600 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
+                {unreadCount}
+              </span>
             )}
           </button>
 
-          {/* System status indicator */}
+          {/* System status */}
           <div className="bg-primary/10 text-primary px-4 py-2 rounded-lg flex items-center">
             <Activity className="mr-2 h-5 w-5" />
             <span className="font-medium">System Status: Operational</span>
