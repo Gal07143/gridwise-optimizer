@@ -1,0 +1,32 @@
+name: Deploy insert-modbus-raw
+
+on:
+  push:
+    paths:
+      - 'supabase/functions/insert-modbus-raw/**'
+      - '.github/workflows/deploy-insert-modbus-raw.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: ⬇️ Checkout
+        uses: actions/checkout@v3
+
+      - name: ⚙️ Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: 🔐 Supabase Auth
+        run: |
+          mkdir -p ~/.supabase
+          echo "${{ secrets.SUPABASE_ACCESS_TOKEN }}" > ~/.supabase/access-token
+
+      - name: 🚀 Deploy insert-modbus-raw
+        run: |
+          npx supabase functions deploy insert-modbus-raw \
+            --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
