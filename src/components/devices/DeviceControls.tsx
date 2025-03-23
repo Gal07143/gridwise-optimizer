@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { DeviceType } from '@/types/energy';
 import SolarControls from './controls/SolarControls';
@@ -34,7 +33,6 @@ const DeviceControls: React.FC<DeviceControlsProps> = ({ deviceId, deviceType, d
             This device is currently offline. Control features are not available when the device is disconnected.
           </AlertDescription>
         </Alert>
-
         <div className="p-8 bg-muted/30 rounded-md text-center">
           <PowerOff className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
           <p className="text-muted-foreground">
@@ -79,4 +77,4 @@ const DeviceControls: React.FC<DeviceControlsProps> = ({ deviceId, deviceType, d
   }
 };
 
-export default DeviceControls;
+export default React.memo(DeviceControls);
