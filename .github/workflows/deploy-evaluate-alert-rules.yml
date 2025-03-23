@@ -1,0 +1,36 @@
+name: Deploy evaluate-alert-rules Edge Function
+
+on:
+  push:
+    paths:
+      - 'supabase/functions/evaluate-alert-rules/**'
+      - '.github/workflows/deploy-evaluate-alert-rules.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: ⬇️ Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: ⚙️ Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: 📦 Install Supabase CLI
+        run: npm install -g supabase
+
+      - name: 🔐 Create Supabase Config
+        run: |
+          mkdir -p ~/.supabase
+          echo "${{ secrets.SUPABASE_ACCESS_TOKEN }}" > ~/.supabase/access-token
+
+      - name: 🚀 Deploy evaluate-alert-rules Function
+        run: |
+          supabase functions deploy evaluate-alert-rules \
+            --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
+
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
