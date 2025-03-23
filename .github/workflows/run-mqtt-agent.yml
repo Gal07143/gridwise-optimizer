@@ -1,29 +1,29 @@
-name: Run MQTT Ingestion
+name: Run MQTT Agent
 
 on:
-  workflow_dispatch:  # Can be triggered manually from GitHub UI
+  push:
+    paths:
+      - 'mqtt-agent/**'
+      - '.github/workflows/run-mqtt-agent.yml'
 
 jobs:
-  mqtt-ingestion:
+  run-agent:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v2
 
-      - name: Install dependencies
-        working-directory: mqtt-ingestion
-        run: npm install
+      - name: Build Docker Image
+        run: docker build -t mqtt-agent ./mqtt-agent
 
-      - name: Run MQTT ingestion service
-        working-directory: mqtt-ingestion
+      - name: Run MQTT Agent
+        run: |
+          docker run --env-file ./mqtt-agent/.env mqtt-agent
         env:
-          MQTT_BROKER_URL: ${{ secrets.MQTT_BROKER_URL }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_API_KEY: ${{ secrets.SUPABASE_API_KEY }}
-        run: node index.js
+          MQTT_BROKER_URL: ${{ secrets.MQTT_BROKER_URL }}
