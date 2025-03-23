@@ -17,13 +17,12 @@ jobs:
       - name: Set up Docker
         uses: docker/setup-buildx-action@v2
 
-      - name: Build Docker Image
+      - name: Build MQTT Agent Docker Image
         run: docker build -t mqtt-agent ./mqtt-agent
 
-      - name: Run MQTT Agent
+      - name: Run MQTT Agent with Supabase Secrets
         run: |
-          docker run --env-file ./mqtt-agent/.env mqtt-agent
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_API_KEY: ${{ secrets.SUPABASE_API_KEY }}
-          MQTT_BROKER_URL: ${{ secrets.MQTT_BROKER_URL }}
+          docker run -e SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
+                     -e SUPABASE_API_KEY=${{ secrets.SUPABASE_API_KEY }} \
+                     -e MQTT_BROKER_URL=${{ secrets.MQTT_BROKER_URL }} \
+                     mqtt-agent
