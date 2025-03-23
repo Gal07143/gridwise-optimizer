@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { DeviceType } from '@/types/energy';
 import SolarControls from './controls/SolarControls';
@@ -57,16 +58,6 @@ const DeviceControls: React.FC<DeviceControlsProps> = ({ deviceId, deviceType, d
       return <LoadControls deviceId={deviceId} />;
     case 'ev_charger':
       return <EVChargerControls deviceId={deviceId} />;
-    case 'inverter':
-      return <InverterControls deviceId={deviceId} />;
-    case 'meter':
-      return <MeterControls deviceId={deviceId} />;
-    case 'light':
-      return <LightControls deviceId={deviceId} />;
-    case 'generator':
-      return <GeneratorControls deviceId={deviceId} />;
-    case 'hydro':
-      return <HydroControls deviceId={deviceId} />;
     case 'inverter':
       return <InverterControls deviceId={deviceId} />;
     case 'meter':

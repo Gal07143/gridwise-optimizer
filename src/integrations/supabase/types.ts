@@ -349,6 +349,119 @@ export type Database = {
           },
         ]
       }
+      billing: {
+        Row: {
+          billing_period: string | null
+          cost_per_kwh: number | null
+          created_at: string | null
+          id: string
+          paid: boolean | null
+          site_id: string | null
+          total_cost: number | null
+          total_energy: number | null
+        }
+        Insert: {
+          billing_period?: string | null
+          cost_per_kwh?: number | null
+          created_at?: string | null
+          id?: string
+          paid?: boolean | null
+          site_id?: string | null
+          total_cost?: number | null
+          total_energy?: number | null
+        }
+        Update: {
+          billing_period?: string | null
+          cost_per_kwh?: number | null
+          created_at?: string | null
+          id?: string
+          paid?: boolean | null
+          site_id?: string | null
+          total_cost?: number | null
+          total_energy?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bms_data: {
+        Row: {
+          created_at: string | null
+          data: Json | null
+          id: string
+          system_name: string | null
+          timestamp: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          data?: Json | null
+          id?: string
+          system_name?: string | null
+          timestamp?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          data?: Json | null
+          id?: string
+          system_name?: string | null
+          timestamp?: string | null
+        }
+        Relationships: []
+      }
+      device_data: {
+        Row: {
+          current: number | null
+          device_id: string | null
+          id: number
+          power_kw: number | null
+          soc_percent: number | null
+          temperature: number | null
+          timestamp: string
+          voltage: number | null
+        }
+        Insert: {
+          current?: number | null
+          device_id?: string | null
+          id?: number
+          power_kw?: number | null
+          soc_percent?: number | null
+          temperature?: number | null
+          timestamp: string
+          voltage?: number | null
+        }
+        Update: {
+          current?: number | null
+          device_id?: string | null
+          id?: number
+          power_kw?: number | null
+          soc_percent?: number | null
+          temperature?: number | null
+          timestamp?: string
+          voltage?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "device_data_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "device_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "device_data_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       devices: {
         Row: {
           capacity: number
@@ -453,6 +566,44 @@ export type Database = {
         }
         Relationships: []
       }
+      energy_baselines: {
+        Row: {
+          baseline_value: number
+          category: string
+          created_at: string | null
+          id: string
+          site_id: string | null
+          unit: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          baseline_value: number
+          category: string
+          created_at?: string | null
+          id?: string
+          site_id?: string | null
+          unit?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          baseline_value?: number
+          category?: string
+          created_at?: string | null
+          id?: string
+          site_id?: string | null
+          unit?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "energy_baselines_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       energy_forecasts: {
         Row: {
           cloud_cover: number | null
@@ -502,6 +653,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "energy_forecasts_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      energy_predictions: {
+        Row: {
+          confidence: number | null
+          created_at: string | null
+          id: string
+          model_version: string | null
+          predicted_consumption: number | null
+          predicted_generation: number | null
+          prediction_time: string
+          site_id: string | null
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string | null
+          id?: string
+          model_version?: string | null
+          predicted_consumption?: number | null
+          predicted_generation?: number | null
+          prediction_time: string
+          site_id?: string | null
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string | null
+          id?: string
+          model_version?: string | null
+          predicted_consumption?: number | null
+          predicted_generation?: number | null
+          prediction_time?: string
+          site_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "energy_predictions_site_id_fkey"
             columns: ["site_id"]
             isOneToOne: false
             referencedRelation: "sites"
@@ -566,6 +758,251 @@ export type Database = {
           },
         ]
       }
+      energy_readings_daily: {
+        Row: {
+          created_at: string | null
+          date: string
+          device_id: string
+          granularity: string | null
+          total_energy: number
+        }
+        Insert: {
+          created_at?: string | null
+          date: string
+          device_id: string
+          granularity?: string | null
+          total_energy: number
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          device_id?: string
+          granularity?: string | null
+          total_energy?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "energy_readings_daily_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "device_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "energy_readings_daily_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      equipment: {
+        Row: {
+          created_at: string | null
+          id: string
+          manufacturer: string | null
+          model: string | null
+          name: string
+          space_id: string | null
+          type: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          manufacturer?: string | null
+          model?: string | null
+          name: string
+          space_id?: string | null
+          type?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          manufacturer?: string | null
+          model?: string | null
+          name?: string
+          space_id?: string | null
+          type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipment_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      faults: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          device_id: string | null
+          id: string
+          resolved_at: string | null
+          severity: string | null
+          status: string | null
+          timestamp: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          device_id?: string | null
+          id?: string
+          resolved_at?: string | null
+          severity?: string | null
+          status?: string | null
+          timestamp?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          device_id?: string | null
+          id?: string
+          resolved_at?: string | null
+          severity?: string | null
+          status?: string | null
+          timestamp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "faults_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "device_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "faults_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fdd_alarms: {
+        Row: {
+          device_id: string | null
+          id: string
+          resolved: boolean | null
+          resolved_at: string | null
+          rule_id: string | null
+          triggered_at: string | null
+        }
+        Insert: {
+          device_id?: string | null
+          id?: string
+          resolved?: boolean | null
+          resolved_at?: string | null
+          rule_id?: string | null
+          triggered_at?: string | null
+        }
+        Update: {
+          device_id?: string | null
+          id?: string
+          resolved?: boolean | null
+          resolved_at?: string | null
+          rule_id?: string | null
+          triggered_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fdd_alarms_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "device_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fdd_alarms_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fdd_alarms_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "fdd_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fdd_rules: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          operator: string
+          parameter: string
+          severity: string | null
+          threshold: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          operator: string
+          parameter: string
+          severity?: string | null
+          threshold: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          operator?: string
+          parameter?: string
+          severity?: string | null
+          threshold?: number
+        }
+        Relationships: []
+      }
+      historical_data: {
+        Row: {
+          current: number | null
+          energy_kwh: number | null
+          id: string
+          power_kw: number | null
+          site_id: string | null
+          timestamp: string | null
+          voltage: number | null
+        }
+        Insert: {
+          current?: number | null
+          energy_kwh?: number | null
+          id?: string
+          power_kw?: number | null
+          site_id?: string | null
+          timestamp?: string | null
+          voltage?: number | null
+        }
+        Update: {
+          current?: number | null
+          energy_kwh?: number | null
+          id?: string
+          power_kw?: number | null
+          site_id?: string | null
+          timestamp?: string | null
+          voltage?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "historical_data_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       maintenance_records: {
         Row: {
           completed_date: string | null
@@ -619,6 +1056,208 @@ export type Database = {
             columns: ["device_id"]
             isOneToOne: false
             referencedRelation: "devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meters: {
+        Row: {
+          created_at: string | null
+          equipment_id: string | null
+          id: string
+          meter_type: string | null
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          equipment_id?: string | null
+          id?: string
+          meter_type?: string | null
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          equipment_id?: string | null
+          id?: string
+          meter_type?: string | null
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meters_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      modbus_cleaned: {
+        Row: {
+          created_at: string | null
+          current: number | null
+          device_id: string | null
+          energy_kwh: number | null
+          id: string
+          power_kw: number | null
+          timestamp: string | null
+          voltage: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          current?: number | null
+          device_id?: string | null
+          energy_kwh?: number | null
+          id?: string
+          power_kw?: number | null
+          timestamp?: string | null
+          voltage?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          current?: number | null
+          device_id?: string | null
+          energy_kwh?: number | null
+          id?: string
+          power_kw?: number | null
+          timestamp?: string | null
+          voltage?: number | null
+        }
+        Relationships: []
+      }
+      modbus_normalized: {
+        Row: {
+          created_at: string
+          current: number
+          device_id: string
+          energy_kwh: number
+          id: string
+          power_kw: number
+          timestamp: string
+          voltage: number
+        }
+        Insert: {
+          created_at?: string
+          current: number
+          device_id: string
+          energy_kwh: number
+          id?: string
+          power_kw: number
+          timestamp?: string
+          voltage: number
+        }
+        Update: {
+          created_at?: string
+          current?: number
+          device_id?: string
+          energy_kwh?: number
+          id?: string
+          power_kw?: number
+          timestamp?: string
+          voltage?: number
+        }
+        Relationships: []
+      }
+      modbus_raw: {
+        Row: {
+          created_at: string | null
+          current: number | null
+          device_id: string | null
+          energy_kwh: number | null
+          id: string
+          power_kw: number | null
+          timestamp: string | null
+          voltage: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          current?: number | null
+          device_id?: string | null
+          energy_kwh?: number | null
+          id?: string
+          power_kw?: number | null
+          timestamp?: string | null
+          voltage?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          current?: number | null
+          device_id?: string | null
+          energy_kwh?: number | null
+          id?: string
+          power_kw?: number | null
+          timestamp?: string | null
+          voltage?: number | null
+        }
+        Relationships: []
+      }
+      modbus_readings: {
+        Row: {
+          created_at: string | null
+          current: number | null
+          device_id: string
+          energy_kwh: number | null
+          id: string
+          power_kw: number | null
+          timestamp: string
+          voltage: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          current?: number | null
+          device_id: string
+          energy_kwh?: number | null
+          id?: string
+          power_kw?: number | null
+          timestamp: string
+          voltage?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          current?: number | null
+          device_id?: string
+          energy_kwh?: number | null
+          id?: string
+          power_kw?: number | null
+          timestamp?: string
+          voltage?: number | null
+        }
+        Relationships: []
+      }
+      optimization_results: {
+        Row: {
+          cost_estimate: number | null
+          id: number
+          schedule_json: Json | null
+          source_data_hash: string | null
+          timestamp_end: string | null
+          timestamp_start: string | null
+          user_id: string | null
+        }
+        Insert: {
+          cost_estimate?: number | null
+          id?: number
+          schedule_json?: Json | null
+          source_data_hash?: string | null
+          timestamp_end?: string | null
+          timestamp_start?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          cost_estimate?: number | null
+          id?: number
+          schedule_json?: Json | null
+          source_data_hash?: string | null
+          timestamp_end?: string | null
+          timestamp_start?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "optimization_results_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -860,6 +1499,145 @@ export type Database = {
         }
         Relationships: []
       }
+      spaces: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          parent_id: string | null
+          type: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          parent_id?: string | null
+          type?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          parent_id?: string | null
+          type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spaces_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tariffs: {
+        Row: {
+          id: number
+          price_eur_kwh: number
+          source: string | null
+          timestamp: string
+          type: string | null
+        }
+        Insert: {
+          id?: number
+          price_eur_kwh: number
+          source?: string | null
+          timestamp: string
+          type?: string | null
+        }
+        Update: {
+          id?: number
+          price_eur_kwh?: number
+          source?: string | null
+          timestamp?: string
+          type?: string | null
+        }
+        Relationships: []
+      }
+      telemetry_log: {
+        Row: {
+          created_at: string | null
+          device_id: string | null
+          id: string
+          message: Json
+          received_at: string | null
+          severity: string | null
+          source: string | null
+          topic: string
+        }
+        Insert: {
+          created_at?: string | null
+          device_id?: string | null
+          id?: string
+          message: Json
+          received_at?: string | null
+          severity?: string | null
+          source?: string | null
+          topic: string
+        }
+        Update: {
+          created_at?: string | null
+          device_id?: string | null
+          id?: string
+          message?: Json
+          received_at?: string | null
+          severity?: string | null
+          source?: string | null
+          topic?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "telemetry_log_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "device_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "telemetry_log_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenants: {
+        Row: {
+          contact_email: string | null
+          created_at: string | null
+          id: string
+          name: string
+          space_id: string | null
+        }
+        Insert: {
+          contact_email?: string | null
+          created_at?: string | null
+          id?: string
+          name: string
+          space_id?: string | null
+        }
+        Update: {
+          contact_email?: string | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          space_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenants_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_accounts: {
         Row: {
           account_status: string
@@ -902,6 +1680,44 @@ export type Database = {
         }
         Relationships: []
       }
+      user_preferences: {
+        Row: {
+          id: string
+          max_soc: number | null
+          min_soc: number | null
+          priority_device_ids: string[] | null
+          time_window_end: string | null
+          time_window_start: string | null
+          user_id: string | null
+        }
+        Insert: {
+          id?: string
+          max_soc?: number | null
+          min_soc?: number | null
+          priority_device_ids?: string[] | null
+          time_window_end?: string | null
+          time_window_start?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          id?: string
+          max_soc?: number | null
+          min_soc?: number | null
+          priority_device_ids?: string[] | null
+          time_window_end?: string | null
+          time_window_start?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_site_access: {
         Row: {
           created_at: string
@@ -930,6 +1746,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      users: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          role: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id?: string
+          role?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          role?: string | null
+        }
+        Relationships: []
       }
       weather_data: {
         Row: {
@@ -987,16 +1824,56 @@ export type Database = {
         Row: {
           capacity: number | null
           created_at: string | null
+          created_by: string | null
           description: string | null
           firmware: string | null
           id: string | null
+          installation_date: string | null
           last_updated: string | null
+          lat: number | null
+          lng: number | null
           location: string | null
+          metrics: Json | null
           name: string | null
           site_id: string | null
-          site_name: string | null
           status: Database["public"]["Enums"]["device_status"] | null
           type: Database["public"]["Enums"]["device_type"] | null
+        }
+        Insert: {
+          capacity?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          firmware?: string | null
+          id?: string | null
+          installation_date?: string | null
+          last_updated?: string | null
+          lat?: number | null
+          lng?: number | null
+          location?: string | null
+          metrics?: Json | null
+          name?: string | null
+          site_id?: string | null
+          status?: Database["public"]["Enums"]["device_status"] | null
+          type?: Database["public"]["Enums"]["device_type"] | null
+        }
+        Update: {
+          capacity?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          firmware?: string | null
+          id?: string | null
+          installation_date?: string | null
+          last_updated?: string | null
+          lat?: number | null
+          lng?: number | null
+          location?: string | null
+          metrics?: Json | null
+          name?: string | null
+          site_id?: string | null
+          status?: Database["public"]["Enums"]["device_status"] | null
+          type?: Database["public"]["Enums"]["device_type"] | null
         }
         Relationships: [
           {
@@ -1018,12 +1895,17 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
-      get_user_role: {
-        Args: {
-          user_id: string
-        }
-        Returns: string
-      }
+      get_user_role:
+        | {
+            Args: Record<PropertyKey, never>
+            Returns: string
+          }
+        | {
+            Args: {
+              user_id: string
+            }
+            Returns: string
+          }
     }
     Enums: {
       ai_recommendation_priority: "low" | "medium" | "high"
