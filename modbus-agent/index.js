@@ -2,34 +2,27 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import { readFromModbus } from './modbusReader.js';
-import { getActiveDevices, insertReading } from './supabaseClient.js';
+import { insertReading } from './supabaseClient.js';
 
 const INTERVAL_MS = parseInt(process.env.POLL_INTERVAL_MS || '5000', 10);
 
 async function runAgent() {
   console.log('⚡ Starting Modbus Agent...');
-  console.log(`Supabase URL: ${process.env.SUPABASE_URL}`);
+  console.log(`Using environment-based config:
+    - MODBUS_HOST: ${process.env.MODBUS_HOST}
+    - MODBUS_PORT: ${process.env.MODBUS_PORT}
+    - MODBUS_ID:   ${process.env.MODBUS_ID}
+    - DEVICE_ID:   ${process.env.DEVICE_ID}
+  `);
 
   setInterval(async () => {
     try {
-      // 1. Fetch all active devices from Supabase
-      const devices = await getActiveDevices();
-      if (!devices || devices.length === 0) {
-        console.log('No active devices found.');
-        return;
-      }
+      console.log('📊 Reading modbus data...');
+      const reading = await readFromModbus(); // no config passed => uses defaults
+      console.log('📥 Reading:', reading);
 
-      // 2. For each device, read Modbus data
-      for (const device of devices) {
-        console.log(`📊 Reading from device [${device.id}] (${device.ip}:${device.port}, unit ${device.unit_id})`);
-        const reading = await readFromModbus(device.ip, device.port, device.unit_id);
-
-        console.log('📥 Reading:', reading);
-
-        // 3. Insert the reading into 'modbus_normalized'
-        await insertReading(device.id, reading);
-        console.log(`✅ Uploaded reading for device ${device.id}`);
-      }
+      await insertReading(reading.device_id, reading);
+      console.log('✅ Uploaded to Supabase');
     } catch (err) {
       console.error('❌ Error in agent loop:', err);
     }
