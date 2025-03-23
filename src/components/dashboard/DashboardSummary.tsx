@@ -10,6 +10,7 @@ import FaultSummaryCard from './FaultSummaryCard';
 import { useFaults } from '@/hooks/useFaults';
 import { createClient } from '@supabase/supabase-js';
 import LiveTelemetryChart from './LiveTelemetryChart';
+import AlertSummaryCard from './AlertSummaryCard';
 
 // Initialize Supabase client with environment variables
 const supabase = createClient(
@@ -134,7 +135,10 @@ const DashboardSummary = () => {
         <LiveTelemetryChart deviceId="your-device-id" metric="power" unit="kW" />
         <LiveTelemetryChart deviceId="your-device-id" metric="voltage" unit="V" />
       </div>
-
+      {/* Add after Metrics row */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <AlertSummaryCard />
+      </div>
 
       
       {/* Modbus / Quality */}
