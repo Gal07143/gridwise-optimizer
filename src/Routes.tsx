@@ -21,6 +21,7 @@ import EnergyFlow from '@/pages/EnergyFlow';
 import MicrogridControl from '@/pages/MicrogridControl';
 import SystemStatus from '@/pages/SystemStatus';
 import Security from '@/pages/Security';
+import MQTTIntegration from '@/pages/MQTTIntegration';
 
 // Integration pages
 import IntegrationsHome from '@/pages/integrations/IntegrationsHome';
@@ -116,6 +117,11 @@ const AppRoutes: React.FC = () => {
       <Route path="/integrations/model/:modelId/edit" element={
         <ProtectedRoute>
           <EditDeviceModelPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/integrations/mqtt" element={
+        <ProtectedRoute>
+          <MQTTIntegration />
         </ProtectedRoute>
       } />
       

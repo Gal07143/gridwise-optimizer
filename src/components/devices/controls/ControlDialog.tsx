@@ -1,94 +1,91 @@
 
-import React from 'react';
-import { DeviceType } from '@/types/energy';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import SolarControls from './SolarControls';
-import WindControls from './WindControls';
-import BatteryControls from './BatteryControls';
-import LoadControls from './LoadControls';
-import { Sun, Wind, Battery, Bolt } from 'lucide-react';
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from 'sonner';
 
-interface ControlDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
-  deviceType: DeviceType;
-  deviceId: string;
+interface Action {
+  label: string;
+  inputType?: string;
+  onSubmit: (value?: any) => void;
 }
 
-const getDialogTitle = (deviceType: DeviceType) => {
-  switch (deviceType) {
-    case 'solar': return 'Solar Array Controls';
-    case 'wind': return 'Wind Turbine Controls';
-    case 'battery': return 'Battery System Controls';
-    case 'load': return 'Load Management Controls';
-    default: return 'Device Controls';
-  }
-};
-
-const getDialogIcon = (deviceType: DeviceType) => {
-  switch (deviceType) {
-    case 'solar': return <Sun className="h-6 w-6 text-yellow-500" />;
-    case 'wind': return <Wind className="h-6 w-6 text-blue-500" />;
-    case 'battery': return <Battery className="h-6 w-6 text-green-500" />;
-    case 'load': return <Bolt className="h-6 w-6 text-orange-500" />;
-    default: return null;
-  }
-};
-
-const getDialogDescription = (deviceType: DeviceType) => {
-  switch (deviceType) {
-    case 'solar': return 'Configure and control solar array operations';
-    case 'wind': return 'Manage wind turbine settings and operations';
-    case 'battery': return 'Control battery charging and discharging operations';
-    case 'load': return 'Manage load balancing and power consumption';
-    default: return 'Manage device settings and operations';
-  }
-};
+interface ControlDialogProps {
+  title: string;
+  description: string;
+  actions: Action[];
+}
 
 const ControlDialog: React.FC<ControlDialogProps> = ({ 
-  isOpen, 
-  onClose, 
-  deviceType, 
-  deviceId 
+  title, 
+  description, 
+  actions 
 }) => {
-  const renderControls = () => {
-    switch (deviceType) {
-      case 'solar':
-        return <SolarControls deviceId={deviceId} />;
-      case 'wind':
-        return <WindControls deviceId={deviceId} />;
-      case 'battery':
-        return <BatteryControls deviceId={deviceId} />;
-      case 'load':
-        return <LoadControls deviceId={deviceId} />;
-      default:
-        return <div>No controls available for this device type</div>;
+  const [inputValues, setInputValues] = useState<Record<string, string>>({});
+
+  const handleInputChange = (index: number, value: string) => {
+    setInputValues(prev => ({
+      ...prev,
+      [index]: value
+    }));
+  };
+
+  const handleAction = (index: number, action: Action) => {
+    if (action.inputType) {
+      const value = inputValues[index] || '';
+      action.onSubmit(value);
+      
+      // Show toast
+      toast.success(`Command sent: ${action.label} with value ${value}`);
+    } else {
+      action.onSubmit();
+      
+      // Show toast
+      toast.success(`Command sent: ${action.label}`);
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-3xl">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-xl">
-            {getDialogIcon(deviceType)}
-            {getDialogTitle(deviceType)}
-          </DialogTitle>
-          <DialogDescription>
-            {getDialogDescription(deviceType)}
-          </DialogDescription>
-        </DialogHeader>
-        <div className="py-4">
-          {renderControls()}
+    <Card className="w-full max-w-md mx-auto">
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+        <CardDescription>{description}</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {actions.map((action, index) => (
+          <div key={index} className="space-y-2">
+            <div className="flex justify-between items-center">
+              <label className="text-sm font-medium">{action.label}</label>
+            </div>
+            
+            <div className="flex space-x-2">
+              {action.inputType && (
+                <Input
+                  type={action.inputType}
+                  value={inputValues[index] || ''}
+                  onChange={(e) => handleInputChange(index, e.target.value)}
+                  className="flex-1"
+                />
+              )}
+              
+              <Button 
+                onClick={() => handleAction(index, action)}
+                variant={action.inputType ? "default" : "outline"}
+                className="min-w-[80px]"
+              >
+                {action.inputType ? "Apply" : "Execute"}
+              </Button>
+            </div>
+          </div>
+        ))}
+      </CardContent>
+      <CardFooter className="flex justify-end">
+        <div className="text-xs text-muted-foreground">
+          Changes may take a few moments to apply to the device
         </div>
-      </DialogContent>
-    </Dialog>
+      </CardFooter>
+    </Card>
   );
 };
 

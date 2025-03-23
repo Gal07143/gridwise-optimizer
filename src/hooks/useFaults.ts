@@ -1,5 +1,6 @@
+
 import { useEffect, useState } from 'react';
-import { supabase } from '@/supabase';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Fault {
   id: string;

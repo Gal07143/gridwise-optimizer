@@ -18,3 +18,4 @@ export {
 // Export devices services
 export * from './getAllDevices';
 export * from './createDevice';
+export * from './readingsService';
