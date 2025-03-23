@@ -1,5 +1,5 @@
 {
-  "name": "gridwise-optemizer",
+  "name": "your-project-name",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -9,10 +9,10 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "start": "node modbus-agent/modbusReader.js"
+    "start": "node modbus-agent/modbusReader.js"  // Add start script to run the agent
   },
   "dependencies": {
-    "modbus-serial": "^9.0.6",
+    "modbus-serial": "^9.0.6", // Ensure modbus-serial is here
     "@hookform/resolvers": "^3.9.0",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.1",
