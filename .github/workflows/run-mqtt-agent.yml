@@ -1,17 +1,31 @@
-name: Run MQTT Agent
+name: Deploy and Run MQTT Agent
 
 on:
   push:
     paths:
       - 'mqtt-agent/**'
-      - '.github/workflows/run-mqtt-agent.yml'
+      - '.github/workflows/deploy-mqtt-agent.yml'
 
 jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📦 Checkout Code
+        uses: actions/checkout@v3
+
+      - name: 🔐 Set Supabase API Key
+        run: echo "SUPABASE_API_KEY=${{ secrets.SUPABASE_API_KEY }}" >> $GITHUB_ENV
+
+      - name: 🏗️ Build MQTT Agent
+        run: |
+          cd mqtt-agent
+          npm install
+          node publish.js
+
   run-agent:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout Code
+      - name: 📦 Checkout Code
         uses: actions/checkout@v3
 
       - name: Set up Docker
