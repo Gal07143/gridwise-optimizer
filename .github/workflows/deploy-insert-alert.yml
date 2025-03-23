@@ -1,0 +1,27 @@
+name: 🚀 Deploy insert-alert Function
+
+on:
+  push:
+    paths:
+      - 'supabase/functions/insert-alert/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🧾 Checkout Code
+        uses: actions/checkout@v3
+
+      - name: 🛠 Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: 📦 Install Supabase CLI
+        run: npm install -g supabase
+
+      - name: 🔐 Login to Supabase
+        run: supabase login --token ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      - name: 🚀 Deploy Edge Function (insert-alert)
+        run: supabase functions deploy insert-alert --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
