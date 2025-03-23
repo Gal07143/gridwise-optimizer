@@ -27,8 +27,26 @@ const TelemetryCard = () => {
         .limit(1)
         .single();
 
-      if (!error) {
-        setData(latestData);
+      if (!error && latestData) {
+        // Transform the data to match our TelemetryData interface
+        const telemetryData: TelemetryData = {
+          device_id: latestData.device_id,
+          // Use received_at or created_at as timestamp
+          timestamp: latestData.timestamp || latestData.received_at || latestData.created_at,
+          // Extract telemetry values from the message if it's in JSON format
+          ...(typeof latestData.message === 'object' 
+            ? latestData.message 
+            : typeof latestData.message === 'string' 
+              ? JSON.parse(latestData.message) 
+              : {}),
+          // Also check for direct properties on the record
+          voltage: latestData.voltage,
+          current: latestData.current,
+          power: latestData.power,
+          temperature: latestData.temperature
+        };
+        
+        setData(telemetryData);
       }
     };
 
