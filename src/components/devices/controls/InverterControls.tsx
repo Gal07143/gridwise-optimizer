@@ -1,52 +1,89 @@
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/components/ui/use-toast';
 
 interface InverterControlsProps {
   deviceId: string;
 }
 
 const InverterControls: React.FC<InverterControlsProps> = ({ deviceId }) => {
-  const [powerLimit, setPowerLimit] = useState(5000);
+  const [isOn, setIsOn] = useState<boolean>(true);
+  const [mode, setMode] = useState<string>('grid-tied');
+  const [power, setPower] = useState<number>(5);
+  const { toast } = useToast();
 
-  const handleStart = () => {
-    console.log(`Start inverter ${deviceId}`);
-    // TODO: Call backend API
+  const handleToggle = () => {
+    setIsOn(!isOn);
+    toast({
+      title: `Inverter ${isOn ? 'turned off' : 'turned on'}`,
+      description: `Device ID: ${deviceId}`,
+    });
   };
 
-  const handleStop = () => {
-    console.log(`Stop inverter ${deviceId}`);
-    // TODO: Call backend API
+  const handleModeChange = (value: string) => {
+    setMode(value);
+    toast({
+      title: 'Inverter mode changed',
+      description: `Mode set to ${value}`,
+    });
   };
 
-  const handlePowerChange = () => {
-    console.log(`Set inverter ${deviceId} power to ${powerLimit}W`);
-    // TODO: Send power limit to backend
+  const handlePowerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPower(Number(e.target.value));
+  };
+
+  const handleReset = () => {
+    toast({
+      title: 'Fault Reset',
+      description: 'Inverter fault has been reset',
+    });
   };
 
   return (
-    <Card>
+    <Card className="shadow-md">
       <CardHeader>
         <CardTitle>Inverter Controls</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex gap-4">
-          <Button onClick={handleStart}>Start</Button>
-          <Button onClick={handleStop} variant="destructive">Stop</Button>
+      <CardContent className="space-y-6">
+        <div className="flex items-center justify-between">
+          <Label>Power Switch</Label>
+          <Switch checked={isOn} onCheckedChange={handleToggle} />
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="power">Set Output Power (W)</label>
-          <Input
-            type="number"
-            id="power"
-            value={powerLimit}
-            onChange={(e) => setPowerLimit(Number(e.target.value))}
-            className="w-48"
-          />
-          <Button onClick={handlePowerChange}>Apply Power Limit</Button>
+          <Label htmlFor="mode">Operation Mode</Label>
+          <Select value={mode} onValueChange={handleModeChange}>
+            <SelectTrigger id="mode">
+              <SelectValue placeholder="Select mode" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="grid-tied">Grid-Tied</SelectItem>
+              <SelectItem value="off-grid">Off-Grid</SelectItem>
+              <SelectItem value="hybrid">Hybrid</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="power">Power Output (kW)</Label>
+          <Input
+            id="power"
+            type="number"
+            min={0}
+            step={0.1}
+            value={power}
+            onChange={handlePowerChange}
+          />
+        </div>
+
+        <Button variant="destructive" onClick={handleReset}>
+          Reset Fault
+        </Button>
       </CardContent>
     </Card>
   );
