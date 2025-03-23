@@ -4,8 +4,13 @@ import { PanelTop, Wind, Sun, Battery, Bolt } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { DeviceType } from '@/types/energy';
-import ControlDialog from '@/components/devices/controls/ControlDialog';
 import { toast } from 'sonner';
+
+// Import specific device controls
+import WindControls from '@/components/devices/controls/WindControls';
+import SolarControls from '@/components/devices/controls/SolarControls';
+import BatteryControls from '@/components/devices/controls/BatteryControls';
+import LoadControls from '@/components/devices/controls/LoadControls';
 
 const DeviceControlsPanel: React.FC = () => {
   const [activeDialog, setActiveDialog] = useState<{
@@ -29,6 +34,24 @@ const DeviceControlsPanel: React.FC = () => {
 
   const closeControlDialog = () => {
     setActiveDialog(prev => ({ ...prev, isOpen: false }));
+  };
+
+  // Render the appropriate control component based on device type
+  const renderDeviceControl = () => {
+    const { deviceType, deviceId } = activeDialog;
+    
+    switch (deviceType) {
+      case 'wind':
+        return <WindControls deviceId={deviceId} />;
+      case 'solar':
+        return <SolarControls deviceId={deviceId} />;
+      case 'battery':
+        return <BatteryControls deviceId={deviceId} />;
+      case 'load':
+        return <LoadControls deviceId={deviceId} />;
+      default:
+        return null;
+    }
   };
 
   return (
@@ -140,12 +163,17 @@ const DeviceControlsPanel: React.FC = () => {
           </Button>
         </div>
         
-        <ControlDialog 
-          isOpen={activeDialog.isOpen}
-          onClose={closeControlDialog}
-          deviceType={activeDialog.deviceType}
-          deviceId={activeDialog.deviceId}
-        />
+        {/* Conditionally render device control dialog */}
+        {activeDialog.isOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+            <div className="bg-background rounded-lg shadow-lg w-full max-w-md">
+              <div className="p-6">
+                {renderDeviceControl()}
+                <Button className="mt-4 w-full" onClick={closeControlDialog}>Close</Button>
+              </div>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
