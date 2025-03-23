@@ -1,0 +1,15 @@
+
+{
+  "name": "mqtt-agent",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node publish.js",
+    "subscribe": "node subscribe.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.0.0",
+    "dotenv": "^16.0.0",
+    "mqtt": "^5.0.0"
+  }
+}
