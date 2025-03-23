@@ -1,7 +1,9 @@
+
 // src/components/dashboard/TelemetryCard.tsx
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatDistanceToNow } from 'date-fns';
+import { supabase } from '@/integrations/supabase/client'; // Import the shared client instead
 
 interface TelemetryData {
   device_id: string;
@@ -17,9 +19,17 @@ const TelemetryCard = () => {
 
   useEffect(() => {
     const fetchTelemetry = async () => {
-      const res = await fetch('/api/telemetry/latest');
-      const json = await res.json();
-      setData(json.data);
+      // Use the imported supabase client
+      const { data: latestData, error } = await supabase
+        .from('telemetry_log')
+        .select('*')
+        .order('timestamp', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (!error) {
+        setData(latestData);
+      }
     };
 
     fetchTelemetry();

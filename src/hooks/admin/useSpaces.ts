@@ -1,5 +1,7 @@
+
 // /src/hooks/admin/useSpaces.ts
 import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client'; // Import the shared client
 
 // minimal example to fetch spaces
 export function useSpaces() {
@@ -9,15 +11,13 @@ export function useSpaces() {
   useEffect(() => {
     async function fetchSpaces() {
       try {
-        const url = 'https://<YOUR_PROJECT>.supabase.co/rest/v1/spaces?select=*';
-        const res = await fetch(url, {
-          headers: {
-            apikey: '<YOUR_ANON_KEY>',
-            Authorization: 'Bearer <YOUR_ANON_KEY>',
-          },
-        });
-        const data = await res.json();
-        setSpaces(data);
+        const { data, error } = await supabase
+          .from('spaces')
+          .select('*');
+          
+        if (!error && data) {
+          setSpaces(data);
+        }
       } finally {
         setLoading(false);
       }
