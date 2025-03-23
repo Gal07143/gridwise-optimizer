@@ -23,17 +23,15 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <AuthProvider>
-            <SiteProvider>
-              <AppRoutes />
-              <Toaster />
-              <SonnerToaster position="top-right" />
-            </SiteProvider>
-          </AuthProvider>
-        </ThemeProvider>
-      </BrowserRouter>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <AuthProvider>
+          <SiteProvider>
+            <AppRoutes />
+            <Toaster />
+            <SonnerToaster position="top-right" />
+          </SiteProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

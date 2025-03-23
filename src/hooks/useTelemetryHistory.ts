@@ -44,7 +44,7 @@ export const useTelemetryHistory = (deviceId: string, limitMinutes = 60) => {
           let enhancedRecord: TelemetryHistoryItem = { 
             ...record,
             // Ensure timestamp exists, falling back to other available time fields
-            timestamp: record.timestamp || record.received_at || record.created_at
+            timestamp: record.received_at || record.created_at
           };
           
           // Process message field if it exists
