@@ -1,22 +1,25 @@
+// types/system.ts
 
-export type ComponentStatus = 'operational' | 'degraded' | 'down' | 'maintenance';
+export type ComponentStatus = 'operational' | 'degraded' | 'maintenance' | 'down';
+
+export type SystemEventSeverity = 'info' | 'warning' | 'error' | 'critical';
 
 export interface SystemComponent {
   id: string;
   component_name: string;
   status: ComponentStatus;
   details: string;
-  latency: number;
-  last_restart: string;
-  updated_at: string;
+  latency: number;         // in milliseconds
+  last_restart: string;    // ISO timestamp
+  updated_at: string;      // ISO timestamp
 }
 
 export interface SystemEvent {
   id: string;
-  timestamp: string;
-  severity: 'info' | 'warning' | 'error';
+  timestamp: string;              // ISO string
+  severity: SystemEventSeverity;  // includes 'critical' now
   message: string;
   component_id: string | null;
-  component_name?: string;
+  component_name?: string;        // optional override display
   acknowledged: boolean;
 }
