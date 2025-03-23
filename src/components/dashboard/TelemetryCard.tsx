@@ -20,33 +20,42 @@ const TelemetryCard = () => {
   useEffect(() => {
     const fetchTelemetry = async () => {
       // Use the imported supabase client
-      const { data: latestData, error } = await supabase
+      const { data: telemetryRecord, error } = await supabase
         .from('telemetry_log')
         .select('*')
         .order('timestamp', { ascending: false })
         .limit(1)
         .single();
 
-      if (!error && latestData) {
-        // Transform the data to match our TelemetryData interface
-        const telemetryData: TelemetryData = {
-          device_id: latestData.device_id,
-          // Use received_at or created_at as timestamp
-          timestamp: latestData.timestamp || latestData.received_at || latestData.created_at,
-          // Extract telemetry values from the message if it's in JSON format
-          ...(typeof latestData.message === 'object' 
-            ? latestData.message 
-            : typeof latestData.message === 'string' 
-              ? JSON.parse(latestData.message) 
-              : {}),
-          // Also check for direct properties on the record
-          voltage: latestData.voltage,
-          current: latestData.current,
-          power: latestData.power,
-          temperature: latestData.temperature
-        };
-        
-        setData(telemetryData);
+      if (!error && telemetryRecord) {
+        try {
+          // Extract message data - it might be a string that needs parsing or already a JSON object
+          let messageData = {};
+          if (telemetryRecord.message) {
+            if (typeof telemetryRecord.message === 'string') {
+              try {
+                messageData = JSON.parse(telemetryRecord.message);
+              } catch (e) {
+                console.error('Failed to parse message:', e);
+              }
+            } else if (typeof telemetryRecord.message === 'object') {
+              messageData = telemetryRecord.message;
+            }
+          }
+
+          // Create telemetry data object, prioritizing fields from the message
+          const telemetryData: TelemetryData = {
+            device_id: telemetryRecord.device_id,
+            // Use the first available timestamp field
+            timestamp: telemetryRecord.received_at || telemetryRecord.created_at,
+            // Add values from message or directly from record if they exist
+            ...messageData
+          };
+          
+          setData(telemetryData);
+        } catch (e) {
+          console.error('Error processing telemetry data:', e);
+        }
       }
     };
 
