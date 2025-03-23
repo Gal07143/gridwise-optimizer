@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Zap, Battery, Sun, Wind, Activity } from 'lucide-react';
 import MetricsCard from '@/components/dashboard/MetricsCard';
@@ -12,7 +11,7 @@ import { createClient } from '@supabase/supabase-js';
 import LiveTelemetryChart from './LiveTelemetryChart';
 import AlertSummaryCard from './AlertSummaryCard';
 
-// Initialize Supabase client with environment variables
+// ✅ Initialize Supabase client
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL || '',
   import.meta.env.VITE_SUPABASE_ANON_KEY || ''
@@ -23,8 +22,8 @@ const DashboardSummary = () => {
   const [telemetry, setTelemetry] = useState<any | null>(null);
 
   useEffect(() => {
-    // ✅ Fetch latest telemetry_log record
-    const fetchTelemetry = async () => {
+    // ✅ Fetch initial telemetry
+    const fetchInitialTelemetry = async () => {
       const { data, error } = await supabase
         .from('telemetry_log')
         .select('*')
@@ -32,24 +31,37 @@ const DashboardSummary = () => {
         .limit(1)
         .single();
 
-      if (!error) {
+      if (!error && data) {
         setTelemetry(data);
       }
     };
 
-    fetchTelemetry();
-    const interval = setInterval(fetchTelemetry, 5000); // Refresh every 5 seconds
+    fetchInitialTelemetry();
 
-    return () => clearInterval(interval);
+    // ✅ Set up realtime subscription
+    const channel = supabase
+      .channel('telemetry_channel')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'telemetry_log' },
+        (payload) => {
+          setTelemetry(payload.new);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   return (
     <div className="space-y-6">
-      {/* Section 1: Metrics Cards */}
+      {/* Metrics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <MetricsCard 
           title="Current Power Flow"
-          value={42.8}
+          value={telemetry ? telemetry.power : '—'}
           unit="kW"
           changeValue={8.2}
           changeType="increase"
@@ -93,7 +105,7 @@ const DashboardSummary = () => {
         />
       </div>
 
-      {/* Section 1.5: Live Telemetry Log Widget */}
+      {/* Live Telemetry Metrics */}
       {telemetry && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           <MetricsCard 
@@ -130,17 +142,18 @@ const DashboardSummary = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <FaultSummaryCard faults={faults} />
       </div>
-      {/* Section: Live Charts (Power, Voltage, etc.) */}
+
+      {/* Live Telemetry Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <LiveTelemetryChart deviceId="your-device-id" metric="power" unit="kW" />
         <LiveTelemetryChart deviceId="your-device-id" metric="voltage" unit="V" />
       </div>
-      {/* Add after Metrics row */}
+
+      {/* Alert Summary */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         <AlertSummaryCard />
       </div>
 
-      
       {/* Modbus / Quality */}
       <div className="space-y-4 mb-8">
         <ModbusCard />
@@ -155,6 +168,7 @@ const DashboardSummary = () => {
         <TariffHistoryCard />
       </div>
 
+      {/* Device Management */}
       <div className="mt-8">
         <DeviceManagement />
       </div>
