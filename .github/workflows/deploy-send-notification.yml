@@ -1,0 +1,18 @@
+# .github/workflows/deploy-send-notification.yml
+name: Deploy Send Notification Function
+
+on:
+  push:
+    paths:
+      - "supabase/functions/send-notification/**"
+      - ".github/workflows/deploy-send-notification.yml"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: supabase/setup-cli@v1
+        with:
+          supabase-token: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      - run: supabase functions deploy send-notification
