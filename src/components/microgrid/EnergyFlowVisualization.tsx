@@ -252,9 +252,6 @@ const EnergyFlowVisualization: React.FC<EnergyFlowVisualizationProps> = ({ micro
       
       <CardContent className="pt-6 pb-4">
         <div className="relative w-full h-[360px] rounded-xl backdrop-blur-sm bg-white dark:bg-slate-900/80 border border-slate-200/50 dark:border-slate-700/50 p-4 overflow-hidden shadow-sm">
-          {/* Background grid pattern */}
-          <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
-          
           {/* Net energy indicator */}
           <div className="absolute top-4 right-4 z-30">
             <div className={`px-3 py-1.5 rounded-full flex items-center gap-2 ${

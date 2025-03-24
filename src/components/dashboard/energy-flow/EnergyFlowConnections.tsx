@@ -58,15 +58,15 @@ const EnergyFlowConnections: React.FC<EnergyFlowConnectionsProps> = ({ connectio
   const getConnectionColor = (from: string): string => {
     switch (from) {
       case 'solar':
-        return "var(--energy-solar, rgba(234, 179, 8, 0.6))";
+        return "var(--energy-solar, rgba(234, 179, 8, 0.8))";
       case 'wind':
-        return "var(--energy-wind, rgba(59, 130, 246, 0.6))";
+        return "var(--energy-wind, rgba(59, 130, 246, 0.8))";
       case 'battery':
-        return "var(--energy-battery, rgba(168, 85, 247, 0.6))";
+        return "var(--energy-battery, rgba(168, 85, 247, 0.8))";
       case 'grid':
-        return "var(--energy-grid, rgba(220, 38, 38, 0.6))";
+        return "var(--energy-grid, rgba(220, 38, 38, 0.8))";
       default:
-        return "rgba(100, 116, 139, 0.6)";
+        return "rgba(100, 116, 139, 0.7)";
     }
   };
 
@@ -97,7 +97,7 @@ const EnergyFlowConnections: React.FC<EnergyFlowConnectionsProps> = ({ connectio
               stroke="white"
               strokeWidth={strokeWidth * 0.6}
               strokeDasharray="10,15"
-              opacity={0.7}
+              opacity={0.8}
               className="animate-flow"
             />
             
@@ -110,7 +110,7 @@ const EnergyFlowConnections: React.FC<EnergyFlowConnectionsProps> = ({ connectio
                   fill="none"
                   stroke="none"
                 />
-                <text dy={-5} className="text-[10px] font-medium fill-slate-700 dark:fill-slate-200">
+                <text dy={-5} className="text-[10px] font-semibold fill-slate-700 dark:fill-slate-200 drop-shadow-sm">
                   <textPath
                     href={`#flow-path-${connection.from}-${connection.to}-${index}`}
                     startOffset="50%"

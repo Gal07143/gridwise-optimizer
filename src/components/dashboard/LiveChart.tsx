@@ -20,6 +20,7 @@ interface LiveChartProps {
   gradientTo?: string;
   className?: string;
   children?: React.ReactNode;
+  animationDelay?: string;
 }
 
 const LiveChart: React.FC<LiveChartProps> = ({
@@ -35,11 +36,12 @@ const LiveChart: React.FC<LiveChartProps> = ({
   gradientFrom,
   gradientTo,
   className,
-  children
+  children,
+  animationDelay
 }) => {
   const renderChart = () => {
     const commonProps = {
-      width,
+      width: typeof width === 'string' ? undefined : width,
       height,
       data,
       margin: { top: 10, right: 10, left: 10, bottom: 10 }
@@ -48,7 +50,7 @@ const LiveChart: React.FC<LiveChartProps> = ({
     // Common props for all chart types
     const chartContent = (
       <>
-        {showGrid && <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.1)" />}
+        {showGrid && <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.1)" opacity={0.5} />}
         {showAxis && (
           <>
             <XAxis 
@@ -125,7 +127,7 @@ const LiveChart: React.FC<LiveChartProps> = ({
   };
 
   return (
-    <div className={className}>
+    <div className={className} style={animationDelay ? { animationDelay } : undefined}>
       <ResponsiveContainer width="100%" height={height}>
         {renderChart()}
       </ResponsiveContainer>

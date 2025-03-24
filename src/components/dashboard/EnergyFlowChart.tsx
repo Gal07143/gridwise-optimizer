@@ -55,7 +55,7 @@ const EnergyFlowChartContent: React.FC<EnergyFlowChartProps> = ({ className, ani
       
       <div className="flex flex-col md:flex-row gap-6">
         <div className="w-full md:w-2/3">
-          <div className="relative w-full h-[350px] overflow-hidden rounded-xl backdrop-blur-sm bg-gradient-to-br from-slate-50/80 to-slate-100/50 dark:from-slate-800/30 dark:to-slate-900/20 border border-slate-200/50 dark:border-slate-700/50 p-4 grid-pattern shadow-sm">
+          <div className="relative w-full h-[350px] overflow-hidden rounded-xl backdrop-blur-sm bg-gradient-to-br from-slate-50/80 to-slate-100/50 dark:from-slate-800/30 dark:to-slate-900/20 border border-slate-200/50 dark:border-slate-700/50 p-4 shadow-sm">
             {/* Real-time metrics at the top */}
             <div className="absolute top-4 left-0 right-0 flex justify-center gap-4 px-4 z-10">
               <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm px-4 py-2 rounded-full flex items-center gap-2 text-sm shadow-sm">

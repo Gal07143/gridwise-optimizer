@@ -1,12 +1,13 @@
 
 import React from 'react';
-import { Zap } from 'lucide-react';
+import { Zap, Info } from 'lucide-react';
 import AppLayout from '@/components/layout/AppLayout';
 import EnergyFlowChart from '@/components/dashboard/EnergyFlowChart';
 import { useSite } from '@/contexts/SiteContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link, useNavigate } from 'react-router-dom';
+import { Main } from '@/components/ui/main';
 
 const EnergyFlow = () => {
   const { currentSite } = useSite();
@@ -14,7 +15,7 @@ const EnergyFlow = () => {
 
   return (
     <AppLayout>
-      <div>
+      <Main>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
           <div>
             <h1 className="text-2xl font-semibold mb-1">Energy Flow</h1>
@@ -64,19 +65,19 @@ const EnergyFlow = () => {
                 <ul className="space-y-2">
                   <li className="flex justify-between items-center">
                     <span className="text-sm">Solar Production</span>
-                    <span className="font-semibold text-energy-green">75.2 kW</span>
+                    <span className="font-semibold text-energy-green">5.2 kW</span>
                   </li>
                   <li className="flex justify-between items-center">
                     <span className="text-sm">Wind Production</span>
-                    <span className="font-semibold text-energy-blue">45.8 kW</span>
+                    <span className="font-semibold text-energy-blue">1.8 kW</span>
                   </li>
                   <li className="flex justify-between items-center">
                     <span className="text-sm">Grid Import</span>
-                    <span className="font-semibold text-slate-500">32.1 kW</span>
+                    <span className="font-semibold text-slate-500">0.3 kW</span>
                   </li>
                   <li className="flex justify-between items-center pt-2 border-t border-slate-200/50 dark:border-slate-700/50 mt-2">
                     <span className="text-sm font-medium">Total Generation</span>
-                    <span className="font-semibold text-primary">153.1 kW</span>
+                    <span className="font-semibold text-primary">7.0 kW</span>
                   </li>
                 </ul>
               </CardContent>
@@ -92,19 +93,19 @@ const EnergyFlow = () => {
                 <ul className="space-y-2">
                   <li className="flex justify-between items-center">
                     <span className="text-sm">Battery Charge</span>
-                    <span className="font-semibold text-energy-blue">68%</span>
+                    <span className="font-semibold text-energy-blue">65%</span>
                   </li>
                   <li className="flex justify-between items-center">
                     <span className="text-sm">Stored Energy</span>
-                    <span className="font-semibold text-energy-blue">120 kWh</span>
+                    <span className="font-semibold text-energy-blue">3.5 kW</span>
                   </li>
                   <li className="flex justify-between items-center">
                     <span className="text-sm">Input/Output</span>
-                    <span className="font-semibold text-energy-green">+6.9 kW</span>
+                    <span className="font-semibold text-energy-green">+2.2 kW</span>
                   </li>
                   <li className="flex justify-between items-center pt-2 border-t border-slate-200/50 dark:border-slate-700/50 mt-2">
                     <span className="text-sm font-medium">Remaining Capacity</span>
-                    <span className="font-semibold text-primary">57 kWh</span>
+                    <span className="font-semibold text-primary">7.1 kWh</span>
                   </li>
                 </ul>
               </CardContent>
@@ -120,26 +121,26 @@ const EnergyFlow = () => {
                 <ul className="space-y-2">
                   <li className="flex justify-between items-center">
                     <span className="text-sm">Building Load</span>
-                    <span className="font-semibold text-energy-purple">102.7 kW</span>
+                    <span className="font-semibold text-energy-purple">3.8 kW</span>
                   </li>
                   <li className="flex justify-between items-center">
                     <span className="text-sm">EV Charging</span>
-                    <span className="font-semibold text-energy-purple">48.3 kW</span>
+                    <span className="font-semibold text-energy-purple">1.5 kW</span>
                   </li>
                   <li className="flex justify-between items-center">
-                    <span className="text-sm">Grid Export</span>
-                    <span className="font-semibold text-slate-500">8.1 kW</span>
+                    <span className="text-sm">Devices</span>
+                    <span className="font-semibold text-slate-500">1.2 kW</span>
                   </li>
                   <li className="flex justify-between items-center pt-2 border-t border-slate-200/50 dark:border-slate-700/50 mt-2">
                     <span className="text-sm font-medium">Total Consumption</span>
-                    <span className="font-semibold text-primary">159.1 kW</span>
+                    <span className="font-semibold text-primary">6.5 kW</span>
                   </li>
                 </ul>
               </CardContent>
             </Card>
           </div>
         </div>
-      </div>
+      </Main>
     </AppLayout>
   );
 };
