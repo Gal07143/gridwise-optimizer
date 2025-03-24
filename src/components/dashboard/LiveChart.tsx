@@ -21,6 +21,11 @@ interface LiveChartProps {
   className?: string;
   children?: React.ReactNode;
   animationDelay?: string;
+  noDataText?: string;
+  labelKey?: string;
+  valueKey?: string;
+  secondaryValueKey?: string;
+  secondaryColor?: string;
 }
 
 const LiveChart: React.FC<LiveChartProps> = ({
@@ -37,7 +42,12 @@ const LiveChart: React.FC<LiveChartProps> = ({
   gradientTo,
   className,
   children,
-  animationDelay
+  animationDelay,
+  noDataText = 'No data available',
+  labelKey = 'time',
+  valueKey = 'value',
+  secondaryValueKey,
+  secondaryColor = 'rgba(239, 68, 68, 1)'
 }) => {
   // Generate placeholder data if data is empty
   const chartData = data.length > 0 ? data : [
@@ -47,6 +57,18 @@ const LiveChart: React.FC<LiveChartProps> = ({
     { time: '18:00', value: 0 },
     { time: '24:00', value: 0 }
   ];
+
+  // Check if we actually have meaningful data
+  const hasRealData = data.length > 0 && data.some(item => item[valueKey] !== 0 && item[valueKey] !== null && item[valueKey] !== undefined);
+
+  // If we don't have any real data, show a no data message
+  if (!hasRealData && data.length === 0) {
+    return (
+      <div className={`flex items-center justify-center h-${height} ${className}`} style={animationDelay ? { animationDelay } : undefined}>
+        <div className="text-muted-foreground text-sm">{noDataText}</div>
+      </div>
+    );
+  }
 
   const renderChart = () => {
     const commonProps = {
@@ -63,7 +85,7 @@ const LiveChart: React.FC<LiveChartProps> = ({
         {showAxis && (
           <>
             <XAxis 
-              dataKey="time" 
+              dataKey={labelKey} 
               tick={{ fontSize: 10 }} 
               tickLine={false} 
               axisLine={{ stroke: 'rgba(0,0,0,0.1)' }} 
@@ -98,12 +120,22 @@ const LiveChart: React.FC<LiveChartProps> = ({
             {chartContent}
             <Area
               type="monotone"
-              dataKey="value"
+              dataKey={valueKey}
               stroke={color}
               fill={gradientFrom ? "url(#colorGradient)" : color}
               fillOpacity={gradientFrom ? 1 : 0.2}
               isAnimationActive={animated}
             />
+            {secondaryValueKey && (
+              <Area
+                type="monotone"
+                dataKey={secondaryValueKey}
+                stroke={secondaryColor}
+                fill={secondaryColor}
+                fillOpacity={0.1}
+                isAnimationActive={animated}
+              />
+            )}
           </AreaChart>
         );
       case 'bar':
@@ -111,10 +143,17 @@ const LiveChart: React.FC<LiveChartProps> = ({
           <BarChart {...commonProps}>
             {chartContent}
             <Bar
-              dataKey="value"
+              dataKey={valueKey}
               fill={color}
               isAnimationActive={animated}
             />
+            {secondaryValueKey && (
+              <Bar
+                dataKey={secondaryValueKey}
+                fill={secondaryColor}
+                isAnimationActive={animated}
+              />
+            )}
           </BarChart>
         );
       case 'line':
@@ -124,12 +163,22 @@ const LiveChart: React.FC<LiveChartProps> = ({
             {chartContent}
             <Line
               type="monotone"
-              dataKey="value"
+              dataKey={valueKey}
               stroke={color}
               strokeWidth={2}
-              dot={false}
+              dot={!hasRealData ? false : { r: 3 }}
               isAnimationActive={animated}
             />
+            {secondaryValueKey && (
+              <Line
+                type="monotone"
+                dataKey={secondaryValueKey}
+                stroke={secondaryColor}
+                strokeWidth={2}
+                dot={!hasRealData ? false : { r: 3 }}
+                isAnimationActive={animated}
+              />
+            )}
           </LineChart>
         );
     }

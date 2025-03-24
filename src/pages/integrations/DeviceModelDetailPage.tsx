@@ -1,581 +1,581 @@
 
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import AppLayout from '@/components/layout/AppLayout';
-import { 
-  Battery, ChevronLeft, Download, FileText, Cpu, HardDrive, Wifi, Zap, 
-  CheckCircle, XCircle, Globe, AlertCircle, Edit, Trash2, Plus, Copy
-} from 'lucide-react';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { fetchDeviceModelById } from '@/services/deviceModelsService';
 import { toast } from 'sonner';
-import { Skeleton } from '@/components/ui/skeleton';
 import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
-import { categoryNames } from '@/hooks/useDeviceModels';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  ChevronLeft, 
+  Download,
+  ExternalLink,
+  Edit,
+  BookOpen,
+  Loader2,
+  AlertTriangle,
+  CheckCircle2,
+  Cpu,
+  Wifi,
+  Cable,
+  Settings,
+  BarChart4
+} from 'lucide-react';
 
 const DeviceModelDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(true);
-  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview');
   
-  // Simulate loading delay
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 800);
-    
-    return () => clearTimeout(timer);
-  }, []);
+  const { data: device, isLoading, error } = useQuery({
+    queryKey: ['deviceModel', id],
+    queryFn: () => fetchDeviceModelById(id || ''),
+    enabled: !!id,
+  });
   
-  // Mocked device data - in a real app, this would be fetched from the API
-  const deviceModel = {
-    id: id || 'b1',
-    manufacturer: 'Tesla',
-    model: 'Powerwall 2',
-    category: 'batteries',
-    type: 'Lithium-ion Battery Storage',
-    protocol: 'Modbus TCP',
-    firmware: 'v1.45.2',
-    supported: true,
-    hasManual: true,
-    releaseDate: '2021-05-15',
-    capacity: '13.5 kWh',
-    nominalVoltage: '50V DC',
-    peakPower: '7 kW',
-    continuousPower: '5 kW',
-    dimensions: '115.6 x 75.3 x 15.5 cm',
-    weight: '114 kg',
-    warranty: '10 years',
-    efficiency: '90%',
-    connectionTypes: ['Ethernet', 'Wi-Fi'],
-    certifications: ['UL', 'IEC', 'CE'],
-    compatibilityNotes: 'Compatible with all Grid-tied solar systems',
-    description: 'The Powerwall 2 is a rechargeable home battery system that stores energy from solar or from the grid and makes it available on demand. It can power your home during the night or back up your home in the event of a power outage.'
-  };
-  
-  const getCategoryIcon = (category: string) => {
-    switch(category) {
-      case 'batteries':
-        return <Battery className="h-5 w-5" />;
-      case 'inverters':
-        return <Zap className="h-5 w-5" />;
-      case 'ev-chargers':
-        return <Zap className="h-5 w-5" />;
-      case 'meters':
-        return <Cpu className="h-5 w-5" />;
-      case 'controllers':
-        return <HardDrive className="h-5 w-5" />;
-      default:
-        return <Cpu className="h-5 w-5" />;
-    }
-  };
-  
-  const handleAddToSystem = () => {
-    toast.success('Device model added to your system');
-  };
-  
-  const handleCopyDeviceId = () => {
-    navigator.clipboard.writeText(id || 'b1');
-    toast.success('Device ID copied to clipboard');
-  };
-  
-  const handleDelete = () => {
-    setConfirmDeleteOpen(false);
-    toast.success('Device model deleted');
-    navigate('/integrations');
+  const handleEditDevice = () => {
+    navigate(`/integrations/device-model/${id}/edit`);
   };
   
   const handleDownloadManual = () => {
-    toast.success('Downloading manual...');
+    if (device?.has_manual) {
+      toast.success(`Downloading manual for ${device.name}...`);
+      // In a real scenario, this would download an actual file
+      setTimeout(() => {
+        toast.info(`${device.name} manual downloaded successfully`);
+      }, 1500);
+    } else {
+      toast.info("Manual not available for this device");
+    }
   };
   
-  const handleDownloadSpecs = () => {
-    toast.success('Downloading technical specifications...');
+  const handleDownloadDatasheet = () => {
+    if (device?.has_datasheet) {
+      toast.success(`Downloading datasheet for ${device.name}...`);
+      setTimeout(() => {
+        toast.info(`${device.name} datasheet downloaded successfully`);
+      }, 1500);
+    } else {
+      toast.info("Datasheet not available for this device");
+    }
   };
   
-  const handleVisitManufacturer = () => {
-    toast.info('Opening manufacturer website...');
+  const handleViewVideo = () => {
+    if (device?.has_video) {
+      toast.success(`Opening video for ${device.name}...`);
+      // In a real app, this would open a modal with the video
+      setTimeout(() => {
+        toast.info(`${device.name} installation video opened`);
+      }, 1500);
+    } else {
+      toast.info("Video not available for this device");
+    }
   };
   
   if (isLoading) {
     return (
       <AppLayout>
-        <div className="flex flex-col gap-6 p-6 animate-in fade-in duration-500">
-          <div className="flex items-center gap-2">
-            <Skeleton className="h-10 w-10" />
-            <Skeleton className="h-8 w-64" />
+        <div className="flex items-center justify-center h-screen">
+          <div className="flex flex-col items-center">
+            <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
+            <p className="mt-4 text-muted-foreground">Loading device model data...</p>
           </div>
-          <Skeleton className="h-[500px] w-full" />
         </div>
       </AppLayout>
     );
   }
   
-  return (
-    <AppLayout>
-      <div className="flex flex-col gap-6 p-6 animate-in fade-in duration-500">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" asChild>
-              <Link to={`/integrations/${deviceModel.category}`}>
+  if (error || !device) {
+    return (
+      <AppLayout>
+        <div className="p-6">
+          <div className="flex items-center mb-6">
+            <Button variant="ghost" size="icon" asChild className="mr-2">
+              <div onClick={() => navigate('/integrations')}>
                 <ChevronLeft className="h-5 w-5" />
-              </Link>
+              </div>
             </Button>
-            <h1 className="text-2xl font-semibold">{deviceModel.manufacturer} {deviceModel.model}</h1>
-            {deviceModel.supported ? (
-              <Badge className="bg-green-500">Supported</Badge>
-            ) : (
-              <Badge variant="outline" className="border-amber-500 text-amber-500">
-                <AlertCircle className="h-3 w-3 mr-1" />
-                Not Supported
-              </Badge>
-            )}
+            <h1 className="text-2xl font-semibold">Device Model Not Found</h1>
           </div>
           
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={handleCopyDeviceId}>
-              <Copy className="h-4 w-4 mr-2" />
-              Copy ID
-            </Button>
-            <Button variant="outline" size="sm" asChild>
-              <Link to={`/integrations/edit-device-model/${id}`}>
-                <Edit className="h-4 w-4 mr-2" />
-                Edit
-              </Link>
-            </Button>
-            <Dialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center py-8">
+                <AlertTriangle className="h-12 w-12 mx-auto text-amber-500 mb-4" />
+                <p className="text-muted-foreground mb-4">
+                  The device model you are looking for could not be found or you don't have permission to view it.
+                </p>
+                <Button asChild>
+                  <div onClick={() => navigate('/integrations')}>
+                    Back to Integrations
+                  </div>
                 </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Delete Device Model</DialogTitle>
-                  <DialogDescription>
-                    Are you sure you want to delete {deviceModel.manufacturer} {deviceModel.model}? This action cannot be undone.
-                  </DialogDescription>
-                </DialogHeader>
-                <DialogFooter className="mt-4">
-                  <Button variant="outline" onClick={() => setConfirmDeleteOpen(false)}>Cancel</Button>
-                  <Button variant="destructive" onClick={handleDelete}>Delete</Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </AppLayout>
+    );
+  }
+  
+  const getSupportBadge = (supportLevel: 'full' | 'partial' | 'none') => {
+    switch (supportLevel) {
+      case 'full':
+        return (
+          <Badge className="bg-green-500 hover:bg-green-600 gap-1 flex items-center">
+            <CheckCircle2 className="h-3 w-3" />
+            Fully Supported
+          </Badge>
+        );
+      case 'partial':
+        return (
+          <Badge className="bg-amber-500 hover:bg-amber-600 gap-1 flex items-center">
+            <AlertTriangle className="h-3 w-3" />
+            Partial Support
+          </Badge>
+        );
+      case 'none':
+        return (
+          <Badge variant="outline" className="gap-1 flex items-center text-muted-foreground">
+            <AlertTriangle className="h-3 w-3" />
+            Not Supported
+          </Badge>
+        );
+    }
+  };
+  
+  return (
+    <AppLayout>
+      <div className="p-6 animate-in fade-in duration-500">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+          <div className="flex items-center">
+            <Button variant="ghost" size="icon" asChild className="mr-2">
+              <div onClick={() => navigate('/integrations')}>
+                <ChevronLeft className="h-5 w-5" />
+              </div>
+            </Button>
+            <div>
+              <h1 className="text-2xl font-semibold">{device.name}</h1>
+              <div className="flex items-center text-muted-foreground">
+                <span className="capitalize">{device.device_type}</span>
+                <span className="mx-2">•</span>
+                <span>{device.manufacturer}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex mt-4 md:mt-0 gap-2">
+            <Button 
+              variant="outline" 
+              onClick={handleDownloadDatasheet}
+              className="flex items-center gap-2"
+              disabled={!device.has_datasheet}
+            >
+              <Download className="h-4 w-4" />
+              Datasheet
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              onClick={handleDownloadManual}
+              className="flex items-center gap-2"
+              disabled={!device.has_manual}
+            >
+              <BookOpen className="h-4 w-4" />
+              Manual
+            </Button>
+            
+            <Button 
+              onClick={handleEditDevice}
+              className="flex items-center gap-2"
+            >
+              <Edit className="h-4 w-4" />
+              Edit Device
+            </Button>
           </div>
         </div>
         
-        <p className="text-muted-foreground">
-          {deviceModel.description}
-        </p>
-        
-        <div className="flex flex-col lg:flex-row gap-6">
-          <div className="lg:w-2/3">
-            <Tabs defaultValue="overview">
-              <TabsList>
-                <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="technical">Technical Specs</TabsTrigger>
-                <TabsTrigger value="compatibility">Compatibility</TabsTrigger>
-                <TabsTrigger value="firmware">Firmware</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="overview" className="space-y-6 mt-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Basic Information</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium">Manufacturer</p>
-                        <p className="text-base">{deviceModel.manufacturer}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium">Model</p>
-                        <p className="text-base">{deviceModel.model}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium">Category</p>
-                        <p className="text-base flex items-center gap-1">
-                          {getCategoryIcon(deviceModel.category)}
-                          {categoryNames[deviceModel.category as keyof typeof categoryNames]}
-                        </p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium">Type</p>
-                        <p className="text-base">{deviceModel.type}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium">Protocol</p>
-                        <p className="text-base">{deviceModel.protocol}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium">Release Date</p>
-                        <p className="text-base">{deviceModel.releaseDate}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium">Warranty</p>
-                        <p className="text-base">{deviceModel.warranty}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium">Status</p>
-                        <p className="text-base flex items-center gap-1">
-                          {deviceModel.supported ? (
-                            <>
-                              <CheckCircle className="h-4 w-4 text-green-500" />
-                              Fully Supported
-                            </>
-                          ) : (
-                            <>
-                              <XCircle className="h-4 w-4 text-amber-500" />
-                              Not Supported
-                            </>
-                          )}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Key Specifications</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium">Capacity</p>
-                        <p className="text-base">{deviceModel.capacity}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium">Nominal Voltage</p>
-                        <p className="text-base">{deviceModel.nominalVoltage}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium">Peak Power</p>
-                        <p className="text-base">{deviceModel.peakPower}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium">Continuous Power</p>
-                        <p className="text-base">{deviceModel.continuousPower}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium">Efficiency</p>
-                        <p className="text-base">{deviceModel.efficiency}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium">Physical Size</p>
-                        <p className="text-base">{deviceModel.dimensions}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              
-              <TabsContent value="technical" className="space-y-6 mt-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Detailed Specifications</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Specification</TableHead>
-                          <TableHead>Value</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        <TableRow>
-                          <TableCell className="font-medium">Capacity</TableCell>
-                          <TableCell>{deviceModel.capacity}</TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell className="font-medium">Nominal Voltage</TableCell>
-                          <TableCell>{deviceModel.nominalVoltage}</TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell className="font-medium">Peak Power</TableCell>
-                          <TableCell>{deviceModel.peakPower}</TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell className="font-medium">Continuous Power</TableCell>
-                          <TableCell>{deviceModel.continuousPower}</TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell className="font-medium">Dimensions</TableCell>
-                          <TableCell>{deviceModel.dimensions}</TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell className="font-medium">Weight</TableCell>
-                          <TableCell>{deviceModel.weight}</TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell className="font-medium">Efficiency</TableCell>
-                          <TableCell>{deviceModel.efficiency}</TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell className="font-medium">Operating Temperature</TableCell>
-                          <TableCell>-20°C to 50°C</TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell className="font-medium">Cycle Life</TableCell>
-                          <TableCell>~4000 cycles</TableCell>
-                        </TableRow>
-                      </TableBody>
-                    </Table>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Connectivity</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div>
-                        <p className="text-sm font-medium mb-2">Connection Types</p>
-                        <div className="flex flex-wrap gap-2">
-                          {deviceModel.connectionTypes.map((type) => (
-                            <Badge key={type} variant="outline" className="flex items-center gap-1">
-                              <Wifi className="h-3 w-3" />
-                              {type}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <p className="text-sm font-medium mb-2">Certifications</p>
-                        <div className="flex flex-wrap gap-2">
-                          {deviceModel.certifications.map((cert) => (
-                            <Badge key={cert} variant="outline">
-                              {cert}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              
-              <TabsContent value="compatibility" className="space-y-6 mt-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>System Compatibility</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="mb-4">{deviceModel.compatibilityNotes}</p>
-                    
-                    <div className="space-y-4">
-                      <div className="flex items-start gap-2">
-                        <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
-                        <div>
-                          <p className="font-medium">Grid-Tied Solar Systems</p>
-                          <p className="text-sm text-muted-foreground">Compatible with most grid-tied solar inverters</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-start gap-2">
-                        <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
-                        <div>
-                          <p className="font-medium">Off-Grid Systems</p>
-                          <p className="text-sm text-muted-foreground">Can be used in off-grid configurations with appropriate equipment</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-start gap-2">
-                        <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
-                        <div>
-                          <p className="font-medium">Time-of-Use Rate Optimization</p>
-                          <p className="text-sm text-muted-foreground">Supports time-based control for electricity rate optimization</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-start gap-2">
-                        <XCircle className="h-5 w-5 text-amber-500 mt-0.5" />
-                        <div>
-                          <p className="font-medium">Three-Phase Systems</p>
-                          <p className="text-sm text-muted-foreground">Not compatible with three-phase power systems without additional equipment</p>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              
-              <TabsContent value="firmware" className="space-y-6 mt-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Firmware Information</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <p className="text-sm font-medium">Current Version</p>
-                          <p className="text-base">{deviceModel.firmware}</p>
-                        </div>
-                        <Badge className="bg-green-500">Latest</Badge>
-                      </div>
-                      
-                      <Separator />
-                      
-                      <div>
-                        <p className="font-medium mb-2">Update History</p>
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Version</TableHead>
-                              <TableHead>Release Date</TableHead>
-                              <TableHead>Changes</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            <TableRow>
-                              <TableCell className="font-medium">v1.45.2</TableCell>
-                              <TableCell>2023-05-15</TableCell>
-                              <TableCell>Security enhancements and bug fixes</TableCell>
-                            </TableRow>
-                            <TableRow>
-                              <TableCell className="font-medium">v1.45.0</TableCell>
-                              <TableCell>2023-03-22</TableCell>
-                              <TableCell>Added support for new grid codes</TableCell>
-                            </TableRow>
-                            <TableRow>
-                              <TableCell className="font-medium">v1.44.2</TableCell>
-                              <TableCell>2023-01-10</TableCell>
-                              <TableCell>Performance improvements and bug fixes</TableCell>
-                            </TableRow>
-                          </TableBody>
-                        </Table>
-                      </div>
-                      
-                      <div className="pt-4">
-                        <p className="font-medium mb-2">Update Method</p>
-                        <p className="text-sm">
-                          Updates can be performed remotely via the manufacturer's cloud platform or locally using the device's web interface.
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Support Status</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex justify-between items-center">
+                <span className="text-lg font-medium">
+                  {getSupportBadge(device.support_level)}
+                </span>
+                <Settings className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                Integration compatibility level
+              </p>
+            </CardContent>
+          </Card>
           
-          <div className="lg:w-1/3 space-y-6">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Model</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex justify-between items-center">
+                <span className="text-lg font-medium">
+                  {device.model_number}
+                </span>
+                <Cpu className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                Model reference
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                {device.device_type === 'battery' ? 'Capacity' : 'Power Rating'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex justify-between items-center">
+                <span className="text-lg font-medium">
+                  {device.device_type === 'battery' 
+                    ? `${device.capacity || 'N/A'} kWh` 
+                    : `${device.power_rating || 'N/A'} kW`}
+                </span>
+                <BarChart4 className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                {device.device_type === 'battery' ? 'Energy storage capacity' : 'Maximum power output'}
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Protocol</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex justify-between items-center">
+                <span className="text-lg font-medium">
+                  {device.protocol}
+                </span>
+                <Cable className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                Communication protocol
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+        
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="specifications">Specifications</TabsTrigger>
+            <TabsTrigger value="connectivity">Connectivity</TabsTrigger>
+            <TabsTrigger value="documentation">Documentation</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="overview" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Actions</CardTitle>
+                <CardTitle>Device Details</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Button className="w-full" onClick={handleAddToSystem}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add to My System
-                </Button>
-                <Button variant="outline" className="w-full" onClick={handleDownloadManual} disabled={!deviceModel.hasManual}>
-                  <FileText className="h-4 w-4 mr-2" />
-                  Download Manual
-                </Button>
-                <Button variant="outline" className="w-full" onClick={handleDownloadSpecs}>
-                  <Download className="h-4 w-4 mr-2" />
-                  Download Specifications
-                </Button>
-                <Button variant="outline" className="w-full" onClick={handleVisitManufacturer}>
-                  <Globe className="h-4 w-4 mr-2" />
-                  Visit Manufacturer Website
-                </Button>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Integration Support</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-start gap-2">
-                  {deviceModel.supported ? (
-                    <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
-                  ) : (
-                    <XCircle className="h-5 w-5 text-amber-500 mt-0.5" />
-                  )}
-                  <div>
-                    <p className="font-medium">
-                      {deviceModel.supported ? 'Fully Supported' : 'Not Supported'}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {deviceModel.supported 
-                        ? 'This device is fully supported by our system with all features available.'
-                        : 'This device is not officially supported. Limited functionality may be available.'}
-                    </p>
-                  </div>
+                <div>
+                  <h3 className="text-lg font-medium mb-2">Description</h3>
+                  <p className="text-muted-foreground">
+                    {device.description || 'No description available.'}
+                  </p>
                 </div>
                 
-                {deviceModel.supported && (
-                  <>
-                    <Separator />
-                    
+                <Separator />
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="text-sm font-medium">Manufacturer</h4>
+                    <p>{device.manufacturer}</p>
+                  </div>
+                  
+                  <div>
+                    <h4 className="text-sm font-medium">Model Number</h4>
+                    <p>{device.model_number}</p>
+                  </div>
+                  
+                  <div>
+                    <h4 className="text-sm font-medium">Category</h4>
+                    <p className="capitalize">{device.category || device.device_type}</p>
+                  </div>
+                  
+                  <div>
+                    <h4 className="text-sm font-medium">Release Date</h4>
+                    <p>{device.release_date ? new Date(device.release_date).toLocaleDateString() : 'Unknown'}</p>
+                  </div>
+                  
+                  <div>
+                    <h4 className="text-sm font-medium">Firmware Version</h4>
+                    <p>{device.firmware_version || 'Not specified'}</p>
+                  </div>
+                  
+                  <div>
+                    <h4 className="text-sm font-medium">Protocol</h4>
+                    <p>{device.protocol}</p>
+                  </div>
+                  
+                  {device.warranty && (
                     <div>
-                      <p className="font-medium mb-2">Supported Features</p>
-                      <ul className="space-y-2">
-                        <li className="flex items-center gap-2">
-                          <CheckCircle className="h-4 w-4 text-green-500" />
-                          <span className="text-sm">Real-time monitoring</span>
-                        </li>
-                        <li className="flex items-center gap-2">
-                          <CheckCircle className="h-4 w-4 text-green-500" />
-                          <span className="text-sm">Remote configuration</span>
-                        </li>
-                        <li className="flex items-center gap-2">
-                          <CheckCircle className="h-4 w-4 text-green-500" />
-                          <span className="text-sm">Energy scheduling</span>
-                        </li>
-                        <li className="flex items-center gap-2">
-                          <CheckCircle className="h-4 w-4 text-green-500" />
-                          <span className="text-sm">Firmware updates</span>
-                        </li>
-                        <li className="flex items-center gap-2">
-                          <CheckCircle className="h-4 w-4 text-green-500" />
-                          <span className="text-sm">Automated alerts</span>
-                        </li>
-                      </ul>
+                      <h4 className="text-sm font-medium">Warranty</h4>
+                      <p>{device.warranty}</p>
                     </div>
-                  </>
+                  )}
+                  
+                  {device.certifications && device.certifications.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-medium">Certifications</h4>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {device.certifications.map((cert, index) => (
+                          <Badge key={index} variant="outline" className="text-xs">
+                            {cert}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="specifications" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Technical Specifications</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {device.specifications ? (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      {Object.entries(device.specifications).map(([key, value]) => (
+                        <div key={key}>
+                          <h4 className="text-sm font-medium capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</h4>
+                          <p>{value}</p>
+                        </div>
+                      ))}
+                      
+                      {device.device_type === 'battery' && (
+                        <div>
+                          <h4 className="text-sm font-medium">Capacity</h4>
+                          <p>{device.capacity} kWh</p>
+                        </div>
+                      )}
+                      
+                      {device.device_type !== 'battery' && device.power_rating && (
+                        <div>
+                          <h4 className="text-sm font-medium">Power Rating</h4>
+                          <p>{device.power_rating} kW</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground">No specifications available for this device model.</p>
                 )}
               </CardContent>
             </Card>
-          </div>
-        </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Physical Specifications</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="text-sm font-medium">Dimensions</h4>
+                      <p>{device.specifications?.dimensions || 'Not specified'}</p>
+                    </div>
+                    
+                    <div>
+                      <h4 className="text-sm font-medium">Weight</h4>
+                      <p>{device.specifications?.weight ? `${device.specifications.weight} kg` : 'Not specified'}</p>
+                    </div>
+                    
+                    {device.specifications?.color && (
+                      <div>
+                        <h4 className="text-sm font-medium">Color</h4>
+                        <p>{device.specifications.color}</p>
+                      </div>
+                    )}
+                    
+                    {device.specifications?.mountingType && (
+                      <div>
+                        <h4 className="text-sm font-medium">Mounting Type</h4>
+                        <p>{device.specifications.mountingType}</p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle>Operational Specifications</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {device.specifications?.operatingTemperature && (
+                      <div>
+                        <h4 className="text-sm font-medium">Operating Temperature</h4>
+                        <p>{device.specifications.operatingTemperature}</p>
+                      </div>
+                    )}
+                    
+                    {device.specifications?.ipRating && (
+                      <div>
+                        <h4 className="text-sm font-medium">IP Rating</h4>
+                        <p>{device.specifications.ipRating}</p>
+                      </div>
+                    )}
+                    
+                    {device.specifications?.noiseLevel && (
+                      <div>
+                        <h4 className="text-sm font-medium">Noise Level</h4>
+                        <p>{device.specifications.noiseLevel}</p>
+                      </div>
+                    )}
+                    
+                    {device.specifications?.cooling && (
+                      <div>
+                        <h4 className="text-sm font-medium">Cooling</h4>
+                        <p>{device.specifications.cooling}</p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="connectivity" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Wifi className="h-5 w-5" />
+                  Connectivity Options
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {device.connectivity ? (
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <h4 className="text-sm font-medium">Wi-Fi</h4>
+                        <p>{device.connectivity.wifi ? 'Yes' : 'No'}</p>
+                      </div>
+                      
+                      <div>
+                        <h4 className="text-sm font-medium">Ethernet</h4>
+                        <p>{device.connectivity.ethernet ? 'Yes' : 'No'}</p>
+                      </div>
+                      
+                      <div>
+                        <h4 className="text-sm font-medium">Bluetooth</h4>
+                        <p>{device.connectivity.bluetooth ? 'Yes' : 'No'}</p>
+                      </div>
+                      
+                      <div>
+                        <h4 className="text-sm font-medium">Cellular</h4>
+                        <p>{device.connectivity.cellular ? 'Yes' : 'No'}</p>
+                      </div>
+                    </div>
+                    
+                    <Separator />
+                    
+                    <div>
+                      <h4 className="text-sm font-medium mb-2">Communication Protocols</h4>
+                      <div className="flex flex-wrap gap-1">
+                        {device.connectivity.protocols && device.connectivity.protocols.map((protocol: string, index: number) => (
+                          <Badge key={index} variant="outline">
+                            {protocol}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground">No connectivity information available for this device model.</p>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="documentation" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Documentation & Resources</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <Card className="bg-muted/50">
+                    <CardContent className="pt-6">
+                      <div className="flex flex-col items-center text-center">
+                        <BookOpen className="h-8 w-8 mb-4 text-primary" />
+                        <h3 className="font-medium mb-2">User Manual</h3>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          {device.has_manual 
+                            ? 'Comprehensive guide for installation and operation'
+                            : 'Manual not available for this device'}
+                        </p>
+                        <Button onClick={handleDownloadManual} disabled={!device.has_manual}>
+                          Download Manual
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="bg-muted/50">
+                    <CardContent className="pt-6">
+                      <div className="flex flex-col items-center text-center">
+                        <Download className="h-8 w-8 mb-4 text-primary" />
+                        <h3 className="font-medium mb-2">Datasheet</h3>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          {device.has_datasheet
+                            ? 'Technical specifications and performance data'
+                            : 'Datasheet not available for this device'}
+                        </p>
+                        <Button onClick={handleDownloadDatasheet} disabled={!device.has_datasheet}>
+                          Download Datasheet
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="bg-muted/50">
+                    <CardContent className="pt-6">
+                      <div className="flex flex-col items-center text-center">
+                        <ExternalLink className="h-8 w-8 mb-4 text-primary" />
+                        <h3 className="font-medium mb-2">Installation Video</h3>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          {device.has_video
+                            ? 'Step-by-step installation tutorial video'
+                            : 'Video not available for this device'}
+                        </p>
+                        <Button onClick={handleViewVideo} disabled={!device.has_video}>
+                          Watch Video
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </AppLayout>
   );

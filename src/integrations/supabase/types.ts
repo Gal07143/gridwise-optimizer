@@ -468,6 +468,93 @@ export type Database = {
           },
         ]
       }
+      device_models: {
+        Row: {
+          capacity: number | null
+          category: string
+          certifications: string[] | null
+          compatible_with: string[] | null
+          connectivity: Json | null
+          created_at: string | null
+          datasheets: Json | null
+          description: string | null
+          device_type: string
+          dimensions: string | null
+          firmware_version: string | null
+          id: string
+          images: Json | null
+          manuals: Json | null
+          manufacturer: string
+          model_number: string
+          name: string
+          power_rating: number | null
+          protocol: string | null
+          release_date: string | null
+          specifications: Json | null
+          support_level: string
+          updated_at: string | null
+          videos: Json | null
+          warranty: string | null
+          weight: number | null
+        }
+        Insert: {
+          capacity?: number | null
+          category: string
+          certifications?: string[] | null
+          compatible_with?: string[] | null
+          connectivity?: Json | null
+          created_at?: string | null
+          datasheets?: Json | null
+          description?: string | null
+          device_type: string
+          dimensions?: string | null
+          firmware_version?: string | null
+          id?: string
+          images?: Json | null
+          manuals?: Json | null
+          manufacturer: string
+          model_number: string
+          name: string
+          power_rating?: number | null
+          protocol?: string | null
+          release_date?: string | null
+          specifications?: Json | null
+          support_level?: string
+          updated_at?: string | null
+          videos?: Json | null
+          warranty?: string | null
+          weight?: number | null
+        }
+        Update: {
+          capacity?: number | null
+          category?: string
+          certifications?: string[] | null
+          compatible_with?: string[] | null
+          connectivity?: Json | null
+          created_at?: string | null
+          datasheets?: Json | null
+          description?: string | null
+          device_type?: string
+          dimensions?: string | null
+          firmware_version?: string | null
+          id?: string
+          images?: Json | null
+          manuals?: Json | null
+          manufacturer?: string
+          model_number?: string
+          name?: string
+          power_rating?: number | null
+          protocol?: string | null
+          release_date?: string | null
+          specifications?: Json | null
+          support_level?: string
+          updated_at?: string | null
+          videos?: Json | null
+          warranty?: string | null
+          weight?: number | null
+        }
+        Relationships: []
+      }
       devices: {
         Row: {
           capacity: number
