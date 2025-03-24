@@ -24,12 +24,12 @@ interface LiveChartProps {
 }
 
 const LiveChart: React.FC<LiveChartProps> = ({
-  data,
+  data = [],
   height = 200,
   width = '100%',
   color = 'rgba(14, 165, 233, 1)',
   type = 'line',
-  showGrid = false, // Changed default to false
+  showGrid = false,
   showTooltip = true,
   showAxis = true,
   animated = true,
@@ -39,11 +39,20 @@ const LiveChart: React.FC<LiveChartProps> = ({
   children,
   animationDelay
 }) => {
+  // Generate placeholder data if data is empty
+  const chartData = data.length > 0 ? data : [
+    { time: '00:00', value: 0 },
+    { time: '06:00', value: 0 },
+    { time: '12:00', value: 0 },
+    { time: '18:00', value: 0 },
+    { time: '24:00', value: 0 }
+  ];
+
   const renderChart = () => {
     const commonProps = {
       width: typeof width === 'string' ? undefined : width,
       height,
-      data,
+      data: chartData,
       margin: { top: 10, right: 10, left: 10, bottom: 10 }
     };
 

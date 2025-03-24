@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { ArrowUpDown, CheckCircle, AlertCircle, BookOpen } from 'lucide-react';
+import { ArrowUpDown, CheckCircle, AlertCircle, BookOpen, ExternalLink } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -56,8 +56,18 @@ const DeviceModelsTable: React.FC<DeviceModelsTableProps> = ({
   };
 
   const handleClickRow = (deviceId: string) => {
-    // Update route path to match what we added in Routes.tsx
+    // Update route path to device model detail page
     navigate(`/integrations/device-model/${deviceId}`);
+  };
+
+  const handleViewManual = (e: React.MouseEvent, deviceId: string) => {
+    e.stopPropagation(); // Prevent row click
+    window.open(`/manuals/${deviceId}.pdf`, '_blank');
+  };
+  
+  const handleViewSpecs = (e: React.MouseEvent, deviceId: string) => {
+    e.stopPropagation(); // Prevent row click
+    window.open(`/specifications/${deviceId}.pdf`, '_blank');
   };
 
   const getSortIndicator = (field: string) => {
@@ -91,7 +101,7 @@ const DeviceModelsTable: React.FC<DeviceModelsTableProps> = ({
               </Button>
             </TableHead>
             <TableHead>Status</TableHead>
-            <TableHead className="text-center">Manual</TableHead>
+            <TableHead className="text-center">Documentation</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -106,16 +116,16 @@ const DeviceModelsTable: React.FC<DeviceModelsTableProps> = ({
               <TableCell>{device.protocol}</TableCell>
               <TableCell>{getSupportBadge(device.support_level)}</TableCell>
               <TableCell className="text-center">
-                {device.has_manual ? (
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={(e) => {
-                    e.stopPropagation();
-                    window.open(`/manuals/${device.id}.pdf`, '_blank');
-                  }}>
-                    <BookOpen className="h-4 w-4 text-muted-foreground" />
+                <div className="flex justify-center space-x-2">
+                  {device.has_manual && (
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={(e) => handleViewManual(e, device.id)}>
+                      <BookOpen className="h-4 w-4 text-muted-foreground" />
+                    </Button>
+                  )}
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={(e) => handleViewSpecs(e, device.id)}>
+                    <ExternalLink className="h-4 w-4 text-muted-foreground" />
                   </Button>
-                ) : (
-                  <span className="text-muted-foreground text-xs">—</span>
-                )}
+                </div>
               </TableCell>
             </TableRow>
           ))}

@@ -1,24 +1,115 @@
+
 export const deviceCatalog = {
   evcharger: {
     vendors: {
       Tesla: [
         { 
           model: 'Tesla Wall Connector', 
-          parameters: { power: '48 kW', voltage: '240V', current: '200A' } 
+          parameters: { power: '48 kW', voltage: '240V', current: '200A' },
+          manual_url: 'https://www.tesla.com/sites/default/files/downloads/wall_connector_installation_manual_80A_en_US.pdf',
+          datasheet_url: 'https://www.tesla.com/sites/default/files/pdfs/wall_connector_product_sheet.pdf',
+          image_url: '/images/devices/tesla-wall-connector.png',
+          firmware_version: '21.44.2',
+          warranty: '4 years',
+          certifications: ['UL', 'CE', 'FCC'],
+          dimensions: '380mm x 160mm x 140mm',
+          weight: '4.5kg',
+          description: 'The Tesla Wall Connector offers the fastest home charging speeds for Tesla vehicles.'
         },
         { 
           model: 'Tesla Mobile Connector', 
-          parameters: { power: '22 kW', voltage: '240V', current: '32A' } 
+          parameters: { power: '22 kW', voltage: '240V', current: '32A' },
+          manual_url: 'https://www.tesla.com/sites/default/files/downloads/gen_2_mobile_connector_manual_32_amp_en_US.pdf',
+          datasheet_url: 'https://www.tesla.com/sites/default/files/pdfs/mobile_connector_product_sheet.pdf',
+          image_url: '/images/devices/tesla-mobile-connector.png',
+          firmware_version: 'N/A',
+          warranty: '1 year',
+          certifications: ['UL', 'CE'],
+          dimensions: '220mm x 80mm x 60mm',
+          weight: '2.2kg',
+          description: 'The Tesla Mobile Connector is a portable charging solution that works with any Tesla vehicle.'
+        },
+        { 
+          model: 'Tesla Destination Charger', 
+          parameters: { power: '22 kW', voltage: '400V', current: '32A' },
+          manual_url: 'https://www.tesla.com/sites/default/files/downloads/destination_charger_installation_manual_en_US.pdf',
+          datasheet_url: 'https://www.tesla.com/sites/default/files/pdfs/destination_charger_product_sheet.pdf',
+          image_url: '/images/devices/tesla-destination-charger.png',
+          firmware_version: '19.33.1',
+          warranty: '2 years commercial',
+          certifications: ['UL', 'CE', 'TUV'],
+          dimensions: '380mm x 160mm x 140mm',
+          weight: '4.8kg',
+          description: 'Tesla Destination Chargers are installed at hotels, restaurants, and shopping centers.'
         },
       ],
       ChargePoint: [
         { 
           model: 'ChargePoint Home Flex', 
-          parameters: { power: '50 kW', voltage: '240V', current: '200A' } 
+          parameters: { power: '50 kW', voltage: '240V', current: '200A' },
+          manual_url: 'https://www.chargepoint.com/assets/pdf/CPH50_Install_Guide.pdf',
+          datasheet_url: 'https://www.chargepoint.com/assets/pdf/CPH50_Datasheet.pdf',
+          image_url: '/images/devices/chargepoint-home-flex.png',
+          firmware_version: '7.5.1',
+          warranty: '3 years',
+          certifications: ['UL', 'Energy Star'],
+          dimensions: '331mm x 183mm x 71mm',
+          weight: '5.4kg',
+          description: 'ChargePoint Home Flex is a flexible home EV charger with adjustable amperage from 16A to 50A.'
         },
         { 
-          model: 'ChargePoint Express', 
-          parameters: { power: '150 kW', voltage: '480V', current: '300A' } 
+          model: 'ChargePoint Express 250', 
+          parameters: { power: '150 kW', voltage: '480V', current: '300A' },
+          manual_url: 'https://www.chargepoint.com/assets/pdf/CPE250_Install_Guide.pdf',
+          datasheet_url: 'https://www.chargepoint.com/assets/pdf/CPE250_Datasheet.pdf',
+          image_url: '/images/devices/chargepoint-express-250.png',
+          firmware_version: '8.1.3',
+          warranty: '1 year',
+          certifications: ['UL', 'CE', 'CHAdeMO', 'CCS'],
+          dimensions: '2230mm x 660mm x 480mm',
+          weight: '249kg',
+          description: 'ChargePoint Express 250 is a DC fast charging station for commercial applications.'
+        },
+        { 
+          model: 'ChargePoint CT4000', 
+          parameters: { power: '22 kW', voltage: '208V', current: '30A' },
+          manual_url: 'https://www.chargepoint.com/assets/pdf/CT4000_Install_Guide.pdf',
+          datasheet_url: 'https://www.chargepoint.com/assets/pdf/CT4000_Datasheet.pdf',
+          image_url: '/images/devices/chargepoint-ct4000.png',
+          firmware_version: '6.2.4',
+          warranty: '2 years',
+          certifications: ['UL', 'CE', 'ADA Compliant'],
+          dimensions: '460mm x 304mm x 188mm',
+          weight: '18.6kg',
+          description: 'The CT4000 is designed for businesses and municipalities looking to offer EV charging.'
+        },
+      ],
+      ABB: [
+        { 
+          model: 'ABB Terra 54', 
+          parameters: { power: '50 kW', voltage: '480V', current: '125A' },
+          manual_url: 'https://search.abb.com/library/Download.aspx?DocumentID=9AKK107991A1820&LanguageCode=en&DocumentPartId=&Action=Launch',
+          datasheet_url: 'https://search.abb.com/library/Download.aspx?DocumentID=9AKK107992A0044&LanguageCode=en&DocumentPartId=&Action=Launch',
+          image_url: '/images/devices/abb-terra-54.png',
+          firmware_version: '5.3.2',
+          warranty: '2 years',
+          certifications: ['UL', 'CE', 'CHAdeMO', 'CCS'],
+          dimensions: '760mm x 525mm x 1900mm',
+          weight: '350kg',
+          description: 'ABB Terra 54 is a multi-standard DC charging station for electric vehicles.'
+        },
+        { 
+          model: 'ABB Terra AC Wallbox', 
+          parameters: { power: '22 kW', voltage: '400V', current: '32A' },
+          manual_url: 'https://search.abb.com/library/Download.aspx?DocumentID=9AKK107991A9821&LanguageCode=en&DocumentPartId=&Action=Launch',
+          datasheet_url: 'https://search.abb.com/library/Download.aspx?DocumentID=9AKK107992A9821&LanguageCode=en&DocumentPartId=&Action=Launch',
+          image_url: '/images/devices/abb-terra-ac-wallbox.png',
+          firmware_version: '2.1.0',
+          warranty: '2 years',
+          certifications: ['IEC', 'CE'],
+          dimensions: '280mm x 135mm x 363mm',
+          weight: '5.3kg',
+          description: 'The Terra AC Wallbox is a compact EV charger suitable for homes and businesses.'
         },
       ],
     },
@@ -28,13 +119,111 @@ export const deviceCatalog = {
       SMA: [
         { 
           model: 'Sunny Boy 5.0', 
-          parameters: { capacity: '5 kW', efficiency: '97%', voltage: '240V' } 
+          parameters: { capacity: '5 kW', efficiency: '97%', voltage: '240V' },
+          manual_url: 'https://files.sma.de/downloads/SB30-50-US-IA-en-33.pdf',
+          datasheet_url: 'https://files.sma.de/downloads/SB30-50-DS-en-39.pdf',
+          image_url: '/images/devices/sma-sunny-boy-5.png',
+          firmware_version: '2.80.4.R',
+          warranty: '10 years',
+          certifications: ['UL 1741', 'IEEE 1547', 'FCC Part 15 A & B'],
+          dimensions: '535mm x 730mm x 198mm',
+          weight: '26kg',
+          description: 'The Sunny Boy 5.0 is a residential string inverter with SMA Smart Connected service.'
+        },
+        { 
+          model: 'Sunny Tripower 15000TL', 
+          parameters: { capacity: '15 kW', efficiency: '98.4%', voltage: '400V' },
+          manual_url: 'https://files.sma.de/downloads/STP15-25TL-IA-en-45.pdf',
+          datasheet_url: 'https://files.sma.de/downloads/STP15-25TL-DS-en-41.pdf',
+          image_url: '/images/devices/sma-sunny-tripower.png',
+          firmware_version: '4.65.02.R',
+          warranty: '5 years',
+          certifications: ['CE', 'VDE', 'UTE', 'G83', 'AS4777'],
+          dimensions: '661mm x 682mm x 264mm',
+          weight: '61kg',
+          description: 'The Sunny Tripower 15000TL is a three-phase inverter designed for commercial applications.'
+        },
+        { 
+          model: 'Sunny Island 6.0H', 
+          parameters: { capacity: '6 kW', efficiency: '95.8%', voltage: '48V' },
+          manual_url: 'https://files.sma.de/downloads/SI3-6H-US-IA-en-35.pdf',
+          datasheet_url: 'https://files.sma.de/downloads/SI3-6H-US-DS-en-36.pdf',
+          image_url: '/images/devices/sma-sunny-island.png',
+          firmware_version: '3.22.01.R',
+          warranty: '5 years',
+          certifications: ['UL 1741', 'IEEE 1547', 'FCC Part 15 A & B'],
+          dimensions: '467mm x 612mm x 242mm',
+          weight: '63kg',
+          description: 'The Sunny Island 6.0H is a battery inverter for off-grid and grid-backup applications.'
         },
       ],
       Fronius: [
         { 
-          model: 'Fronius Primo', 
-          parameters: { capacity: '3.5 kW', efficiency: '96%', voltage: '240V' } 
+          model: 'Fronius Primo 6.0-1', 
+          parameters: { capacity: '6 kW', efficiency: '96.7%', voltage: '240V' },
+          manual_url: 'https://www.fronius.com/~/downloads/Solar%20Energy/Operating%20Instructions/42,0426,0191,EN.pdf',
+          datasheet_url: 'https://www.fronius.com/~/downloads/Solar%20Energy/Datasheets/SE_DS_Fronius_Primo_EN.pdf',
+          image_url: '/images/devices/fronius-primo.png',
+          firmware_version: '1.14.1-1',
+          warranty: '10 years',
+          certifications: ['UL 1741', 'IEEE 1547', 'FCC Part 15 A & B', 'CSA'],
+          dimensions: '429mm x 627mm x 205mm',
+          weight: '21.5kg',
+          description: 'The Fronius Primo is a single-phase inverter for residential applications.'
+        },
+        { 
+          model: 'Fronius Symo 15.0-3 480', 
+          parameters: { capacity: '15 kW', efficiency: '98.1%', voltage: '480V' },
+          manual_url: 'https://www.fronius.com/~/downloads/Solar%20Energy/Operating%20Instructions/42,0426,0191,EN.pdf',
+          datasheet_url: 'https://www.fronius.com/~/downloads/Solar%20Energy/Datasheets/SE_DS_Fronius_Symo_EN.pdf',
+          image_url: '/images/devices/fronius-symo.png',
+          firmware_version: '1.15.3-1',
+          warranty: '10 years',
+          certifications: ['UL 1741', 'IEEE 1547', 'FCC Part 15 A & B', 'CSA'],
+          dimensions: '510mm x 725mm x 225mm',
+          weight: '43.4kg',
+          description: 'The Fronius Symo is a three-phase inverter for commercial solar applications.'
+        },
+        { 
+          model: 'Fronius Smart Meter 63A-3', 
+          parameters: { capacity: 'N/A', voltage: '400V', current: '63A' },
+          manual_url: 'https://www.fronius.com/~/downloads/Solar%20Energy/Operating%20Instructions/42,0426,0295,EN.pdf',
+          datasheet_url: 'https://www.fronius.com/~/downloads/Solar%20Energy/Datasheets/SE_DS_Fronius_Smart_Meter_EN.pdf',
+          image_url: '/images/devices/fronius-smart-meter.png',
+          firmware_version: '3.8.4',
+          warranty: '2 years',
+          certifications: ['CE', 'EN 50470'],
+          dimensions: '89mm x 35mm x 66mm',
+          weight: '0.21kg',
+          description: 'The Fronius Smart Meter is a bidirectional meter for optimizing self-consumption and monitoring.'
+        },
+      ],
+      Enphase: [
+        { 
+          model: 'Enphase IQ7+', 
+          parameters: { capacity: '290 W', efficiency: '97.6%', voltage: '240V' },
+          manual_url: 'https://enphase.com/sites/default/files/downloads/support/IQ7-IQ7plus-DS-EN-US.pdf',
+          datasheet_url: 'https://enphase.com/sites/default/files/downloads/support/IQ7-IQ7plus-DS-EN-US.pdf',
+          image_url: '/images/devices/enphase-iq7plus.png',
+          firmware_version: '6.3.10',
+          warranty: '25 years',
+          certifications: ['UL 1741', 'IEEE 1547', 'FCC Part 15 Class B'],
+          dimensions: '212mm x 175mm x 30mm',
+          weight: '1.08kg',
+          description: 'The Enphase IQ7+ is a microinverter offering per-module conversion and monitoring.'
+        },
+        { 
+          model: 'Enphase Envoy-S Metered', 
+          parameters: { capacity: 'N/A', voltage: '240V', current: '20A' },
+          manual_url: 'https://enphase.com/sites/default/files/downloads/support/IQ-Envoy-Install-EN-US.pdf',
+          datasheet_url: 'https://enphase.com/sites/default/files/downloads/support/Envoy-S-DS-EN-US.pdf',
+          image_url: '/images/devices/enphase-envoy-s.png',
+          firmware_version: '5.0.65',
+          warranty: '5 years',
+          certifications: ['UL 916', 'CAN/CSA C22.2', 'FCC Part 15 Class B'],
+          dimensions: '213mm x 126mm x 45mm',
+          weight: '0.5kg',
+          description: 'The Envoy-S Metered is a communication gateway that monitors system performance.'
         },
       ],
     },
@@ -43,17 +232,208 @@ export const deviceCatalog = {
     vendors: {
       LG: [
         { 
-          model: 'LG Chem RESU', 
-          parameters: { capacity: '9.8 kWh', voltage: '400V', weight: '110kg' } 
+          model: 'LG Chem RESU10H', 
+          parameters: { capacity: '9.8 kWh', voltage: '400V', weight: '110kg' },
+          manual_url: 'https://www.lgessbattery.com/content/dam/lg-ess/global/pdf/resource/manual/RESU_Gen2_Installation_Manual.pdf',
+          datasheet_url: 'https://www.lgessbattery.com/content/dam/lg-ess/global/pdf/resource/catalog/RESU_Gen2_Catalog_Global_Ver.pdf',
+          image_url: '/images/devices/lg-resu10h.png',
+          firmware_version: '3.2.1',
+          warranty: '10 years',
+          certifications: ['TUV', 'CE', 'UL 1973', 'IEC 62619'],
+          dimensions: '452mm x 654mm x 227mm',
+          weight: '75kg',
+          description: 'The LG Chem RESU10H is a high-voltage residential energy storage unit.'
+        },
+        { 
+          model: 'LG Chem RESU16H Prime', 
+          parameters: { capacity: '16 kWh', voltage: '400V', weight: '185kg' },
+          manual_url: 'https://www.lgessbattery.com/content/dam/lg-ess/global/pdf/resource/manual/RESU_Prime_Installation_Manual.pdf',
+          datasheet_url: 'https://www.lgessbattery.com/content/dam/lg-ess/global/pdf/resource/catalog/RESU_Prime_Catalog_Global_Ver.pdf',
+          image_url: '/images/devices/lg-resu16h-prime.png',
+          firmware_version: '1.3.4',
+          warranty: '10 years',
+          certifications: ['TUV', 'CE', 'UL 1973', 'IEC 62619'],
+          dimensions: '664mm x 639mm x 206mm',
+          weight: '148kg',
+          description: 'The LG Chem RESU16H Prime is a high-capacity energy storage solution for residential use.'
         },
       ],
       Tesla: [
         { 
-          model: 'Powerwall', 
-          parameters: { capacity: '13.5 kWh', voltage: '350V', weight: '120kg' } 
+          model: 'Powerwall 2', 
+          parameters: { capacity: '13.5 kWh', voltage: '350V', weight: '120kg' },
+          manual_url: 'https://www.tesla.com/sites/default/files/downloads/powerwall_2_ac_owners_manual.pdf',
+          datasheet_url: 'https://www.tesla.com/sites/default/files/pdfs/powerwall/Powerwall%202_AC_Datasheet_en_northamerica.pdf',
+          image_url: '/images/devices/tesla-powerwall-2.png',
+          firmware_version: '21.44.1',
+          warranty: '10 years',
+          certifications: ['UL', 'IEC', 'CE', 'AU/NZS 4777.2'],
+          dimensions: '1150mm x 755mm x 155mm',
+          weight: '125kg',
+          description: 'The Tesla Powerwall 2 is a rechargeable home battery system that can power your home during outages.'
+        },
+        { 
+          model: 'Powerwall+', 
+          parameters: { capacity: '13.5 kWh', voltage: '350V', weight: '125kg' },
+          manual_url: 'https://www.tesla.com/sites/default/files/downloads/powerwall_plus_owners_manual.pdf',
+          datasheet_url: 'https://www.tesla.com/sites/default/files/pdfs/powerwall/Powerwall_Plus_Datasheet_en_northamerica.pdf',
+          image_url: '/images/devices/tesla-powerwall-plus.png',
+          firmware_version: '22.1.2',
+          warranty: '10 years',
+          certifications: ['UL', 'IEC', 'CE', 'AU/NZS 4777.2'],
+          dimensions: '1150mm x 755mm x 155mm (battery) + inverter unit',
+          weight: '125kg (battery) + 25kg (inverter)',
+          description: 'The Tesla Powerwall+ integrates an inverter with the Powerwall battery for solar systems.'
+        },
+      ],
+      Sonnen: [
+        { 
+          model: 'sonnenCore', 
+          parameters: { capacity: '10 kWh', voltage: '48V', weight: '160kg' },
+          manual_url: 'https://sonnenbatterie.de/sites/default/files/2020-06/sonnenCore_installation_manual_en.pdf',
+          datasheet_url: 'https://sonnenbatterie.de/sites/default/files/2020-05/sonnenCore_datasheet_en.pdf',
+          image_url: '/images/devices/sonnen-core.png',
+          firmware_version: '1.5.2',
+          warranty: '10 years',
+          certifications: ['UL 9540', 'UL 1973', 'UL 1741', 'FCC Part 15B'],
+          dimensions: '686mm x 1395mm x 226mm',
+          weight: '160kg',
+          description: 'The sonnenCore is an all-in-one energy storage solution for residential applications.'
+        },
+        { 
+          model: 'sonnen eco 8', 
+          parameters: { capacity: '8 kWh', voltage: '48V', weight: '205kg' },
+          manual_url: 'https://sonnenbatterie.de/sites/default/files/2020-05/sonnen_eco_9_installation_manual_en.pdf',
+          datasheet_url: 'https://sonnenbatterie.de/sites/default/files/2020-04/sonnen_eco_9_datasheet_en.pdf',
+          image_url: '/images/devices/sonnen-eco.png',
+          firmware_version: '3.3.1',
+          warranty: '10 years',
+          certifications: ['UL 9540', 'UL 1973', 'UL 1741', 'FCC Part 15B'],
+          dimensions: '700mm x 1400mm x 330mm',
+          weight: '205kg',
+          description: 'The sonnen eco is a modular home battery system with integrated smart energy management.'
         },
       ],
     },
   },
-  // Add more categories as needed...
+  meter: {
+    vendors: {
+      Schneider: [
+        { 
+          model: 'PowerLogic PM5560', 
+          parameters: { accuracy: '0.2%', voltage: '690V', current: '6A' },
+          manual_url: 'https://download.schneider-electric.com/files?p_enDocType=User+guide&p_File_Name=7EN02-0390-04.pdf',
+          datasheet_url: 'https://download.schneider-electric.com/files?p_enDocType=Catalog&p_File_Name=PLSED310131EN.pdf',
+          image_url: '/images/devices/schneider-pm5560.png',
+          firmware_version: '2.6.4',
+          warranty: '2 years',
+          certifications: ['UL', 'IEC 61557-12', 'IEC 62053-22'],
+          dimensions: '96mm x 96mm x 77mm',
+          weight: '0.37kg',
+          description: 'The PowerLogic PM5560 is a high-performance power meter for monitoring electrical installations.'
+        },
+        { 
+          model: 'PowerTag A', 
+          parameters: { voltage: '415V', current: '63A', wireless: 'Zigbee' },
+          manual_url: 'https://download.schneider-electric.com/files?p_enDocType=User+guide&p_File_Name=DOCA0133EN-02.pdf',
+          datasheet_url: 'https://download.schneider-electric.com/files?p_enDocType=Catalog&p_File_Name=PLSED310027EN.pdf',
+          image_url: '/images/devices/schneider-powertag.png',
+          firmware_version: '1.2.3',
+          warranty: '2 years',
+          certifications: ['CE', 'IEC 61010-1', 'IEC 61326-1'],
+          dimensions: '18mm x 55mm x 38mm',
+          weight: '0.04kg',
+          description: 'PowerTag A is a wireless energy sensor for monitoring and alarming in electrical panels.'
+        },
+      ],
+      Siemens: [
+        { 
+          model: 'Sentron PAC4200', 
+          parameters: { accuracy: '0.2%', voltage: '690V', current: '5A' },
+          manual_url: 'https://cache.industry.siemens.com/dl/files/922/34261922/att_106173/v1/PAC4200_manual_en-US.pdf',
+          datasheet_url: 'https://cache.industry.siemens.com/dl/files/921/34261921/att_106172/v1/PAC4200_datasheet_en-US.pdf',
+          image_url: '/images/devices/siemens-pac4200.png',
+          firmware_version: '2.2.3',
+          warranty: '3 years',
+          certifications: ['UL', 'CE', 'cULus', 'IEC 61557-12'],
+          dimensions: '96mm x 96mm x 82mm',
+          weight: '0.4kg',
+          description: 'The Sentron PAC4200 is a power monitoring device for industrial applications and power distribution.'
+        },
+        { 
+          model: 'Sentron 7KT PAC1600', 
+          parameters: { accuracy: '1%', voltage: '480V', current: '80A' },
+          manual_url: 'https://cache.industry.siemens.com/dl/files/132/109482132/att_926139/v1/PAC1600_manual_en-US.pdf',
+          datasheet_url: 'https://cache.industry.siemens.com/dl/files/131/109482131/att_926138/v1/PAC1600_datasheet_en-US.pdf',
+          image_url: '/images/devices/siemens-pac1600.png',
+          firmware_version: '1.5.0',
+          warranty: '2 years',
+          certifications: ['CE', 'cULus', 'IEC 61010-1'],
+          dimensions: '72mm x 90mm x 70mm',
+          weight: '0.2kg',
+          description: 'The Sentron 7KT PAC1600 is a compact power monitoring device for DIN rail mounting.'
+        },
+      ],
+    },
+  },
+  solar: {
+    vendors: {
+      SunPower: [
+        { 
+          model: 'Maxeon 6 AC', 
+          parameters: { capacity: '440W', efficiency: '22.8%', cells: '66' },
+          manual_url: 'https://us.sunpower.com/sites/default/files/media-library/manuals/man-maxeon-6-ac-install-guide.pdf',
+          datasheet_url: 'https://us.sunpower.com/sites/default/files/media-library/data-sheets/ds-maxeon6-residential-solar-panels.pdf',
+          image_url: '/images/devices/sunpower-maxeon-6.png',
+          firmware_version: 'N/A',
+          warranty: '25 years',
+          certifications: ['IEC 61215', 'IEC 61730', 'UL 1703'],
+          dimensions: '1835mm x 1106mm x 40mm',
+          weight: '21.1kg',
+          description: 'SunPower Maxeon 6 AC modules with integrated microinverters for residential installations.'
+        },
+        { 
+          model: 'Performance 3 COM', 
+          parameters: { capacity: '450W', efficiency: '20.4%', cells: '144' },
+          manual_url: 'https://us.sunpower.com/sites/default/files/media-library/manuals/man-performance-3-com-install-guide.pdf',
+          datasheet_url: 'https://us.sunpower.com/sites/default/files/media-library/data-sheets/ds-performance-3-commercial-solar-panels.pdf',
+          image_url: '/images/devices/sunpower-performance-3.png',
+          firmware_version: 'N/A',
+          warranty: '25 years',
+          certifications: ['IEC 61215', 'IEC 61730', 'UL 1703'],
+          dimensions: '2066mm x 998mm x 35mm',
+          weight: '22.7kg',
+          description: 'SunPower Performance 3 COM panels are designed for commercial installations with high power density.'
+        },
+      ],
+      JinkoSolar: [
+        { 
+          model: 'Tiger Neo N-Type', 
+          parameters: { capacity: '615W', efficiency: '22.3%', cells: '156' },
+          manual_url: 'https://jinkosolar.com/uploads/TigerNeo_Installation_Manual.pdf',
+          datasheet_url: 'https://jinkosolar.com/uploads/TigerNeo_66TR_615-635M.pdf',
+          image_url: '/images/devices/jinko-tiger-neo.png',
+          firmware_version: 'N/A',
+          warranty: '25 years',
+          certifications: ['IEC 61215', 'IEC 61730', 'UL 1703'],
+          dimensions: '2465mm x 1134mm x 35mm',
+          weight: '32.7kg',
+          description: 'JinkoSolar Tiger Neo N-Type modules utilize TOPCon cell technology for higher efficiency.'
+        },
+        { 
+          model: 'Eagle 72HM G4', 
+          parameters: { capacity: '585W', efficiency: '21.3%', cells: '144' },
+          manual_url: 'https://jinkosolar.com/uploads/Eagle_Installation_Manual.pdf',
+          datasheet_url: 'https://jinkosolar.com/uploads/Eagle72HM_G4_585-605M.pdf',
+          image_url: '/images/devices/jinko-eagle.png',
+          firmware_version: 'N/A',
+          warranty: '25 years',
+          certifications: ['IEC 61215', 'IEC 61730', 'UL 1703'],
+          dimensions: '2278mm x 1134mm x 35mm',
+          weight: '28.8kg',
+          description: 'JinkoSolar Eagle series modules offer high power density and long-term reliability.'
+        },
+      ],
+    },
+  },
 };
