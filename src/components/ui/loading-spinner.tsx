@@ -1,27 +1,25 @@
 
-import React from 'react';
-import { Loader2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
-
-type SpinnerSize = 'sm' | 'md' | 'lg' | 'xl';
+import { cn } from "@/lib/utils";
 
 interface LoadingSpinnerProps {
-  size?: SpinnerSize;
+  size?: "sm" | "md" | "lg";
   className?: string;
 }
 
-const sizeMap: Record<SpinnerSize, string> = {
-  sm: 'h-4 w-4',
-  md: 'h-6 w-6',
-  lg: 'h-8 w-8',
-  xl: 'h-12 w-12'
-};
+export function LoadingSpinner({ size = "md", className }: LoadingSpinnerProps) {
+  const sizeClasses = {
+    sm: "h-4 w-4 border-2",
+    md: "h-8 w-8 border-3",
+    lg: "h-12 w-12 border-4",
+  };
 
-export const LoadingSpinner = ({ 
-  size = 'md', 
-  className 
-}: LoadingSpinnerProps) => {
   return (
-    <Loader2 className={cn(`animate-spin ${sizeMap[size]}`, className)} />
+    <div
+      className={cn(
+        "animate-spin rounded-full border-solid border-primary border-t-transparent",
+        sizeClasses[size],
+        className
+      )}
+    />
   );
-};
+}

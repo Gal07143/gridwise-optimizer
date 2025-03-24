@@ -104,6 +104,8 @@ export type Database = {
           id: string
           message: string
           resolved_at: string | null
+          severity: string | null
+          source: string | null
           timestamp: string
           type: Database["public"]["Enums"]["alert_type"]
         }
@@ -115,6 +117,8 @@ export type Database = {
           id?: string
           message: string
           resolved_at?: string | null
+          severity?: string | null
+          source?: string | null
           timestamp?: string
           type: Database["public"]["Enums"]["alert_type"]
         }
@@ -126,6 +130,8 @@ export type Database = {
           id?: string
           message?: string
           resolved_at?: string | null
+          severity?: string | null
+          source?: string | null
           timestamp?: string
           type?: Database["public"]["Enums"]["alert_type"]
         }
@@ -465,56 +471,83 @@ export type Database = {
       devices: {
         Row: {
           capacity: number
+          config: Json | null
+          connection_info: Json | null
           created_at: string
           created_by: string | null
           description: string | null
+          enabled: boolean | null
           firmware: string | null
+          firmware_version: string | null
           id: string
           installation_date: string | null
+          ip_address: string | null
+          last_seen: string | null
           last_updated: string
           lat: number | null
           lng: number | null
           location: string | null
           metrics: Json | null
+          modbus_config: Json | null
           name: string
+          protocol: string | null
           site_id: string | null
           status: Database["public"]["Enums"]["device_status"]
+          tags: Json | null
           type: Database["public"]["Enums"]["device_type"]
         }
         Insert: {
           capacity: number
+          config?: Json | null
+          connection_info?: Json | null
           created_at?: string
           created_by?: string | null
           description?: string | null
+          enabled?: boolean | null
           firmware?: string | null
+          firmware_version?: string | null
           id?: string
           installation_date?: string | null
+          ip_address?: string | null
+          last_seen?: string | null
           last_updated?: string
           lat?: number | null
           lng?: number | null
           location?: string | null
           metrics?: Json | null
+          modbus_config?: Json | null
           name: string
+          protocol?: string | null
           site_id?: string | null
           status?: Database["public"]["Enums"]["device_status"]
+          tags?: Json | null
           type: Database["public"]["Enums"]["device_type"]
         }
         Update: {
           capacity?: number
+          config?: Json | null
+          connection_info?: Json | null
           created_at?: string
           created_by?: string | null
           description?: string | null
+          enabled?: boolean | null
           firmware?: string | null
+          firmware_version?: string | null
           id?: string
           installation_date?: string | null
+          ip_address?: string | null
+          last_seen?: string | null
           last_updated?: string
           lat?: number | null
           lng?: number | null
           location?: string | null
           metrics?: Json | null
+          modbus_config?: Json | null
           name?: string
+          protocol?: string | null
           site_id?: string | null
           status?: Database["public"]["Enums"]["device_status"]
+          tags?: Json | null
           type?: Database["public"]["Enums"]["device_type"]
         }
         Relationships: [
@@ -934,6 +967,7 @@ export type Database = {
       }
       fdd_rules: {
         Row: {
+          alert_source: string | null
           created_at: string | null
           id: string
           is_active: boolean | null
@@ -944,6 +978,7 @@ export type Database = {
           threshold: number
         }
         Insert: {
+          alert_source?: string | null
           created_at?: string | null
           id?: string
           is_active?: boolean | null
@@ -954,6 +989,7 @@ export type Database = {
           threshold: number
         }
         Update: {
+          alert_source?: string | null
           created_at?: string | null
           id?: string
           is_active?: boolean | null
@@ -1122,6 +1158,39 @@ export type Database = {
           power_kw?: number | null
           timestamp?: string | null
           voltage?: number | null
+        }
+        Relationships: []
+      }
+      modbus_devices: {
+        Row: {
+          id: string
+          inserted_at: string | null
+          ip: string
+          is_active: boolean
+          name: string | null
+          port: number
+          unit_id: number
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          inserted_at?: string | null
+          ip: string
+          is_active?: boolean
+          name?: string | null
+          port?: number
+          unit_id?: number
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          inserted_at?: string | null
+          ip?: string
+          is_active?: boolean
+          name?: string | null
+          port?: number
+          unit_id?: number
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -1680,6 +1749,38 @@ export type Database = {
         }
         Relationships: []
       }
+      user_alert_preferences: {
+        Row: {
+          created_at: string | null
+          id: string
+          muted_severities: string[] | null
+          muted_sources: string[] | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          muted_severities?: string[] | null
+          muted_sources?: string[] | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          muted_severities?: string[] | null
+          muted_sources?: string[] | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_alert_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_preferences: {
         Row: {
           id: string
@@ -1887,6 +1988,13 @@ export type Database = {
       }
     }
     Functions: {
+      evaluate_fdd_expression: {
+        Args: {
+          expression: string
+          device_id: string
+        }
+        Returns: Json
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -1906,6 +2014,10 @@ export type Database = {
             }
             Returns: string
           }
+      rpc_evaluate_fdd_rules: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       ai_recommendation_priority: "low" | "medium" | "high"

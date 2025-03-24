@@ -1,192 +1,156 @@
 
-import { supabase } from "@/integrations/supabase/client";
-import { Alert, AlertType, AlertSeverity } from "@/types/energy";
-import { toast } from "sonner";
+import { supabase } from "@/lib/supabase";
 
-// Define the database alert types
-type DbAlertType = 'warning' | 'critical' | 'info';
+export interface Alert {
+  id: string;
+  type: string;
+  message: string;
+  device_id: string;
+  timestamp: string;
+  acknowledged: boolean;
+  acknowledged_at?: string;
+  acknowledged_by?: string;
+  severity: string;
+  source?: string;
+  resolved_at?: string;
+}
 
-// Convert frontend AlertType to database-compatible type
-const toDbAlertType = (type: AlertType): DbAlertType => {
-  switch (type) {
-    case 'warning':
-      return 'warning';
-    case 'critical':
-      return 'critical';
-    case 'system':
-    case 'security':
-    case 'device':
-    case 'performance':
-    case 'forecast':
-    case 'info':
-      return 'info';
-    default:
-      return 'info';
+export interface AlertSummary {
+  total: number;
+  critical: number;
+  warning: number;
+  info: number;
+  unacknowledged: number;
+}
+
+// Fetch all alerts
+export async function getAlerts(
+  limit: number = 20,
+  filters?: {
+    severity?: string;
+    acknowledged?: boolean;
+    deviceId?: string;
+    startDate?: string;
+    endDate?: string;
   }
-};
-
-/**
- * Get all alerts, with optional filtering
- */
-export const getAlerts = async (options?: {
-  deviceId?: string;
-  acknowledged?: boolean;
-  type?: AlertType;
-  limit?: number;
-}): Promise<Alert[]> => {
+): Promise<Alert[]> {
   try {
     let query = supabase
       .from('alerts')
-      .select('*');
-    
-    if (options?.deviceId) {
-      query = query.eq('device_id', options.deviceId);
+      .select('*')
+      .order('timestamp', { ascending: false })
+      .limit(limit);
+
+    // Apply filters if provided
+    if (filters) {
+      if (filters.severity) {
+        query = query.eq('severity', filters.severity);
+      }
+      if (filters.acknowledged !== undefined) {
+        query = query.eq('acknowledged', filters.acknowledged);
+      }
+      if (filters.deviceId) {
+        query = query.eq('device_id', filters.deviceId);
+      }
+      if (filters.startDate) {
+        query = query.gte('timestamp', filters.startDate);
+      }
+      if (filters.endDate) {
+        query = query.lte('timestamp', filters.endDate);
+      }
     }
-    
-    if (options?.acknowledged !== undefined) {
-      query = query.eq('acknowledged', options.acknowledged);
-    }
-    
-    if (options?.type) {
-      // Convert type to match database expectations
-      const dbType = toDbAlertType(options.type);
-      query = query.eq('type', dbType);
-    }
-    
-    query = query.order('timestamp', { ascending: false });
-    
-    if (options?.limit) {
-      query = query.limit(options.limit);
-    }
-    
+
     const { data, error } = await query;
-    
-    if (error) throw error;
-    
-    // Transform data to match Alert interface
-    const alerts: Alert[] = (data || []).map(item => ({
-      id: item.id,
-      device_id: item.device_id,
-      type: mapDbTypeToAlertType(item.type as DbAlertType),
-      title: item.message || item.type, 
-      message: item.message,
-      severity: mapDbTypeToSeverity(item.type as DbAlertType),
-      timestamp: item.timestamp,
-      acknowledged: item.acknowledged,
-      acknowledged_at: item.acknowledged_at,
-      acknowledged_by: item.acknowledged_by,
-      resolved_at: item.resolved_at,
-      source: 'system',
-      resolved: !!item.resolved_at,
-      source_id: item.device_id
-    }));
-    
-    return alerts;
-    
+
+    if (error) {
+      console.error('Error fetching alerts:', error);
+      throw error;
+    }
+
+    return data || [];
   } catch (error) {
-    console.error("Error fetching alerts:", error);
-    toast.error("Failed to fetch alerts");
-    return [];
-  }
-};
-
-// Map DB alert type to frontend alert type
-function mapDbTypeToAlertType(dbType: DbAlertType): AlertType {
-  switch(dbType) {
-    case 'warning': return 'warning';
-    case 'critical': return 'critical';
-    case 'info': return 'info';
-    default: return 'system';
+    console.error('Error in getAlerts:', error);
+    throw error;
   }
 }
 
-// Map DB alert type to frontend severity
-function mapDbTypeToSeverity(dbType: DbAlertType): AlertSeverity {
-  switch(dbType) {
-    case 'critical': return 'critical';
-    case 'warning': return 'medium';
-    case 'info': return 'low';
-    default: return 'info';
+// Get a summary of alerts (counts by severity)
+export async function getAlertSummary(): Promise<AlertSummary> {
+  try {
+    const { data: alerts, error } = await supabase
+      .from('alerts')
+      .select('*');
+
+    if (error) {
+      console.error('Error fetching alert summary:', error);
+      throw error;
+    }
+
+    const summary: AlertSummary = {
+      total: alerts?.length || 0,
+      critical: alerts?.filter(a => a.severity === 'critical')?.length || 0,
+      warning: alerts?.filter(a => a.severity === 'warning')?.length || 0,
+      info: alerts?.filter(a => a.severity === 'info')?.length || 0,
+      unacknowledged: alerts?.filter(a => !a.acknowledged)?.length || 0
+    };
+
+    return summary;
+  } catch (error) {
+    console.error('Error in getAlertSummary:', error);
+    throw error;
   }
 }
 
-/**
- * Acknowledge an alert
- */
-export const acknowledgeAlert = async (alertId: string): Promise<boolean> => {
+// Create a new alert
+export async function createAlert(alert: Omit<Alert, 'id' | 'timestamp'>): Promise<Alert> {
+  try {
+    const { data, error } = await supabase
+      .from('alerts')
+      .insert([{
+        ...alert,
+        timestamp: new Date().toISOString()
+      }])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating alert:', error);
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error in createAlert:', error);
+    throw error;
+  }
+}
+
+// Acknowledge an alert
+export async function acknowledgeAlert(alertId: string, userId: string): Promise<boolean> {
   try {
     const { error } = await supabase
       .from('alerts')
       .update({
         acknowledged: true,
         acknowledged_at: new Date().toISOString(),
-        acknowledged_by: (await supabase.auth.getUser()).data.user?.id
+        acknowledged_by: userId
       })
       .eq('id', alertId);
-    
-    if (error) throw error;
-    
-    toast.success("Alert acknowledged");
+
+    if (error) {
+      console.error('Error acknowledging alert:', error);
+      throw error;
+    }
+
     return true;
-    
   } catch (error) {
-    console.error(`Error acknowledging alert ${alertId}:`, error);
-    toast.error("Failed to acknowledge alert");
-    return false;
+    console.error('Error in acknowledgeAlert:', error);
+    throw error;
   }
-};
+}
 
-/**
- * Create a new alert
- */
-export const createAlert = async (alert: Omit<Alert, 'id' | 'acknowledged' | 'acknowledged_by' | 'acknowledged_at' | 'resolved_at'>): Promise<Alert | null> => {
-  try {
-    // Map our AlertType to the database's acceptable types
-    const dbType = toDbAlertType(alert.type);
-    
-    const { data, error } = await supabase
-      .from('alerts')
-      .insert({
-        device_id: alert.device_id,
-        type: dbType,
-        message: alert.message,
-        timestamp: alert.timestamp
-      })
-      .select()
-      .single();
-    
-    if (error) throw error;
-    
-    // Transform to match Alert interface
-    const createdAlert: Alert = {
-      id: data.id,
-      device_id: data.device_id,
-      type: alert.type,
-      title: alert.title || data.message || data.type,
-      message: data.message,
-      severity: alert.severity || 'medium',
-      timestamp: data.timestamp,
-      acknowledged: data.acknowledged,
-      acknowledged_at: data.acknowledged_at,
-      acknowledged_by: data.acknowledged_by,
-      resolved_at: data.resolved_at,
-      source: alert.source,
-      resolved: false,
-      source_id: alert.source_id
-    };
-    
-    return createdAlert;
-    
-  } catch (error) {
-    console.error("Error creating alert:", error);
-    return null;
-  }
-};
-
-/**
- * Resolve an alert
- */
-export const resolveAlert = async (alertId: string): Promise<boolean> => {
+// Mark an alert as resolved
+export async function resolveAlert(alertId: string): Promise<boolean> {
   try {
     const { error } = await supabase
       .from('alerts')
@@ -194,15 +158,82 @@ export const resolveAlert = async (alertId: string): Promise<boolean> => {
         resolved_at: new Date().toISOString()
       })
       .eq('id', alertId);
-    
-    if (error) throw error;
-    
-    toast.success("Alert resolved");
+
+    if (error) {
+      console.error('Error resolving alert:', error);
+      throw error;
+    }
+
     return true;
-    
   } catch (error) {
-    console.error(`Error resolving alert ${alertId}:`, error);
-    toast.error("Failed to resolve alert");
-    return false;
+    console.error('Error in resolveAlert:', error);
+    throw error;
   }
-};
+}
+
+// Get alerts for a specific device
+export async function getDeviceAlerts(deviceId: string, limit: number = 10): Promise<Alert[]> {
+  try {
+    const { data, error } = await supabase
+      .from('alerts')
+      .select('*')
+      .eq('device_id', deviceId)
+      .order('timestamp', { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      console.error('Error fetching device alerts:', error);
+      throw error;
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error('Error in getDeviceAlerts:', error);
+    throw error;
+  }
+}
+
+// Get recent alerts
+export async function getRecentAlerts(limit: number = 5): Promise<Alert[]> {
+  // This is a sample function that returns mock data for now
+  // In a real application, you would call getAlerts with appropriate filters
+  const mockAlerts: Alert[] = [
+    {
+      id: "1",
+      type: "device_status",
+      message: "Battery inverter went offline",
+      device_id: "device-1",
+      timestamp: new Date().toISOString(),
+      acknowledged: false,
+      severity: "critical",
+      source: "automatic"
+    },
+    {
+      id: "2",
+      type: "threshold",
+      message: "Power consumption exceeded threshold",
+      device_id: "device-2",
+      timestamp: new Date(Date.now() - 3600000).toISOString(),
+      acknowledged: true,
+      acknowledged_at: new Date(Date.now() - 1800000).toISOString(),
+      acknowledged_by: "user-1",
+      severity: "warning",
+      source: "threshold"
+    },
+    {
+      id: "3",
+      type: "system",
+      message: "System update available",
+      device_id: "system",
+      timestamp: new Date(Date.now() - 86400000).toISOString(),
+      acknowledged: true,
+      acknowledged_at: new Date(Date.now() - 43200000).toISOString(),
+      acknowledged_by: "user-1",
+      severity: "info",
+      source: "system",
+      resolved_at: new Date(Date.now() - 21600000).toISOString()
+    }
+  ];
+  
+  return mockAlerts.slice(0, limit);
+}

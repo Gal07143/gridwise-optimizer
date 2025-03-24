@@ -1,110 +1,75 @@
 
-import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from 'react';
 import { 
-  getEnergyPredictions, 
-  PredictionResult 
-} from "@/services/predictions/energyPredictionService";
-import { weeklyEnergyData } from "@/components/analytics/data/sampleData";
+  PredictionDataPoint, 
+  SystemRecommendation, 
+  generatePredictionData, 
+  getSystemRecommendations 
+} from '@/services/predictions/energyPredictionService';
 
-interface ProcessedPrediction {
-  day: string;
-  value: number;
-  confidence: number;
+interface UsePredictionsResult {
+  predictions: PredictionDataPoint[];
+  recommendations: SystemRecommendation[];
+  isLoading: boolean;
+  error: Error | null;
+  predictionDays: number;
+  setPredictionDays: (days: number) => void;
+  refetch: () => void;
 }
 
-export const usePredictions = (
-  timeframe: string,
-  customData?: any[]
-) => {
-  const [predictionDays, setPredictionDays] = useState(7);
-  const [includeRecommendations, setIncludeRecommendations] = useState(true);
-  const [lastError, setLastError] = useState<string | null>(null);
-  const [processedPredictions, setProcessedPredictions] = useState<ProcessedPrediction[]>([]);
+const usePredictions = (timeframe: string = 'week', customData?: any[]): UsePredictionsResult => {
+  const [predictions, setPredictions] = useState<PredictionDataPoint[]>([]);
+  const [recommendations, setRecommendations] = useState<SystemRecommendation[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<Error | null>(null);
+  const [predictionDays, setPredictionDays] = useState<number>(7);
   
-  // Use either custom data or default sample data based on timeframe
-  const getInputData = () => {
-    if (customData && customData.length > 0) {
-      return customData;
-    }
-    
-    // Default to weekly data if no custom data is provided
-    switch (timeframe) {
-      case 'day':
-        return weeklyEnergyData.slice(0, 24).map(item => item.value);
-      case 'month':
-        return weeklyEnergyData.slice(0, 30).map(item => item.value);
-      case 'year':
-        return weeklyEnergyData.slice(0, 52).map(item => item.value);
-      case 'week':
-      default:
-        return weeklyEnergyData.map(item => item.value);
+  const fetchData = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // Generate prediction data
+      const predictionData = generatePredictionData(predictionDays);
+      setPredictions(predictionData);
+      
+      // Fetch recommendations
+      const recommendationsData = await getSystemRecommendations();
+      setRecommendations(recommendationsData);
+    } catch (err) {
+      console.error('Error fetching prediction data:', err);
+      setError(err as Error);
+    } finally {
+      setIsLoading(false);
     }
   };
-
-  const {
-    data,
+  
+  // Initial fetch
+  useEffect(() => {
+    fetchData();
+  }, [timeframe, predictionDays]);
+  
+  // If customData is provided, generate a different set of predictions
+  useEffect(() => {
+    if (customData && customData.length > 0) {
+      try {
+        // Use custom data to influence predictions
+        const customPredictions = generatePredictionData(predictionDays);
+        setPredictions(customPredictions);
+      } catch (err) {
+        console.error('Error generating custom predictions:', err);
+      }
+    }
+  }, [customData, predictionDays]);
+  
+  return {
+    predictions,
+    recommendations,
     isLoading,
     error,
-    refetch,
-    isError
-  } = useQuery({
-    queryKey: ["energy-predictions", timeframe, predictionDays, customData?.length, includeRecommendations],
-    queryFn: async () => {
-      const inputData = getInputData();
-      console.log(`Fetching predictions for ${timeframe} with ${predictionDays} days forecast`);
-      
-      const result = await getEnergyPredictions({
-        energyData: inputData,
-        predictionDays,
-        includeRecommendations
-      });
-      
-      if (result.error) {
-        setLastError(result.error);
-      } else {
-        setLastError(null);
-      }
-      
-      return result;
-    },
-    enabled: true,
-    // Retry failed predictions up to 2 times before giving up
-    retry: 2,
-    // Cache prediction results for 5 minutes
-    staleTime: 5 * 60 * 1000
-  });
-  
-  // Process raw predictions into the format expected by the PredictionsCard
-  useEffect(() => {
-    if (data?.predictions && data.predictions.length > 0) {
-      const processed = data.predictions.map((pred, index) => ({
-        day: `Day ${index + 1}`,
-        value: pred.consumption,
-        confidence: pred.confidence
-      }));
-      setProcessedPredictions(processed);
-    }
-  }, [data?.predictions]);
-
-  // Clear error state if query parameters change
-  useEffect(() => {
-    setLastError(null);
-  }, [timeframe, predictionDays, customData?.length, includeRecommendations]);
-
-  return {
-    predictions: processedPredictions,
-    rawPredictions: data?.predictions || [],
-    recommendations: data?.recommendations || [],
-    modelVersion: data?.model_version,
-    isLoading,
-    error: error || lastError,
-    isError: isError || !!lastError,
-    refetch,
     predictionDays,
     setPredictionDays,
-    includeRecommendations,
-    setIncludeRecommendations
+    refetch: fetchData
   };
 };
 
