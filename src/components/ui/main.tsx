@@ -11,7 +11,7 @@ const Main = React.forwardRef<
   return (
     <main
       ref={ref}
-      className={cn("flex-1 p-4 md:p-6", className)}
+      className={cn("flex-1 p-3 md:p-5 overflow-auto", className)}
       {...props}
     />
   )

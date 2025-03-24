@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -105,7 +106,14 @@ const AppRoutes = () => {
           <IntegrationCategoryPage />
         </ProtectedRoute>
       } />
+      {/* Fixed route for device model - adding both paths */}
       <Route path="/integrations/model/:modelId" element={
+        <ProtectedRoute>
+          <DeviceModelDetailPage />
+        </ProtectedRoute>
+      } />
+      {/* Add the route that users are actually trying to access */}
+      <Route path="/integrations/device-model/:modelId" element={
         <ProtectedRoute>
           <DeviceModelDetailPage />
         </ProtectedRoute>
@@ -123,6 +131,33 @@ const AppRoutes = () => {
       <Route path="/integrations/mqtt" element={
         <ProtectedRoute>
           <MQTTIntegration />
+        </ProtectedRoute>
+      } />
+      
+      {/* Integration category specific routes */}
+      <Route path="/integrations/batteries" element={
+        <ProtectedRoute>
+          <IntegrationCategoryPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/integrations/inverters" element={
+        <ProtectedRoute>
+          <IntegrationCategoryPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/integrations/ev-chargers" element={
+        <ProtectedRoute>
+          <IntegrationCategoryPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/integrations/meters" element={
+        <ProtectedRoute>
+          <IntegrationCategoryPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/integrations/controllers" element={
+        <ProtectedRoute>
+          <IntegrationCategoryPage />
         </ProtectedRoute>
       } />
       

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { ArrowUpDown, CheckCircle, AlertCircle, BookOpen, Link } from 'lucide-react';
+import { ArrowUpDown, CheckCircle, AlertCircle, BookOpen } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -56,6 +56,7 @@ const DeviceModelsTable: React.FC<DeviceModelsTableProps> = ({
   };
 
   const handleClickRow = (deviceId: string) => {
+    // Update route path to match what we added in Routes.tsx
     navigate(`/integrations/device-model/${deviceId}`);
   };
 

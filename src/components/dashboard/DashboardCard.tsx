@@ -30,24 +30,24 @@ const DashboardCard = ({
   style
 }: DashboardCardProps) => {
   return (
-    <Card className={cn("transition-all duration-200 overflow-hidden", className)} style={style}>
+    <Card className={cn("transition-all duration-200 overflow-hidden h-full", className)} style={style}>
       <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
         <div>
           <div className="flex items-center">
             {icon && <span className="mr-2 text-muted-foreground">{icon}</span>}
-            <CardTitle className="text-lg font-medium">{title}</CardTitle>
+            <CardTitle className="text-base font-medium">{title}</CardTitle>
             {badge && (
               <Badge variant={badgeVariant} className="ml-2">
                 {badge}
               </Badge>
             )}
           </div>
-          {description && <CardDescription>{description}</CardDescription>}
+          {description && <CardDescription className="text-xs">{description}</CardDescription>}
         </div>
       </CardHeader>
-      <CardContent className="p-4">
+      <CardContent className="p-3">
         {isLoading ? (
-          <div className="flex items-center justify-center h-40">
+          <div className="flex items-center justify-center h-32">
             <div className="animate-pulse">
               <div className="h-4 w-32 bg-slate-200 dark:bg-slate-700 rounded mb-2.5"></div>
               <div className="h-2 w-48 bg-slate-200 dark:bg-slate-700 rounded"></div>

@@ -172,7 +172,7 @@ const IntegrationDeviceModelsCard: React.FC<IntegrationDeviceModelsCardProps> = 
           </Button>
         </div>
         <Button size="sm" asChild>
-          <Link to="/integrations/add-device-model">
+          <Link to="/integrations/model/add">
             <Plus className="h-4 w-4 mr-2" />
             Add New Device
           </Link>
