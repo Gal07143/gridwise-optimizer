@@ -1,5 +1,5 @@
 {
-  "name": "modbus-agent",  // Add the project name here
+  "name": "modbus-agent",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -9,7 +9,7 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "start": "node modbus-agent/modbusReader.js"  // Add start script to run the agent
+    "start": "node modbus-agent/modbusReader.js"
   },
   "dependencies": {
     "modbus-serial": "^9.0.7",
