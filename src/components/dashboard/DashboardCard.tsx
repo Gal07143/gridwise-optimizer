@@ -16,7 +16,6 @@ export interface DashboardCardProps {
   className?: string;
   children: React.ReactNode;
   isLoading?: boolean;
-  loading?: boolean; // alias for isLoading for backward compatibility
   loadingText?: string;
   style?: React.CSSProperties;
   actions?: React.ReactNode;
@@ -40,7 +39,6 @@ const DashboardCard = ({
   className,
   children,
   isLoading = false,
-  loading = false, // for backward compatibility
   loadingText = 'Loading...',
   style,
   actions,
@@ -54,9 +52,6 @@ const DashboardCard = ({
   elevation = 'flat',
   status = 'default'
 }: DashboardCardProps) => {
-  // For backward compatibility
-  const showLoading = isLoading || loading;
-  
   // Determine elevation class
   const elevationClass = 
     elevation === 'high' ? 'shadow-lg' :
@@ -122,7 +117,7 @@ const DashboardCard = ({
         {actions && <div className="flex items-center space-x-2">{actions}</div>}
       </CardHeader>
       <CardContent className={cn("p-3", contentClassName)}>
-        {showLoading ? (
+        {isLoading ? (
           <div className="flex flex-col space-y-2">
             <Skeleton className="h-4 w-3/4" />
             <Skeleton className="h-8 w-full" />

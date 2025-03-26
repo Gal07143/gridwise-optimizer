@@ -4,6 +4,20 @@ import { toast } from 'sonner';
 import { fetchDeviceModels, getDeviceCategories } from '@/services/deviceModelsService';
 import { DeviceModel } from '@/components/integrations/DeviceModelsTable';
 
+// Define a consistent map of category IDs to display names
+export const categoryNames: Record<string, string> = {
+  'batteries': 'Batteries',
+  'inverters': 'Inverters',
+  'ev-chargers': 'EV Chargers',
+  'meters': 'Energy Meters',
+  'controllers': 'System Controllers',
+  'solar': 'Solar Panels',
+  'wind': 'Wind Turbines',
+  'hydro': 'Hydro Generators',
+  'biomass': 'Biomass Systems',
+  'all': 'All Devices',
+};
+
 export const useDeviceModels = (categoryId?: string) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -18,20 +32,19 @@ export const useDeviceModels = (categoryId?: string) => {
   useEffect(() => {
     // Fetch available categories
     const loadCategories = async () => {
-      const cats = await getDeviceCategories();
-      setCategories(cats);
-      
-      // Get the category name based on ID
-      if (categoryId) {
-        const category = categoryId === 'all' ? 'All Devices' : 
-                        categoryId === 'batteries' ? 'Batteries' :
-                        categoryId === 'inverters' ? 'Inverters' :
-                        categoryId === 'ev-chargers' ? 'EV Chargers' :
-                        categoryId === 'meters' ? 'Energy Meters' :
-                        categoryId === 'controllers' ? 'System Controllers' : 'All Devices';
-        setCategoryName(category);
-      } else {
-        setCategoryName('All Devices');
+      try {
+        const cats = await getDeviceCategories();
+        setCategories(cats);
+        
+        // Get the category name based on ID
+        if (categoryId) {
+          setCategoryName(categoryNames[categoryId] || 'All Devices');
+        } else {
+          setCategoryName('All Devices');
+        }
+      } catch (err) {
+        console.error('Error loading device categories:', err);
+        toast.error('Failed to load device categories');
       }
     };
     
@@ -91,14 +104,4 @@ export const useDeviceModels = (categoryId?: string) => {
     categoryName,
     categories
   };
-};
-
-// Export the categoryNames mapping for reference elsewhere
-export const categoryNames: Record<string, string> = {
-  'batteries': 'Batteries',
-  'inverters': 'Inverters',
-  'ev-chargers': 'EV Chargers',
-  'meters': 'Energy Meters',
-  'controllers': 'System Controllers',
-  'all': 'All Devices',
 };

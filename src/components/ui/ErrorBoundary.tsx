@@ -3,6 +3,7 @@ import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { Button } from './button';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useNavigate } from 'react-router-dom';
 
 interface Props {
   children: ReactNode;
@@ -15,7 +16,6 @@ interface State {
   hasError: boolean;
   error: Error | null;
   errorInfo: ErrorInfo | null;
-  isMobile?: boolean;
 }
 
 // MobileAwareErrorUI component to handle responsive error display
@@ -62,6 +62,17 @@ const MobileAwareErrorUI = ({
   );
 };
 
+// Use a wrapper component to access React Router hooks
+const NavigateWrapper = (props: { to: string; children: ReactNode }) => {
+  const navigate = useNavigate();
+  
+  const handleClick = () => {
+    navigate(props.to);
+  };
+  
+  return React.cloneElement(props.children as React.ReactElement, { onClick: handleClick });
+};
+
 class ErrorBoundary extends Component<Props, State> {
   public state: State = {
     hasError: false,
@@ -78,9 +89,6 @@ class ErrorBoundary extends Component<Props, State> {
     // You can also log the error to an error reporting service
     console.error('Uncaught error:', error, errorInfo);
     this.setState({ errorInfo });
-    
-    // Log to any monitoring service you might add later
-    // logErrorToService(error, errorInfo);
   }
 
   private handleReset = () => {
@@ -91,20 +99,18 @@ class ErrorBoundary extends Component<Props, State> {
     this.setState({ hasError: false, error: null, errorInfo: null });
   }
 
-  private navigateToHome = () => {
-    window.location.href = '/dashboard';
-  }
-
   public render() {
     if (this.state.hasError) {
       // You can render any custom fallback UI
       return this.props.fallback || (
-        <MobileAwareErrorUI 
-          error={this.state.error} 
-          onReset={this.handleReset}
-          onNavigateHome={this.navigateToHome}
-          resetLabel={this.props.resetLabel}
-        />
+        <NavigateWrapper to="/dashboard">
+          <MobileAwareErrorUI 
+            error={this.state.error} 
+            onReset={this.handleReset}
+            onNavigateHome={() => {}} // Actual navigation handled by wrapper
+            resetLabel={this.props.resetLabel}
+          />
+        </NavigateWrapper>
       );
     }
 
