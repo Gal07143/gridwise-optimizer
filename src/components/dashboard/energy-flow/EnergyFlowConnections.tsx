@@ -14,17 +14,14 @@ const EnergyFlowConnections: React.FC<EnergyFlowConnectionsProps> = ({ connectio
       case 'solar-battery':
         return "M110,80 C160,80 160,160 210,160";
       case 'solar-building':
-        return "M110,80 C200,50 350,50 410,120";
       case 'solar-home':
         return "M110,80 C200,50 350,50 410,120";
       case 'wind-battery':
         return "M110,240 C135,240 185,200 210,180";
       case 'wind-building':
-        return "M110,240 C180,240 270,200 410,160";
       case 'wind-home':
         return "M110,240 C180,240 270,200 410,160";
       case 'battery-building':
-        return "M290,160 C320,160 390,140 410,140";
       case 'battery-home':
         return "M290,160 C320,160 390,140 410,140";
       case 'battery-devices':
@@ -32,7 +29,6 @@ const EnergyFlowConnections: React.FC<EnergyFlowConnectionsProps> = ({ connectio
       case 'battery-ev':
         return "M290,160 C320,190 350,260 410,280";
       case 'grid-building':
-        return "M110,320 C180,320 270,200 410,180";
       case 'grid-home':
         return "M110,320 C180,320 270,200 410,180";
       case 'grid-battery':
@@ -49,24 +45,24 @@ const EnergyFlowConnections: React.FC<EnergyFlowConnectionsProps> = ({ connectio
   // Calculate stroke width based on energy value
   const getStrokeWidth = (value: number): number => {
     const baseWidth = 2;
-    const maxValue = 20;
-    // Scale width between baseWidth and 8 based on value
-    return Math.max(baseWidth, Math.min(8, baseWidth + (value / maxValue) * 6));
+    const maxValue = 12;
+    // Scale width between baseWidth and 10 based on value
+    return Math.max(baseWidth, Math.min(10, baseWidth + (value / maxValue) * 8));
   };
 
   // Get the color for the connection based on the source
   const getConnectionColor = (from: string): string => {
     switch (from) {
       case 'solar':
-        return "var(--energy-solar, rgba(234, 179, 8, 0.8))";
+        return "#FDCB40"; // Bright yellow for solar
       case 'wind':
-        return "var(--energy-wind, rgba(59, 130, 246, 0.8))";
+        return "#38BDF8"; // Bright blue for wind
       case 'battery':
-        return "var(--energy-battery, rgba(168, 85, 247, 0.8))";
+        return "#A78BFA"; // Vibrant purple for battery
       case 'grid':
-        return "var(--energy-grid, rgba(220, 38, 38, 0.8))";
+        return "#F87171"; // Bright red for grid
       default:
-        return "rgba(100, 116, 139, 0.7)";
+        return "#94A3B8"; // Default slate for unknown sources
     }
   };
 
@@ -80,28 +76,44 @@ const EnergyFlowConnections: React.FC<EnergyFlowConnectionsProps> = ({ connectio
         if (!path || !connection.active) return null;
         
         return (
-          <g key={`${connection.from}-${connection.to}-${index}`}>
-            {/* Background connection line */}
+          <g key={`${connection.from}-${connection.to}-${index}`} className="energy-flow-connection">
+            {/* Background glow effect */}
+            <path
+              d={path}
+              fill="none"
+              stroke={color}
+              strokeWidth={strokeWidth + 4}
+              opacity={0.15}
+              strokeLinecap="round"
+            />
+            
+            {/* Main connection line */}
             <path
               d={path}
               fill="none"
               stroke={color}
               strokeWidth={strokeWidth}
-              opacity={0.7}
+              opacity={0.8}
+              strokeLinecap="round"
             />
             
-            {/* Animated flow pattern */}
+            {/* Animated flow pattern - faster and more visible */}
             <path
               d={path}
               fill="none"
               stroke="white"
               strokeWidth={strokeWidth * 0.6}
-              strokeDasharray="10,15"
-              opacity={0.8}
+              strokeDasharray={`${5 + Math.min(10, connection.value * 0.8)},${15 + Math.min(20, connection.value * 1.2)}`}
+              opacity={0.9}
               className="animate-flow"
+              style={{ 
+                animation: `flow ${Math.max(3, 12 - connection.value)}s linear infinite`,
+                filter: `drop-shadow(0 0 3px ${color})`
+              }}
+              strokeLinecap="round"
             />
             
-            {/* Energy value indicator */}
+            {/* Energy value indicator with improved visibility */}
             {connection.value > 0.5 && (
               <>
                 <path
@@ -110,11 +122,12 @@ const EnergyFlowConnections: React.FC<EnergyFlowConnectionsProps> = ({ connectio
                   fill="none"
                   stroke="none"
                 />
-                <text dy={-5} className="text-[10px] font-semibold fill-slate-700 dark:fill-slate-200 drop-shadow-sm">
+                <text dy={-8} className="text-[10px] font-bold drop-shadow-lg">
                   <textPath
                     href={`#flow-path-${connection.from}-${connection.to}-${index}`}
                     startOffset="50%"
                     textAnchor="middle"
+                    className="fill-white"
                   >
                     {connection.value.toFixed(1)} kW
                   </textPath>

@@ -1,89 +1,90 @@
 
 import React from 'react';
+import { Sun, Wind, Battery, Home, Car, Cable, Cpu, Zap } from 'lucide-react';
 import { EnergyNode as EnergyNodeType } from './types';
-import { Sun, Wind, Battery, Home, Laptop, Building, Cpu } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface EnergyNodeProps {
   node: EnergyNodeType;
-  showDetails?: boolean;
+  className?: string;
 }
 
-const EnergyNode: React.FC<EnergyNodeProps> = ({ node, showDetails = true }) => {
-  // Get the appropriate icon based on node type and ID
+const EnergyNode: React.FC<EnergyNodeProps> = ({ node, className }) => {
   const getNodeIcon = () => {
-    switch (node.id) {
+    switch (node.deviceType) {
       case 'solar':
-        return <Sun className="h-10 w-10 mb-2 text-yellow-500" />;
+        return <Sun className="h-8 w-8 text-yellow-400" />;
       case 'wind':
-        return <Wind className="h-10 w-10 mb-2 text-blue-500" />;
+        return <Wind className="h-8 w-8 text-blue-400" />;
       case 'battery':
-        return <Battery className="h-12 w-12 mb-2 text-purple-500" />;
-      case 'building':
-        return <Building className="h-10 w-10 mb-2 text-green-500" />;
-      case 'devices':
-        return <Laptop className="h-10 w-10 mb-2 text-slate-500" />;
+        return <Battery className="h-8 w-8 text-purple-400" />;
+      case 'grid':
+        return <Cable className="h-8 w-8 text-red-400" />;
+      case 'load':
+        return <Home className="h-8 w-8 text-green-400" />;
+      case 'ev':
+        return <Car className="h-8 w-8 text-green-400" />;
       default:
-        if (node.type === 'source') return <Sun className="h-10 w-10 mb-2 text-yellow-500" />;
-        if (node.type === 'storage') return <Battery className="h-10 w-10 mb-2 text-purple-500" />;
-        if (node.type === 'consumption') return <Home className="h-10 w-10 mb-2 text-green-500" />;
-        return <Cpu className="h-10 w-10 mb-2 text-gray-500" />;
+        return <Zap className="h-8 w-8 text-slate-400" />;
     }
   };
 
-  // Get background color based on node type
-  const getNodeBackgroundColor = () => {
-    switch (node.type) {
-      case 'source':
-        return node.id === 'solar'
-          ? 'bg-yellow-100/70 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800/50'
-          : 'bg-blue-100/70 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800/50';
-      case 'storage':
-        return 'bg-purple-100/70 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800/50';
-      case 'consumption':
-        return node.id === 'building'
-          ? 'bg-green-100/70 dark:bg-green-900/20 border-green-200 dark:border-green-800/50'
-          : 'bg-slate-100/70 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700/50';
+  const getNodeColor = () => {
+    switch (node.deviceType) {
+      case 'solar':
+        return "from-yellow-900/50 to-yellow-950/80 border-yellow-700/30";
+      case 'wind':
+        return "from-blue-900/50 to-blue-950/80 border-blue-700/30";
+      case 'battery':
+        return "from-purple-900/50 to-purple-950/80 border-purple-700/30";
+      case 'grid':
+        return "from-red-900/50 to-red-950/80 border-red-700/30";
+      case 'load':
+      case 'ev':
+        return "from-green-900/50 to-green-950/80 border-green-700/30";
       default:
-        return 'bg-gray-100/70 dark:bg-gray-800/20 border-gray-200 dark:border-gray-700/50';
+        return "from-slate-800/50 to-slate-900/80 border-slate-700/30";
     }
   };
 
-  // Get extra content for specific node types
-  const getNodeExtraContent = () => {
-    if (node.type === 'storage') {
-      // Calculate battery percentage (now correctly using the batteryLevel or defaulting to 73.6)
-      const batteryPercentage = node.batteryLevel || 73.6;
-      
-      return (
-        <>
-          <div className="w-full h-4 bg-purple-200/50 dark:bg-purple-800/30 rounded-full overflow-hidden mt-2">
-            <div
-              className="h-full bg-purple-500"
-              style={{ width: `${batteryPercentage}%` }}
-            ></div>
-          </div>
-          <div className="text-xs text-purple-700 dark:text-purple-300 mt-1">
-            {batteryPercentage}% Charged
-          </div>
-        </>
-      );
-    }
-    
-    return null;
-  };
+  // Show a battery level indicator if the node is a battery
+  const showBatteryLevel = node.deviceType === 'battery' && node.batteryLevel !== undefined;
 
   return (
-    <div className={`w-full p-4 rounded-lg ${getNodeBackgroundColor()} backdrop-blur-sm flex flex-col items-center shadow-sm transition-all duration-300 hover:shadow-md`}>
-      {getNodeIcon()}
-      <div className="text-sm font-medium">{node.label}</div>
-      <div className="text-xl font-bold">{node.power.toFixed(1)} kW</div>
-      {showDetails && getNodeExtraContent()}
-      
-      {node.status !== 'active' && (
-        <div className="mt-2 text-xs px-2 py-1 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-300">
-          {node.status === 'error' ? 'Error' : 'Offline'}
-        </div>
+    <div 
+      className={cn(
+        "p-3 rounded-lg bg-gradient-to-br shadow-lg border",
+        getNodeColor(),
+        className
       )}
+    >
+      <div className="flex flex-col items-center text-center">
+        <div className="mb-2 p-2 rounded-full bg-slate-800/80 border border-slate-700/50 shadow-inner flex items-center justify-center">
+          {getNodeIcon()}
+        </div>
+        <div className="text-sm font-medium text-slate-200">{node.label}</div>
+        <div className="text-xl font-bold text-white">{node.power.toFixed(1)} kW</div>
+        
+        {showBatteryLevel && (
+          <div className="w-full mt-2">
+            <div className="text-xs text-slate-400 text-center mb-1">
+              {node.batteryLevel}% Charged
+            </div>
+            <div className="w-full h-2 bg-purple-950/50 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-purple-500 transition-all duration-700 ease-in-out"
+                style={{ width: `${node.batteryLevel}%` }}
+              />
+            </div>
+          </div>
+        )}
+        
+        {node.status !== 'active' && (
+          <div className="mt-1 px-2 py-0.5 rounded-full bg-red-900/50 text-xs font-medium text-red-300 border border-red-800/50">
+            {node.status === 'offline' ? 'Offline' : 'Warning'}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

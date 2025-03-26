@@ -55,25 +55,25 @@ const EnergyFlowChartContent: React.FC<EnergyFlowChartProps> = ({ className, ani
       
       <div className="flex flex-col md:flex-row gap-6">
         <div className="w-full md:w-2/3">
-          <div className="relative w-full h-[350px] overflow-hidden rounded-xl backdrop-blur-sm bg-gradient-to-br from-slate-50/80 to-slate-100/50 dark:from-slate-800/30 dark:to-slate-900/20 border border-slate-200/50 dark:border-slate-700/50 p-4 shadow-sm">
+          <div className="relative w-full h-[350px] overflow-hidden rounded-xl bg-gradient-to-br from-slate-900/90 to-slate-800/90 dark:from-slate-950 dark:to-slate-900 border border-slate-700/50 dark:border-slate-800/50 p-4 shadow-lg">
             {/* Real-time metrics at the top */}
             <div className="absolute top-4 left-0 right-0 flex justify-center gap-4 px-4 z-10">
-              <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm px-4 py-2 rounded-full flex items-center gap-2 text-sm shadow-sm">
-                <Zap className="h-4 w-4 text-energy-green" />
-                <span className="font-medium">{totalGeneration.toFixed(1)} kW</span>
-                <span className="text-muted-foreground">Generation</span>
+              <div className="bg-slate-800/80 dark:bg-slate-900/90 backdrop-blur-sm px-4 py-2 rounded-full flex items-center gap-2 text-sm shadow-sm border border-slate-700/30">
+                <Zap className="h-4 w-4 text-green-400" />
+                <span className="font-medium text-green-100">{totalGeneration.toFixed(1)} kW</span>
+                <span className="text-slate-400">Generation</span>
               </div>
               
-              <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm px-4 py-2 rounded-full flex items-center gap-2 text-sm shadow-sm">
-                <Home className="h-4 w-4 text-energy-purple" />
-                <span className="font-medium">{totalConsumption.toFixed(1)} kW</span>
-                <span className="text-muted-foreground">Consumption</span>
+              <div className="bg-slate-800/80 dark:bg-slate-900/90 backdrop-blur-sm px-4 py-2 rounded-full flex items-center gap-2 text-sm shadow-sm border border-slate-700/30">
+                <Home className="h-4 w-4 text-purple-400" />
+                <span className="font-medium text-purple-100">{totalConsumption.toFixed(1)} kW</span>
+                <span className="text-slate-400">Consumption</span>
               </div>
               
-              <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm px-4 py-2 rounded-full flex items-center gap-2 text-sm shadow-sm">
-                <Battery className="h-4 w-4 text-energy-blue" />
-                <span className="font-medium">{batteryPercentage.toFixed(1)}%</span>
-                <span className="text-muted-foreground">Battery</span>
+              <div className="bg-slate-800/80 dark:bg-slate-900/90 backdrop-blur-sm px-4 py-2 rounded-full flex items-center gap-2 text-sm shadow-sm border border-slate-700/30">
+                <Battery className="h-4 w-4 text-blue-400" />
+                <span className="font-medium text-blue-100">{batteryPercentage.toFixed(1)}%</span>
+                <span className="text-slate-400">Battery</span>
               </div>
             </div>
             
@@ -103,10 +103,10 @@ const EnergyFlowChartContent: React.FC<EnergyFlowChartProps> = ({ className, ani
             
             {/* System status */}
             <div className="absolute bottom-4 left-0 right-0 flex justify-center">
-              <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm px-3 py-1 rounded-full flex items-center gap-1 text-xs shadow-sm">
+              <div className="bg-slate-800/80 dark:bg-slate-900/90 backdrop-blur-sm px-3 py-1 rounded-full flex items-center gap-1 text-xs shadow-sm border border-slate-700/30">
                 <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                <span>System Active</span>
-                <span className="text-muted-foreground ml-1">
+                <span className="text-slate-300">System Active</span>
+                <span className="text-slate-500 ml-1">
                   • Updated {lastRefreshed.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </span>
               </div>
