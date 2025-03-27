@@ -13,13 +13,21 @@ interface EnergyNodeGroupProps {
 }
 
 const EnergyNodeGroup: React.FC<EnergyNodeGroupProps> = ({ 
-  nodes, 
+  nodes = [], // Provide a default empty array to prevent issues
   type, 
   className,
   onNodeClick,
   selectedNodeId
 }) => {
-  const filteredNodes = nodes.filter(n => n.type === type);
+  // Safely filter nodes - handle case where nodes might be undefined
+  const filteredNodes = Array.isArray(nodes) 
+    ? nodes.filter(n => n && n.type === type)
+    : [];
+  
+  // If no nodes match, render an empty placeholder to maintain layout
+  if (filteredNodes.length === 0) {
+    return <div className={className} />;
+  }
   
   return (
     <div className={className}>
