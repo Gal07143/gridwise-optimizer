@@ -18,7 +18,9 @@ import {
   Battery,
   Workflow,
   Zap,
-  Package
+  Package,
+  Router,
+  Signal
 } from 'lucide-react';
 
 export const mainNavItems = [
@@ -102,6 +104,11 @@ export const integrationItems = [
     href: "/integrations/controllers",
     icon: <Package size={18} />,
     label: "Controllers"
+  },
+  {
+    href: "/integrations/communication",
+    icon: <Router size={18} />,
+    label: "Communication Devices"
   }
 ];
 

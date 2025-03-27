@@ -29,6 +29,7 @@ import IntegrationCategoryPage from '@/pages/integrations/IntegrationCategoryPag
 import DeviceModelDetailPage from '@/pages/integrations/DeviceModelDetailPage';
 import AddDeviceModelPage from '@/pages/integrations/AddDeviceModelPage';
 import EditDeviceModelPage from '@/pages/integrations/EditDeviceModelPage';
+import CommunicationDevices from '@/pages/integrations/CommunicationDevices';
 
 // Settings pages
 import Settings from '@/pages/Settings';
@@ -41,6 +42,7 @@ import ApiSettings from '@/pages/settings/ApiSettings';
 import NotificationServices from '@/pages/settings/NotificationServices';
 import OperationalThresholds from "./pages/settings/OperationalThresholds";
 import OptimizationAlgorithms from "./pages/settings/OptimizationAlgorithms";
+import ExternalServices from "@/pages/settings/ExternalServices";
 
 // Authentication components
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
@@ -134,6 +136,13 @@ const AppRoutes = () => {
         </ProtectedRoute>
       } />
       
+      {/* Add the new route for Communication Devices */}
+      <Route path="/integrations/communication" element={
+        <ProtectedRoute>
+          <CommunicationDevices />
+        </ProtectedRoute>
+      } />
+
       {/* Integration category specific routes */}
       <Route path="/integrations/batteries" element={
         <ProtectedRoute>
