@@ -16,11 +16,15 @@ const EnergyFlowConnections: React.FC<EnergyFlowConnectionsProps> = ({ connectio
       case 'solar-building':
       case 'solar-home':
         return "M110,80 C200,50 350,50 410,120";
+      case 'solar-devices':
+        return "M110,80 C200,80 300,180 410,220";
       case 'wind-battery':
         return "M110,240 C135,240 185,200 210,180";
       case 'wind-building':
       case 'wind-home':
         return "M110,240 C180,240 270,200 410,160";
+      case 'wind-devices':
+        return "M110,240 C180,240 270,220 410,220";
       case 'battery-building':
       case 'battery-home':
         return "M290,160 C320,160 390,140 410,140";
@@ -66,12 +70,47 @@ const EnergyFlowConnections: React.FC<EnergyFlowConnectionsProps> = ({ connectio
     }
   };
 
+  // Get a glow effect for the connection
+  const getGlowFilter = (from: string): string => {
+    const id = `glow-${from}`;
+    return id;
+  };
+
   return (
     <svg className="absolute inset-0 w-full h-full" style={{ overflow: 'visible' }}>
+      {/* Define filters for glow effects */}
+      <defs>
+        <filter id="glow-solar" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="4" result="blur" />
+          <feFlood floodColor="#FDCB40" floodOpacity="0.3" />
+          <feComposite in2="blur" operator="in" />
+          <feComposite in="SourceGraphic" />
+        </filter>
+        <filter id="glow-wind" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="4" result="blur" />
+          <feFlood floodColor="#38BDF8" floodOpacity="0.3" />
+          <feComposite in2="blur" operator="in" />
+          <feComposite in="SourceGraphic" />
+        </filter>
+        <filter id="glow-battery" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="4" result="blur" />
+          <feFlood floodColor="#A78BFA" floodOpacity="0.3" />
+          <feComposite in2="blur" operator="in" />
+          <feComposite in="SourceGraphic" />
+        </filter>
+        <filter id="glow-grid" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="4" result="blur" />
+          <feFlood floodColor="#F87171" floodOpacity="0.3" />
+          <feComposite in2="blur" operator="in" />
+          <feComposite in="SourceGraphic" />
+        </filter>
+      </defs>
+      
       {connections.map((connection, index) => {
         const path = getConnectionPath(connection.from, connection.to);
         const strokeWidth = getStrokeWidth(connection.value);
         const color = getConnectionColor(connection.from);
+        const glowFilter = getGlowFilter(connection.from);
         
         if (!path || !connection.active) return null;
         
@@ -85,6 +124,7 @@ const EnergyFlowConnections: React.FC<EnergyFlowConnectionsProps> = ({ connectio
               strokeWidth={strokeWidth + 4}
               opacity={0.15}
               strokeLinecap="round"
+              filter={`url(#${glowFilter})`}
             />
             
             {/* Main connection line */}
