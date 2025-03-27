@@ -30,6 +30,7 @@ import DeviceModelDetailPage from '@/pages/integrations/DeviceModelDetailPage';
 import AddDeviceModelPage from '@/pages/integrations/AddDeviceModelPage';
 import EditDeviceModelPage from '@/pages/integrations/EditDeviceModelPage';
 import CommunicationDevices from '@/pages/integrations/CommunicationDevices';
+import CommunicationDeviceDetail from '@/pages/integrations/CommunicationDeviceDetail';
 
 // Settings pages
 import Settings from '@/pages/Settings';
@@ -136,10 +137,15 @@ const AppRoutes = () => {
         </ProtectedRoute>
       } />
       
-      {/* Add the new route for Communication Devices */}
+      {/* Communication Devices routes */}
       <Route path="/integrations/communication" element={
         <ProtectedRoute>
           <CommunicationDevices />
+        </ProtectedRoute>
+      } />
+      <Route path="/integrations/communication/:deviceId" element={
+        <ProtectedRoute>
+          <CommunicationDeviceDetail />
         </ProtectedRoute>
       } />
 

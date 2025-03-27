@@ -1,104 +1,132 @@
 
-import React from 'react';
+import React, { ReactNode } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Info } from 'lucide-react';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { InfoIcon } from 'lucide-react';
 
-interface MetricsCardProps {
+export type ChangeType = 'increase' | 'decrease' | 'neutral';
+
+export interface MetricsCardProps {
   title: string;
   value: number | string;
   unit?: string;
-  changeValue?: number;
-  changeType?: 'increase' | 'decrease' | 'neutral';
+  changeType?: ChangeType;
+  changeValue?: number | string;
   description?: string;
-  subtitle?: string;
-  icon?: React.ReactNode;
-  className?: string;
-  status?: 'success' | 'warning' | 'error' | 'info';
+  icon?: ReactNode;
+  status?: 'success' | 'warning' | 'error' | string;
   tooltipContent?: string;
   animationDelay?: string;
+  isLoading?: boolean;
 }
 
-const MetricsCard = ({
+export const MetricsCard: React.FC<MetricsCardProps> = ({
   title,
   value,
-  unit = '',
+  unit,
+  changeType = 'neutral',
   changeValue,
-  changeType,
   description,
-  subtitle,
   icon,
-  className,
   status,
   tooltipContent,
-  animationDelay = '0ms',
-}: MetricsCardProps) => {
+  animationDelay,
+  isLoading = false
+}) => {
+  const getStatusColor = () => {
+    switch (status) {
+      case 'success': return 'text-green-500';
+      case 'warning': return 'text-yellow-500';
+      case 'error': return 'text-red-500';
+      default: return 'text-primary';
+    }
+  };
+
+  const getChangeColor = () => {
+    switch (changeType) {
+      case 'increase': return 'text-green-500';
+      case 'decrease': return 'text-red-500';
+      case 'neutral': return 'text-gray-500';
+      default: return 'text-gray-500';
+    }
+  };
+
+  const getChangeArrow = () => {
+    switch (changeType) {
+      case 'increase': return '↑';
+      case 'decrease': return '↓';
+      case 'neutral': return '→';
+      default: return '';
+    }
+  };
+
+  const cardStyle = {
+    animationDelay: animationDelay || '0ms'
+  };
+
+  if (isLoading) {
+    return (
+      <Card className="animate-in fade-in-50 duration-500 slide-in-from-bottom-5" style={cardStyle}>
+        <CardContent className="p-6">
+          <Skeleton className="h-4 w-28 mb-3" />
+          <Skeleton className="h-8 w-36 mb-2" />
+          <Skeleton className="h-4 w-full" />
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <div
-      className={cn(
-        "p-6 bg-card rounded-lg border shadow-sm",
-        "animate-in fade-in-50 duration-500",
-        {
-          "border-green-200 shadow-green-100 dark:border-green-900/40 dark:shadow-green-900/20": status === 'success',
-          "border-amber-200 shadow-amber-100 dark:border-amber-900/40 dark:shadow-amber-900/20": status === 'warning',
-          "border-red-200 shadow-red-100 dark:border-red-900/40 dark:shadow-red-900/20": status === 'error',
-          "border-blue-200 shadow-blue-100 dark:border-blue-900/40 dark:shadow-blue-900/20": status === 'info',
-        },
-        className
-      )}
-      style={{ animationDelay }}
-    >
-      <div className="flex justify-between items-start mb-3">
-        <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-1">
-          {title}
-          {tooltipContent && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger>
-                  <Info className="h-3.5 w-3.5 text-muted-foreground/70" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="max-w-xs">{tooltipContent}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-        </h3>
-        {icon && <div className="text-muted-foreground">{icon}</div>}
-      </div>
-      
-      <div className="flex items-baseline gap-1">
-        <span className="text-2xl font-bold">{value}</span>
-        {unit && <span className="text-sm text-muted-foreground">{unit}</span>}
-      </div>
-      
-      {subtitle && (
-        <div className="mt-1 text-sm text-muted-foreground">
-          {subtitle}
-        </div>
-      )}
-      
-      {(changeValue !== undefined || description) && (
-        <div className="mt-2 text-xs flex items-center">
-          {changeValue !== undefined && changeType && (
-            <span 
-              className={cn("mr-1 px-1 py-0.5 rounded", {
-                "text-green-700 bg-green-100 dark:text-green-400 dark:bg-green-900/30": changeType === 'increase',
-                "text-red-700 bg-red-100 dark:text-red-400 dark:bg-red-900/30": changeType === 'decrease',
-                "text-blue-700 bg-blue-100 dark:text-blue-400 dark:bg-blue-900/30": changeType === 'neutral',
-              })}
-            >
-              {changeType === 'increase' ? '+' : changeType === 'decrease' ? '-' : ''}
-              {Math.abs(changeValue)}%
-            </span>
-          )}
-          
-          {description && (
-            <span className="text-muted-foreground">{description}</span>
+    <Card className={cn(
+      "overflow-hidden animate-in fade-in-50 duration-500 slide-in-from-bottom-5",
+      status && `border-l-4 border-l-${status === 'success' ? 'green' : status === 'warning' ? 'yellow' : status === 'error' ? 'red' : 'primary'}-500`
+    )} style={cardStyle}>
+      <CardContent className="p-6">
+        <div className="flex justify-between items-start">
+          <div>
+            <div className="flex items-center gap-1 text-sm text-muted-foreground mb-2">
+              {title}
+              {tooltipContent && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <InfoIcon className="h-3.5 w-3.5 cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{tooltipContent}</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+            <div className="flex items-end gap-1 mb-1">
+              <div className={cn("text-2xl font-bold", getStatusColor())}>
+                {value}
+              </div>
+              {unit && <div className="text-sm text-muted-foreground ml-1">
+                {unit}
+              </div>}
+            </div>
+            {changeValue && (
+              <div className={cn("text-sm flex items-center gap-1", getChangeColor())}>
+                <span>{getChangeArrow()}</span>
+                <span>{changeValue}</span>
+              </div>
+            )}
+            {description && (
+              <div className="text-xs text-muted-foreground mt-1">
+                {description}
+              </div>
+            )}
+          </div>
+          {icon && (
+            <div className="p-2 rounded-full bg-primary/10">
+              {icon}
+            </div>
           )}
         </div>
-      )}
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 

@@ -1,113 +1,94 @@
 
-import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
 export interface Site {
   id: string;
   name: string;
   address?: string;
   city?: string;
+  state?: string;
   country?: string;
-  capacity?: number;
-  type?: string;
-  status?: string;
+  zipCode?: string;
   timezone?: string;
+  capacity?: number;
+  location?: {
+    latitude: number;
+    longitude: number;
+  };
   created_at?: string;
   updated_at?: string;
 }
 
 export interface SiteContextType {
   sites: Site[];
-  currentSite: Site | null;
-  setCurrentSite: (site: Site) => void;
+  activeSite: Site | null;
   isLoading: boolean;
-  error: string | null;
+  error: Error | null;
+  setSites: (sites: Site[]) => void;
+  setActiveSite: (site: Site | null) => void;
 }
 
+// Create context with default values
 const SiteContext = createContext<SiteContextType>({
   sites: [],
-  currentSite: null,
-  setCurrentSite: () => {},
-  isLoading: false,
+  activeSite: null,
+  isLoading: true,
   error: null,
+  setSites: () => {},
+  setActiveSite: () => {},
 });
 
-export const useSite = () => useContext(SiteContext);
-
-// Also export as useSiteContext for components that expect this name
 export const useSiteContext = () => useContext(SiteContext);
 
-// Mock data for sites
-const mockSites: Site[] = [
-  {
-    id: '1',
-    name: 'Main Residence',
-    address: '123 Energy St',
-    city: 'Solar City',
-    country: 'USA',
-    capacity: 10.5,
-    type: 'residential',
-    status: 'active',
-    timezone: 'America/Los_Angeles',
-    created_at: '2023-01-15T08:00:00Z',
-    updated_at: '2023-04-10T15:30:00Z'
-  },
-  {
-    id: '2',
-    name: 'Beach House',
-    address: '456 Coastal Ave',
-    city: 'Seaside',
-    country: 'USA',
-    capacity: 7.2,
-    type: 'residential',
-    status: 'active',
-    timezone: 'America/New_York',
-    created_at: '2023-02-20T10:15:00Z',
-    updated_at: '2023-05-05T09:45:00Z'
-  },
-  {
-    id: '3',
-    name: 'Mountain Cabin',
-    address: '789 Ridge Road',
-    city: 'Alpine',
-    country: 'USA',
-    capacity: 5.8,
-    type: 'residential',
-    status: 'maintenance',
-    timezone: 'America/Denver',
-    created_at: '2023-03-10T14:30:00Z',
-    updated_at: '2023-06-01T16:20:00Z'
-  }
-];
-
-export const SiteProvider: React.FC<{children: ReactNode}> = ({ children }) => {
+export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [sites, setSites] = useState<Site[]>([]);
-  const [currentSite, setCurrentSite] = useState<Site | null>(null);
+  const [activeSite, setActiveSite] = useState<Site | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    // Simulate API fetch
-    const fetchSites = async () => {
-      try {
-        // Simulate network delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // Set mock data
-        setSites(mockSites);
-        setCurrentSite(mockSites[0]);
-        setIsLoading(false);
-      } catch (err) {
-        setError('Failed to fetch sites');
-        setIsLoading(false);
-      }
-    };
+    // Simulated data for sites
+    const mockSites: Site[] = [
+      {
+        id: '1',
+        name: 'Main Solar Plant',
+        address: '123 Energy St',
+        city: 'Sunnyvale',
+        state: 'CA',
+        country: 'USA',
+        zipCode: '94086',
+        timezone: 'America/Los_Angeles',
+        capacity: 500,
+        location: { latitude: 37.368, longitude: -122.036 },
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+      {
+        id: '2',
+        name: 'Wind Farm North',
+        address: '456 Turbine Rd',
+        city: 'Windy Hills',
+        state: 'TX',
+        country: 'USA',
+        zipCode: '75001',
+        timezone: 'America/Chicago',
+        capacity: 750,
+        location: { latitude: 32.77, longitude: -96.79 },
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+    ];
 
-    fetchSites();
+    setSites(mockSites);
+    setActiveSite(mockSites[0]);
+    setIsLoading(false);
   }, []);
 
   return (
-    <SiteContext.Provider value={{ sites, currentSite, setCurrentSite, isLoading, error }}>
+    <SiteContext.Provider value={{ sites, activeSite, isLoading, error, setSites, setActiveSite }}>
       {children}
     </SiteContext.Provider>
   );
 };
+
+export default SiteProvider;

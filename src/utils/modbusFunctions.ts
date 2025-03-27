@@ -2,19 +2,18 @@
 // Mock implementation since we can't import modbus-serial
 
 // Define a type that can be used in place of ModbusRTU
-type MockModbusRTU = {
-  connectRTUBuffered: (port: string, options: any) => Promise<void>;
-  setTimeout: (timeout: number) => void;
-  setID: (id: number) => void;
-  readHoldingRegisters: (addr: number, len: number) => Promise<{ data: number[] }>;
-  close: () => Promise<void>;
+type MockModbusRTUOptions = {
+  baudRate?: number;
+  dataBits?: number;
+  stopBits?: number;
+  parity?: 'none' | 'even' | 'odd';
 };
 
 // Mock ModbusRTU class
-class MockModbusRTU implements MockModbusRTU {
+class MockModbusRTU {
   constructor() {}
   
-  async connectRTUBuffered(port: string, options: any) {
+  async connectRTUBuffered(port: string, options: MockModbusRTUOptions) {
     console.log(`Mock connecting to ${port} with options:`, options);
     return Promise.resolve();
   }
