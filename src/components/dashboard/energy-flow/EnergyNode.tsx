@@ -47,8 +47,8 @@ const EnergyNode: React.FC<EnergyNodeProps> = ({ node, className }) => {
     }
   };
 
-  // Show a battery level indicator if the node is a battery
-  const showBatteryLevel = node.deviceType === 'battery' && node.batteryLevel !== undefined;
+  // Show a battery level indicator if the node is a battery and batteryLevel is defined
+  const showBatteryLevel = node.deviceType === 'battery' && typeof node.batteryLevel !== 'undefined';
 
   return (
     <div 
