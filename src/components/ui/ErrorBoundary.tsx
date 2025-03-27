@@ -1,9 +1,8 @@
 
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import React, { Component, ErrorInfo, ReactNode, useEffect } from 'react';
 import { Button } from './button';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useNavigate } from 'react-router-dom';
 
 interface Props {
   children: ReactNode;
@@ -22,12 +21,10 @@ interface State {
 const MobileAwareErrorUI = ({ 
   error, 
   onReset, 
-  onNavigateHome,
   resetLabel = "Try Again"
 }: { 
   error: Error | null; 
   onReset: () => void;
-  onNavigateHome: () => void;
   resetLabel?: string;
 }) => {
   const isMobile = useIsMobile();
@@ -51,7 +48,9 @@ const MobileAwareErrorUI = ({
           <span>{resetLabel}</span>
         </Button>
         <Button 
-          onClick={onNavigateHome}
+          onClick={() => {
+            window.location.href = '/dashboard';
+          }}
           className="flex items-center gap-2"
         >
           <Home size={16} />
@@ -60,17 +59,6 @@ const MobileAwareErrorUI = ({
       </div>
     </div>
   );
-};
-
-// Use a wrapper component to access React Router hooks
-const NavigateWrapper = (props: { to: string; children: ReactNode }) => {
-  const navigate = useNavigate();
-  
-  const handleClick = () => {
-    navigate(props.to);
-  };
-  
-  return React.cloneElement(props.children as React.ReactElement, { onClick: handleClick });
 };
 
 class ErrorBoundary extends Component<Props, State> {
@@ -103,14 +91,11 @@ class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       // You can render any custom fallback UI
       return this.props.fallback || (
-        <NavigateWrapper to="/dashboard">
-          <MobileAwareErrorUI 
-            error={this.state.error} 
-            onReset={this.handleReset}
-            onNavigateHome={() => {}} // Actual navigation handled by wrapper
-            resetLabel={this.props.resetLabel}
-          />
-        </NavigateWrapper>
+        <MobileAwareErrorUI 
+          error={this.state.error} 
+          onReset={this.handleReset}
+          resetLabel={this.props.resetLabel}
+        />
       );
     }
 

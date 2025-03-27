@@ -64,7 +64,7 @@ const LiveChart: React.FC<LiveChartProps> = ({
   // If we don't have any real data, show a no data message
   if (!hasRealData && data.length === 0) {
     return (
-      <div className={`flex items-center justify-center h-${height} ${className}`} style={animationDelay ? { animationDelay } : undefined}>
+      <div className={`flex items-center justify-center h-[${height}px] ${className}`} style={animationDelay ? { animationDelay } : undefined}>
         <div className="text-muted-foreground text-sm">{noDataText}</div>
       </div>
     );

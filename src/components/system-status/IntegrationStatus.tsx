@@ -1,274 +1,277 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  CardTitle 
+} from '@/components/ui/card';
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from '@/components/ui/table';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuRadioGroup, 
+  DropdownMenuRadioItem, 
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, CheckCircle, Clock, Database, RefreshCcw, Server } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
+import { Integration } from '@/services/systemStatusService';
+import { CheckCircle2, XCircle, AlertTriangle, RefreshCw, ChevronDown, Search, ArrowUpDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-interface Integration {
-  name: string;
-  status: 'online' | 'offline' | 'unknown' | 'error';
-  lastHeartbeat?: string;
-  type: 'modbus' | 'mqtt' | 'database' | 'edge';
-  testEndpoint?: string;
+interface IntegrationStatusProps {
+  integrations: Integration[];
+  isLoading?: boolean;
 }
 
-const IntegrationStatus = () => {
-  const [integrations, setIntegrations] = useState<Integration[]>([
-    {
-      name: 'Modbus/TCP Agent',
-      status: 'unknown',
-      type: 'modbus',
-      testEndpoint: '/api/test-modbus'
-    },
-    {
-      name: 'MQTT Broker',
-      status: 'unknown',
-      type: 'mqtt',
-      testEndpoint: '/api/test-mqtt'
-    },
-    {
-      name: 'Supabase Database',
-      status: 'unknown',
-      type: 'database'
-    },
-    {
-      name: 'Edge Functions',
-      status: 'unknown',
-      type: 'edge'
-    }
-  ]);
-  const [loading, setLoading] = useState(false);
+export const IntegrationStatus: React.FC<IntegrationStatusProps> = ({ 
+  integrations = [], 
+  isLoading = false 
+}) => {
+  const [filter, setFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [sortBy, setSortBy] = useState<string | null>(null);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
-  const testSupabase = async () => {
-    try {
-      const start = Date.now();
-      const { data, error } = await supabase.from('telemetry_log').select('count').limit(1);
-      const latency = Date.now() - start;
+  // Sort + Filter integrations
+  const filteredIntegrations = integrations
+    .filter(integration => {
+      const matchesSearchFilter = integration.name.toLowerCase().includes(filter.toLowerCase()) ||
+        integration.type.toLowerCase().includes(filter.toLowerCase());
       
-      if (error) throw error;
+      const matchesStatusFilter = 
+        statusFilter === 'all' || 
+        integration.status === statusFilter;
       
-      // Update the database status
-      updateIntegrationStatus('Supabase Database', 'online', latency);
-      toast.success(`Database connection successful (${latency}ms)`);
-    } catch (error) {
-      console.error('Database connection error:', error);
-      updateIntegrationStatus('Supabase Database', 'error');
-      toast.error('Database connection failed');
-    }
-  };
-
-  const testEdgeFunctions = async () => {
-    try {
-      // For now we'll just simulate this
-      updateIntegrationStatus('Edge Functions', 'online');
-      toast.success('Edge Functions are online');
-    } catch (error) {
-      updateIntegrationStatus('Edge Functions', 'error');
-      toast.error('Edge Functions test failed');
-    }
-  };
-
-  const testModbus = async () => {
-    // For now, simulate the test
-    toast.info('Testing Modbus connection...');
-    setTimeout(() => {
-      const success = Math.random() > 0.3; // 70% success rate for simulation
+      return matchesSearchFilter && matchesStatusFilter;
+    })
+    .sort((a, b) => {
+      if (!sortBy) return 0;
       
-      if (success) {
-        updateIntegrationStatus('Modbus/TCP Agent', 'online');
-        toast.success('Modbus agent is responding');
-      } else {
-        updateIntegrationStatus('Modbus/TCP Agent', 'error');
-        toast.error('Modbus agent is not responding');
+      let valA, valB;
+      
+      switch (sortBy) {
+        case 'name':
+          valA = a.name;
+          valB = b.name;
+          break;
+        case 'type':
+          valA = a.type;
+          valB = b.type;
+          break;
+        case 'status':
+          valA = a.status;
+          valB = b.status;
+          break;
+        case 'latency':
+          valA = a.latency || 0;
+          valB = b.latency || 0;
+          break;
+        case 'successRate':
+          valA = a.successRate || 0;
+          valB = b.successRate || 0;
+          break;
+        default:
+          return 0;
       }
-    }, 1500);
-  };
-
-  const testMQTT = async () => {
-    // For now, simulate the test
-    toast.info('Testing MQTT connection...');
-    setTimeout(() => {
-      const success = Math.random() > 0.3; // 70% success rate for simulation
       
-      if (success) {
-        updateIntegrationStatus('MQTT Broker', 'online');
-        toast.success('MQTT broker is connected');
-      } else {
-        updateIntegrationStatus('MQTT Broker', 'error');
-        toast.error('MQTT broker connection failed');
-      }
-    }, 1500);
-  };
+      const comparison = typeof valA === 'string' 
+        ? valA.localeCompare(valB as string)
+        : (valA as number) - (valB as number);
+        
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
 
-  const updateIntegrationStatus = (name: string, status: 'online' | 'offline' | 'unknown' | 'error', latencyMs?: number) => {
-    setIntegrations(prev => 
-      prev.map(integration => 
-        integration.name === name 
-          ? { 
-              ...integration, 
-              status, 
-              lastHeartbeat: new Date().toISOString(),
-              latency: latencyMs
-            } 
-          : integration
-      )
-    );
-  };
-
-  const refreshAll = async () => {
-    setLoading(true);
-    
-    try {
-      // Test all connections in parallel
-      await Promise.all([
-        testSupabase(),
-        testEdgeFunctions(),
-        testModbus(),
-        testMQTT()
-      ]);
-    } catch (error) {
-      console.error('Error refreshing integration status:', error);
-      toast.error('Failed to refresh some integration statuses');
-    } finally {
-      setLoading(false);
+  const handleSort = (column: string) => {
+    if (sortBy === column) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(column);
+      setSortOrder('asc');
     }
   };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'online':
-        return <CheckCircle className="h-5 w-5 text-green-500" />;
-      case 'offline':
-        return <AlertCircle className="h-5 w-5 text-red-500" />;
-      case 'error':
-        return <AlertCircle className="h-5 w-5 text-red-500" />;
-      default:
-        return <Clock className="h-5 w-5 text-gray-400" />;
-    }
-  };
-
-  const getIntegrationIcon = (type: string) => {
-    switch (type) {
-      case 'modbus':
-        return <Server className="h-5 w-5" />;
-      case 'mqtt':
-        return <Server className="h-5 w-5" />;
-      case 'database':
-        return <Database className="h-5 w-5" />;
-      case 'edge':
-        return <Server className="h-5 w-5" />;
-      default:
-        return <Server className="h-5 w-5" />;
-    }
-  };
-
+  
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'online':
-        return <Badge className="bg-green-500">Online</Badge>;
+        return (
+          <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800/30">
+            <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Online
+          </Badge>
+        );
       case 'offline':
-        return <Badge variant="destructive">Offline</Badge>;
-      case 'error':
-        return <Badge variant="destructive">Error</Badge>;
+        return (
+          <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800/30">
+            <XCircle className="h-3.5 w-3.5 mr-1" /> Offline
+          </Badge>
+        );
+      case 'degraded':
+        return (
+          <Badge variant="outline" className="bg-yellow-50 text-yellow-600 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-800/30">
+            <AlertTriangle className="h-3.5 w-3.5 mr-1" /> Degraded
+          </Badge>
+        );
       default:
-        return <Badge variant="outline">Unknown</Badge>;
+        return <Badge>{status}</Badge>;
     }
   };
-
-  const handleTest = (integration: Integration) => {
-    switch (integration.type) {
-      case 'modbus':
-        testModbus();
-        break;
-      case 'mqtt':
-        testMQTT();
-        break;
-      case 'database':
-        testSupabase();
-        break;
-      case 'edge':
-        testEdgeFunctions();
-        break;
-    }
-  };
-
-  React.useEffect(() => {
-    // Test database connection on mount
-    testSupabase();
-  }, []);
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-lg font-semibold">Integration Status</CardTitle>
-        <CardDescription>Status of system integrations and connectivity</CardDescription>
+      <CardHeader className="pb-2">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <CardTitle>Integration Status</CardTitle>
+          <div className="flex flex-wrap gap-2">
+            <div className="relative w-full md:w-auto">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search integrations..."
+                className="pl-8 w-full md:w-[200px] lg:w-[300px]"
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+              />
+            </div>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-full md:w-auto">
+                  Status: {statusFilter === 'all' ? 'All' : statusFilter}
+                  <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuRadioGroup value={statusFilter} onValueChange={setStatusFilter}>
+                  <DropdownMenuRadioItem value="all">All</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="online">Online</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="degraded">Degraded</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="offline">Offline</DropdownMenuRadioItem>
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
+            <Button variant="outline" className="w-full md:w-auto" disabled={isLoading}>
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Refresh
+            </Button>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          {integrations.map((integration) => (
-            <div key={integration.name} className="flex items-center justify-between p-3 bg-muted/20 rounded-md border">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-full">
-                  {getIntegrationIcon(integration.type)}
-                </div>
-                
-                <div>
-                  <div className="font-medium">{integration.name}</div>
-                  {integration.lastHeartbeat ? (
-                    <div className="text-xs text-muted-foreground">
-                      Last check: {new Date(integration.lastHeartbeat).toLocaleTimeString()}
-                      {integration.latency && ` (${integration.latency}ms)`}
+        {isLoading ? (
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-full" />
+            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-16 w-full" />
+          </div>
+        ) : (
+          <div className="relative overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead onClick={() => handleSort('name')} className="cursor-pointer hover:bg-accent hover:text-accent-foreground">
+                    <div className="flex items-center">
+                      Integration
+                      {sortBy === 'name' && (
+                        <ArrowUpDown className={`ml-1 h-4 w-4 ${sortOrder === 'desc' ? 'rotate-180' : ''}`} />
+                      )}
                     </div>
-                  ) : (
-                    <div className="text-xs text-muted-foreground">Not tested yet</div>
-                  )}
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                {loading ? (
-                  <Skeleton className="h-6 w-16" />
+                  </TableHead>
+                  <TableHead onClick={() => handleSort('type')} className="cursor-pointer hover:bg-accent hover:text-accent-foreground">
+                    <div className="flex items-center">
+                      Type
+                      {sortBy === 'type' && (
+                        <ArrowUpDown className={`ml-1 h-4 w-4 ${sortOrder === 'desc' ? 'rotate-180' : ''}`} />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead onClick={() => handleSort('status')} className="cursor-pointer hover:bg-accent hover:text-accent-foreground">
+                    <div className="flex items-center">
+                      Status
+                      {sortBy === 'status' && (
+                        <ArrowUpDown className={`ml-1 h-4 w-4 ${sortOrder === 'desc' ? 'rotate-180' : ''}`} />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead onClick={() => handleSort('latency')} className="cursor-pointer hover:bg-accent hover:text-accent-foreground">
+                    <div className="flex items-center">
+                      Latency
+                      {sortBy === 'latency' && (
+                        <ArrowUpDown className={`ml-1 h-4 w-4 ${sortOrder === 'desc' ? 'rotate-180' : ''}`} />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead onClick={() => handleSort('successRate')} className="cursor-pointer hover:bg-accent hover:text-accent-foreground text-right">
+                    <div className="flex items-center justify-end">
+                      Success Rate
+                      {sortBy === 'successRate' && (
+                        <ArrowUpDown className={`ml-1 h-4 w-4 ${sortOrder === 'desc' ? 'rotate-180' : ''}`} />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead className="text-right">Last Sync</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredIntegrations.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                      No integrations found matching your filters.
+                    </TableCell>
+                  </TableRow>
                 ) : (
-                  getStatusBadge(integration.status)
+                  filteredIntegrations.map((integration) => (
+                    <TableRow key={integration.id} className="group">
+                      <TableCell className="font-medium">{integration.name}</TableCell>
+                      <TableCell className="capitalize">{integration.type}</TableCell>
+                      <TableCell>{getStatusBadge(integration.status)}</TableCell>
+                      <TableCell>
+                        {integration.latency ? (
+                          <span className={cn(
+                            integration.latency < 100 ? "text-green-600 dark:text-green-400" :
+                            integration.latency < 250 ? "text-amber-600 dark:text-amber-400" :
+                            "text-red-600 dark:text-red-400"
+                          )}>
+                            {integration.latency} ms
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">N/A</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {integration.successRate !== undefined ? (
+                          <span className={cn(
+                            integration.successRate > 99 ? "text-green-600 dark:text-green-400" :
+                            integration.successRate > 95 ? "text-amber-600 dark:text-amber-400" :
+                            "text-red-600 dark:text-red-400"
+                          )}>
+                            {integration.successRate.toFixed(1)}%
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">N/A</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right text-sm text-muted-foreground">
+                        {new Date(integration.lastSync).toLocaleString()}
+                      </TableCell>
+                    </TableRow>
+                  ))
                 )}
-                
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  onClick={() => handleTest(integration)}
-                  disabled={loading}
-                >
-                  Test
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
+              </TableBody>
+            </Table>
+          </div>
+        )}
       </CardContent>
-      <CardFooter>
-        <Button 
-          onClick={refreshAll} 
-          disabled={loading} 
-          className="w-full"
-          variant="outline"
-        >
-          {loading ? (
-            <>
-              <RefreshCcw className="mr-2 h-4 w-4 animate-spin" />
-              Testing connections...
-            </>
-          ) : (
-            <>
-              <RefreshCcw className="mr-2 h-4 w-4" />
-              Refresh All
-            </>
-          )}
-        </Button>
-      </CardFooter>
     </Card>
   );
 };

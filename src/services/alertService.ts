@@ -1,239 +1,207 @@
 
-import { supabase } from "@/lib/supabase";
+import { toast } from 'sonner';
 
 export interface Alert {
   id: string;
-  type: string;
+  title: string;
   message: string;
-  device_id: string;
+  severity: 'critical' | 'warning' | 'info';
   timestamp: string;
+  source: string;
+  deviceId?: string;
   acknowledged: boolean;
-  acknowledged_at?: string;
-  acknowledged_by?: string;
-  severity: string;
-  source?: string;
-  resolved_at?: string;
+  resolved?: boolean;
+  resolvedAt?: string;
+  resolvedBy?: string;
+  acknowledgedAt?: string;
+  acknowledgedBy?: string;
 }
 
-export interface AlertSummary {
-  total: number;
-  critical: number;
-  warning: number;
-  info: number;
-  unacknowledged: number;
-}
+// Mock data for alerts
+const mockAlerts: Alert[] = [
+  {
+    id: '1',
+    title: 'Battery Low Charge',
+    message: 'Home battery system charge is below 15%',
+    severity: 'warning',
+    timestamp: new Date(Date.now() - 25 * 60000).toISOString(), // 25 minutes ago
+    source: 'Battery Management System',
+    deviceId: 'batt-01',
+    acknowledged: false,
+  },
+  {
+    id: '2',
+    title: 'Grid Connection Lost',
+    message: 'Connection to utility grid has been lost',
+    severity: 'critical',
+    timestamp: new Date(Date.now() - 45 * 60000).toISOString(), // 45 minutes ago
+    source: 'Grid Connection Monitor',
+    deviceId: 'grid-01',
+    acknowledged: true,
+    acknowledgedAt: new Date(Date.now() - 40 * 60000).toISOString(),
+    acknowledgedBy: 'admin',
+  },
+  {
+    id: '3',
+    title: 'Inverter Firmware Update',
+    message: 'New firmware is available for your inverter',
+    severity: 'info',
+    timestamp: new Date(Date.now() - 2 * 60 * 60000).toISOString(), // 2 hours ago
+    source: 'System Updates',
+    deviceId: 'inv-01',
+    acknowledged: false,
+  },
+  {
+    id: '4',
+    title: 'Solar Panel Efficiency Degraded',
+    message: 'Panel 3 is producing 15% less power than expected',
+    severity: 'warning',
+    timestamp: new Date(Date.now() - 5 * 60 * 60000).toISOString(), // 5 hours ago
+    source: 'Performance Monitor',
+    deviceId: 'solar-03',
+    acknowledged: true,
+    acknowledgedAt: new Date(Date.now() - 4.5 * 60 * 60000).toISOString(),
+    acknowledgedBy: 'admin',
+  },
+  {
+    id: '5',
+    title: 'High Energy Consumption',
+    message: 'Unusual energy consumption detected in the last hour',
+    severity: 'warning',
+    timestamp: new Date(Date.now() - 70 * 60000).toISOString(), // 70 minutes ago
+    source: 'Energy Monitor',
+    acknowledged: false,
+  },
+  {
+    id: '6',
+    title: 'Weather Alert',
+    message: 'Severe weather expected in your area within 24 hours',
+    severity: 'info',
+    timestamp: new Date(Date.now() - 3 * 60 * 60000).toISOString(), // 3 hours ago
+    source: 'Weather Service',
+    acknowledged: true,
+    acknowledgedAt: new Date(Date.now() - 2.8 * 60 * 60000).toISOString(),
+    acknowledgedBy: 'admin',
+  },
+];
 
-// Fetch all alerts
-export async function getAlerts(
-  limit: number = 20,
-  filters?: {
-    severity?: string;
-    acknowledged?: boolean;
-    deviceId?: string;
-    startDate?: string;
-    endDate?: string;
-  }
-): Promise<Alert[]> {
-  try {
-    let query = supabase
-      .from('alerts')
-      .select('*')
-      .order('timestamp', { ascending: false })
-      .limit(limit);
+// Get all alerts
+export const getAlerts = async (): Promise<Alert[]> => {
+  // Simulate API call delay
+  await new Promise(resolve => setTimeout(resolve, 800));
+  return [...mockAlerts];
+};
 
-    // Apply filters if provided
-    if (filters) {
-      if (filters.severity) {
-        query = query.eq('severity', filters.severity);
-      }
-      if (filters.acknowledged !== undefined) {
-        query = query.eq('acknowledged', filters.acknowledged);
-      }
-      if (filters.deviceId) {
-        query = query.eq('device_id', filters.deviceId);
-      }
-      if (filters.startDate) {
-        query = query.gte('timestamp', filters.startDate);
-      }
-      if (filters.endDate) {
-        query = query.lte('timestamp', filters.endDate);
-      }
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      console.error('Error fetching alerts:', error);
-      throw error;
-    }
-
-    return data || [];
-  } catch (error) {
-    console.error('Error in getAlerts:', error);
-    throw error;
-  }
-}
-
-// Get a summary of alerts (counts by severity)
-export async function getAlertSummary(): Promise<AlertSummary> {
-  try {
-    const { data: alerts, error } = await supabase
-      .from('alerts')
-      .select('*');
-
-    if (error) {
-      console.error('Error fetching alert summary:', error);
-      throw error;
-    }
-
-    const summary: AlertSummary = {
-      total: alerts?.length || 0,
-      critical: alerts?.filter(a => a.severity === 'critical')?.length || 0,
-      warning: alerts?.filter(a => a.severity === 'warning')?.length || 0,
-      info: alerts?.filter(a => a.severity === 'info')?.length || 0,
-      unacknowledged: alerts?.filter(a => !a.acknowledged)?.length || 0
-    };
-
-    return summary;
-  } catch (error) {
-    console.error('Error in getAlertSummary:', error);
-    throw error;
-  }
-}
-
-// Create a new alert
-export async function createAlert(alert: Omit<Alert, 'id' | 'timestamp'>): Promise<Alert> {
-  try {
-    const { data, error } = await supabase
-      .from('alerts')
-      .insert([{
-        ...alert,
-        timestamp: new Date().toISOString()
-      }])
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error creating alert:', error);
-      throw error;
-    }
-
-    return data;
-  } catch (error) {
-    console.error('Error in createAlert:', error);
-    throw error;
-  }
-}
+// Get alert summary (count by type)
+export const getAlertSummary = async () => {
+  // Simulate API call delay
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
+  const total = mockAlerts.length;
+  const critical = mockAlerts.filter(a => a.severity === 'critical').length;
+  const warning = mockAlerts.filter(a => a.severity === 'warning').length;
+  const info = mockAlerts.filter(a => a.severity === 'info').length;
+  const unacknowledged = mockAlerts.filter(a => !a.acknowledged).length;
+  
+  return {
+    total,
+    critical,
+    warning,
+    info,
+    unacknowledged
+  };
+};
 
 // Acknowledge an alert
-export async function acknowledgeAlert(alertId: string, userId: string): Promise<boolean> {
-  try {
-    const { error } = await supabase
-      .from('alerts')
-      .update({
-        acknowledged: true,
-        acknowledged_at: new Date().toISOString(),
-        acknowledged_by: userId
-      })
-      .eq('id', alertId);
-
-    if (error) {
-      console.error('Error acknowledging alert:', error);
-      throw error;
-    }
-
-    return true;
-  } catch (error) {
-    console.error('Error in acknowledgeAlert:', error);
-    throw error;
-  }
-}
-
-// Mark an alert as resolved
-export async function resolveAlert(alertId: string): Promise<boolean> {
-  try {
-    const { error } = await supabase
-      .from('alerts')
-      .update({
-        resolved_at: new Date().toISOString()
-      })
-      .eq('id', alertId);
-
-    if (error) {
-      console.error('Error resolving alert:', error);
-      throw error;
-    }
-
-    return true;
-  } catch (error) {
-    console.error('Error in resolveAlert:', error);
-    throw error;
-  }
-}
-
-// Get alerts for a specific device
-export async function getDeviceAlerts(deviceId: string, limit: number = 10): Promise<Alert[]> {
-  try {
-    const { data, error } = await supabase
-      .from('alerts')
-      .select('*')
-      .eq('device_id', deviceId)
-      .order('timestamp', { ascending: false })
-      .limit(limit);
-
-    if (error) {
-      console.error('Error fetching device alerts:', error);
-      throw error;
-    }
-
-    return data || [];
-  } catch (error) {
-    console.error('Error in getDeviceAlerts:', error);
-    throw error;
-  }
-}
-
-// Get recent alerts
-export async function getRecentAlerts(limit: number = 5): Promise<Alert[]> {
-  // This is a sample function that returns mock data for now
-  // In a real application, you would call getAlerts with appropriate filters
-  const mockAlerts: Alert[] = [
-    {
-      id: "1",
-      type: "device_status",
-      message: "Battery inverter went offline",
-      device_id: "device-1",
-      timestamp: new Date().toISOString(),
-      acknowledged: false,
-      severity: "critical",
-      source: "automatic"
-    },
-    {
-      id: "2",
-      type: "threshold",
-      message: "Power consumption exceeded threshold",
-      device_id: "device-2",
-      timestamp: new Date(Date.now() - 3600000).toISOString(),
-      acknowledged: true,
-      acknowledged_at: new Date(Date.now() - 1800000).toISOString(),
-      acknowledged_by: "user-1",
-      severity: "warning",
-      source: "threshold"
-    },
-    {
-      id: "3",
-      type: "system",
-      message: "System update available",
-      device_id: "system",
-      timestamp: new Date(Date.now() - 86400000).toISOString(),
-      acknowledged: true,
-      acknowledged_at: new Date(Date.now() - 43200000).toISOString(),
-      acknowledged_by: "user-1",
-      severity: "info",
-      source: "system",
-      resolved_at: new Date(Date.now() - 21600000).toISOString()
-    }
-  ];
+export const acknowledgeAlert = async (alertId: string): Promise<boolean> => {
+  // Simulate API call delay
+  await new Promise(resolve => setTimeout(resolve, 600));
   
-  return mockAlerts.slice(0, limit);
-}
+  // In a real implementation, this would update the database
+  // Here we just return success
+  toast.success('Alert acknowledged successfully');
+  return true;
+};
+
+// Resolve an alert
+export const resolveAlert = async (alertId: string): Promise<boolean> => {
+  // Simulate API call delay
+  await new Promise(resolve => setTimeout(resolve, 600));
+  
+  // In a real implementation, this would update the database
+  // Here we just return success
+  toast.success('Alert resolved successfully');
+  return true;
+};
+
+// Create a new alert
+export const createAlert = async (alert: Partial<Alert>): Promise<Alert> => {
+  // Simulate API call delay
+  await new Promise(resolve => setTimeout(resolve, 700));
+  
+  // Create a new alert with generated ID and timestamp
+  const newAlert: Alert = {
+    id: Math.random().toString(36).substring(2, 11),
+    title: alert.title || 'Untitled Alert',
+    message: alert.message || 'No message provided',
+    severity: alert.severity || 'info',
+    timestamp: new Date().toISOString(),
+    source: alert.source || 'System',
+    deviceId: alert.deviceId,
+    acknowledged: false,
+  };
+  
+  // In a real implementation, this would add to the database
+  // Here we just return the new alert
+  return newAlert;
+};
+
+// Subscribe to alerts (returns a cleanup function)
+export const subscribeToAlerts = (callback: (alerts: Alert[]) => void): () => void => {
+  // In a real implementation, this would set up a websocket or polling
+  // Here we just simulate with a timer
+  
+  let active = true;
+  
+  const poll = () => {
+    if (!active) return;
+    
+    // Get current alerts
+    getAlerts().then(alerts => {
+      callback(alerts);
+      
+      // Simulate a new alert randomly (1% chance per poll)
+      if (Math.random() < 0.01) {
+        const severities: Array<'critical' | 'warning' | 'info'> = ['critical', 'warning', 'info'];
+        const newAlert: Alert = {
+          id: Math.random().toString(36).substring(2, 11),
+          title: 'New System Alert',
+          message: 'This is a simulated alert for testing',
+          severity: severities[Math.floor(Math.random() * severities.length)],
+          timestamp: new Date().toISOString(),
+          source: 'Alert Simulator',
+          acknowledged: false,
+        };
+        
+        // Add to our mock data and notify
+        mockAlerts.unshift(newAlert);
+        callback([...mockAlerts]);
+        
+        // Show a toast
+        toast.warning('New alert received', {
+          description: newAlert.message,
+        });
+      }
+      
+      setTimeout(poll, 10000); // Poll every 10 seconds
+    });
+  };
+  
+  // Start polling
+  poll();
+  
+  // Return cleanup function
+  return () => {
+    active = false;
+  };
+};

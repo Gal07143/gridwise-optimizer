@@ -1,159 +1,122 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { PerformanceMetric } from '@/services/systemStatusService';
+import { Skeleton } from '@/components/ui/skeleton';
+import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import LiveChart from '@/components/dashboard/LiveChart';
 
-export const PerformanceMetrics: React.FC = () => {
-  // Sample data for charts
-  const cpuData = [
-    { time: '00:00', value: 45 },
-    { time: '01:00', value: 42 },
-    { time: '02:00', value: 40 },
-    { time: '03:00', value: 38 },
-    { time: '04:00', value: 35 },
-    { time: '05:00', value: 39 },
-    { time: '06:00', value: 48 },
-    { time: '07:00', value: 56 },
-    { time: '08:00', value: 68 },
-    { time: '09:00', value: 75 },
-    { time: '10:00', value: 82 },
-    { time: '11:00', value: 78 },
-    { time: '12:00', value: 74 },
-  ];
+interface PerformanceMetricsProps {
+  metrics: PerformanceMetric[];
+  isLoading?: boolean;
+}
 
-  const memoryData = [
-    { time: '00:00', value: 62 },
-    { time: '01:00', value: 64 },
-    { time: '02:00', value: 63 },
-    { time: '03:00', value: 61 },
-    { time: '04:00', value: 58 },
-    { time: '05:00', value: 60 },
-    { time: '06:00', value: 65 },
-    { time: '07:00', value: 72 },
-    { time: '08:00', value: 78 },
-    { time: '09:00', value: 82 },
-    { time: '10:00', value: 85 },
-    { time: '11:00', value: 81 },
-    { time: '12:00', value: 76 },
-  ];
-
-  const networkData = [
-    { time: '00:00', value: 15 },
-    { time: '01:00', value: 12 },
-    { time: '02:00', value: 8 },
-    { time: '03:00', value: 5 },
-    { time: '04:00', value: 6 },
-    { time: '05:00', value: 14 },
-    { time: '06:00', value: 28 },
-    { time: '07:00', value: 45 },
-    { time: '08:00', value: 65 },
-    { time: '09:00', value: 75 },
-    { time: '10:00', value: 72 },
-    { time: '11:00', value: 68 },
-    { time: '12:00', value: 62 },
-  ];
-
+export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({
+  metrics = [],
+  isLoading = false,
+}) => {
+  const formatMetricData = (metric: PerformanceMetric) => {
+    if (!metric.history) return [];
+    
+    return metric.history.map(point => ({
+      time: new Date(point.timestamp).toLocaleTimeString(),
+      value: point.value,
+    }));
+  };
+  
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'good': return 'text-green-500';
+      case 'warning': return 'text-yellow-500';
+      case 'critical': return 'text-red-500';
+      default: return 'text-muted-foreground';
+    }
+  };
+  
+  const getTrendIcon = (trend: string) => {
+    switch (trend) {
+      case 'up': return <TrendingUp className="h-4 w-4 text-green-500" />;
+      case 'down': return <TrendingDown className="h-4 w-4 text-red-500" />;
+      case 'stable': return <Minus className="h-4 w-4 text-muted-foreground" />;
+      default: return null;
+    }
+  };
+  
+  const getChartColor = (status: string) => {
+    switch (status) {
+      case 'good': return 'rgba(34, 197, 94, 0.7)';
+      case 'warning': return 'rgba(234, 179, 8, 0.7)';
+      case 'critical': return 'rgba(239, 68, 68, 0.7)';
+      default: return 'rgba(147, 147, 147, 0.7)';
+    }
+  };
+  
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-lg">Performance Metrics</CardTitle>
+        <CardTitle>Performance Metrics</CardTitle>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="cpu">
-          <TabsList className="mb-4">
-            <TabsTrigger value="cpu">CPU</TabsTrigger>
-            <TabsTrigger value="memory">Memory</TabsTrigger>
-            <TabsTrigger value="network">Network</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="cpu" className="space-y-4">
-            <div className="flex justify-between">
-              <div>
-                <div className="text-2xl font-bold">74%</div>
-                <div className="text-sm text-muted-foreground">Current usage</div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold">82%</div>
-                <div className="text-sm text-muted-foreground">Peak (last 24h)</div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold">53%</div>
-                <div className="text-sm text-muted-foreground">Average (last 24h)</div>
-              </div>
-            </div>
-            
-            <div className="h-[200px] mt-4">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={cpuData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="time" />
-                  <YAxis domain={[0, 100]} tickFormatter={(tick) => `${tick}%`} />
-                  <Tooltip formatter={(value) => [`${value}%`, 'CPU']} />
-                  <Bar dataKey="value" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="memory" className="space-y-4">
-            <div className="flex justify-between">
-              <div>
-                <div className="text-2xl font-bold">76%</div>
-                <div className="text-sm text-muted-foreground">Current usage</div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold">85%</div>
-                <div className="text-sm text-muted-foreground">Peak (last 24h)</div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold">68%</div>
-                <div className="text-sm text-muted-foreground">Average (last 24h)</div>
-              </div>
-            </div>
-            
-            <div className="h-[200px] mt-4">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={memoryData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="time" />
-                  <YAxis domain={[0, 100]} tickFormatter={(tick) => `${tick}%`} />
-                  <Tooltip formatter={(value) => [`${value}%`, 'Memory']} />
-                  <Bar dataKey="value" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="network" className="space-y-4">
-            <div className="flex justify-between">
-              <div>
-                <div className="text-2xl font-bold">62%</div>
-                <div className="text-sm text-muted-foreground">Current usage</div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold">75%</div>
-                <div className="text-sm text-muted-foreground">Peak (last 24h)</div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold">42%</div>
-                <div className="text-sm text-muted-foreground">Average (last 24h)</div>
-              </div>
-            </div>
-            
-            <div className="h-[200px] mt-4">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={networkData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="time" />
-                  <YAxis domain={[0, 100]} tickFormatter={(tick) => `${tick}%`} />
-                  <Tooltip formatter={(value) => [`${value}%`, 'Network']} />
-                  <Bar dataKey="value" fill="#10b981" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </TabsContent>
-        </Tabs>
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[...Array(6)].map((_, i) => (
+              <Skeleton key={i} className="h-44 w-full" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {metrics.map((metric) => (
+              <Card key={metric.id} className="overflow-hidden">
+                <CardHeader className="p-4 pb-0">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <CardTitle className="text-sm">{metric.name}</CardTitle>
+                      <div className="flex items-baseline mt-1 gap-2">
+                        <span className="text-2xl font-bold">{metric.value}</span>
+                        <span className="text-sm">{metric.unit}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 text-sm">
+                      {getTrendIcon(metric.trend)}
+                      <span 
+                        className={`${
+                          metric.trend === 'up' && metric.change && metric.change > 0 ? 'text-green-500' : 
+                          metric.trend === 'down' && metric.change && metric.change < 0 ? 'text-red-500' : 
+                          'text-muted-foreground'
+                        }`}
+                      >
+                        {metric.change ? (metric.change > 0 ? `+${metric.change}` : metric.change) : '0'}
+                        {metric.unit === '%' ? '%' : ''}
+                      </span>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <div className="h-28">
+                    <LiveChart
+                      data={formatMetricData(metric)}
+                      height={100}
+                      color={getChartColor(metric.status)}
+                      type="area"
+                      showAxis={false}
+                      showGrid={false}
+                      gradientFrom={getChartColor(metric.status)}
+                      gradientTo={`${getChartColor(metric.status).slice(0, -4)}0.05)`}
+                    />
+                  </div>
+                  <div className="px-4 pb-3 pt-1 flex justify-between items-center border-t">
+                    <div className="text-xs text-muted-foreground">
+                      {metric.threshold ? `Threshold: ${metric.threshold}${metric.unit}` : 'No threshold set'}
+                    </div>
+                    <div className={`text-xs font-medium ${getStatusColor(metric.status)}`}>
+                      {metric.status.charAt(0).toUpperCase() + metric.status.slice(1)}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

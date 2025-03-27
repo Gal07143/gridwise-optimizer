@@ -1,210 +1,265 @@
 
 import React, { useState, useEffect } from 'react';
-import { SystemOverview } from '@/components/system-status/SystemOverview';
-import { PerformanceMetrics } from '@/components/system-status/PerformanceMetrics';
-import { StatusCard } from '@/components/system-status/StatusCard';
-import { EventsList } from '@/components/system-status/EventsList';
-import IntegrationStatus from '@/components/system-status/IntegrationStatus';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useQuery } from '@tanstack/react-query';
 import AppLayout from '@/components/layout/AppLayout';
-import { Server, HardDrive, Wifi, CloudRain } from 'lucide-react';
+import PageHeader from '@/components/pages/PageHeader';
+import ErrorMessage from '@/components/ui/error-message';
+import SystemOverview from '@/components/system-status/SystemOverview';
+import IntegrationStatus from '@/components/system-status/IntegrationStatus';
+import EventsList from '@/components/system-status/EventsList';
+import PerformanceMetrics from '@/components/system-status/PerformanceMetrics';
+import { Activity, RefreshCw, Cpu, CircuitBoard, Router, DownloadCloud } from 'lucide-react';
+import {
+  getSystemComponents,
+  getIntegrationStatus,
+  getSystemEvents,
+  getPerformanceMetrics,
+  acknowledgeEvent,
+} from '@/services/systemStatusService';
 import { toast } from 'sonner';
 
-// Define types locally to avoid dependency on Supabase
-interface SystemComponent {
-  id: string;
-  name: string;
-  status: 'healthy' | 'degraded' | 'critical' | 'maintenance' | 'unknown';
-  lastUpdated: string;
-  details?: string;
-  type: string;
-  metrics?: {
-    [key: string]: number | string;
-  };
-}
-
-interface SystemEvent {
-  id: string;
-  message: string;
-  severity: 'info' | 'warning' | 'critical';
-  timestamp: string;
-  source: string;
-  acknowledged: boolean;
-  details?: string;
-}
-
-// Mock data service functions to replace actual API calls
-const fetchSystemComponents = (): Promise<SystemComponent[]> => {
-  return Promise.resolve([
-    {
-      id: '1',
-      name: 'Main Application Server',
-      status: 'healthy',
-      lastUpdated: new Date().toISOString(),
-      type: 'server',
-      metrics: { uptime: 99.9, responseTime: 120 }
-    },
-    {
-      id: '2',
-      name: 'Primary Database',
-      status: 'healthy',
-      lastUpdated: new Date().toISOString(),
-      type: 'database',
-      metrics: { queries: 2340, latency: 35 }
-    },
-    {
-      id: '3',
-      name: 'Edge API Gateway',
-      status: 'degraded',
-      lastUpdated: new Date().toISOString(),
-      type: 'api',
-      metrics: { requests: 15420, errors: 23 }
-    },
-    {
-      id: '4',
-      name: 'Authentication Service',
-      status: 'healthy',
-      lastUpdated: new Date().toISOString(),
-      type: 'service',
-      metrics: { sessions: 342, failures: 0 }
-    },
-    {
-      id: '5',
-      name: 'Backup System',
-      status: 'maintenance',
-      lastUpdated: new Date().toISOString(),
-      type: 'storage',
-      metrics: { lastBackup: '2023-10-12T04:30:00Z' }
-    },
-    {
-      id: '6',
-      name: 'Notification Service',
-      status: 'healthy',
-      lastUpdated: new Date().toISOString(),
-      type: 'service',
-      metrics: { delivered: 1245, pending: 12 }
-    }
-  ]);
-};
-
-const fetchSystemEvents = (): Promise<SystemEvent[]> => {
-  return Promise.resolve([
-    {
-      id: '1',
-      message: 'System update completed successfully',
-      severity: 'info',
-      timestamp: new Date(Date.now() - 15 * 60000).toISOString(),
-      source: 'System',
-      acknowledged: true
-    },
-    {
-      id: '2',
-      message: 'Database backup scheduled for 2:00 AM',
-      severity: 'info',
-      timestamp: new Date(Date.now() - 120 * 60000).toISOString(),
-      source: 'Maintenance',
-      acknowledged: true
-    },
-    {
-      id: '3',
-      message: 'API rate limit exceeded for weather service',
-      severity: 'warning',
-      timestamp: new Date(Date.now() - 45 * 60000).toISOString(),
-      source: 'API Gateway',
-      acknowledged: false
-    },
-    {
-      id: '4',
-      message: 'Edge function deployment failed',
-      severity: 'critical',
-      timestamp: new Date(Date.now() - 30 * 60000).toISOString(),
-      source: 'Deployment',
-      acknowledged: false
-    },
-    {
-      id: '5',
-      message: 'Server CPU usage above 80%',
-      severity: 'warning',
-      timestamp: new Date(Date.now() - 5 * 60000).toISOString(),
-      source: 'Monitoring',
-      acknowledged: false
-    }
-  ]);
-};
-
 const SystemStatus = () => {
-  const [events, setEvents] = useState<SystemEvent[]>([]);
-  const [components, setComponents] = useState<SystemComponent[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  // Fetch system components
+  const componentsQuery = useQuery({
+    queryKey: ['systemComponents'],
+    queryFn: getSystemComponents,
+  });
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        setIsLoading(true);
-        const [eventsData, componentsData] = await Promise.all([
-          fetchSystemEvents(),
-          fetchSystemComponents()
-        ]);
-        setEvents(eventsData);
-        setComponents(componentsData);
-      } catch (error) {
-        console.error('Error loading system status data:', error);
-        toast.error('Failed to load system status data');
-      } finally {
-        setIsLoading(false);
+  // Fetch integrations 
+  const integrationsQuery = useQuery({
+    queryKey: ['integrationStatus'],
+    queryFn: getIntegrationStatus,
+  });
+
+  // Fetch system events
+  const eventsQuery = useQuery({
+    queryKey: ['systemEvents'],
+    queryFn: getSystemEvents,
+  });
+
+  // Fetch performance metrics
+  const metricsQuery = useQuery({
+    queryKey: ['performanceMetrics'],
+    queryFn: getPerformanceMetrics,
+  });
+
+  const handleRefresh = () => {
+    componentsQuery.refetch();
+    integrationsQuery.refetch();
+    eventsQuery.refetch();
+    metricsQuery.refetch();
+    toast.success('System status refreshed');
+  };
+
+  const handleAcknowledgeEvent = async (id: string) => {
+    try {
+      const result = await acknowledgeEvent(id);
+      if (result) {
+        // Refresh events after acknowledgment
+        eventsQuery.refetch();
       }
-    };
-
-    loadData();
-    // Refresh data every 30 seconds
-    const interval = setInterval(loadData, 30000);
-    return () => clearInterval(interval);
-  }, []);
+      return result;
+    } catch (error) {
+      console.error('Failed to acknowledge event:', error);
+      return false;
+    }
+  };
 
   return (
     <AppLayout>
-      <div className="p-6 space-y-6 animate-in">
-        <h1 className="text-2xl font-bold tracking-tight">System Status</h1>
+      <div className="container max-w-7xl mx-auto py-6">
+        <PageHeader
+          title="System Status"
+          description="Monitor the health and performance of your energy management system"
+          icon={<Activity className="h-6 w-6" />}
+          actions={
+            <Button onClick={handleRefresh} disabled={componentsQuery.isLoading}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh Status
+            </Button>
+          }
+        />
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          <StatusCard 
-            title="Application Server" 
-            status="healthy" 
-            icon={<Server className="h-5 w-5" />} 
-            metric="99.9%" 
-            description="Uptime" 
-          />
-          <StatusCard 
-            title="Database" 
-            status="healthy" 
-            icon={<HardDrive className="h-5 w-5" />} 
-            metric="35ms" 
-            description="Response time" 
-          />
-          <StatusCard 
-            title="Network" 
-            status="healthy" 
-            icon={<Wifi className="h-5 w-5" />} 
-            metric="1.2Gb/s" 
-            description="Bandwidth" 
-          />
-          <StatusCard 
-            title="Weather API" 
-            status="degraded" 
-            icon={<CloudRain className="h-5 w-5" />} 
-            metric="87%" 
-            description="Availability" 
-          />
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <Card className="col-span-1">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">System Status</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-green-500">Healthy</div>
+              <p className="text-sm text-muted-foreground">All systems operational</p>
+            </CardContent>
+          </Card>
+          <Card className="col-span-1">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">Active Components</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">
+                {componentsQuery.isLoading ? '...' : componentsQuery.data?.length || 0}
+              </div>
+              <p className="text-sm text-muted-foreground">Components monitored</p>
+            </CardContent>
+          </Card>
+          <Card className="col-span-1">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">Active Integrations</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">
+                {integrationsQuery.isLoading
+                  ? '...'
+                  : integrationsQuery.data?.filter(i => i.status === 'online').length || 0}
+              </div>
+              <p className="text-sm text-muted-foreground">Connected services</p>
+            </CardContent>
+          </Card>
+          <Card className="col-span-1">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">Unacknowledged Events</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">
+                {eventsQuery.isLoading
+                  ? '...'
+                  : eventsQuery.data?.filter(e => !e.acknowledged).length || 0}
+              </div>
+              <p className="text-sm text-muted-foreground">Requiring attention</p>
+            </CardContent>
+          </Card>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-2">
-          <SystemOverview components={components} />
-          <PerformanceMetrics />
-        </div>
+        <Tabs defaultValue="overview" className="w-full mb-6">
+          <TabsList className="mb-4">
+            <TabsTrigger value="overview">
+              <Cpu className="h-4 w-4 mr-2" />
+              System Overview
+            </TabsTrigger>
+            <TabsTrigger value="metrics">
+              <Activity className="h-4 w-4 mr-2" />
+              Performance Metrics
+            </TabsTrigger>
+            <TabsTrigger value="integrations">
+              <Router className="h-4 w-4 mr-2" />
+              Integrations
+            </TabsTrigger>
+            <TabsTrigger value="events">
+              <CircuitBoard className="h-4 w-4 mr-2" />
+              System Events
+            </TabsTrigger>
+          </TabsList>
 
-        <div className="grid gap-6 lg:grid-cols-2">
-          <IntegrationStatus />
-          <EventsList events={events} />
-        </div>
+          <TabsContent value="overview" className="space-y-6">
+            {componentsQuery.error ? (
+              <ErrorMessage
+                message="Failed to load system components"
+                description="There was an error fetching system component data."
+                retryAction={() => componentsQuery.refetch()}
+              />
+            ) : (
+              <SystemOverview
+                components={componentsQuery.data || []}
+                isLoading={componentsQuery.isLoading}
+              />
+            )}
+          </TabsContent>
+
+          <TabsContent value="metrics" className="space-y-6">
+            {metricsQuery.error ? (
+              <ErrorMessage
+                message="Failed to load performance metrics"
+                description="There was an error fetching performance metrics data."
+                retryAction={() => metricsQuery.refetch()}
+              />
+            ) : (
+              <PerformanceMetrics
+                metrics={metricsQuery.data || []}
+                isLoading={metricsQuery.isLoading}
+              />
+            )}
+          </TabsContent>
+
+          <TabsContent value="integrations" className="space-y-6">
+            {integrationsQuery.error ? (
+              <ErrorMessage
+                message="Failed to load integration status"
+                description="There was an error fetching integration data."
+                retryAction={() => integrationsQuery.refetch()}
+              />
+            ) : (
+              <IntegrationStatus
+                integrations={integrationsQuery.data || []}
+                isLoading={integrationsQuery.isLoading}
+              />
+            )}
+          </TabsContent>
+
+          <TabsContent value="events" className="space-y-6">
+            {eventsQuery.error ? (
+              <ErrorMessage
+                message="Failed to load system events"
+                description="There was an error fetching system events data."
+                retryAction={() => eventsQuery.refetch()}
+              />
+            ) : (
+              <EventsList
+                events={eventsQuery.data || []}
+                isLoading={eventsQuery.isLoading}
+                onAcknowledge={handleAcknowledgeEvent}
+              />
+            )}
+          </TabsContent>
+        </Tabs>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>System Diagnostics</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h3 className="text-lg font-medium mb-4">Run Diagnostics</h3>
+                <div className="space-y-3">
+                  <Button variant="outline" className="w-full justify-start">
+                    <Activity className="h-4 w-4 mr-2" />
+                    Run System Health Check
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start">
+                    <Router className="h-4 w-4 mr-2" />
+                    Test Network Connectivity
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start">
+                    <CircuitBoard className="h-4 w-4 mr-2" />
+                    Verify Hardware Components
+                  </Button>
+                </div>
+              </div>
+              <div>
+                <h3 className="text-lg font-medium mb-4">System Logs</h3>
+                <div className="space-y-3">
+                  <Button variant="outline" className="w-full justify-start">
+                    <DownloadCloud className="h-4 w-4 mr-2" />
+                    Download System Logs
+                  </Button>
+                  <div className="bg-slate-100 dark:bg-slate-800 p-3 rounded-md">
+                    <div className="text-sm mb-2 font-medium">Log Level</div>
+                    <select className="w-full p-2 border rounded">
+                      <option>Error</option>
+                      <option>Warning</option>
+                      <option selected>Info</option>
+                      <option>Debug</option>
+                      <option>Trace</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </AppLayout>
   );

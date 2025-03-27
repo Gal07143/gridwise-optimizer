@@ -1,137 +1,87 @@
 
-import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { ReactNode } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Info } from 'lucide-react';
 
 export interface DashboardCardProps {
   title: string;
-  description?: string;
-  icon?: React.ReactNode;
-  badge?: string;
-  badgeVariant?: 'default' | 'secondary' | 'destructive' | 'outline' | 'success';
+  children: ReactNode;
   className?: string;
-  children: React.ReactNode;
+  icon?: ReactNode;
   isLoading?: boolean;
-  loadingText?: string;
-  style?: React.CSSProperties;
-  actions?: React.ReactNode;
-  footer?: React.ReactNode;
-  onClick?: () => void;
+  badge?: string;
+  badgeVariant?: "default" | "destructive" | "outline" | "secondary" | "success"; // Custom type to include success
   headerClassName?: string;
-  contentClassName?: string;
-  tooltip?: string;
-  compact?: boolean;
-  highlightBorder?: boolean;
-  elevation?: 'flat' | 'low' | 'medium' | 'high';
-  status?: 'success' | 'warning' | 'error' | 'info' | 'default';
+  rightHeaderContent?: ReactNode;
 }
 
-const DashboardCard = ({
-  title,
-  description,
-  icon,
-  badge,
-  badgeVariant = 'outline',
-  className,
-  children,
-  isLoading = false,
-  loadingText = 'Loading...',
-  style,
-  actions,
-  footer,
-  onClick,
-  headerClassName,
-  contentClassName,
-  tooltip,
-  compact = false,
-  highlightBorder = false,
-  elevation = 'flat',
-  status = 'default'
-}: DashboardCardProps) => {
-  // Determine elevation class
-  const elevationClass = 
-    elevation === 'high' ? 'shadow-lg' :
-    elevation === 'medium' ? 'shadow-md' :
-    elevation === 'low' ? 'shadow-sm' :
-    '';
+// Create a custom badge component that supports the "success" variant
+const ExtendedBadge = ({ variant, ...props }: { 
+  variant?: "default" | "destructive" | "outline" | "secondary" | "success", 
+  [key: string]: any 
+}) => {
+  // Map our extended variants to the actual Badge component variants
+  const badgeVariant = variant === "success" 
+    ? "outline" // Use outline for success
+    : variant as "default" | "destructive" | "outline" | "secondary";
   
-  // Determine status border color
-  const statusBorderClass = 
-    status === 'success' ? 'border-green-500' :
-    status === 'warning' ? 'border-amber-500' :
-    status === 'error' ? 'border-red-500' :
-    status === 'info' ? 'border-blue-500' :
-    highlightBorder ? 'border-primary' : '';
-    
+  // Apply custom styling for success
+  const className = variant === "success" 
+    ? "border-green-500 text-green-500 bg-green-50 dark:bg-green-950/20" 
+    : "";
+  
+  return <Badge variant={badgeVariant} className={cn(className, props.className)} {...props} />;
+};
+
+const DashboardCard: React.FC<DashboardCardProps> = ({
+  title,
+  children,
+  className,
+  icon,
+  isLoading = false,
+  badge,
+  badgeVariant = "default",
+  headerClassName,
+  rightHeaderContent,
+}) => {
   return (
-    <Card 
-      className={cn(
-        "transition-all duration-200 overflow-hidden h-full", 
-        onClick && "cursor-pointer hover:shadow-md",
-        elevationClass,
-        statusBorderClass,
-        className
-      )} 
-      style={style}
-      onClick={onClick}
-    >
-      <CardHeader className={cn(
-        "pb-2 flex flex-row items-center justify-between space-y-0", 
-        compact && "p-3",
-        headerClassName
-      )}>
-        <div>
+    <Card className={cn("overflow-hidden h-full", className)}>
+      <CardHeader className={cn("pb-2", headerClassName)}>
+        <div className="flex justify-between items-center">
           <div className="flex items-center">
-            {icon && <span className="mr-2 text-muted-foreground">{icon}</span>}
-            <CardTitle className={cn("text-base font-medium", compact && "text-sm")}>
-              {title}
-              {tooltip && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Info className="h-4 w-4 ml-1 inline-block text-muted-foreground" />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="max-w-xs">{tooltip}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+            {icon && <div className="mr-2 text-primary">{icon}</div>}
+            <CardTitle className="text-lg">
+              {isLoading ? (
+                <Skeleton className="h-6 w-32" />
+              ) : (
+                title
               )}
             </CardTitle>
-            {badge && (
-              <Badge variant={badgeVariant} className="ml-2">
-                {badge}
-              </Badge>
-            )}
           </div>
-          {description && (
-            <CardDescription className={cn("text-xs", compact && "text-xs")}>
-              {description}
-            </CardDescription>
-          )}
+          <div className="flex items-center gap-2">
+            {badge && !isLoading && (
+              <ExtendedBadge variant={badgeVariant}>
+                {badge}
+              </ExtendedBadge>
+            )}
+            {isLoading && (
+              <Skeleton className="h-5 w-16" />
+            )}
+            {rightHeaderContent}
+          </div>
         </div>
-        {actions && <div className="flex items-center space-x-2">{actions}</div>}
       </CardHeader>
-      <CardContent className={cn("p-3", contentClassName)}>
+      <CardContent className="p-0">
         {isLoading ? (
-          <div className="flex flex-col space-y-2">
-            <Skeleton className="h-4 w-3/4" />
-            <Skeleton className="h-8 w-full" />
-            <Skeleton className="h-4 w-1/2" />
+          <div className="p-4">
+            <Skeleton className="h-40 w-full" />
           </div>
         ) : (
           children
         )}
       </CardContent>
-      {footer && (
-        <div className="px-3 pb-3 pt-0">
-          {footer}
-        </div>
-      )}
     </Card>
   );
 };

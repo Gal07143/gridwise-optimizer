@@ -1,164 +1,412 @@
 
-import { toast } from 'sonner';
+// This file contains types and mock data for system status features
 
-// Define types
 export interface SystemComponent {
   id: string;
   name: string;
+  type: string;
   status: 'healthy' | 'degraded' | 'critical' | 'maintenance' | 'unknown';
   lastUpdated: string;
-  details?: string;
+  metrics?: Record<string, string | number>;
+  description?: string;
+}
+
+export interface Integration {
+  id: string;
+  name: string;
   type: string;
-  metrics?: {
-    [key: string]: number | string;
-  };
+  status: 'online' | 'offline' | 'degraded';
+  lastSync: string;
+  latency?: number;
+  errorCount?: number;
+  successRate?: number;
 }
 
 export interface SystemEvent {
   id: string;
-  message: string;
-  severity: 'info' | 'warning' | 'critical';
   timestamp: string;
   source: string;
+  severity: 'info' | 'warning' | 'critical';
+  message: string;
   acknowledged: boolean;
-  details?: string;
+  details?: Record<string, any>;
 }
 
-// Mock data
-const systemComponents: SystemComponent[] = [
+export interface PerformanceMetric {
+  id: string;
+  name: string;
+  value: number;
+  unit: string;
+  threshold?: number;
+  change?: number;
+  status: 'good' | 'warning' | 'critical';
+  trend: 'up' | 'down' | 'stable';
+  history?: { timestamp: string; value: number }[];
+}
+
+// Mock data for system components
+export const mockSystemComponents: SystemComponent[] = [
   {
     id: '1',
-    name: 'Main Application Server',
+    name: 'Battery Management System',
+    type: 'controller',
     status: 'healthy',
     lastUpdated: new Date().toISOString(),
-    type: 'server',
-    metrics: { uptime: 99.9, responseTime: 120 }
+    metrics: {
+      cpuUsage: '24%',
+      memoryUsage: '512MB',
+      uptime: '12d 5h',
+      temperature: '42°C'
+    }
   },
   {
     id: '2',
-    name: 'Primary Database',
+    name: 'Inverter Controller',
+    type: 'controller',
     status: 'healthy',
     lastUpdated: new Date().toISOString(),
-    type: 'database',
-    metrics: { queries: 2340, latency: 35 }
+    metrics: {
+      cpuUsage: '18%',
+      memoryUsage: '384MB',
+      uptime: '10d 12h',
+      temperature: '38°C'
+    }
   },
   {
     id: '3',
-    name: 'Edge API Gateway',
+    name: 'Grid Connection Monitor',
+    type: 'monitor',
     status: 'degraded',
     lastUpdated: new Date().toISOString(),
-    type: 'api',
-    metrics: { requests: 15420, errors: 23 }
+    metrics: {
+      responseTime: '120ms',
+      packetLoss: '2.5%',
+      frequency: '59.97Hz',
+      voltage: '240.2V'
+    }
   },
   {
     id: '4',
-    name: 'Authentication Service',
+    name: 'Data Processing Service',
+    type: 'service',
     status: 'healthy',
     lastUpdated: new Date().toISOString(),
-    type: 'service',
-    metrics: { sessions: 342, failures: 0 }
+    metrics: {
+      processedItems: '1,243',
+      queueLength: '0',
+      processingTime: '45ms',
+      errorRate: '0.02%'
+    }
   },
   {
     id: '5',
-    name: 'Backup System',
-    status: 'maintenance',
+    name: 'Weather Data Service',
+    type: 'service',
+    status: 'healthy',
     lastUpdated: new Date().toISOString(),
-    type: 'storage',
-    metrics: { lastBackup: '2023-10-12T04:30:00Z' }
+    metrics: {
+      lastUpdate: '5m ago',
+      accuracy: '92%',
+      forecastLength: '7 days',
+      dataPoints: '3,450'
+    }
   },
   {
     id: '6',
-    name: 'Notification Service',
+    name: 'Database Cluster',
+    type: 'infrastructure',
     status: 'healthy',
     lastUpdated: new Date().toISOString(),
-    type: 'service',
-    metrics: { delivered: 1245, pending: 12 }
-  }
+    metrics: {
+      connections: '24',
+      storage: '62.4GB',
+      readLatency: '4ms',
+      writeLatency: '8ms'
+    }
+  },
 ];
 
-const systemEvents: SystemEvent[] = [
+// Mock data for integrations
+export const mockIntegrations: Integration[] = [
   {
     id: '1',
-    message: 'System update completed successfully',
-    severity: 'info',
-    timestamp: new Date(Date.now() - 15 * 60000).toISOString(),
-    source: 'System',
-    acknowledged: true
+    name: 'Utility Grid API',
+    type: 'api',
+    status: 'online',
+    lastSync: new Date().toISOString(),
+    latency: 142,
+    errorCount: 0,
+    successRate: 100
   },
   {
     id: '2',
-    message: 'Database backup scheduled for 2:00 AM',
-    severity: 'info',
-    timestamp: new Date(Date.now() - 120 * 60000).toISOString(),
-    source: 'Maintenance',
-    acknowledged: true
+    name: 'Weather Service',
+    type: 'api',
+    status: 'online',
+    lastSync: new Date().toISOString(),
+    latency: 256,
+    errorCount: 2,
+    successRate: 99.5
   },
   {
     id: '3',
-    message: 'API rate limit exceeded for weather service',
-    severity: 'warning',
-    timestamp: new Date(Date.now() - 45 * 60000).toISOString(),
-    source: 'API Gateway',
-    acknowledged: false
+    name: 'Solar Panel Manufacturer',
+    type: 'modbus',
+    status: 'online',
+    lastSync: new Date().toISOString(),
+    latency: 52,
+    errorCount: 0,
+    successRate: 100
   },
   {
     id: '4',
-    message: 'Edge function deployment failed',
-    severity: 'critical',
-    timestamp: new Date(Date.now() - 30 * 60000).toISOString(),
-    source: 'Deployment',
-    acknowledged: false
+    name: 'Battery Management System',
+    type: 'modbus',
+    status: 'online',
+    lastSync: new Date().toISOString(),
+    latency: 38,
+    errorCount: 0,
+    successRate: 100
   },
   {
     id: '5',
-    message: 'Server CPU usage above 80%',
-    severity: 'warning',
-    timestamp: new Date(Date.now() - 5 * 60000).toISOString(),
-    source: 'Monitoring',
-    acknowledged: false
-  }
+    name: 'EV Charger Network',
+    type: 'mqtt',
+    status: 'degraded',
+    lastSync: new Date().toISOString(),
+    latency: 312,
+    errorCount: 14,
+    successRate: 96.2
+  },
+  {
+    id: '6',
+    name: 'Smart Meter Data',
+    type: 'api',
+    status: 'offline',
+    lastSync: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
+    latency: 0,
+    errorCount: 45,
+    successRate: 0
+  },
 ];
 
-// Service functions
-export const fetchSystemComponents = async (): Promise<SystemComponent[]> => {
-  try {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-    return [...systemComponents];
-  } catch (error) {
-    console.error('Error fetching system components:', error);
-    toast.error('Failed to fetch system components');
-    return [];
-  }
+// Mock data for system events
+export const mockSystemEvents: SystemEvent[] = [
+  {
+    id: '1',
+    timestamp: new Date().toISOString(),
+    source: 'Battery Management System',
+    severity: 'info',
+    message: 'System self-test completed successfully',
+    acknowledged: true,
+  },
+  {
+    id: '2',
+    timestamp: new Date(Date.now() - 1800000).toISOString(), // 30 minutes ago
+    source: 'Inverter Controller',
+    severity: 'warning',
+    message: 'Inverter efficiency below optimal threshold (92%)',
+    acknowledged: false,
+    details: {
+      efficiency: 92,
+      threshold: 95,
+      duration: '45m'
+    }
+  },
+  {
+    id: '3',
+    timestamp: new Date(Date.now() - 7200000).toISOString(), // 2 hours ago
+    source: 'Grid Connection Monitor',
+    severity: 'warning',
+    message: 'Voltage fluctuation detected (±5.2V)',
+    acknowledged: false,
+    details: {
+      voltage: 240.2,
+      fluctuation: 5.2,
+      duration: '15m'
+    }
+  },
+  {
+    id: '4',
+    timestamp: new Date(Date.now() - 14400000).toISOString(), // 4 hours ago
+    source: 'Weather Data Service',
+    severity: 'info',
+    message: 'Weather forecast updated - Clear skies expected for next 3 days',
+    acknowledged: true,
+  },
+  {
+    id: '5',
+    timestamp: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
+    source: 'Smart Meter Data',
+    severity: 'critical',
+    message: 'Connection to utility API failed - Authentication error',
+    acknowledged: true,
+    details: {
+      attempts: 3,
+      error: 'Authentication failed',
+      nextRetry: '2h'
+    }
+  },
+  {
+    id: '6',
+    timestamp: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
+    source: 'Database Cluster',
+    severity: 'warning',
+    message: 'Storage usage approaching threshold (85% used)',
+    acknowledged: true,
+    details: {
+      usage: '85%',
+      freeSpace: '15.6GB',
+      projectedFullDate: '15 days'
+    }
+  },
+];
+
+// Mock data for performance metrics
+export const mockPerformanceMetrics: PerformanceMetric[] = [
+  {
+    id: '1',
+    name: 'System Uptime',
+    value: 99.97,
+    unit: '%',
+    threshold: 99.9,
+    change: 0.01,
+    status: 'good',
+    trend: 'stable',
+    history: [
+      { timestamp: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), value: 99.95 },
+      { timestamp: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(), value: 99.96 },
+      { timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), value: 99.92 },
+      { timestamp: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), value: 99.94 },
+      { timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), value: 99.96 },
+      { timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), value: 99.97 },
+      { timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), value: 99.97 },
+    ]
+  },
+  {
+    id: '2',
+    name: 'Response Time',
+    value: 124,
+    unit: 'ms',
+    threshold: 200,
+    change: -5,
+    status: 'good',
+    trend: 'down',
+    history: [
+      { timestamp: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), value: 145 },
+      { timestamp: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(), value: 140 },
+      { timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), value: 138 },
+      { timestamp: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), value: 135 },
+      { timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), value: 130 },
+      { timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), value: 129 },
+      { timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), value: 124 },
+    ]
+  },
+  {
+    id: '3',
+    name: 'Error Rate',
+    value: 0.42,
+    unit: '%',
+    threshold: 1,
+    change: 0.12,
+    status: 'good',
+    trend: 'up',
+    history: [
+      { timestamp: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), value: 0.2 },
+      { timestamp: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(), value: 0.25 },
+      { timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), value: 0.28 },
+      { timestamp: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), value: 0.3 },
+      { timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), value: 0.32 },
+      { timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), value: 0.35 },
+      { timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), value: 0.42 },
+    ]
+  },
+  {
+    id: '4',
+    name: 'CPU Usage',
+    value: 38.5,
+    unit: '%',
+    threshold: 80,
+    change: -2.1,
+    status: 'good',
+    trend: 'down',
+    history: [
+      { timestamp: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), value: 45.2 },
+      { timestamp: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(), value: 43.8 },
+      { timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), value: 42.5 },
+      { timestamp: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), value: 41.2 },
+      { timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), value: 40.5 },
+      { timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), value: 40.6 },
+      { timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), value: 38.5 },
+    ]
+  },
+  {
+    id: '5',
+    name: 'Memory Usage',
+    value: 65.3,
+    unit: '%',
+    threshold: 85,
+    change: 3.2,
+    status: 'good',
+    trend: 'up',
+    history: [
+      { timestamp: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), value: 58.2 },
+      { timestamp: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(), value: 59.5 },
+      { timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), value: 60.8 },
+      { timestamp: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), value: 62.1 },
+      { timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), value: 63.5 },
+      { timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), value: 64.2 },
+      { timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), value: 65.3 },
+    ]
+  },
+  {
+    id: '6',
+    name: 'Disk I/O',
+    value: 12.8,
+    unit: 'MB/s',
+    threshold: 50,
+    change: 1.5,
+    status: 'good',
+    trend: 'up',
+    history: [
+      { timestamp: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), value: 9.5 },
+      { timestamp: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(), value: 10.2 },
+      { timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), value: 10.5 },
+      { timestamp: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), value: 11.0 },
+      { timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), value: 11.5 },
+      { timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), value: 12.2 },
+      { timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), value: 12.8 },
+    ]
+  },
+];
+
+// Service functions to fetch data
+export const getSystemComponents = async (): Promise<SystemComponent[]> => {
+  // Simulate API call delay
+  await new Promise(resolve => setTimeout(resolve, 500));
+  return mockSystemComponents;
 };
 
-export const fetchSystemEvents = async (): Promise<SystemEvent[]> => {
-  try {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 600));
-    return [...systemEvents];
-  } catch (error) {
-    console.error('Error fetching system events:', error);
-    toast.error('Failed to fetch system events');
-    return [];
-  }
+export const getIntegrationStatus = async (): Promise<Integration[]> => {
+  // Simulate API call delay
+  await new Promise(resolve => setTimeout(resolve, 500));
+  return mockIntegrations;
+};
+
+export const getSystemEvents = async (): Promise<SystemEvent[]> => {
+  // Simulate API call delay
+  await new Promise(resolve => setTimeout(resolve, 500));
+  return mockSystemEvents;
+};
+
+export const getPerformanceMetrics = async (): Promise<PerformanceMetric[]> => {
+  // Simulate API call delay
+  await new Promise(resolve => setTimeout(resolve, 500));
+  return mockPerformanceMetrics;
 };
 
 export const acknowledgeEvent = async (eventId: string): Promise<boolean> => {
-  try {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    // In a real app, this would update the database
-    const eventIndex = systemEvents.findIndex(event => event.id === eventId);
-    if (eventIndex >= 0) {
-      systemEvents[eventIndex].acknowledged = true;
-      return true;
-    }
-    return false;
-  } catch (error) {
-    console.error('Error acknowledging event:', error);
-    toast.error('Failed to acknowledge event');
-    return false;
-  }
+  // Simulate API call delay
+  await new Promise(resolve => setTimeout(resolve, 300));
+  return true;
 };

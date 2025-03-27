@@ -41,8 +41,18 @@ export const StatusCard: React.FC<StatusCardProps> = ({
     }
   };
 
+  const getStatusBgClass = () => {
+    switch (status) {
+      case 'healthy': return 'bg-green-50 dark:bg-green-900/20';
+      case 'degraded': return 'bg-yellow-50 dark:bg-yellow-900/20';
+      case 'critical': return 'bg-red-50 dark:bg-red-900/20';
+      case 'maintenance': return 'bg-blue-50 dark:bg-blue-900/20';
+      default: return 'bg-gray-50 dark:bg-gray-900/20';
+    }
+  };
+
   return (
-    <Card className={cn("overflow-hidden", className)}>
+    <Card className={cn("overflow-hidden", className, getStatusBgClass())}>
       <div className={`h-1 ${getStatusColor()}`} />
       <CardContent className="p-4">
         <div className="flex items-start justify-between">
@@ -55,7 +65,7 @@ export const StatusCard: React.FC<StatusCardProps> = ({
               <div className="text-2xl font-bold">{metric}</div>
             )}
             {description && (
-              <div className="text-xs text-muted-foreground">{description}</div>
+              <div className="text-xs text-muted-foreground mt-1">{description}</div>
             )}
           </div>
           <Badge className={getStatusColor()}>{getStatusText()}</Badge>
