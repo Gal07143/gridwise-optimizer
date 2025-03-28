@@ -7,7 +7,7 @@ import ThemeToggle from './ThemeToggle';
 import SiteSelector from '@/components/sites/SiteSelector';
 import Logo from './Logo';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LayoutDashboard, BarChart2, Activity, Wind, LightbulbIcon, Settings } from 'lucide-react';
 
 export interface SidebarProps {
   className?: string;
@@ -21,17 +21,19 @@ export const sidebarNavData = [
     key: 'main',
     title: 'Main',
     items: [
-      { href: '/dashboard', icon: '🏠', label: 'Dashboard' },
+      { href: '/dashboard', icon: <LayoutDashboard size={16} />, label: 'Dashboard' },
       { href: '/energy-flow', icon: '⚡', label: 'Energy Flow' },
-      { href: '/analytics', icon: '📊', label: 'Analytics' },
-      { href: '/devices', icon: '🔌', label: 'Devices' },
+      { href: '/analytics', icon: <BarChart2 size={16} />, label: 'Analytics' },
+      { href: '/consumption', icon: <LightbulbIcon size={16} />, label: 'Consumption' },
+      { href: '/production', icon: <Wind size={16} />, label: 'Production' },
+      { href: '/devices', icon: <Activity size={16} />, label: 'Devices' },
     ]
   },
   {
     key: 'admin',
     title: 'Administration',
     items: [
-      { href: '/settings', icon: '⚙️', label: 'Settings' },
+      { href: '/settings', icon: <Settings size={16} />, label: 'Settings' },
       { href: '/reports', icon: '📑', label: 'Reports' },
       { href: '/system-status', icon: '🔍', label: 'System Status' },
     ]

@@ -93,7 +93,7 @@ const MinimalistEnergyFlow: React.FC<MinimalistEnergyFlowProps> = ({
           
           if (evNode) {
             updatedData.ev = { 
-              value: evNode.power.toFixed(1), 
+              value: parseFloat(evNode.power.toFixed(1)), // Fix: convert to number
               unit: 'kW',
               status: evNode.power > 0 ? 'charging' : 'idle',
               mode: flowData.selfConsumptionRate > 70 ? 'Solar Mode' : 'Grid Mode'
@@ -180,7 +180,7 @@ const MinimalistEnergyFlow: React.FC<MinimalistEnergyFlowProps> = ({
           try {
             const evReading = await fetchDeviceData(evDevice.id);
             if (evReading) {
-              const evValue = parseFloat((evReading.power / 1000).toFixed(1)) || 0; // Convert to kW
+              const evValue = parseFloat((evReading.power / 1000).toFixed(1)) || 0; // Fix: ensure number
               
               newData.ev = {
                 value: evValue,

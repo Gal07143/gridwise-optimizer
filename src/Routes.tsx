@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -15,6 +14,8 @@ import AddDevice from '@/pages/AddDevice';
 import DeviceView from '@/pages/DeviceView';
 import EditDevice from '@/pages/EditDevice';
 import Analytics from '@/pages/Analytics';
+import Consumption from '@/pages/Consumption';
+import Production from '@/pages/Production';
 import Reports from '@/pages/Reports';
 import Alerts from '@/pages/Alerts';
 import EnergyFlow from '@/pages/EnergyFlow';
@@ -98,6 +99,43 @@ const AppRoutes = () => {
         </ProtectedRoute>
       } />
       
+      {/* Energy management routes */}
+      <Route path="/analytics" element={
+        <ProtectedRoute>
+          <Analytics />
+        </ProtectedRoute>
+      } />
+      <Route path="/consumption" element={
+        <ProtectedRoute>
+          <Consumption />
+        </ProtectedRoute>
+      } />
+      <Route path="/production" element={
+        <ProtectedRoute>
+          <Production />
+        </ProtectedRoute>
+      } />
+      <Route path="/reports" element={
+        <ProtectedRoute>
+          <Reports />
+        </ProtectedRoute>
+      } />
+      <Route path="/alerts" element={
+        <ProtectedRoute>
+          <Alerts />
+        </ProtectedRoute>
+      } />
+      <Route path="/energy-flow" element={
+        <ProtectedRoute>
+          <EnergyFlow />
+        </ProtectedRoute>
+      } />
+      <Route path="/microgrid-control" element={
+        <ProtectedRoute>
+          <MicrogridControl />
+        </ProtectedRoute>
+      } />
+      
       {/* Integration routes */}
       <Route path="/integrations" element={
         <ProtectedRoute>
@@ -173,33 +211,6 @@ const AppRoutes = () => {
       <Route path="/integrations/controllers" element={
         <ProtectedRoute>
           <IntegrationCategoryPage />
-        </ProtectedRoute>
-      } />
-      
-      {/* Energy management routes */}
-      <Route path="/analytics" element={
-        <ProtectedRoute>
-          <Analytics />
-        </ProtectedRoute>
-      } />
-      <Route path="/reports" element={
-        <ProtectedRoute>
-          <Reports />
-        </ProtectedRoute>
-      } />
-      <Route path="/alerts" element={
-        <ProtectedRoute>
-          <Alerts />
-        </ProtectedRoute>
-      } />
-      <Route path="/energy-flow" element={
-        <ProtectedRoute>
-          <EnergyFlow />
-        </ProtectedRoute>
-      } />
-      <Route path="/microgrid-control" element={
-        <ProtectedRoute>
-          <MicrogridControl />
         </ProtectedRoute>
       } />
       

@@ -20,7 +20,9 @@ import {
   Zap,
   Package,
   Router,
-  Signal
+  Signal,
+  LineChart,
+  LightbulbIcon
 } from 'lucide-react';
 
 export const mainNavItems = [
@@ -33,6 +35,16 @@ export const mainNavItems = [
     href: "/analytics",
     icon: <BarChart2 size={18} />,
     label: "Analytics"
+  },
+  {
+    href: "/consumption",
+    icon: <LightbulbIcon size={18} />,
+    label: "Consumption"
+  },
+  {
+    href: "/production",
+    icon: <Wind size={18} />,
+    label: "Production"
   },
   {
     href: "/devices",
