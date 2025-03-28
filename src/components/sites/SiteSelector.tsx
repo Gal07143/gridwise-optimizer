@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import {
   Select,
@@ -24,17 +25,28 @@ const SiteSelector: React.FC<SiteSelectorProps> = ({ onSiteChange }) => {
 
   useEffect(() => {
     if (activeSite && onSiteChange) {
-      onSiteChange(activeSite);
+      // Ensure activeSite has required fields before passing
+      const normalizedSite: Site = {
+        ...activeSite,
+        timezone: activeSite.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+        created_at: activeSite.created_at || new Date().toISOString(),
+        updated_at: activeSite.updated_at || new Date().toISOString()
+      };
+      onSiteChange(normalizedSite);
     }
   }, [activeSite, onSiteChange]);
 
   const handleSiteChange = (siteId: string) => {
     const selectedSite = sites.find((site) => site.id === siteId);
     if (selectedSite) {
-      setActiveSite(selectedSite);
-      if (onSiteChange) {
-        onSiteChange(selectedSite);
-      }
+      // Ensure selectedSite has required fields before setting
+      const normalizedSite: Site = {
+        ...selectedSite,
+        timezone: selectedSite.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+        created_at: selectedSite.created_at || new Date().toISOString(),
+        updated_at: selectedSite.updated_at || new Date().toISOString()
+      };
+      setActiveSite(normalizedSite);
       toast.success(`Active site changed to ${selectedSite.name}`);
     }
   };

@@ -1,107 +1,75 @@
 
+// src/hooks/useDeviceModels.ts
 import { useState, useEffect } from 'react';
-import { toast } from 'sonner';
-import { fetchDeviceModels, getDeviceCategories } from '@/services/deviceModelsService';
-import { DeviceModel } from '@/components/integrations/DeviceModelsTable';
+import { DeviceType } from '@/types/energy';
 
-// Define a consistent map of category IDs to display names
-export const categoryNames: Record<string, string> = {
-  'batteries': 'Batteries',
-  'inverters': 'Inverters',
-  'ev-chargers': 'EV Chargers',
-  'meters': 'Energy Meters',
-  'controllers': 'System Controllers',
-  'solar': 'Solar Panels',
-  'wind': 'Wind Turbines',
-  'hydro': 'Hydro Generators',
-  'biomass': 'Biomass Systems',
-  'all': 'All Devices',
-};
+// Export the DeviceModel interface to fix import error
+export interface DeviceModel {
+  id: string;
+  manufacturer: string;
+  model_name: string;
+  name?: string;
+  device_type: DeviceType;
+  description?: string;
+  specifications?: Record<string, any>;
+  compatible_with?: string[];
+  firmware_versions?: string[];
+  created_at: string;
+  updated_at?: string;
+  category?: string;
+}
 
-export const useDeviceModels = (categoryId?: string) => {
-  const [isLoading, setIsLoading] = useState(true);
+export const useDeviceModels = () => {
+  const [models, setModels] = useState<DeviceModel[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const [devices, setDevices] = useState<DeviceModel[]>([]);
-  const [deviceCount, setDeviceCount] = useState(0);
-  const [sortField, setSortField] = useState('name');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [categoryName, setCategoryName] = useState('All Devices');
-  const [categories, setCategories] = useState<string[]>(['all']);
 
   useEffect(() => {
-    // Fetch available categories
-    const loadCategories = async () => {
+    const fetchDeviceModels = async () => {
+      setLoading(true);
       try {
-        const cats = await getDeviceCategories();
-        setCategories(cats);
+        // Mock data, in a real app this would fetch from an API
+        const mockModels: DeviceModel[] = [
+          {
+            id: '1',
+            manufacturer: 'SolarEdge',
+            model_name: 'SE7600H-US',
+            device_type: 'inverter',
+            description: 'Single Phase Inverter',
+            specifications: {
+              power: 7600,
+              voltage: 240,
+              efficiency: 97.6
+            },
+            created_at: new Date().toISOString()
+          },
+          {
+            id: '2',
+            manufacturer: 'Tesla',
+            model_name: 'Powerwall 2',
+            device_type: 'battery',
+            description: 'Home Battery',
+            specifications: {
+              capacity: 13.5,
+              power: 5,
+              round_trip_efficiency: 90
+            },
+            created_at: new Date().toISOString()
+          }
+        ];
         
-        // Get the category name based on ID
-        if (categoryId) {
-          setCategoryName(categoryNames[categoryId] || 'All Devices');
-        } else {
-          setCategoryName('All Devices');
-        }
-      } catch (err) {
-        console.error('Error loading device categories:', err);
-        toast.error('Failed to load device categories');
-      }
-    };
-    
-    loadCategories();
-  }, [categoryId]);
-
-  useEffect(() => {
-    const fetchDeviceModelData = async () => {
-      try {
-        setIsLoading(true);
+        setModels(mockModels);
         setError(null);
-        
-        // Convert categoryId to category for database query
-        const category = categoryId === 'all' ? undefined : categoryId;
-        
-        // Fetch device models from the database
-        const deviceModels = await fetchDeviceModels(
-          category,
-          searchQuery,
-          sortField,
-          sortDirection
-        );
-        
-        setDevices(deviceModels);
-        setDeviceCount(deviceModels.length);
       } catch (err) {
         console.error('Error fetching device models:', err);
-        setError(err instanceof Error ? err : new Error('Failed to load device models'));
-        toast.error('Failed to load device models');
+        setError(err instanceof Error ? err : new Error('Unknown error fetching device models'));
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
-    
-    fetchDeviceModelData();
-  }, [categoryId, sortField, sortDirection, searchQuery]);
-  
-  const handleSort = (field: string) => {
-    if (field === sortField) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
-    }
-  };
-  
-  return {
-    devices,
-    isLoading,
-    error,
-    deviceCount,
-    sortField,
-    sortDirection,
-    searchQuery,
-    setSearchQuery,
-    handleSort,
-    categoryName,
-    categories
-  };
+
+    fetchDeviceModels();
+  }, []);
+
+  return { models, loading, error };
 };

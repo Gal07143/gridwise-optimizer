@@ -1,71 +1,65 @@
 
 import { useState, useEffect } from 'react';
-import { useSiteContext } from '@/contexts/SiteContext';
-import { 
-  PredictionDataPoint, 
-  SystemRecommendation, 
-  generatePredictionData, 
-  getSystemRecommendations 
+import {
+  PredictionDataPoint,
+  SystemRecommendation,
+  generatePredictionData,
+  getSystemRecommendations
 } from '@/services/predictions/energyPredictionService';
 
 export interface UsePredictionsResult {
   predictions: PredictionDataPoint[];
-  recommendations: SystemRecommendation[];
   isLoading: boolean;
   error: Error | null;
+  recommendations: SystemRecommendation[];
   predictionDays: number;
   setPredictionDays: (days: number) => void;
-  refetch: () => void;
+  refreshData: () => void;
 }
 
-export function usePredictions(
-  timeframe: 'day' | 'week' | 'month' | 'year' = 'day',
-  dataType: string = 'energy_consumption'
-): UsePredictionsResult {
-  const { activeSite } = useSiteContext();
+const usePredictions = (timeframe: 'day' | 'week' | 'month' | 'year' = 'week', customData?: any[]): UsePredictionsResult => {
   const [predictions, setPredictions] = useState<PredictionDataPoint[]>([]);
   const [recommendations, setRecommendations] = useState<SystemRecommendation[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
-  const [predictionDays, setPredictionDays] = useState(7);
+  const [predictionDays, setPredictionDays] = useState<number>(7);
 
   const fetchData = async () => {
-    if (!activeSite) return;
-    
-    setIsLoading(true);
-    setError(null);
-    
     try {
-      // Fetch prediction data
-      const predData = await generatePredictionData(timeframe, dataType);
-      setPredictions(predData);
+      setIsLoading(true);
+      // Generate prediction data based on timeframe
+      const data = customData || generatePredictionData(timeframe, predictionDays);
+      setPredictions(data);
+
+      // Get recommendations
+      const recs = getSystemRecommendations();
+      setRecommendations(recs);
       
-      // Fetch recommendations
-      const recData = await getSystemRecommendations();
-      setRecommendations(recData);
-      
+      setError(null);
     } catch (err) {
       console.error('Error fetching prediction data:', err);
-      setError(err instanceof Error ? err : new Error('Failed to fetch prediction data'));
+      setError(err instanceof Error ? err : new Error('Unknown error'));
+      setPredictions([]);
+      setRecommendations([]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Initial data fetch
+  // Fetch data when timeframe or predictionDays changes
   useEffect(() => {
     fetchData();
-  }, [activeSite?.id, timeframe, dataType]);
+  }, [timeframe, predictionDays]);
 
   return {
     predictions,
-    recommendations,
     isLoading,
     error,
+    recommendations,
     predictionDays,
     setPredictionDays,
-    refetch: fetchData
+    refreshData: fetchData
   };
-}
+};
 
 export default usePredictions;

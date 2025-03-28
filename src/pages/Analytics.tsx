@@ -1,173 +1,161 @@
 
 import React, { useState } from 'react';
-import { Main } from '@/components/ui/main';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card } from '@/components/ui/card';
 import AnalyticsHeader from '@/components/analytics/AnalyticsHeader';
+import PredictionsCard from '@/components/analytics/PredictionsCard';
 import TimeframeSelector from '@/components/analytics/TimeframeSelector';
 import ComparisonToggle from '@/components/analytics/ComparisonToggle';
-import PredictionsCard from '@/components/analytics/PredictionsCard';
 import SystemRecommendationsCard from '@/components/analytics/SystemRecommendationsCard';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent } from '@/components/ui/card';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
-import { useSiteContext } from '@/contexts/SiteContext';
-import usePredictions from '@/hooks/usePredictions';
-
-// Analytics tab components
 import GenerationTab from '@/components/analytics/tabs/GenerationTab';
 import ConsumptionTab from '@/components/analytics/tabs/ConsumptionTab';
 import CostTab from '@/components/analytics/tabs/CostTab';
 import InsightsTab from '@/components/analytics/tabs/InsightsTab';
+import usePredictions from '@/hooks/usePredictions';
 
-const Analytics: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('generation');
+const Analytics = () => {
   const [timeframe, setTimeframe] = useState<'day' | 'week' | 'month' | 'year'>('month');
   const [dataComparisonEnabled, setDataComparisonEnabled] = useState(false);
-  const { activeSite, loading, error } = useSiteContext();
-  const predictionData = usePredictions(timeframe);
-
-  // Sample data for tabs
+  const [activeTab, setActiveTab] = useState('generation');
+  
+  // Get prediction data using the hook
+  const { predictions, recommendations, isLoading } = usePredictions(timeframe);
+  
+  // Sample data - in a real app, this would come from an API
   const monthlyGenerationData = [
-    { month: 'Jan', value: 120 },
-    { month: 'Feb', value: 140 },
-    { month: 'Mar', value: 160 },
-    { month: 'Apr', value: 180 },
-    { month: 'May', value: 220 },
-    { month: 'Jun', value: 240 },
+    { day: 'Jan', value: 230 },
+    { day: 'Feb', value: 250 },
+    { day: 'Mar', value: 300 },
+    { day: 'Apr', value: 350 },
+    { day: 'May', value: 400 },
+    { day: 'Jun', value: 450 },
+    { day: 'Jul', value: 500 },
+    { day: 'Aug', value: 480 },
+    { day: 'Sep', value: 420 },
+    { day: 'Oct', value: 380 },
+    { day: 'Nov', value: 320 },
+    { day: 'Dec', value: 270 }
   ];
-
-  const costBreakdownData = [
-    { name: 'Solar', value: 35 },
-    { name: 'Grid', value: 45 },
-    { name: 'Battery', value: 20 },
-  ];
-
+  
   const weeklyEnergyData = [
-    { day: 'Mon', value: 30 },
-    { day: 'Tue', value: 40 },
-    { day: 'Wed', value: 45 },
-    { day: 'Thu', value: 35 },
-    { day: 'Fri', value: 50 },
-    { day: 'Sat', value: 35 },
-    { day: 'Sun', value: 25 },
+    { day: 'Mon', value: 45 },
+    { day: 'Tue', value: 52 },
+    { day: 'Wed', value: 49 },
+    { day: 'Thu', value: 47 },
+    { day: 'Fri', value: 53 },
+    { day: 'Sat', value: 56 },
+    { day: 'Sun', value: 51 }
   ];
-
+  
   const peakDemandData = [
-    { time: '00:00', value: 20 },
-    { time: '04:00', value: 15 },
-    { time: '08:00', value: 35 },
-    { time: '12:00', value: 45 },
-    { time: '16:00', value: 60 },
-    { time: '20:00', value: 50 },
+    { time: '6am', value: 30 },
+    { time: '9am', value: 75 },
+    { time: '12pm', value: 85 },
+    { time: '3pm', value: 70 },
+    { time: '6pm', value: 90 },
+    { time: '9pm', value: 60 },
+    { time: '12am', value: 35 }
   ];
-
+  
   const energySourcesData = [
-    { name: 'Solar', value: 45 },
-    { name: 'Grid', value: 35 },
-    { name: 'Battery', value: 20 },
+    { name: 'Solar', value: 65 },
+    { name: 'Grid', value: 25 },
+    { name: 'Battery', value: 10 }
   ];
-
+  
   const topConsumersData = [
     { name: 'HVAC', value: 35 },
-    { name: 'Appliances', value: 25 },
-    { name: 'Lighting', value: 15 },
-    { name: 'Electronics', value: 15 },
-    { name: 'Other', value: 10 },
+    { name: 'Lighting', value: 20 },
+    { name: 'Equipment', value: 30 },
+    { name: 'Other', value: 15 }
+  ];
+  
+  const costBreakdownData = [
+    { name: 'Peak Hours', value: 65 },
+    { name: 'Off-Peak', value: 35 }
   ];
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+  // Fixed setTimeframe handler to handle proper type
+  const handleTimeframeChange = (value: 'day' | 'week' | 'month' | 'year') => {
+    setTimeframe(value);
+  };
 
-  if (error) {
-    return (
-      <Main>
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>
-            {error.message}
-          </AlertDescription>
-        </Alert>
-      </Main>
-    );
-  }
+  // Fixed setDataComparisonEnabled handler
+  const handleComparisonToggle = (enabled: boolean) => {
+    setDataComparisonEnabled(enabled);
+  };
 
   return (
-    <Main>
+    <div className="container p-6 mx-auto">
       <AnalyticsHeader 
-        timeframe={timeframe}
-        setTimeframe={setTimeframe}
+        timeframe={timeframe} 
+        setTimeframe={handleTimeframeChange}
         dataComparisonEnabled={dataComparisonEnabled}
-        setDataComparisonEnabled={setDataComparisonEnabled}
+        setDataComparisonEnabled={handleComparisonToggle}
       />
-      <div className="flex flex-col gap-4">
-        <Card>
-          <CardContent className="flex items-center justify-between">
-            <div className="space-y-1">
-              <h2 className="text-xl font-semibold">Energy Analysis</h2>
-              <p className="text-muted-foreground">
-                Explore energy generation, consumption, and cost trends.
-              </p>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
+        <Card className="lg:col-span-8">
+          <div className="p-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <TabsList className="grid grid-cols-4 mb-4">
+                  <TabsTrigger value="generation">Generation</TabsTrigger>
+                  <TabsTrigger value="consumption">Consumption</TabsTrigger>
+                  <TabsTrigger value="cost">Cost</TabsTrigger>
+                  <TabsTrigger value="insights">Insights</TabsTrigger>
+                </TabsList>
+              </Tabs>
+              <div className="flex items-center space-x-4">
+                <TimeframeSelector timeframe={timeframe} setTimeframe={handleTimeframeChange} />
+                <ComparisonToggle 
+                  timeframe={timeframe}
+                  dataComparisonEnabled={dataComparisonEnabled} 
+                  setDataComparisonEnabled={handleComparisonToggle} 
+                />
+              </div>
             </div>
-            <div className="flex items-center gap-4">
-              <TimeframeSelector 
-                timeframe={timeframe}
-                setTimeframe={setTimeframe}
+            
+            <TabsContent value="generation" className="mt-0">
+              <GenerationTab 
+                monthlyGenerationData={monthlyGenerationData} 
+                dataComparisonEnabled={dataComparisonEnabled} 
               />
-              <ComparisonToggle 
-                timeframe={timeframe}
+            </TabsContent>
+            
+            <TabsContent value="consumption" className="mt-0">
+              <ConsumptionTab 
+                weeklyEnergyData={weeklyEnergyData}
+                peakDemandData={peakDemandData}
+                energySourcesData={energySourcesData}
+                topConsumersData={topConsumersData}
                 dataComparisonEnabled={dataComparisonEnabled}
-                setDataComparisonEnabled={setDataComparisonEnabled}
               />
-            </div>
-          </CardContent>
+            </TabsContent>
+            
+            <TabsContent value="cost" className="mt-0">
+              <CostTab 
+                costBreakdownData={costBreakdownData} 
+                monthlyGenerationData={monthlyGenerationData}
+              />
+            </TabsContent>
+            
+            <TabsContent value="insights" className="mt-0">
+              <InsightsTab />
+            </TabsContent>
+          </div>
         </Card>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        
+        <div className="lg:col-span-4 space-y-6">
           <PredictionsCard timeframe={timeframe} />
+          
           <SystemRecommendationsCard 
-            recommendations={predictionData.recommendations}
-            isLoading={predictionData.isLoading}
-            onRefresh={predictionData.refetch}
+            recommendations={recommendations} 
+            isLoading={isLoading}
           />
         </div>
-
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
-            <TabsTrigger value="generation">Generation</TabsTrigger>
-            <TabsTrigger value="consumption">Consumption</TabsTrigger>
-            <TabsTrigger value="cost">Cost</TabsTrigger>
-            <TabsTrigger value="insights">Insights</TabsTrigger>
-          </TabsList>
-          <TabsContent value="generation" className="space-y-6">
-            <GenerationTab 
-              monthlyGenerationData={monthlyGenerationData}
-              dataComparisonEnabled={dataComparisonEnabled}
-            />
-          </TabsContent>
-          <TabsContent value="consumption" className="space-y-6">
-            <ConsumptionTab 
-              weeklyEnergyData={weeklyEnergyData}
-              peakDemandData={peakDemandData}
-              energySourcesData={energySourcesData}
-              topConsumersData={topConsumersData}
-              dataComparisonEnabled={dataComparisonEnabled}
-              timeframe={timeframe}
-            />
-          </TabsContent>
-          <TabsContent value="cost" className="space-y-6">
-            <CostTab 
-              costBreakdownData={costBreakdownData}
-              monthlyGenerationData={monthlyGenerationData}
-            />
-          </TabsContent>
-          <TabsContent value="insights" className="space-y-6">
-            <InsightsTab timeframe={timeframe} />
-          </TabsContent>
-        </Tabs>
       </div>
-    </Main>
+    </div>
   );
 };
 

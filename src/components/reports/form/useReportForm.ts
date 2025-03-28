@@ -1,7 +1,8 @@
+
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { reportValidationSchema, ReportFormValues } from './reportValidationSchema';
+import { reportValidationSchema, ReportFormValues, getDefaultValues } from './reportValidationSchema';
 import { useSiteContext } from '@/contexts/SiteContext';
 import { toast } from 'sonner';
 
@@ -30,13 +31,20 @@ const mockGetReportTemplateById = async (templateId: string) => {
     id: templateId,
     title: `Template ${templateId}`,
     description: 'A sample report template',
-    type: 'energy_consumption',
+    type: 'energy_consumption' as const,
     parameters: {
       timeframe: 'last_30_days',
       groupBy: 'day'
     }
   };
 };
+
+// Update SiteContextType interface to include currentSite
+declare module '@/contexts/SiteContext' {
+  interface SiteContextType {
+    currentSite: { id: string } | null;
+  }
+}
 
 interface UseReportFormProps {
   onSuccess: () => void;
@@ -55,6 +63,7 @@ export const useReportForm = ({ onSuccess }: UseReportFormProps) => {
   });
 
   useEffect(() => {
+    // Use proper type assertion for the template_id field
     const templateId = form.watch('template_id');
     
     if (templateId && templateId !== selectedTemplate) {
@@ -84,8 +93,10 @@ export const useReportForm = ({ onSuccess }: UseReportFormProps) => {
       return;
     }
     
+    // Use the correct type for schedule
+    const submissionData = { ...data };
     if (!isScheduled) {
-      data.schedule = undefined;
+      delete submissionData.schedule;
     }
     
     try {
@@ -93,18 +104,22 @@ export const useReportForm = ({ onSuccess }: UseReportFormProps) => {
       
       let result;
       
-      if (data.template_id) {
-        result = await mockCreateReportFromTemplate(data.template_id, currentSite.id, data);
+      if (submissionData.template_id) {
+        result = await mockCreateReportFromTemplate(
+          submissionData.template_id, 
+          currentSite.id, 
+          submissionData
+        );
       } else {
         const reportData = {
           site_id: currentSite.id,
           created_by: 'current-user',
-          type: data.type || 'energy_consumption',
-          title: data.title,
-          description: data.description,
-          is_template: data.is_template,
-          schedule: data.schedule,
-          parameters: data.parameters || {},
+          type: submissionData.type,
+          title: submissionData.title,
+          description: submissionData.description,
+          is_template: submissionData.is_template,
+          schedule: submissionData.schedule,
+          parameters: submissionData.parameters || {},
         };
         
         result = await mockCreateReport(reportData);

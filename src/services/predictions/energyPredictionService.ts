@@ -1,5 +1,5 @@
 
-// Mock data and interfaces for energy predictions
+// Define required interfaces
 export interface PredictionDataPoint {
   day: string;
   value: number;
@@ -10,85 +10,134 @@ export interface SystemRecommendation {
   id: string;
   title: string;
   description: string;
-  type: string;
-  priority: string;
-  potential_savings: string;
+  type: 'efficiency' | 'cost' | 'maintenance' | 'operational';
+  potential_savings: number; 
   implementation_effort: string;
+  priority: 'high' | 'medium' | 'low';
   confidence: number;
-  applied: boolean;
-  applied_at?: string;
-  applied_by?: string;
+  category: string;
+  estimated_roi: number;
+  applied?: boolean;
 }
 
-export const generatePredictionData = async (
-  timeframe: 'day' | 'week' | 'month' | 'year' = 'day',
-  dataType: string = 'energy_consumption'
-): Promise<PredictionDataPoint[]> => {
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 1000));
+export interface ModelStatus {
+  version: string;
+  lastTrained: string;
+  accuracy: number;
+  status: 'active' | 'training' | 'error';
+}
+
+// Mock data for predictions
+const generatePredictionData = (timeframe: 'day' | 'week' | 'month' | 'year', days: number = 7): PredictionDataPoint[] => {
+  const data: PredictionDataPoint[] = [];
+  const now = new Date();
   
-  // Generate sample data based on timeframe
-  const days = timeframe === 'day' ? 1 : 
-              timeframe === 'week' ? 7 : 
-              timeframe === 'month' ? 30 : 365;
+  for (let i = 1; i <= days; i++) {
+    const date = new Date(now);
+    date.setDate(date.getDate() + i);
+    
+    let value = 0;
+    // Different patterns for different timeframes
+    switch(timeframe) {
+      case 'day':
+        value = 40 + Math.random() * 20;
+        break;
+      case 'week':
+        value = 300 + Math.random() * 100;
+        break;
+      case 'month':
+        value = 1200 + Math.random() * 400;
+        break;
+      case 'year':
+        value = 15000 + Math.random() * 5000;
+        break;
+    }
+    
+    data.push({
+      day: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      value: parseFloat(value.toFixed(1)),
+      confidence: 0.7 + Math.random() * 0.3
+    });
+  }
   
-  return Array.from({ length: days }, (_, i) => ({
-    day: `Day ${i + 1}`,
-    value: Math.round(Math.random() * 100 + 50),
-    confidence: Math.random() * 0.3 + 0.7 // Between 70% and 100%
-  }));
+  return data;
 };
 
-export const getSystemRecommendations = async (): Promise<SystemRecommendation[]> => {
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 1200));
-  
-  // Sample recommendations
+// Get recommendations for system optimization
+const getSystemRecommendations = (): SystemRecommendation[] => {
   return [
     {
-      id: '1',
-      title: 'Optimize Battery Charging Schedule',
-      description: 'Shifting battery charging to off-peak hours could reduce energy costs by approximately 15%.',
-      type: 'optimization',
+      id: 'rec-1',
+      title: 'Optimize battery charging schedule',
+      description: 'Adjust battery charging to utilize off-peak electricity rates, potentially saving 15% on energy costs.',
+      type: 'efficiency',
+      potential_savings: 120,
+      implementation_effort: 'low',
       priority: 'high',
-      potential_savings: '$120-150/month',
-      implementation_effort: 'Low',
-      confidence: 0.89,
-      applied: false
+      confidence: 0.85,
+      category: 'battery',
+      estimated_roi: 240,
     },
     {
-      id: '2',
-      title: 'Increase Solar Panel Cleaning Frequency',
-      description: 'Current dust accumulation is reducing efficiency by an estimated 8%. Increasing cleaning frequency to monthly would improve output.',
+      id: 'rec-2',
+      title: 'Increase solar panel cleaning frequency',
+      description: 'Current dust accumulation is reducing efficiency by approximately 8%. Implementing bi-weekly cleaning can restore optimal performance.',
       type: 'maintenance',
+      potential_savings: 85,
+      implementation_effort: 'medium',
       priority: 'medium',
-      potential_savings: '$80-100/month',
-      implementation_effort: 'Medium',
-      confidence: 0.76,
-      applied: false
+      confidence: 0.92,
+      category: 'solar',
+      estimated_roi: 170,
     },
     {
-      id: '3',
-      title: 'Adjust HVAC Operating Hours',
-      description: 'Analysis shows the HVAC system runs 2 hours longer than necessary on weekends. Adjusting the schedule could save energy.',
-      type: 'behavioral',
-      priority: 'medium',
-      potential_savings: '$50-70/month',
-      implementation_effort: 'Low',
-      confidence: 0.92,
-      applied: false
+      id: 'rec-3',
+      title: 'Adjust HVAC operating hours',
+      description: 'Current operation shows 2.5 hours of unnecessary runtime daily. Adjusting schedules could reduce consumption.',
+      type: 'operational',
+      potential_savings: 210,
+      implementation_effort: 'low',
+      priority: 'high',
+      confidence: 0.78,
+      category: 'hvac',
+      estimated_roi: 315,
     }
   ];
 };
 
-export const applyRecommendation = async (
-  recommendationId: string,
-  notes: string
-): Promise<boolean> => {
+// Function to simulate applying a recommendation
+const applyRecommendation = async (id: string): Promise<boolean> => {
   // Simulate API call
-  console.log('Applying recommendation:', recommendationId, 'with notes:', notes);
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  // Return success
+  await new Promise(resolve => setTimeout(resolve, 1500));
   return true;
+};
+
+// Get model status 
+const getModelStatus = async (): Promise<ModelStatus> => {
+  // Simulate API call
+  await new Promise(resolve => setTimeout(resolve, 800));
+  return {
+    version: '1.2.3',
+    lastTrained: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+    accuracy: 0.87,
+    status: 'active'
+  };
+};
+
+// Train model
+const trainModel = async (): Promise<{success: boolean, message?: string}> => {
+  // Simulate API call
+  await new Promise(resolve => setTimeout(resolve, 2000));
+  return {
+    success: true,
+    message: 'Model training completed successfully'
+  };
+};
+
+export {
+  generatePredictionData,
+  getSystemRecommendations,
+  applyRecommendation,
+  getModelStatus,
+  trainModel
 };

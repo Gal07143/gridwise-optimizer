@@ -1,7 +1,7 @@
+
 import React from 'react';
 import SidebarNavSection from "./SidebarNavSection";
-import { NavItem } from './NavItem';
-import { sidebarNavData } from "./sidebarNavData";
+import NavItem from './NavItem';
 import { 
   BarChart3, 
   BatteryFull, 
@@ -19,33 +19,35 @@ import SiteSelector from "@/components/sites/SiteSelector";
 
 interface SidebarProps {
   className?: string;
+  isExpanded?: boolean;
+  toggleSidebar?: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ className }) => {
+const Sidebar: React.FC<SidebarProps> = ({ className, isExpanded, toggleSidebar }) => {
   const navSections = [
     {
       title: 'Overview',
       items: [
-        { name: 'Dashboard', href: '/', icon: <Home className="h-4 w-4" /> },
-        { name: 'Analytics', href: '/analytics', icon: <BarChart3 className="h-4 w-4" /> },
-        { name: 'Energy Flow', href: '/energy-flow', icon: <Plug className="h-4 w-4" /> },
+        { href: '/', icon: <Home className="h-4 w-4" />, label: 'Dashboard' },
+        { href: '/analytics', icon: <BarChart3 className="h-4 w-4" />, label: 'Analytics' },
+        { href: '/energy-flow', icon: <Plug className="h-4 w-4" />, label: 'Energy Flow' },
       ],
     },
     {
       title: 'Energy Management',
       items: [
-        { name: 'Devices', href: '/devices', icon: <Cpu className="h-4 w-4" /> },
-        { name: 'Microgrid Control', href: '/microgrid', icon: <Gauge className="h-4 w-4" /> },
-        { name: 'Battery Storage', href: '/battery', icon: <BatteryFull className="h-4 w-4" /> },
-        { name: 'Weather', href: '/weather', icon: <Cloud className="h-4 w-4" /> },
+        { href: '/devices', icon: <Cpu className="h-4 w-4" />, label: 'Devices' },
+        { href: '/microgrid', icon: <Gauge className="h-4 w-4" />, label: 'Microgrid Control' },
+        { href: '/battery', icon: <BatteryFull className="h-4 w-4" />, label: 'Battery Storage' },
+        { href: '/weather', icon: <Cloud className="h-4 w-4" />, label: 'Weather' },
       ],
     },
     {
       title: 'System',
       items: [
-        { name: 'Alerts', href: '/alerts', icon: <Thermometer className="h-4 w-4" /> },
-        { name: 'Reports', href: '/reports', icon: <Blocks className="h-4 w-4" /> },
-        { name: 'Settings', href: '/settings', icon: <Settings className="h-4 w-4" /> },
+        { href: '/alerts', icon: <Thermometer className="h-4 w-4" />, label: 'Alerts' },
+        { href: '/reports', icon: <Blocks className="h-4 w-4" />, label: 'Reports' },
+        { href: '/settings', icon: <Settings className="h-4 w-4" />, label: 'Settings' },
       ],
     },
   ];

@@ -10,6 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DatePicker } from '@/components/ui/date-picker';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DeviceType, DeviceStatus } from '@/types/energy';
 
 // Simple schema for device validation
 const deviceSchema = z.object({
@@ -84,6 +86,20 @@ const EnhancedDeviceForm = () => {
       });
     }
   };
+
+  const handleTypeChange = (value: string) => {
+    setFormData({
+      ...formData,
+      type: value as DeviceType
+    });
+  };
+
+  const handleStatusChange = (value: string) => {
+    setFormData({
+      ...formData,
+      status: value as DeviceStatus
+    });
+  };
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,12 +107,28 @@ const EnhancedDeviceForm = () => {
     
     try {
       if (isEditMode && deviceId) {
-        // Update existing device
-        await updateDevice(deviceId, formData);
+        // Update existing device - ensure we're passing correct device type
+        await updateDevice(deviceId, {
+          name: formData.name,
+          type: formData.type as DeviceType,
+          status: formData.status as DeviceStatus,
+          location: formData.location,
+          capacity: formData.capacity,
+          firmware: formData.firmware,
+          installation_date: formData.installation_date
+        });
         toast.success('Device updated successfully');
       } else {
-        // Create new device
-        await createDevice(formData);
+        // Create new device - ensure we're passing correct device type
+        await createDevice({
+          name: formData.name,
+          type: formData.type as DeviceType,
+          status: formData.status as DeviceStatus,
+          location: formData.location,
+          capacity: formData.capacity,
+          firmware: formData.firmware,
+          installation_date: formData.installation_date
+        });
         toast.success('Device created successfully');
       }
       
@@ -113,6 +145,16 @@ const EnhancedDeviceForm = () => {
   if (isEditMode && isLoadingDevice) {
     return <div>Loading device details...</div>;
   }
+
+  const deviceTypes: DeviceType[] = [
+    'battery', 'solar', 'wind', 'grid', 'load', 'ev_charger', 
+    'inverter', 'meter', 'light', 'generator', 'hydro'
+  ];
+
+  const deviceStatuses: DeviceStatus[] = [
+    'online', 'offline', 'maintenance', 'error',
+    'warning', 'idle', 'active', 'charging', 'discharging'
+  ];
   
   return (
     <Card className="w-full max-w-2xl mx-auto">
@@ -137,14 +179,40 @@ const EnhancedDeviceForm = () => {
               
               <div className="space-y-2">
                 <Label htmlFor="type">Device Type</Label>
-                <Input
-                  id="type"
-                  name="type"
-                  value={formData.type}
-                  onChange={handleInputChange}
-                  placeholder="Enter device type"
-                  required
-                />
+                <Select 
+                  value={formData.type} 
+                  onValueChange={handleTypeChange}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select device type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {deviceTypes.map(type => (
+                      <SelectItem key={type} value={type}>
+                        {type.charAt(0).toUpperCase() + type.slice(1).replace('_', ' ')}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="status">Status</Label>
+                <Select 
+                  value={formData.status} 
+                  onValueChange={handleStatusChange}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {deviceStatuses.map(status => (
+                      <SelectItem key={status} value={status}>
+                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               
               <div className="space-y-2">

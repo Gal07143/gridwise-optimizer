@@ -10,9 +10,9 @@ export interface Site {
   zipCode?: string;
   timezone?: string;
   capacity?: number;        // Added to fix errors
-  location: string;        // This is a string, not an object (fixed from previous definition)
-  lat?: number | null;
-  lng?: number | null;
+  location: string;         // This is a string now, not an object
+  lat?: number | null;      // Separate lat field
+  lng?: number | null;      // Separate lng field
   created_at: string;
   updated_at: string;
   description?: string;

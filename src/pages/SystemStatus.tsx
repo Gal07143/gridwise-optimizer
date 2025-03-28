@@ -19,7 +19,7 @@ import {
   CheckCircle,
   Zap
 } from 'lucide-react';
-import { SystemComponent } from '@/services/systemStatusService';
+import { SystemComponent, SystemEvent } from '@/services/systemStatusService';
 
 // Mock system status data
 const mockComponents: SystemComponent[] = [
@@ -88,6 +88,40 @@ const mockComponents: SystemComponent[] = [
       activeUsers: '8',
       failedLogins: '2'
     }
+  }
+];
+
+// Mock system events data
+const systemEvents: SystemEvent[] = [
+  {
+    id: "event-1",
+    title: "Database Connection Issue",
+    timestamp: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
+    severity: "warning",
+    message: "Database connection latency exceeded threshold (150ms)",
+    component_id: "db-primary",
+    component_name: "Primary Database",
+    acknowledged: false
+  },
+  {
+    id: "event-2",
+    title: "API Rate Limit Warning",
+    timestamp: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
+    severity: "info",
+    message: "External API rate limit at 80% of maximum",
+    component_id: "api-service",
+    component_name: "API Service",
+    acknowledged: true
+  },
+  {
+    id: "event-3",
+    title: "Storage Space Critical",
+    timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
+    severity: "critical",
+    message: "Time series database storage below 10% free space",
+    component_id: "tsdb",
+    component_name: "Time Series Database",
+    acknowledged: false
   }
 ];
 

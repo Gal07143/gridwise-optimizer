@@ -19,7 +19,7 @@ const Inverters = () => {
             <li key={device.id} className="p-2 border rounded shadow">
               <h2 className="font-semibold">{device.name}</h2>
               <p>Status: {device.status}</p>
-              <p>Last Updated: {new Date(device.last_updated).toLocaleString()}</p>
+              <p>Last Updated: {new Date(device.last_updated || '').toLocaleString()}</p>
             </li>
           ))}
         </ul>
