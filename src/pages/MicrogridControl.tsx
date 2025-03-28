@@ -5,11 +5,6 @@ import LiveTelemetryChart from '@/components/telemetry/LiveTelemetryChart';
 import DashboardCard from '@/components/ui/dashboard/DashboardCard';
 import { StatusOverview } from '@/components/dashboard/status';
 
-// Export the index components
-export * from './StatusItem';
-export * from './StatusOverview';
-export * from './StatusSkeleton';
-
 const MicrogridControl = () => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
