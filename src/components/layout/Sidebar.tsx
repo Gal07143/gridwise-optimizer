@@ -5,7 +5,7 @@ import NavItem from './NavItem';
 import SidebarNavSection from './SidebarNavSection';
 import ThemeToggle from './ThemeToggle';
 import SiteSelector from '@/components/sites/SiteSelector';
-import { Logo } from './Logo';
+import Logo from './Logo';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -43,7 +43,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className = '', isExpanded, toggleSid
     <div className={`${className} bg-background border-r h-screen flex flex-col transition-all duration-300 ${isExpanded ? 'w-64' : 'w-16'}`}>
       <div className="flex items-center justify-between p-4">
         {isExpanded ? (
-          <Logo className="h-8" />
+          <Logo />
         ) : (
           <div className="h-8 w-8 rounded-md bg-primary/10 flex items-center justify-center">
             <span className="text-primary text-xs font-bold">EMS</span>
@@ -68,7 +68,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className = '', isExpanded, toggleSid
         {sidebarNavData.map((section) => (
           <SidebarNavSection 
             key={section.key} 
-            heading={section.title} 
+            heading={section.title}
             collapsed={!isExpanded}
           >
             {section.items.map((item) => (
@@ -85,7 +85,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className = '', isExpanded, toggleSid
       </div>
       
       <div className="p-4 border-t">
-        <ThemeToggle collapsed={!isExpanded} />
+        <ThemeToggle />
       </div>
     </div>
   );

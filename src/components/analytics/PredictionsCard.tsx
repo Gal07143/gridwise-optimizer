@@ -19,7 +19,7 @@ const PredictionsCard = ({ timeframe, customData }: PredictionsCardProps) => {
     error, 
     predictionDays, 
     setPredictionDays 
-  } = usePredictions(timeframe, customData);
+  } = usePredictions(timeframe);
 
   const handlePredictionDaysChange = (value: number[]) => {
     setPredictionDays(value[0]);
@@ -30,7 +30,7 @@ const PredictionsCard = ({ timeframe, customData }: PredictionsCardProps) => {
 
   // Calculate average confidence if we have predictions
   const avgConfidence = predictions.length 
-    ? Math.round((predictions.reduce((sum, p) => sum + p.confidence, 0) / predictions.length) * 100) 
+    ? Math.round((predictions.reduce((sum, p) => sum + (p.confidence || 0), 0) / predictions.length) * 100) 
     : 0;
 
   return (

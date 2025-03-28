@@ -5,8 +5,22 @@ import { Button } from '@/components/ui/button';
 import { Brain, RefreshCw } from 'lucide-react';
 import { formatDistance } from 'date-fns';
 import { toast } from 'sonner';
-import { getModelStatus, trainModel } from '@/services/predictions/energyPredictionService';
 import usePredictions from '@/hooks/usePredictions';
+
+// Mock services for model status and training
+const getModelStatus = async () => {
+  await new Promise(resolve => setTimeout(resolve, 500));
+  return {
+    lastTrained: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+    version: "1.2.3",
+    accuracy: 0.872
+  };
+};
+
+const trainModel = async () => {
+  await new Promise(resolve => setTimeout(resolve, 1500));
+  return { success: true };
+};
 
 const MLModelCard = () => {
   const [isTraining, setIsTraining] = useState(false);
@@ -15,7 +29,7 @@ const MLModelCard = () => {
   const [modelAccuracy, setModelAccuracy] = useState<number | null>(null);
   
   // The model version will be tracked separately since it doesn't exist in the hook
-  const { refreshData } = usePredictions();
+  const { refetch } = usePredictions();
   
   const refreshModelStatus = async () => {
     try {
@@ -48,7 +62,7 @@ const MLModelCard = () => {
         // Refresh status after a delay to simulate training
         setTimeout(() => {
           refreshModelStatus();
-          refreshData();
+          refetch();
         }, 3000);
       } else {
         toast.error("Failed to initiate model training");

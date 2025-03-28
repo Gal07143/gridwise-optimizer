@@ -13,11 +13,10 @@ interface InsightsTabProps {
 
 const InsightsTab: React.FC<InsightsTabProps> = ({ timeframe }) => {
   const { 
-    predictions, 
     recommendations, 
     isLoading, 
     error, 
-    refreshData 
+    refetch
   } = usePredictions(timeframe);
 
   return (
@@ -26,7 +25,7 @@ const InsightsTab: React.FC<InsightsTabProps> = ({ timeframe }) => {
         <Button 
           variant="outline" 
           size="sm" 
-          onClick={refreshData}
+          onClick={refetch}
           className="flex items-center gap-2"
         >
           <RefreshCw className="h-4 w-4" />

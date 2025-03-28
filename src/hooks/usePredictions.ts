@@ -12,6 +12,8 @@ export interface SystemRecommendation {
   status: 'new' | 'in_progress' | 'completed' | 'rejected';
   created_at: string;
   category: string;
+  type: string;
+  priority: 'high' | 'medium' | 'low';
   estimated_roi: number;
   potential_savings: number;
   implementation_effort: string;
@@ -28,6 +30,7 @@ export interface UsePredictionsResult {
   timeframe: 'day' | 'week' | 'month' | 'year';
   setTimeframe: (timeframe: 'day' | 'week' | 'month' | 'year') => void;
   refetch: () => void;
+  refreshData: () => void;
 }
 
 export const usePredictions = (initialTimeframe: 'day' | 'week' | 'month' | 'year' = 'week'): UsePredictionsResult => {
@@ -66,6 +69,8 @@ export const usePredictions = (initialTimeframe: 'day' | 'week' | 'month' | 'yea
           status: "new",
           created_at: new Date().toISOString(),
           category: "efficiency",
+          type: "schedule_optimization",
+          priority: "high",
           estimated_roi: 120,
           potential_savings: 240,
           implementation_effort: "low",
@@ -80,6 +85,8 @@ export const usePredictions = (initialTimeframe: 'day' | 'week' | 'month' | 'yea
           status: "new",
           created_at: new Date().toISOString(),
           category: "expansion",
+          type: "capacity_increase",
+          priority: "medium",
           estimated_roi: 350,
           potential_savings: 850,
           implementation_effort: "high",
@@ -94,6 +101,8 @@ export const usePredictions = (initialTimeframe: 'day' | 'week' | 'month' | 'yea
           status: "new",
           created_at: new Date().toISOString(),
           category: "optimization",
+          type: "hvac_optimization",
+          priority: "low",
           estimated_roi: 90,
           potential_savings: 180,
           implementation_effort: "medium",
@@ -116,6 +125,10 @@ export const usePredictions = (initialTimeframe: 'day' | 'week' | 'month' | 'yea
   const refetch = () => {
     fetchPredictions();
   };
+  
+  const refreshData = () => {
+    fetchPredictions();
+  };
 
   return {
     predictions,
@@ -126,7 +139,8 @@ export const usePredictions = (initialTimeframe: 'day' | 'week' | 'month' | 'yea
     setPredictionDays,
     timeframe,
     setTimeframe,
-    refetch
+    refetch,
+    refreshData
   };
 };
 

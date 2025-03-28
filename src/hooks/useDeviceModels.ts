@@ -1,8 +1,10 @@
 
 import { useState, useEffect } from 'react';
+import { DeviceType } from '@/types/energy';
 import { DeviceModel, categoryNames } from '@/types/device-model';
 
-export { DeviceModel, categoryNames };
+export type { DeviceModel };
+export { categoryNames };
 
 export function useDeviceModels(categoryId?: string) {
   const [models, setModels] = useState<DeviceModel[]>([]);
@@ -31,7 +33,7 @@ export function useDeviceModels(categoryId?: string) {
             model_name: "X-Series",
             name: "SunPower X-Series",
             model_number: "SPR-X22-370",
-            device_type: "solar_panel",
+            device_type: "solar_panel" as DeviceType,
             description: "High-efficiency solar panel for residential installations",
             compatible_with: ["inv-001", "inv-002"],
             firmware_versions: ["1.2.3"],
@@ -49,7 +51,7 @@ export function useDeviceModels(categoryId?: string) {
             model_name: "Powerwall",
             name: "Tesla Powerwall 2",
             model_number: "PW-2",
-            device_type: "battery",
+            device_type: "battery" as DeviceType,
             description: "Home battery for energy storage",
             compatible_with: ["inv-003"],
             firmware_versions: ["2.1.4"],
@@ -67,7 +69,7 @@ export function useDeviceModels(categoryId?: string) {
             model_name: "Sunny Boy",
             name: "SMA Sunny Boy",
             model_number: "SB-7.7",
-            device_type: "inverter",
+            device_type: "inverter" as DeviceType,
             description: "Solar inverter for residential installations",
             compatible_with: ["dm-1"],
             firmware_versions: ["3.0.1"],

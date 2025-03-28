@@ -13,22 +13,18 @@ import {
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import DeviceModelsTable from './DeviceModelsTable';
-import { DeviceModel } from '@/hooks/useDeviceModels';
+import { DeviceModel } from '@/types/device-model';
 import { toast } from 'sonner';
 
 interface DeviceModelsCardProps {
-  deviceCount: number;
-  categoryName: string;
-  filteredDevices: DeviceModel[];
+  deviceModels: DeviceModel[];
   sortField: string;
   sortDirection: 'asc' | 'desc';
   onSort: (field: string) => void;
 }
 
 const DeviceModelsCard: React.FC<DeviceModelsCardProps> = ({
-  deviceCount,
-  categoryName,
-  filteredDevices,
+  deviceModels,
   sortField,
   sortDirection,
   onSort
@@ -37,15 +33,14 @@ const DeviceModelsCard: React.FC<DeviceModelsCardProps> = ({
     toast.success("Exporting device list...");
     
     // Create CSV content
-    const headers = ['Name', 'Manufacturer', 'Power Rating', 'Capacity', 'Release Date'];
+    const headers = ['Name', 'Manufacturer', 'Model Number', 'Device Type'];
     const csvContent = [
       headers.join(','),
-      ...filteredDevices.map(device => [
-        device.name,
+      ...deviceModels.map(device => [
+        device.name || `${device.manufacturer} ${device.model_name}`,
         device.manufacturer,
-        device.power_rating || 'N/A',
-        device.capacity || 'N/A',
-        device.release_date || 'N/A'
+        device.model_number,
+        device.device_type
       ].join(','))
     ].join('\n');
     
@@ -56,7 +51,7 @@ const DeviceModelsCard: React.FC<DeviceModelsCardProps> = ({
     link.setAttribute('href', url);
     
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const filename = `${categoryName.toLowerCase()}-list-${timestamp}.csv`;
+    const filename = `device-models-list-${timestamp}.csv`;
     link.setAttribute('download', filename);
     
     document.body.appendChild(link);
@@ -83,15 +78,15 @@ const DeviceModelsCard: React.FC<DeviceModelsCardProps> = ({
   };
 
   const handleDownloadCatalog = () => {
-    toast.success(`Downloading ${categoryName} catalog...`);
+    toast.success(`Downloading device catalog...`);
     
     // Create a simulated PDF download
     setTimeout(() => {
       const timestamp = new Date().toISOString().slice(0, 10);
-      const filename = `${categoryName.toLowerCase()}-catalog-${timestamp}.pdf`;
+      const filename = `device-catalog-${timestamp}.pdf`;
       
       // Create a sample PDF blob (in a real app, this would be actual PDF content)
-      const pdfContent = `This is a sample PDF catalog for ${categoryName}`;
+      const pdfContent = `This is a sample PDF catalog for devices`;
       const blob = new Blob([pdfContent], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
       
@@ -108,6 +103,27 @@ const DeviceModelsCard: React.FC<DeviceModelsCardProps> = ({
     }, 2000);
   };
 
+  // Map to DeviceModelsTable's expected DeviceModel type
+  const mappedDevices = deviceModels.map(device => ({
+    id: device.id,
+    name: device.name || `${device.manufacturer} ${device.model_name}`,
+    manufacturer: device.manufacturer,
+    model_number: device.model_number,
+    device_type: device.device_type,
+    protocol: device.protocol,
+    support_level: device.support_level,
+    has_manual: device.has_manual,
+    has_datasheet: device.has_datasheet,
+    has_video: device.has_video,
+    category: device.category,
+    power_rating: device.power_rating,
+    capacity: device.capacity,
+    release_date: device.release_date,
+    description: device.description,
+    warranty: device.warranty,
+    certifications: device.certifications
+  }));
+
   return (
     <Card>
       <CardHeader className="pb-0">
@@ -115,7 +131,7 @@ const DeviceModelsCard: React.FC<DeviceModelsCardProps> = ({
           <div>
             <CardTitle>Device Models</CardTitle>
             <CardDescription>
-              {deviceCount} {categoryName.toLowerCase()} found matching your criteria
+              {deviceModels.length} device models found
             </CardDescription>
           </div>
           <div className="flex gap-2 mt-4 sm:mt-0">
@@ -132,13 +148,13 @@ const DeviceModelsCard: React.FC<DeviceModelsCardProps> = ({
       </CardHeader>
       <CardContent>
         <DeviceModelsTable 
-          devices={filteredDevices}
+          devices={mappedDevices}
           sortField={sortField}
           sortDirection={sortDirection}
           onSort={onSort}
         />
         
-        {filteredDevices.length === 0 && (
+        {deviceModels.length === 0 && (
           <div className="text-center py-8 bg-slate-50 dark:bg-slate-800/50 rounded-lg mt-4">
             <p className="text-muted-foreground">No device models found matching your criteria.</p>
             <Button variant="outline" size="sm" className="mt-4" onClick={handleClearFilters}>Clear Filters</Button>

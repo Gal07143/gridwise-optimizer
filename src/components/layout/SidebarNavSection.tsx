@@ -1,19 +1,19 @@
 
-import React from 'react';
+import React, { ReactNode } from 'react';
 
-export interface NavSectionProps {
+export interface SidebarNavSectionProps {
   heading: string;
-  children: React.ReactNode;
+  children: ReactNode;
   collapsed?: boolean;
 }
 
-const SidebarNavSection: React.FC<NavSectionProps> = ({ 
+const SidebarNavSection: React.FC<SidebarNavSectionProps> = ({ 
   heading, 
   children, 
   collapsed = false 
 }) => {
   return (
-    <div className="mb-6">
+    <div className="py-2">
       {!collapsed && (
         <h3 className="mb-2 px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
           {heading}
