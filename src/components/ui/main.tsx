@@ -16,8 +16,8 @@ export const Main = React.forwardRef<HTMLDivElement, MainProps>(
       full: 'p-0',
     };
 
-    // Specify custom properties in a type-safe way
-    const customProperties = {
+    // Fix: Use CSS custom properties in a type-safe way
+    const customStyle = {
       '--content-padding': paddingStyles[containerSize],
     } as React.CSSProperties;
 
@@ -25,7 +25,7 @@ export const Main = React.forwardRef<HTMLDivElement, MainProps>(
       <main
         ref={ref}
         className={cn('flex-1', className)}
-        style={{ ...customProperties, ...style }}
+        style={{ ...customStyle, ...style }}
         {...props}
       >
         {children}

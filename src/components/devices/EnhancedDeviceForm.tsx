@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate, useParams } from 'react-router-dom';
 import { DeviceSchema, DeviceFormValues } from './deviceValidationSchema';
@@ -12,12 +12,10 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from 'sonner';
-import { DeviceType, DeviceStatus } from '@/types/energy';
-import { createDevice, getDeviceById, updateDevice } from '@/services/deviceService';
+import { getDeviceById, updateDevice, createDevice } from '@/services/deviceService';
 import { useQuery } from '@tanstack/react-query';
 import { Badge } from "@/components/ui/badge";
 import { DatePicker } from "@/components/ui/date-picker";
-import { CalendarIcon } from "lucide-react";
 import { format } from 'date-fns';
 import { cn } from "@/lib/utils";
 
@@ -61,21 +59,28 @@ const EnhancedDeviceForm: React.FC = () => {
     queryKey: ['device', deviceId],
     queryFn: () => getDeviceById(deviceId!),
     enabled: !!deviceId,
-    onSuccess: (data) => {
+    onSettled: (data) => {
       if (data) {
         setIsEditMode(true);
         form.setValue('name', data.name);
         form.setValue('type', data.type);
         form.setValue('status', data.status);
-        form.setValue('capacity', data.capacity);
+        form.setValue('capacity', data.capacity || 0);
         form.setValue('location', data.location || '');
         form.setValue('description', data.description || '');
         form.setValue('manufacturer', data.manufacturer || '');
         form.setValue('model', data.model || '');
         form.setValue('serialNumber', data.serialNumber || '');
         form.setValue('firmware', data.firmware || '');
-        form.setValue('installation_date', data.installation_date ? new Date(data.installation_date) : undefined);
-        form.setValue('lastMaintenanceDate', data.lastMaintenanceDate ? new Date(data.lastMaintenanceDate) : undefined);
+        
+        if (data.installation_date) {
+          form.setValue('installation_date', new Date(data.installation_date));
+        }
+        
+        if (data.lastMaintenanceDate) {
+          form.setValue('lastMaintenanceDate', new Date(data.lastMaintenanceDate));
+        }
+        
         form.setValue('latitude', data.latitude || 0);
         form.setValue('longitude', data.longitude || 0);
         form.setValue('energyCapacity', data.energyCapacity || 0);
@@ -89,20 +94,15 @@ const EnhancedDeviceForm: React.FC = () => {
         form.setValue('communicationProtocol', data.communicationProtocol || '');
         form.setValue('dataUpdateFrequency', data.dataUpdateFrequency || 0);
       }
-    },
-    onError: (error) => {
-      toast.error(`Failed to fetch device: ${error}`);
     }
   });
   
   const onSubmit = async (values: DeviceFormValues) => {
     try {
       if (isEditMode && deviceId) {
-        // Update existing device
         await updateDevice(deviceId, values);
         toast.success('Device updated successfully');
       } else {
-        // Create new device
         await createDevice(values);
         toast.success('Device created successfully');
       }
@@ -117,9 +117,6 @@ const EnhancedDeviceForm: React.FC = () => {
     navigate('/devices');
   };
   
-  const deviceStatus = 'online'; // Example status
-  const connectionStatus = true; // Example connection status
-  
   return (
     <Card className="w-full shadow-md">
       <CardHeader>
@@ -132,7 +129,6 @@ const EnhancedDeviceForm: React.FC = () => {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Device Name */}
               <FormField
                 control={form.control}
                 name="name"
@@ -147,7 +143,6 @@ const EnhancedDeviceForm: React.FC = () => {
                 )}
               />
               
-              {/* Device Type */}
               <FormField
                 control={form.control}
                 name="type"
@@ -181,7 +176,6 @@ const EnhancedDeviceForm: React.FC = () => {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Device Status */}
               <FormField
                 control={form.control}
                 name="status"
@@ -211,7 +205,6 @@ const EnhancedDeviceForm: React.FC = () => {
                 )}
               />
               
-              {/* Capacity */}
               <FormField
                 control={form.control}
                 name="capacity"
@@ -227,7 +220,6 @@ const EnhancedDeviceForm: React.FC = () => {
               />
             </div>
             
-            {/* Location */}
             <FormField
               control={form.control}
               name="location"
@@ -242,7 +234,6 @@ const EnhancedDeviceForm: React.FC = () => {
               )}
             />
             
-            {/* Description */}
             <FormField
               control={form.control}
               name="description"
@@ -258,7 +249,6 @@ const EnhancedDeviceForm: React.FC = () => {
             />
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Manufacturer */}
               <FormField
                 control={form.control}
                 name="manufacturer"
@@ -273,7 +263,6 @@ const EnhancedDeviceForm: React.FC = () => {
                 )}
               />
               
-              {/* Model */}
               <FormField
                 control={form.control}
                 name="model"
@@ -290,7 +279,6 @@ const EnhancedDeviceForm: React.FC = () => {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Serial Number */}
               <FormField
                 control={form.control}
                 name="serialNumber"
@@ -305,7 +293,6 @@ const EnhancedDeviceForm: React.FC = () => {
                 )}
               />
               
-              {/* Firmware */}
               <FormField
                 control={form.control}
                 name="firmware"
@@ -322,7 +309,6 @@ const EnhancedDeviceForm: React.FC = () => {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Installation Date */}
               <FormField
                 control={form.control}
                 name="installation_date"
@@ -331,9 +317,8 @@ const EnhancedDeviceForm: React.FC = () => {
                     <FormLabel>Installation Date</FormLabel>
                     <FormControl>
                       <DatePicker
-                        onSelect={field.onChange}
-                        defaultMonth={field.value}
-                        mode="single"
+                        selected={field.value}
+                        onChange={field.onChange}
                       />
                     </FormControl>
                     <FormDescription>
@@ -344,7 +329,6 @@ const EnhancedDeviceForm: React.FC = () => {
                 )}
               />
               
-              {/* Last Maintenance Date */}
               <FormField
                 control={form.control}
                 name="lastMaintenanceDate"
@@ -353,9 +337,8 @@ const EnhancedDeviceForm: React.FC = () => {
                     <FormLabel>Last Maintenance Date</FormLabel>
                     <FormControl>
                       <DatePicker
-                        onSelect={field.onChange}
-                        defaultMonth={field.value}
-                        mode="single"
+                        selected={field.value}
+                        onChange={field.onChange}
                       />
                     </FormControl>
                     <FormDescription>
@@ -368,7 +351,6 @@ const EnhancedDeviceForm: React.FC = () => {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Latitude */}
               <FormField
                 control={form.control}
                 name="latitude"
@@ -383,7 +365,6 @@ const EnhancedDeviceForm: React.FC = () => {
                 )}
               />
               
-              {/* Longitude */}
               <FormField
                 control={form.control}
                 name="longitude"
@@ -400,7 +381,6 @@ const EnhancedDeviceForm: React.FC = () => {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Energy Capacity */}
               <FormField
                 control={form.control}
                 name="energyCapacity"
@@ -415,7 +395,6 @@ const EnhancedDeviceForm: React.FC = () => {
                 )}
               />
               
-              {/* Efficiency */}
               <FormField
                 control={form.control}
                 name="efficiency"
@@ -432,7 +411,6 @@ const EnhancedDeviceForm: React.FC = () => {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Max Voltage */}
               <FormField
                 control={form.control}
                 name="maxVoltage"
@@ -447,7 +425,6 @@ const EnhancedDeviceForm: React.FC = () => {
                 )}
               />
               
-              {/* Min Voltage */}
               <FormField
                 control={form.control}
                 name="minVoltage"
@@ -464,7 +441,6 @@ const EnhancedDeviceForm: React.FC = () => {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Max Current */}
               <FormField
                 control={form.control}
                 name="maxCurrent"
@@ -479,7 +455,6 @@ const EnhancedDeviceForm: React.FC = () => {
                 )}
               />
               
-              {/* Min Current */}
               <FormField
                 control={form.control}
                 name="minCurrent"
@@ -496,7 +471,6 @@ const EnhancedDeviceForm: React.FC = () => {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Nominal Voltage */}
               <FormField
                 control={form.control}
                 name="nominalVoltage"
@@ -511,7 +485,6 @@ const EnhancedDeviceForm: React.FC = () => {
                 )}
               />
               
-              {/* Nominal Current */}
               <FormField
                 control={form.control}
                 name="nominalCurrent"
@@ -528,7 +501,6 @@ const EnhancedDeviceForm: React.FC = () => {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Communication Protocol */}
               <FormField
                 control={form.control}
                 name="communicationProtocol"
@@ -543,7 +515,6 @@ const EnhancedDeviceForm: React.FC = () => {
                 )}
               />
               
-              {/* Data Update Frequency */}
               <FormField
                 control={form.control}
                 name="dataUpdateFrequency"
@@ -559,44 +530,42 @@ const EnhancedDeviceForm: React.FC = () => {
               />
             </div>
             
-            {/* Connection Status */}
-            <div className="mb-4">
-              <Label className="block text-sm font-medium leading-none peer-disabled:cursor-not-allowed">
-                Connection Status
-              </Label>
-              <div className="mt-2">
-                {connectionStatus ? (
-                  <Badge variant="outline" className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">Connected</Badge>
-                ) : (
-                  <Badge variant="outline" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">Not Connected</Badge>
-                )}
-              </div>
-            </div>
-            
-            {/* Device Status */}
-            <div className="mb-4">
-              <Label className="block text-sm font-medium leading-none peer-disabled:cursor-not-allowed">
-                Device Status
-              </Label>
-              <div className="mt-2">
-                {deviceStatus === 'online' && (
-                  <Badge variant="default" className="bg-green-500 text-white">Active</Badge>
-                )}
-                {deviceStatus === 'offline' && (
-                  <Badge variant="destructive" className="bg-red-500 text-white">Inactive</Badge>
-                )}
-                {deviceStatus !== 'online' && deviceStatus !== 'offline' && (
-                  <Badge variant="outline" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">Unknown</Badge>
-                )}
-              </div>
-            </div>
-            
-            <div className="flex justify-end gap-2">
-              <Button variant="ghost" onClick={handleCancel}>Cancel</Button>
-              <Button type="submit">{isEditMode ? 'Update Device' : 'Add Device'}</Button>
+            <div className="flex items-center gap-4">
+              <Button type="submit">{isEditMode ? 'Update Device' : 'Create Device'}</Button>
+              <Button type="button" variant="outline" onClick={handleCancel}>
+                Cancel
+              </Button>
             </div>
           </form>
         </Form>
+        
+        {deviceId && device && (
+          <div className="mt-6 border-t pt-6">
+            <h3 className="text-lg font-medium mb-3">Device Status</h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div>
+                <Label>Connection Status</Label>
+                {device.status === "online" ? (
+                  <Badge variant="outline" className="bg-green-100 text-green-700">Connected</Badge>
+                ) : (
+                  <Badge variant="outline" className="bg-red-100 text-red-700">Disconnected</Badge>
+                )}
+              </div>
+              
+              <div>
+                <Label>Health Status</Label>
+                <Badge variant="outline" className="bg-blue-100 text-blue-700">Good</Badge>
+              </div>
+              
+              <div>
+                <Label>Last Updated</Label>
+                <p className="text-sm text-muted-foreground">
+                  {new Date().toLocaleDateString()} {new Date().toLocaleTimeString()}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

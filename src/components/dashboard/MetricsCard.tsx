@@ -7,7 +7,7 @@ import { ArrowDownIcon, ArrowUpIcon } from 'lucide-react';
 export interface MetricsCardProps {
   title: string;
   value: number | string;
-  unit: string;
+  unit?: string;
   changeValue?: number;
   changeType?: 'increase' | 'decrease' | 'neutral';
   description?: string;
@@ -19,7 +19,7 @@ export interface MetricsCardProps {
 const MetricsCard: React.FC<MetricsCardProps> = ({
   title,
   value,
-  unit,
+  unit = '',
   changeValue,
   changeType = 'neutral',
   description,
@@ -42,7 +42,7 @@ const MetricsCard: React.FC<MetricsCardProps> = ({
             <p className="text-sm text-muted-foreground">{title}</p>
             <div className="flex items-baseline gap-1">
               <span className="text-2xl font-bold">{value}</span>
-              <span className="text-sm text-muted-foreground">{unit}</span>
+              {unit && <span className="text-sm text-muted-foreground">{unit}</span>}
             </div>
           </div>
           {icon && (

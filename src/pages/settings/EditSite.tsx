@@ -9,6 +9,15 @@ import SiteForm from '@/components/sites/SiteForm';
 import { Button } from '@/components/ui/button';
 import { CornerDownLeft, Loader2, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Site } from '@/types/energy';
+
+interface SiteFormValues {
+  name: string;
+  location: string;
+  timezone: string;
+  lat?: number | null;
+  lng?: number | null;
+}
 
 const EditSite = () => {
   const { siteId } = useParams<{ siteId: string }>();
@@ -22,7 +31,7 @@ const EditSite = () => {
     retry: 1,
   });
   
-  const handleSubmit = async (data: any) => {
+  const handleSubmit = async (data: SiteFormValues) => {
     if (!siteId) return;
     
     setIsSubmitting(true);
@@ -80,6 +89,15 @@ const EditSite = () => {
     );
   }
   
+  // Convert site to SiteFormValues
+  const initialValues: SiteFormValues = {
+    name: site.name,
+    location: site.location,
+    timezone: site.timezone,
+    lat: site.lat,
+    lng: site.lng
+  };
+  
   return (
     <SettingsPageTemplate
       title={`Edit Site: ${site.name}`}
@@ -98,7 +116,7 @@ const EditSite = () => {
     >
       <div className="max-w-3xl mx-auto">
         <SiteForm 
-          initialData={site} 
+          initialData={initialValues} 
           onSubmit={handleSubmit} 
           isSubmitting={isSubmitting} 
         />

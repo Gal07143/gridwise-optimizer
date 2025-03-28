@@ -46,9 +46,9 @@ export const updateSite = async (id: string, siteData: Partial<Site>): Promise<S
   return updatedSite;
 };
 
-export const deleteSite = async (id: string): Promise<void> => {
+export const deleteSite = async (id: string): Promise<boolean> => {
   // In a real implementation, this would delete from the database
-  return;
+  return true;
 };
 
 export const getOrCreateDummySite = async (): Promise<Site> => {

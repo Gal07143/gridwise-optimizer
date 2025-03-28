@@ -1,100 +1,123 @@
 
 import React from 'react';
+import { 
+  AlertTriangle, 
+  Battery, 
+  CircleDot,
+  Cpu, 
+  Home, 
+  Zap 
+} from 'lucide-react';
+import { EnergyNode as EnergyNodeType } from './types';
 import { cn } from '@/lib/utils';
 
-export type EnergyNodeStatus = 'active' | 'inactive' | 'warning' | 'error' | 'offline';
-
 interface EnergyNodeProps {
-  title: string;
-  value: number | string;
-  unit: string;
-  status?: EnergyNodeStatus;
-  statusMessage?: string;
-  icon: React.ReactNode;
-  bgColor?: string;
-  textColor?: string;
-  onClick?: () => void;
-  selected?: boolean;
+  node: EnergyNodeType;
   className?: string;
+  onClick?: () => void;
 }
 
-export const EnergyNode: React.FC<EnergyNodeProps> = ({
-  title,
-  value,
-  unit,
-  status = 'active',
-  statusMessage,
-  icon,
-  bgColor = 'bg-gradient-to-br from-blue-900/90 to-slate-900/95',
-  textColor = 'text-blue-400',
-  onClick,
-  selected = false,
-  className
+const EnergyNode: React.FC<EnergyNodeProps> = ({ 
+  node, 
+  className,
+  onClick
 }) => {
-  const getStatusColor = (status: EnergyNodeStatus) => {
-    switch (status) {
-      case 'active':
-        return 'bg-green-500';
-      case 'inactive':
-        return 'bg-slate-400';
-      case 'warning':
-        return 'bg-yellow-500';
-      case 'error':
-        return 'bg-red-500';
-      case 'offline':
-        return 'bg-slate-500';
+  const getNodeIcon = () => {
+    switch (node.deviceType) {
+      case 'solar':
+        return <Zap className="h-6 w-6 text-amber-500" />;
+      case 'wind':
+        return <Zap className="h-6 w-6 text-blue-500" />;
+      case 'battery':
+        return <Battery className="h-6 w-6 text-green-500" />;
+      case 'grid':
+        return <Zap className="h-6 w-6 text-purple-500" />;
+      case 'load':
+      case 'ev':
+        return <Home className="h-6 w-6 text-orange-500" />;
       default:
-        return 'bg-slate-400';
+        return <Cpu className="h-6 w-6 text-muted-foreground" />;
     }
   };
-
-  const getStatusLabel = (status: EnergyNodeStatus) => {
-    switch (status) {
+  
+  const getStatusIndicator = () => {
+    switch (node.status) {
       case 'active':
-        return 'Active';
-      case 'inactive':
-        return 'Inactive';
+        return "bg-green-500";
       case 'warning':
-        return 'Warning';
+        return "bg-yellow-500";
       case 'error':
-        return 'Error';
+        return "bg-red-500";
+      case 'maintenance':
+      case 'inactive':
       case 'offline':
-        return 'Offline';
       default:
-        return 'Unknown';
+        return "bg-gray-400";
     }
   };
-
+  
+  const getNodeTypeLabel = () => {
+    switch (node.type) {
+      case 'source':
+        return 'Generation';
+      case 'storage':
+        return 'Storage';
+      case 'consumption':
+        return 'Consumption';
+      default:
+        return node.type;
+    }
+  };
+  
   return (
-    <div
+    <div 
       className={cn(
-        'p-4 rounded-xl shadow-md border border-slate-800/50 cursor-pointer transition-all duration-300 energy-node',
-        bgColor,
-        selected ? 'ring-2 ring-blue-500/50 scale-105' : '',
-        onClick ? 'hover:ring-1 hover:ring-blue-500/30' : '',
+        "relative bg-card border rounded-lg p-3 shadow-sm hover:shadow-md transition-all",
+        "cursor-pointer",
+        node.status === 'error' && "border-red-500/50 animate-pulse",
+        node.status === 'warning' && "border-yellow-500/50",
+        node.status === 'active' && "border-green-500/30",
+        node.status === 'maintenance' && "border-blue-500/30",
+        node.status === 'inactive' && "border-gray-300 opacity-70",
+        node.status === 'offline' && "border-gray-300 opacity-70",
         className
       )}
       onClick={onClick}
     >
-      <div className="flex flex-col items-center gap-2 text-center">
-        <div className="p-3 rounded-full bg-slate-950/50 flex items-center justify-center mb-1">
-          {React.cloneElement(icon as React.ReactElement, {
-            className: cn('h-8 w-8', textColor)
-          })}
+      {/* Status indicator */}
+      <div className="absolute top-2 right-2 flex items-center gap-1.5">
+        <span className="text-xs text-muted-foreground capitalize">{node.status}</span>
+        <div className={cn("h-2.5 w-2.5 rounded-full", getStatusIndicator())} />
+      </div>
+      
+      {node.status === 'error' && (
+        <div className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1">
+          <AlertTriangle className="h-4 w-4" />
+        </div>
+      )}
+      
+      <div className="flex items-center gap-3 mb-2">
+        <div className="p-2 bg-muted rounded-md">
+          {getNodeIcon()}
+        </div>
+        <div>
+          <h3 className="font-medium text-sm">{node.label}</h3>
+          <p className="text-xs text-muted-foreground">{getNodeTypeLabel()}</p>
+        </div>
+      </div>
+      
+      <div className="mt-3 pt-2 border-t text-sm">
+        <div className="flex justify-between items-center">
+          <span className="text-muted-foreground">Power:</span>
+          <span className="font-medium">{node.power} kW</span>
         </div>
         
-        <p className="text-slate-200 font-medium">{title}</p>
-        
-        <div className="text-2xl font-bold text-white">
-          {typeof value === 'number' ? value.toFixed(1) : value} {unit}
-        </div>
-        
-        <div className="flex items-center gap-1.5 text-xs mt-1">
-          <div className={`h-2 w-2 rounded-full ${getStatusColor(status)}`} />
-          <span className="text-slate-300">
-            {statusMessage || getStatusLabel(status)}
-          </span>
-        </div>
+        {node.batteryLevel !== undefined && (
+          <div className="flex justify-between items-center mt-1">
+            <span className="text-muted-foreground">Battery:</span>
+            <span className="font-medium">{node.batteryLevel}%</span>
+          </div>
+        )}
       </div>
     </div>
   );

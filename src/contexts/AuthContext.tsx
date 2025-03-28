@@ -41,7 +41,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(false);
   }, []);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string): Promise<void> => {
     try {
       // Mock authentication
       const mockUser: User = {
@@ -53,14 +53,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
       setUser(mockUser);
       localStorage.setItem('user', JSON.stringify(mockUser));
-      return { user: mockUser, error: null };
     } catch (error) {
       console.error('Error signing in:', error);
-      return { user: null, error };
+      throw error; // Re-throw the error so it can be caught by the caller
     }
   };
 
-  const signUp = async (email: string, password: string, userData: Partial<User>) => {
+  const signUp = async (email: string, password: string, userData: Partial<User>): Promise<void> => {
     try {
       // Mock user creation
       const mockUser: User = {
@@ -72,22 +71,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
       setUser(mockUser);
       localStorage.setItem('user', JSON.stringify(mockUser));
-      return { user: mockUser, error: null };
     } catch (error) {
       console.error('Error signing up:', error);
-      return { user: null, error };
+      throw error; // Re-throw the error so it can be caught by the caller
     }
   };
 
-  const signOut = async () => {
+  const signOut = async (): Promise<void> => {
     try {
       // Mock sign out
       setUser(null);
       localStorage.removeItem('user');
-      return { error: null };
     } catch (error) {
       console.error('Error signing out:', error);
-      return { error };
+      throw error; // Re-throw the error so it can be caught by the caller
     }
   };
 

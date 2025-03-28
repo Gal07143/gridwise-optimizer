@@ -1,243 +1,164 @@
 
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { ArrowRight, Battery, Zap } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { toast } from 'sonner';
 
+// Auth page component
 const Auth = () => {
-  const { signIn, signUp, loading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [isSignUp, setIsSignUp] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleSignIn = async (e: React.FormEvent) => {
+  
+  const { signIn, signUp } = useAuth();
+  const navigate = useNavigate();
+  
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     
     try {
-      const { error } = await signIn(email, password);
-      if (error) {
-        console.error('Sign in error:', error);
+      if (isSignUp) {
+        await signUp(email, password, { 
+          firstName, 
+          lastName 
+        });
+        toast.success('Account created successfully!');
+      } else {
+        await signIn(email, password);
+        toast.success('Signed in successfully!');
       }
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    
-    try {
-      const { error } = await signUp(email, password, {
-        first_name: firstName,
-        last_name: lastName
-      });
-      if (error) {
-        console.error('Sign up error:', error);
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  return (
-    <div className="min-h-screen flex flex-col lg:flex-row">
-      {/* Brand Section */}
-      <div className="bg-gradient-to-br from-primary to-blue-600 text-white lg:w-1/2 flex items-center justify-center p-8">
-        <div className="max-w-md">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 rounded-xl bg-white bg-opacity-20 flex items-center justify-center backdrop-blur-sm">
-              <Zap className="w-6 h-6" />
-            </div>
-            <h1 className="text-3xl font-bold">GridWise EMS</h1>
-          </div>
-          
-          <h2 className="text-2xl font-medium mb-4">
-            Advanced Energy Management System
-          </h2>
-          
-          <p className="text-blue-100 mb-6">
-            Welcome to the next generation energy management platform. Monitor, analyze, and optimize your energy systems with unprecedented precision.
-          </p>
-          
-          <div className="grid grid-cols-2 gap-6 mb-8">
-            <div className="bg-white bg-opacity-10 p-4 rounded-lg backdrop-blur-sm">
-              <Zap className="w-6 h-6 mb-3" />
-              <h3 className="font-medium mb-1">Real-time Monitoring</h3>
-              <p className="text-sm text-blue-100">Track your energy flow and device performance in real-time</p>
-            </div>
-            
-            <div className="bg-white bg-opacity-10 p-4 rounded-lg backdrop-blur-sm">
-              <Battery className="w-6 h-6 mb-3" />
-              <h3 className="font-medium mb-1">Storage Optimization</h3>
-              <p className="text-sm text-blue-100">Maximize battery efficiency and reduce energy costs</p>
-            </div>
-          </div>
-          
-          <div className="text-sm text-blue-100">
-            © 2025 GridWise Systems. All rights reserved.
-          </div>
-        </div>
-      </div>
       
-      {/* Auth Section */}
-      <div className="lg:w-1/2 flex items-center justify-center p-8">
-        <div className="w-full max-w-md">
-          <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-8">
-              <TabsTrigger value="login">Sign In</TabsTrigger>
-              <TabsTrigger value="register">Create Account</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="login" className="animate-in">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Welcome back</CardTitle>
-                  <CardDescription>
-                    Sign in to access your energy management dashboard
-                  </CardDescription>
-                </CardHeader>
-                <form onSubmit={handleSignIn}>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="your.email@example.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="password">Password</Label>
-                        <Link
-                          to="/auth/forgot-password"
-                          className="text-xs text-primary hover:underline"
-                        >
-                          Forgot password?
-                        </Link>
-                      </div>
-                      <Input
-                        id="password"
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                      />
-                    </div>
-                  </CardContent>
-                  <CardFooter>
-                    <Button 
-                      type="submit" 
-                      className="w-full"
-                      disabled={isSubmitting || loading}
-                    >
-                      {isSubmitting || loading ? (
-                        <LoadingSpinner size="sm" className="mr-2" />
-                      ) : (
-                        <ArrowRight className="mr-2 h-4 w-4" />
-                      )}
-                      Sign In
-                    </Button>
-                  </CardFooter>
-                </form>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="register" className="animate-in">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Create an account</CardTitle>
-                  <CardDescription>
-                    Join our energy management platform
-                  </CardDescription>
-                </CardHeader>
-                <form onSubmit={handleSignUp}>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="firstName">First name</Label>
-                        <Input
-                          id="firstName"
-                          value={firstName}
-                          onChange={(e) => setFirstName(e.target.value)}
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="lastName">Last name</Label>
-                        <Input
-                          id="lastName"
-                          value={lastName}
-                          onChange={(e) => setLastName(e.target.value)}
-                          required
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="your.email@example.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="password">Password</Label>
-                      <Input
-                        id="password"
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        minLength={8}
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Password must be at least 8 characters long
-                      </p>
-                    </div>
-                  </CardContent>
-                  <CardFooter>
-                    <Button 
-                      type="submit" 
-                      className="w-full"
-                      disabled={isSubmitting || loading}
-                    >
-                      {isSubmitting || loading ? (
-                        <LoadingSpinner size="sm" className="mr-2" />
-                      ) : (
-                        <ArrowRight className="mr-2 h-4 w-4" />
-                      )}
-                      Create Account
-                    </Button>
-                  </CardFooter>
-                </form>
-              </Card>
-            </TabsContent>
-          </Tabs>
+      // Navigate to dashboard on success
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Authentication error:', error);
+      toast.error(error instanceof Error ? error.message : 'Authentication failed');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-md space-y-8 bg-white p-8 rounded-lg shadow-lg">
+        <div>
+          <h2 className="mt-6 text-center text-3xl font-bold tracking-tight">
+            {isSignUp ? 'Create your account' : 'Sign in to your account'}
+          </h2>
+          <p className="mt-2 text-center text-sm text-gray-600">
+            {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
+            <button
+              type="button"
+              className="font-medium text-blue-600 hover:text-blue-500"
+              onClick={() => setIsSignUp(!isSignUp)}
+            >
+              {isSignUp ? 'Sign in' : 'Sign up'}
+            </button>
+          </p>
         </div>
+        
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          {isSignUp && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
+                  First Name
+                </label>
+                <input
+                  id="firstName"
+                  name="firstName"
+                  type="text"
+                  required
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                />
+              </div>
+              <div>
+                <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
+                  Last Name
+                </label>
+                <input
+                  id="lastName"
+                  name="lastName"
+                  type="text"
+                  required
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                />
+              </div>
+            </div>
+          )}
+          
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              Email address
+            </label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              required
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+          
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              Password
+            </label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              autoComplete={isSignUp ? 'new-password' : 'current-password'}
+              required
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+          
+          {!isSignUp && (
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <input
+                  id="remember-me"
+                  name="remember-me"
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
+                  Remember me
+                </label>
+              </div>
+              
+              <div className="text-sm">
+                <a href="#" className="font-medium text-blue-600 hover:text-blue-500">
+                  Forgot your password?
+                </a>
+              </div>
+            </div>
+          )}
+          
+          <div>
+            <button
+              type="submit"
+              className="group relative flex w-full justify-center rounded-md border border-transparent bg-blue-600 py-2 px-4 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Processing...' : isSignUp ? 'Sign up' : 'Sign in'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

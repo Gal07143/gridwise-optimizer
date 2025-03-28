@@ -1,227 +1,168 @@
 
-import { supabase } from "@/lib/supabase";
+import { toast } from 'sonner';
+import { DeviceFormValues } from '@/components/devices/deviceValidationSchema';
 
 export interface Device {
   id: string;
   name: string;
-  description?: string;
   type: string;
   status: string;
-  site_id?: string;
+  capacity?: number;
   location?: string;
+  description?: string;
+  manufacturer?: string;
+  model?: string;
+  serialNumber?: string;
   firmware?: string;
-  capacity: number;
-  lat?: number;
-  lng?: number;
   installation_date?: string;
-  created_at?: string;
-  created_by?: string;
-  last_updated?: string;
-  metrics?: Record<string, any>;
-  connection_info?: Record<string, any>;
-  config?: Record<string, any>;
+  lastMaintenanceDate?: string;
+  latitude?: number;
+  longitude?: number;
+  energyCapacity?: number;
+  efficiency?: number;
+  maxVoltage?: number;
+  minVoltage?: number;
+  maxCurrent?: number;
+  minCurrent?: number;
+  nominalVoltage?: number;
+  nominalCurrent?: number;
+  communicationProtocol?: string;
+  dataUpdateFrequency?: number;
 }
 
-export interface DeviceReading {
-  id: string;
-  device_id: string;
-  timestamp: string;
-  voltage?: number;
-  current?: number;
-  power?: number;
-  energy?: number;
-  temperature?: number;
-  state_of_charge?: number;
-  [key: string]: any;
-}
-
-// Fetch all devices for the current user
-export async function fetchDevices(): Promise<Device[]> {
-  try {
-    const { data, error } = await supabase
-      .from('devices')
-      .select('*')
-      .order('name');
-
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    return data || [];
-  } catch (error) {
-    console.error('Error fetching devices:', error);
-    throw error;
+// Mock device data
+const mockDevices: Device[] = [
+  {
+    id: 'device-1',
+    name: 'Solar Panel Array 1',
+    type: 'solar',
+    status: 'online',
+    capacity: 10,
+    location: 'Roof - North',
+    description: 'Main solar panel array',
+    manufacturer: 'SunPower',
+    model: 'X-Series',
+    installation_date: '2022-05-15T00:00:00.000Z'
+  },
+  {
+    id: 'device-2',
+    name: 'Battery Storage 1',
+    type: 'battery',
+    status: 'online',
+    capacity: 13.5,
+    location: 'Utility Room',
+    description: 'Main battery storage',
+    manufacturer: 'Tesla',
+    model: 'Powerwall',
+    installation_date: '2022-05-20T00:00:00.000Z'
   }
-}
+];
 
-// Fetch a specific device by ID
-export async function fetchDeviceById(id: string): Promise<Device | null> {
-  try {
-    const { data, error } = await supabase
-      .from('devices')
-      .select('*')
-      .eq('id', id)
-      .single();
+// Get all devices
+export const getDevices = async (): Promise<Device[]> => {
+  // This would be a real API call in production
+  return mockDevices;
+};
 
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    return data;
-  } catch (error) {
-    console.error(`Error fetching device ${id}:`, error);
-    throw error;
-  }
-}
+// Get device by ID
+export const getDeviceById = async (id: string): Promise<Device | null> => {
+  // This would be a real API call in production
+  const device = mockDevices.find(device => device.id === id);
+  return device || null;
+};
 
 // Create a new device
-export async function createDevice(device: Omit<Device, 'id' | 'created_at' | 'last_updated'>): Promise<Device> {
-  try {
-    const { data, error } = await supabase
-      .from('devices')
-      .insert([device])
-      .select()
-      .single();
+export const createDevice = async (deviceData: DeviceFormValues): Promise<Device> => {
+  // This would be a real API call in production
+  const newDevice: Device = {
+    id: `device-${Date.now()}`,
+    name: deviceData.name,
+    type: deviceData.type,
+    status: deviceData.status,
+    capacity: deviceData.capacity,
+    location: deviceData.location,
+    description: deviceData.description,
+    manufacturer: deviceData.manufacturer,
+    model: deviceData.model,
+    serialNumber: deviceData.serialNumber,
+    firmware: deviceData.firmware,
+    installation_date: deviceData.installation_date?.toISOString(),
+    lastMaintenanceDate: deviceData.lastMaintenanceDate?.toISOString(),
+    latitude: deviceData.latitude,
+    longitude: deviceData.longitude,
+    energyCapacity: deviceData.energyCapacity,
+    efficiency: deviceData.efficiency,
+    maxVoltage: deviceData.maxVoltage,
+    minVoltage: deviceData.minVoltage,
+    maxCurrent: deviceData.maxCurrent,
+    minCurrent: deviceData.minCurrent,
+    nominalVoltage: deviceData.nominalVoltage,
+    nominalCurrent: deviceData.nominalCurrent,
+    communicationProtocol: deviceData.communicationProtocol,
+    dataUpdateFrequency: deviceData.dataUpdateFrequency,
+  };
 
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    return data;
-  } catch (error) {
-    console.error('Error creating device:', error);
-    throw error;
-  }
-}
+  // Add to mock devices
+  mockDevices.push(newDevice);
+  
+  return newDevice;
+};
 
 // Update an existing device
-export async function updateDevice(id: string, updates: Partial<Device>): Promise<Device> {
-  try {
-    const { data, error } = await supabase
-      .from('devices')
-      .update(updates)
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    return data;
-  } catch (error) {
-    console.error(`Error updating device ${id}:`, error);
-    throw error;
+export const updateDevice = async (id: string, deviceData: DeviceFormValues): Promise<Device | null> => {
+  // This would be a real API call in production
+  const deviceIndex = mockDevices.findIndex(device => device.id === id);
+  
+  if (deviceIndex === -1) {
+    return null;
   }
-}
+  
+  const updatedDevice: Device = {
+    ...mockDevices[deviceIndex],
+    name: deviceData.name,
+    type: deviceData.type,
+    status: deviceData.status,
+    capacity: deviceData.capacity,
+    location: deviceData.location,
+    description: deviceData.description,
+    manufacturer: deviceData.manufacturer,
+    model: deviceData.model,
+    serialNumber: deviceData.serialNumber,
+    firmware: deviceData.firmware,
+    installation_date: deviceData.installation_date?.toISOString(),
+    lastMaintenanceDate: deviceData.lastMaintenanceDate?.toISOString(),
+    latitude: deviceData.latitude,
+    longitude: deviceData.longitude,
+    energyCapacity: deviceData.energyCapacity,
+    efficiency: deviceData.efficiency,
+    maxVoltage: deviceData.maxVoltage,
+    minVoltage: deviceData.minVoltage,
+    maxCurrent: deviceData.maxCurrent,
+    minCurrent: deviceData.minCurrent,
+    nominalVoltage: deviceData.nominalVoltage,
+    nominalCurrent: deviceData.nominalCurrent,
+    communicationProtocol: deviceData.communicationProtocol,
+    dataUpdateFrequency: deviceData.dataUpdateFrequency,
+  };
+  
+  mockDevices[deviceIndex] = updatedDevice;
+  
+  return updatedDevice;
+};
 
 // Delete a device
-export async function deleteDevice(id: string): Promise<boolean> {
-  try {
-    const { error } = await supabase
-      .from('devices')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    return true;
-  } catch (error) {
-    console.error(`Error deleting device ${id}:`, error);
-    throw error;
+export const deleteDevice = async (id: string): Promise<boolean> => {
+  // This would be a real API call in production
+  const deviceIndex = mockDevices.findIndex(device => device.id === id);
+  
+  if (deviceIndex === -1) {
+    return false;
   }
-}
+  
+  mockDevices.splice(deviceIndex, 1);
+  
+  return true;
+};
 
-// Fetch the device telemetry history
-export async function fetchDeviceTelemetry(
-  deviceId: string,
-  limit: number = 100,
-  timeRange?: { start: string; end: string }
-): Promise<DeviceReading[]> {
-  try {
-    let query = supabase
-      .from('energy_readings')
-      .select('*')
-      .eq('device_id', deviceId)
-      .order('timestamp', { ascending: false })
-      .limit(limit);
-
-    if (timeRange) {
-      query = query
-        .gte('timestamp', timeRange.start)
-        .lte('timestamp', timeRange.end);
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    return data || [];
-  } catch (error) {
-    console.error(`Error fetching telemetry for device ${deviceId}:`, error);
-    throw error;
-  }
-}
-
-// Fetch devices by site ID
-export async function fetchDevicesBySite(siteId: string): Promise<Device[]> {
-  try {
-    const { data, error } = await supabase
-      .from('devices')
-      .select('*')
-      .eq('site_id', siteId)
-      .order('name');
-
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    return data || [];
-  } catch (error) {
-    console.error(`Error fetching devices for site ${siteId}:`, error);
-    throw error;
-  }
-}
-
-// Set a device online/offline status
-export async function updateDeviceStatus(id: string, status: string): Promise<boolean> {
-  try {
-    const { error } = await supabase
-      .from('devices')
-      .update({ status })
-      .eq('id', id);
-
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    return true;
-  } catch (error) {
-    console.error(`Error updating status for device ${id}:`, error);
-    throw error;
-  }
-}
-
-// Get device aggregated statistics
-export async function getDeviceStats(deviceId: string): Promise<Record<string, any>> {
-  try {
-    // Here we would normally call a database function or query aggregated data
-    // For simplicity, we'll just mock the data
-    const mockStats = {
-      totalEnergyToday: Math.random() * 100,
-      averagePower: Math.random() * 50,
-      peakPower: Math.random() * 100,
-      uptime: 99.5,
-      lastReading: new Date().toISOString()
-    };
-    
-    return mockStats;
-  } catch (error) {
-    console.error(`Error fetching stats for device ${deviceId}:`, error);
-    throw error;
-  }
-}
+// Alias for compatibility
+export const fetchDeviceById = getDeviceById;
