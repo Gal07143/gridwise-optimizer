@@ -1,7 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient('https://xullgeycueouyxeirrqs.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh1bGxnZXljdWVvdXl4ZWlycnFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDIzMjE2NDQsImV4cCI6MjA1Nzg5NzY0NH0.n5z7ce0elijXBkrpgW_RhTAASKKe3vmzYHxwl8f2KRg');
+import React, { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 const DeviceManagement = () => {
   const [devices, setDevices] = useState([]);
@@ -29,91 +32,101 @@ const DeviceManagement = () => {
   const handleAddDevice = async () => {
     await supabase.from('devices').insert([newDevice]);
     fetchDevices();
+    
+    // Reset form after submission
+    setNewDevice({
+      name: '',
+      type: '',
+      status: 'offline',
+      location: '',
+      capacity: 0,
+      firmware: '',
+      lat: 0,
+      lng: 0,
+      installation_date: new Date().toISOString().slice(0,10),
+    });
   };
 
   return (
-    <div className="p-4">
-      <h2 className="font-semibold text-lg mb-4">Device Management</h2>
-      
-      <div className="mb-4 grid grid-cols-3 gap-4">
-        <input
-          type="text"
-          placeholder="Device Name"
-          value={newDevice.name}
-          onChange={(e) => setNewDevice({ ...newDevice, name: e.target.value })}
-          className="border p-2 rounded"
-        />
-        <input
-          type="text"
-          placeholder="Device Type"
-          value={newDevice.type}
-          onChange={(e) => setNewDevice({ ...newDevice, type: e.target.value })}
-          className="border p-2 rounded"
-        />
-        <input
-          type="text"
-          placeholder="Location"
-          value={newDevice.location}
-          onChange={(e) => setNewDevice({ ...newDevice, location: e.target.value })}
-          className="border p-2 rounded"
-        />
-        <input
-          type="number"
-          placeholder="Capacity"
-          value={newDevice.capacity}
-          onChange={(e) => setNewDevice({ ...newDevice, capacity: parseFloat(e.target.value) })}
-          className="border p-2 rounded"
-        />
-        <input
-          type="text"
-          placeholder="Firmware"
-          value={newDevice.firmware}
-          onChange={(e) => setNewDevice({ ...newDevice, firmware: e.target.value })}
-          className="border p-2 rounded"
-        />
-        <input
-          type="date"
-          placeholder="Installation Date"
-          value={newDevice.installation_date}
-          onChange={(e) => setNewDevice({ ...newDevice, installation_date: e.target.value })}
-          className="border p-2 rounded"
-        />
-      </div>
+    <Card className="p-4">
+      <CardHeader>
+        <CardTitle className="text-lg">Device Management</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Input
+            type="text"
+            placeholder="Device Name"
+            value={newDevice.name}
+            onChange={(e) => setNewDevice({ ...newDevice, name: e.target.value })}
+          />
+          <Input
+            type="text"
+            placeholder="Device Type"
+            value={newDevice.type}
+            onChange={(e) => setNewDevice({ ...newDevice, type: e.target.value })}
+          />
+          <Input
+            type="text"
+            placeholder="Location"
+            value={newDevice.location}
+            onChange={(e) => setNewDevice({ ...newDevice, location: e.target.value })}
+          />
+          <Input
+            type="number"
+            placeholder="Capacity"
+            value={newDevice.capacity}
+            onChange={(e) => setNewDevice({ ...newDevice, capacity: parseFloat(e.target.value) })}
+          />
+          <Input
+            type="text"
+            placeholder="Firmware"
+            value={newDevice.firmware}
+            onChange={(e) => setNewDevice({ ...newDevice, firmware: e.target.value })}
+          />
+          <Input
+            type="date"
+            placeholder="Installation Date"
+            value={newDevice.installation_date}
+            onChange={(e) => setNewDevice({ ...newDevice, installation_date: e.target.value })}
+          />
+        </div>
 
-      <button
-        onClick={handleAddDevice}
-        className="bg-blue-500 text-white p-2 rounded mb-4"
-      >
-        Add Device
-      </button>
+        <Button
+          onClick={handleAddDevice}
+          className="mb-4"
+        >
+          Add Device
+        </Button>
 
-      <table className="w-full text-left border-collapse">
-        <thead>
-          <tr>
-            <th className="border p-2">Device Name</th>
-            <th className="border p-2">Type</th>
-            <th className="border p-2">Status</th>
-            <th className="border p-2">Location</th>
-            <th className="border p-2">Capacity</th>
-            <th className="border p-2">Firmware</th>
-            <th className="border p-2">Installation Date</th>
-          </tr>
-        </thead>
-        <tbody>
-          {devices.map((device) => (
-            <tr key={device.id}>
-              <td className="border p-2">{device.name}</td>
-              <td className="border p-2">{device.type}</td>
-              <td className="border p-2">{device.status}</td>
-              <td className="border p-2">{device.location}</td>
-              <td className="border p-2">{device.capacity}</td>
-              <td className="border p-2">{device.firmware}</td>
-              <td className="border p-2">{device.installation_date}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Device Name</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Location</TableHead>
+              <TableHead>Capacity</TableHead>
+              <TableHead>Firmware</TableHead>
+              <TableHead>Installation Date</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {devices.map((device) => (
+              <TableRow key={device.id}>
+                <TableCell>{device.name}</TableCell>
+                <TableCell>{device.type}</TableCell>
+                <TableCell>{device.status}</TableCell>
+                <TableCell>{device.location}</TableCell>
+                <TableCell>{device.capacity}</TableCell>
+                <TableCell>{device.firmware}</TableCell>
+                <TableCell>{device.installation_date}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
   );
 };
 
