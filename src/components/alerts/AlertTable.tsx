@@ -1,20 +1,10 @@
-
 import React, { useEffect, useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { formatTimestamp } from '@/lib/utils';
-import { getRecentAlerts } from '@/services/alertService';
+import { getRecentAlerts, Alert } from '@/services/alertService';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-
-interface Alert {
-  id: string;
-  timestamp: string;
-  source: string;
-  message: string;
-  severity: 'info' | 'warning' | 'critical';
-  resolved: boolean;
-}
 
 // Define severity styles consistently
 const severityStyles = {

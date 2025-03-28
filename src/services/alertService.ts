@@ -1,4 +1,3 @@
-
 import { toast } from 'sonner';
 
 export interface Alert {
@@ -231,5 +230,30 @@ export const getAlertStats = async (): Promise<{
     critical,
     warning,
     byCategory
+  };
+};
+
+// NEW FUNCTION: Get alert summary for dashboard
+export const getAlertSummary = async (): Promise<{
+  total: number;
+  critical: number;
+  warning: number;
+  info: number;
+  unacknowledged: number;
+}> => {
+  // Simulate API call delay
+  await new Promise(resolve => setTimeout(resolve, 400));
+  
+  const critical = mockAlerts.filter(a => a.severity === 'critical').length;
+  const warning = mockAlerts.filter(a => a.severity === 'warning').length;
+  const info = mockAlerts.filter(a => a.severity === 'info').length;
+  const unacknowledged = mockAlerts.filter(a => !a.acknowledged).length;
+  
+  return {
+    total: mockAlerts.length,
+    critical,
+    warning,
+    info,
+    unacknowledged
   };
 };

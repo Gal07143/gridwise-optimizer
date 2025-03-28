@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
@@ -17,7 +16,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { useSite } from '@/contexts/SiteContext';
+import { useSiteContext } from '@/contexts/SiteContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatTimestamp } from '@/lib/utils';
 import DashboardCard from '@/components/dashboard/DashboardCard';
@@ -27,7 +26,6 @@ import { getRandomColor } from '@/lib/utils';
 import { fetchDevicesBySite } from '@/services/deviceService';
 import { getAlertSummary } from '@/services/alertService';
 
-// Mock data
 const energyData = [
   { time: '00:00', value: 4 },
   { time: '03:00', value: 2 },
@@ -66,7 +64,7 @@ const batteryData = [
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const { currentSite } = useSite();
+  const { currentSite } = useSiteContext();
   const [devices, setDevices] = useState<any[]>([]);
   const [alertSummary, setAlertSummary] = useState({
     total: 0,
@@ -109,7 +107,6 @@ const Dashboard = () => {
     loadDevices();
     loadAlertSummary();
 
-    // Update time every minute
     const interval = setInterval(() => {
       setCurrentTime(new Date());
     }, 60000);
@@ -397,10 +394,8 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="relative space-y-3 ml-3 pb-2">
-                {/* Timeline Line */}
                 <div className="absolute top-0 bottom-0 left-0 w-0.5 bg-slate-200 dark:bg-slate-700"></div>
                 
-                {/* Timeline Items */}
                 {[
                   { 
                     time: '09:45 AM', 
@@ -425,16 +420,13 @@ const Dashboard = () => {
                   },
                 ].map((item, i) => (
                   <div key={i} className="relative flex items-start gap-4 pb-8">
-                    {/* Timeline Dot */}
                     <div className="absolute left-0 -translate-x-1/2 w-3 h-3 rounded-full bg-primary"></div>
                     
                     <div className="ml-4">
-                      {/* Time */}
                       <div className="text-xs text-muted-foreground mb-1">
                         {item.time} • Today
                       </div>
                       
-                      {/* Content */}
                       <div>
                         <h4 className="text-sm font-medium flex items-center gap-1">
                           <span className="text-primary">{item.icon}</span>
@@ -461,7 +453,6 @@ const Dashboard = () => {
             <CardContent>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {isLoadingDevices ? (
-                  // Loading placeholders
                   Array(3).fill(0).map((_, i) => (
                     <div key={i} className="rounded-lg border p-4 animate-pulse bg-slate-50 dark:bg-slate-800">
                       <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-3/4 mb-4"></div>
@@ -473,7 +464,6 @@ const Dashboard = () => {
                     </div>
                   ))
                 ) : devices.length > 0 ? (
-                  // Actual devices
                   devices.map((device) => (
                     <Link 
                       key={device.id} 
@@ -503,7 +493,6 @@ const Dashboard = () => {
                     </Link>
                   ))
                 ) : (
-                  // No devices
                   <div className="col-span-3 py-8 text-center text-muted-foreground">
                     <p>No devices found for this site.</p>
                     <Link to="/devices/add">
