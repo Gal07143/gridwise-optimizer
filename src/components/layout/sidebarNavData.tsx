@@ -22,7 +22,11 @@ import {
   Router,
   Signal,
   LineChart,
-  LightbulbIcon
+  LightbulbIcon,
+  CloudSun,
+  Gauge,
+  BatteryFull,
+  Sparkles
 } from 'lucide-react';
 
 export const mainNavItems = [
@@ -50,6 +54,21 @@ export const mainNavItems = [
     href: "/devices",
     icon: <Activity size={18} />,
     label: "Devices"
+  },
+  {
+    href: "/battery-management",
+    icon: <BatteryFull size={18} />,
+    label: "Battery Management"
+  },
+  {
+    href: "/energy-optimization",
+    icon: <Sparkles size={18} />,
+    label: "Optimization"
+  },
+  {
+    href: "/weather-forecast",
+    icon: <CloudSun size={18} />,
+    label: "Weather Forecast"
   },
   {
     href: "/alerts",

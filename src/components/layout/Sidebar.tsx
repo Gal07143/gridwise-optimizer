@@ -7,38 +7,14 @@ import ThemeToggle from './ThemeToggle';
 import SiteSelector from '@/components/sites/SiteSelector';
 import Logo from './Logo';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, LayoutDashboard, BarChart2, Activity, Wind, LightbulbIcon, Settings } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { mainNavItems, systemControlItems, adminItems } from './sidebarNavData';
 
 export interface SidebarProps {
   className?: string;
   isExpanded: boolean;
   toggleSidebar: () => void;
 }
-
-// Define the navigation data structure
-export const sidebarNavData = [
-  {
-    key: 'main',
-    title: 'Main',
-    items: [
-      { href: '/dashboard', icon: <LayoutDashboard size={16} />, label: 'Dashboard' },
-      { href: '/energy-flow', icon: '⚡', label: 'Energy Flow' },
-      { href: '/analytics', icon: <BarChart2 size={16} />, label: 'Analytics' },
-      { href: '/consumption', icon: <LightbulbIcon size={16} />, label: 'Consumption' },
-      { href: '/production', icon: <Wind size={16} />, label: 'Production' },
-      { href: '/devices', icon: <Activity size={16} />, label: 'Devices' },
-    ]
-  },
-  {
-    key: 'admin',
-    title: 'Administration',
-    items: [
-      { href: '/settings', icon: <Settings size={16} />, label: 'Settings' },
-      { href: '/reports', icon: '📑', label: 'Reports' },
-      { href: '/system-status', icon: '🔍', label: 'System Status' },
-    ]
-  }
-];
 
 const Sidebar: React.FC<SidebarProps> = ({ className = '', isExpanded, toggleSidebar }) => {
   return (
@@ -67,23 +43,53 @@ const Sidebar: React.FC<SidebarProps> = ({ className = '', isExpanded, toggleSid
       </div>
       
       <div className="flex-1 overflow-y-auto py-4 px-2">
-        {sidebarNavData.map((section) => (
-          <SidebarNavSection 
-            key={section.key} 
-            heading={section.title}
-            collapsed={!isExpanded}
-          >
-            {section.items.map((item) => (
-              <NavItem 
-                key={item.href} 
-                href={item.href} 
-                icon={item.icon} 
-                label={item.label}
-                collapsed={!isExpanded}
-              />
-            ))}
-          </SidebarNavSection>
-        ))}
+        <SidebarNavSection 
+          key="main" 
+          heading="Main"
+          collapsed={!isExpanded}
+        >
+          {mainNavItems.map((item) => (
+            <NavItem 
+              key={item.href} 
+              href={item.href} 
+              icon={item.icon} 
+              label={item.label}
+              collapsed={!isExpanded}
+            />
+          ))}
+        </SidebarNavSection>
+
+        <SidebarNavSection 
+          key="control" 
+          heading="System Control"
+          collapsed={!isExpanded}
+        >
+          {systemControlItems.map((item) => (
+            <NavItem 
+              key={item.href} 
+              href={item.href} 
+              icon={item.icon} 
+              label={item.label}
+              collapsed={!isExpanded}
+            />
+          ))}
+        </SidebarNavSection>
+        
+        <SidebarNavSection 
+          key="admin" 
+          heading="Administration"
+          collapsed={!isExpanded}
+        >
+          {adminItems.map((item) => (
+            <NavItem 
+              key={item.href} 
+              href={item.href} 
+              icon={item.icon} 
+              label={item.label}
+              collapsed={!isExpanded}
+            />
+          ))}
+        </SidebarNavSection>
       </div>
       
       <div className="p-4 border-t">

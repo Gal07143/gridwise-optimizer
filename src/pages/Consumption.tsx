@@ -1,272 +1,183 @@
 
 import React, { useState } from 'react';
-import { Main } from '@/components/ui/main';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AppLayout } from '@/components/layout';
+import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useSiteContext } from '@/contexts/SiteContext';
-import { TimeframeSelector } from '@/components/analytics/TimeframeSelector';
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
-  BarChart,
-  Bar,
-} from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { useDevices } from '@/hooks/useDevices';
+import TimeframeSelector from '@/components/analytics/TimeframeSelector';
+import { useSite } from '@/contexts/SiteContext';
 
-const Consumption: React.FC = () => {
-  const { activeSite } = useSiteContext();
-  const [timeframe, setTimeframe] = useState<'day' | 'week' | 'month' | 'year'>('week');
+// Sample data - would be replaced with real device data
+const generateSampleData = (days: number) => {
+  return Array.from({ length: days }).map((_, i) => {
+    const date = new Date();
+    date.setDate(date.getDate() - days + i + 1);
+    
+    return {
+      date: date.toLocaleDateString(),
+      household: Math.floor(Math.random() * 15) + 10,
+      hvac: Math.floor(Math.random() * 8) + 5,
+      lighting: Math.floor(Math.random() * 4) + 2,
+      appliances: Math.floor(Math.random() * 6) + 4,
+    };
+  });
+};
 
-  // Sample data - in a real app, this would come from your API
-  const consumptionData = [
-    { time: '00:00', consumption: 2.1, grid: 1.8, solar: 0, battery: 0.3 },
-    { time: '04:00', consumption: 1.8, grid: 1.8, solar: 0, battery: 0 },
-    { time: '08:00', consumption: 3.5, grid: 1.2, solar: 2.3, battery: 0 },
-    { time: '12:00', consumption: 4.2, grid: 0, solar: 3.8, battery: 0.4 },
-    { time: '16:00', consumption: 5.1, grid: 1.0, solar: 3.1, battery: 1.0 },
-    { time: '20:00', consumption: 3.8, grid: 2.5, solar: 0, battery: 1.3 },
-  ];
+const timeframes = [
+  { value: 'day', label: 'Day' },
+  { value: 'week', label: 'Week' },
+  { value: 'month', label: 'Month' },
+  { value: 'year', label: 'Year' }
+];
 
-  const deviceConsumptionData = [
-    { name: 'HVAC', value: 35 },
-    { name: 'Lighting', value: 20 },
-    { name: 'Appliances', value: 15 },
-    { name: 'EV Charging', value: 20 },
-    { name: 'Other', value: 10 },
-  ];
-
-  const peakUsageData = [
-    { day: 'Mon', morning: 3.2, midday: 2.8, evening: 4.5 },
-    { day: 'Tue', morning: 3.5, midday: 3.1, evening: 4.2 },
-    { day: 'Wed', morning: 3.1, midday: 2.9, evening: 4.8 },
-    { day: 'Thu', morning: 3.3, midday: 3.0, evening: 4.1 },
-    { day: 'Fri', morning: 3.4, midday: 3.2, evening: 5.2 },
-    { day: 'Sat', morning: 2.8, midday: 2.5, evening: 3.5 },
-    { day: 'Sun', morning: 2.6, midday: 2.2, evening: 3.2 },
-  ];
-
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#A569BD'];
-
-  const handleTimeframeChange = (value: 'day' | 'week' | 'month' | 'year') => {
-    setTimeframe(value);
+const ConsumptionPage = () => {
+  const [timeframe, setTimeframe] = useState('week');
+  const { currentSite } = useSite();
+  const { devices } = useDevices();
+  
+  // Get data based on selected timeframe
+  const getData = () => {
+    switch(timeframe) {
+      case 'day': return generateSampleData(24);
+      case 'week': return generateSampleData(7);
+      case 'month': return generateSampleData(30);
+      case 'year': return generateSampleData(12);
+      default: return generateSampleData(7);
+    }
   };
-
+  
+  const data = getData();
+  
   return (
-    <Main title="Energy Consumption">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gridx-navy dark:text-white mb-2">Energy Consumption</h1>
-        <p className="text-gridx-gray dark:text-gray-400 text-sm">
-          Analyze and optimize your energy consumption patterns
-        </p>
-      </div>
-
-      <div className="flex justify-end mb-4">
-        <TimeframeSelector timeframe={timeframe} setTimeframe={handleTimeframeChange} />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Energy Consumption Overview</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <AreaChart
-                data={consumptionData}
-                margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="time" />
-                <YAxis label={{ value: 'kWh', angle: -90, position: 'insideLeft' }} />
-                <Tooltip />
-                <Area
-                  type="monotone"
-                  dataKey="consumption"
-                  stackId="1"
-                  stroke="#8884d8"
-                  fill="#8884d8"
-                />
-                <Area
-                  type="monotone"
-                  dataKey="grid"
-                  stackId="2"
-                  stroke="#82ca9d"
-                  fill="#82ca9d"
-                />
-                <Area
-                  type="monotone"
-                  dataKey="solar"
-                  stackId="2"
-                  stroke="#ffc658"
-                  fill="#ffc658"
-                />
-                <Area
-                  type="monotone"
-                  dataKey="battery"
-                  stackId="2"
-                  stroke="#ff8042"
-                  fill="#ff8042"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Consumption by Device</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={deviceConsumptionData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                >
-                  {deviceConsumptionData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value) => `${value}%`} />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Tabs defaultValue="insights" className="w-full space-y-6">
-        <TabsList>
-          <TabsTrigger value="insights">Consumption Insights</TabsTrigger>
-          <TabsTrigger value="patterns">Usage Patterns</TabsTrigger>
-          <TabsTrigger value="compare">Historical Compare</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="insights" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg">Daily Average</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-blue-600">12.4 kWh</div>
-                <p className="text-muted-foreground text-sm">
-                  5% below your monthly average
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg">Peak Consumption</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-amber-500">5.2 kW</div>
-                <p className="text-muted-foreground text-sm">
-                  Today at 6:30 PM
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg">Cost Estimate</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-green-600">$42.15</div>
-                <p className="text-muted-foreground text-sm">
-                  For the current billing period
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Recommended Actions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-3">
-                <li className="flex items-start">
-                  <div className="bg-blue-100 dark:bg-blue-900 p-2 rounded-full mr-3 mt-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-600 dark:text-blue-300">
-                      <path d="M12 22V8" /><path d="m2 12 10-4 10 4" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h4 className="font-medium">Shift HVAC usage</h4>
-                    <p className="text-sm text-muted-foreground">Running your HVAC during solar production hours can save approximately 25% in energy costs.</p>
-                  </div>
-                </li>
-                <li className="flex items-start">
-                  <div className="bg-green-100 dark:bg-green-900 p-2 rounded-full mr-3 mt-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-600 dark:text-green-300">
-                      <path d="M12 22V8" /><path d="m2 12 10-4 10 4" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h4 className="font-medium">EV charging optimization</h4>
-                    <p className="text-sm text-muted-foreground">Scheduling EV charging between 10am-2pm would utilize 95% solar energy rather than grid power.</p>
-                  </div>
-                </li>
-              </ul>
-            </CardContent>
+    <AppLayout>
+      <div className="p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">Energy Consumption</h1>
+          <TimeframeSelector 
+            timeframes={timeframes} 
+            selected={timeframe} 
+            onChange={setTimeframe} 
+          />
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <Card className="p-4">
+            <h3 className="text-lg font-medium mb-2">Total Consumption</h3>
+            <p className="text-3xl font-bold">248 kWh</p>
+            <p className="text-sm text-muted-foreground">+12% from last {timeframe}</p>
           </Card>
-        </TabsContent>
-
-        <TabsContent value="patterns">
-          <Card>
-            <CardHeader>
-              <CardTitle>Peak Usage Times</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={350}>
-                <BarChart
-                  data={peakUsageData}
-                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                >
+          
+          <Card className="p-4">
+            <h3 className="text-lg font-medium mb-2">Peak Usage</h3>
+            <p className="text-3xl font-bold">7.2 kW</p>
+            <p className="text-sm text-muted-foreground">At 19:30, June 15</p>
+          </Card>
+          
+          <Card className="p-4">
+            <h3 className="text-lg font-medium mb-2">Average Daily</h3>
+            <p className="text-3xl font-bold">35.4 kWh</p>
+            <p className="text-sm text-muted-foreground">-5% from last {timeframe}</p>
+          </Card>
+        </div>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card className="p-4">
+            <h3 className="text-lg font-medium mb-4">Consumption Over Time</h3>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="day" />
-                  <YAxis />
+                  <XAxis dataKey="date" />
+                  <YAxis unit=" kWh" />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="morning" name="Morning (6-10am)" fill="#8884d8" />
-                  <Bar dataKey="midday" name="Midday (11am-3pm)" fill="#82ca9d" />
-                  <Bar dataKey="evening" name="Evening (4-8pm)" fill="#ffc658" />
-                </BarChart>
+                  <Line type="monotone" dataKey="household" stroke="#8884d8" name="Total" strokeWidth={2} />
+                </LineChart>
               </ResponsiveContainer>
-            </CardContent>
+            </div>
           </Card>
-        </TabsContent>
-
-        <TabsContent value="compare">
-          <Card>
-            <CardHeader>
-              <CardTitle>Historical Comparison</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="mb-4 text-muted-foreground">Compare your current consumption with previous periods</p>
-              <div className="h-[400px] flex items-center justify-center text-muted-foreground">
-                Historical comparison charts will be displayed here
-              </div>
-            </CardContent>
+          
+          <Card className="p-4">
+            <h3 className="text-lg font-medium mb-4">Consumption Breakdown</h3>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis unit=" kWh" />
+                  <Tooltip />
+                  <Legend />
+                  <Line type="monotone" dataKey="hvac" stroke="#82ca9d" name="HVAC" />
+                  <Line type="monotone" dataKey="lighting" stroke="#ffc658" name="Lighting" />
+                  <Line type="monotone" dataKey="appliances" stroke="#ff8042" name="Appliances" />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
           </Card>
-        </TabsContent>
-      </Tabs>
-    </Main>
+        </div>
+        
+        <div className="mt-6">
+          <Card className="p-4">
+            <Tabs defaultValue="hourly">
+              <TabsList className="mb-4">
+                <TabsTrigger value="hourly">Hourly</TabsTrigger>
+                <TabsTrigger value="daily">Daily</TabsTrigger>
+                <TabsTrigger value="devices">By Device</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="hourly">
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={generateSampleData(24)} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" />
+                      <YAxis unit=" kWh" />
+                      <Tooltip />
+                      <Legend />
+                      <Line type="monotone" dataKey="household" stroke="#8884d8" name="Total" strokeWidth={2} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="daily">
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={generateSampleData(30)} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" />
+                      <YAxis unit=" kWh" />
+                      <Tooltip />
+                      <Legend />
+                      <Line type="monotone" dataKey="household" stroke="#8884d8" name="Total" strokeWidth={2} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="devices">
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" />
+                      <YAxis unit=" kWh" />
+                      <Tooltip />
+                      <Legend />
+                      <Line type="monotone" dataKey="hvac" stroke="#82ca9d" name="HVAC" />
+                      <Line type="monotone" dataKey="lighting" stroke="#ffc658" name="Lighting" />
+                      <Line type="monotone" dataKey="appliances" stroke="#ff8042" name="Appliances" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </Card>
+        </div>
+      </div>
+    </AppLayout>
   );
 };
 
-export default Consumption;
+export default ConsumptionPage;

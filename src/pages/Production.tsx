@@ -1,340 +1,186 @@
 
 import React, { useState } from 'react';
-import { Main } from '@/components/ui/main';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AppLayout } from '@/components/layout';
+import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useSiteContext } from '@/contexts/SiteContext';
-import { TimeframeSelector } from '@/components/analytics/TimeframeSelector';
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-} from 'recharts';
-import { Battery, Sun, Info, Wind } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import TimeframeSelector from '@/components/analytics/TimeframeSelector';
+import { useSite } from '@/contexts/SiteContext';
 
-const Production: React.FC = () => {
-  const { activeSite } = useSiteContext();
-  const [timeframe, setTimeframe] = useState<'day' | 'week' | 'month' | 'year'>('week');
+// Sample data - would be replaced with real device data
+const generateSampleData = (days: number) => {
+  return Array.from({ length: days }).map((_, i) => {
+    const date = new Date();
+    date.setDate(date.getDate() - days + i + 1);
+    
+    return {
+      date: date.toLocaleDateString(),
+      solar: Math.floor(Math.random() * 30) + 10,
+      wind: Math.floor(Math.random() * 10),
+      battery: Math.floor(Math.random() * 5) - 2,
+      total: Math.floor(Math.random() * 35) + 15,
+    };
+  });
+};
 
-  // Sample data - in a real app, this would come from your API
-  const productionData = [
-    { time: '00:00', solar: 0, battery: 0.2, wind: 0 },
-    { time: '04:00', solar: 0, battery: 0, wind: 0.3 },
-    { time: '08:00', solar: 1.8, battery: 0, wind: 0.4 },
-    { time: '12:00', solar: 3.7, battery: 0, wind: 0.5 },
-    { time: '16:00', solar: 2.5, battery: 0, wind: 0.7 },
-    { time: '20:00', solar: 0.3, battery: 1.2, wind: 0.3 },
-  ];
+const timeframes = [
+  { value: 'day', label: 'Day' },
+  { value: 'week', label: 'Week' },
+  { value: 'month', label: 'Month' },
+  { value: 'year', label: 'Year' }
+];
 
-  const monthlyProduction = [
-    { month: 'Jan', production: 450 },
-    { month: 'Feb', production: 520 },
-    { month: 'Mar', production: 780 },
-    { month: 'Apr', production: 920 },
-    { month: 'May', production: 1050 },
-    { month: 'Jun', production: 1150 },
-    { month: 'Jul', production: 1180 },
-    { month: 'Aug', production: 1100 },
-    { month: 'Sep', production: 950 },
-    { month: 'Oct', production: 780 },
-    { month: 'Nov', production: 560 },
-    { month: 'Dec', production: 480 },
-  ];
-
-  const productionMixData = [
-    { name: 'Solar', value: 75 },
-    { name: 'Battery', value: 15 },
-    { name: 'Wind', value: 10 },
-  ];
-
-  const COLORS = ['#FDB813', '#3366CC', '#00C49F'];
-
-  const handleTimeframeChange = (value: 'day' | 'week' | 'month' | 'year') => {
-    setTimeframe(value);
+const ProductionPage = () => {
+  const [timeframe, setTimeframe] = useState('week');
+  const { currentSite } = useSite();
+  
+  // Get data based on selected timeframe
+  const getData = () => {
+    switch(timeframe) {
+      case 'day': return generateSampleData(24);
+      case 'week': return generateSampleData(7);
+      case 'month': return generateSampleData(30);
+      case 'year': return generateSampleData(12);
+      default: return generateSampleData(7);
+    }
   };
-
+  
+  const data = getData();
+  
+  // Calculate totals for the timeframe
+  const solarTotal = data.reduce((sum, entry) => sum + entry.solar, 0);
+  const windTotal = data.reduce((sum, entry) => sum + entry.wind, 0);
+  const totalProduction = solarTotal + windTotal;
+  
   return (
-    <Main title="Energy Production">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gridx-navy dark:text-white mb-2">Energy Production</h1>
-        <p className="text-gridx-gray dark:text-gray-400 text-sm">
-          Monitor and optimize your energy generation sources
-        </p>
-      </div>
-
-      <div className="flex justify-end mb-4">
-        <TimeframeSelector timeframe={timeframe} setTimeframe={handleTimeframeChange} />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <Card className="bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/10 border-yellow-100 dark:border-yellow-900/30">
-          <CardHeader className="pb-2">
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-lg flex items-center">
-                <Sun className="w-5 h-5 mr-2 text-yellow-500" />
-                Solar Production
-              </CardTitle>
-              <span className="text-sm text-yellow-600 dark:text-yellow-400 font-medium bg-yellow-100 dark:bg-yellow-900/30 px-2 py-0.5 rounded-full">
-                Primary
-              </span>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-yellow-600 dark:text-yellow-400 mb-1">24.5 kWh</div>
-            <p className="text-sm text-yellow-700/70 dark:text-yellow-300/70 mb-4">Today's generation</p>
-            <div className="flex items-center text-green-600 dark:text-green-400 text-sm font-medium">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
-                <path d="m6 18 6-6-6-6" /><path d="m18 6-6 6 6 6" />
-              </svg>
-              +15% vs. yesterday
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/10 border-blue-100 dark:border-blue-900/30">
-          <CardHeader className="pb-2">
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-lg flex items-center">
-                <Battery className="w-5 h-5 mr-2 text-blue-500" />
-                Battery Storage
-              </CardTitle>
-              <span className="text-sm text-blue-600 dark:text-blue-400 font-medium bg-blue-100 dark:bg-blue-900/30 px-2 py-0.5 rounded-full">
-                76% Charged
-              </span>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-1">5.8 kWh</div>
-            <p className="text-sm text-blue-700/70 dark:text-blue-300/70 mb-4">Discharged today</p>
-            <div className="w-full bg-blue-100 dark:bg-blue-900/50 rounded-full h-2.5">
-              <div className="bg-blue-600 dark:bg-blue-400 h-2.5 rounded-full" style={{ width: '76%' }}></div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-teal-50 to-green-50 dark:from-teal-900/20 dark:to-green-900/10 border-teal-100 dark:border-teal-900/30">
-          <CardHeader className="pb-2">
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-lg flex items-center">
-                <Wind className="w-5 h-5 mr-2 text-teal-500" />
-                Wind Production
-              </CardTitle>
-              <span className="text-sm text-teal-600 dark:text-teal-400 font-medium bg-teal-100 dark:bg-teal-900/30 px-2 py-0.5 rounded-full">
-                Secondary
-              </span>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-teal-600 dark:text-teal-400 mb-1">3.2 kWh</div>
-            <p className="text-sm text-teal-700/70 dark:text-teal-300/70 mb-4">Today's generation</p>
-            <div className="flex items-center text-red-500 dark:text-red-400 text-sm font-medium">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
-                <path d="m18 6-6 6 6 6" /><path d="m6 6 6 6-6 6" />
-              </svg>
-              -8% vs. yesterday
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Energy Production Overview</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <AreaChart
-                data={productionData}
-                margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="time" />
-                <YAxis label={{ value: 'kWh', angle: -90, position: 'insideLeft' }} />
-                <Tooltip />
-                <Area
-                  type="monotone"
-                  dataKey="solar"
-                  stackId="1"
-                  stroke="#FDB813"
-                  fill="#FDB813"
-                  name="Solar"
-                />
-                <Area
-                  type="monotone"
-                  dataKey="battery"
-                  stackId="1"
-                  stroke="#3366CC"
-                  fill="#3366CC"
-                  name="Battery"
-                />
-                <Area
-                  type="monotone"
-                  dataKey="wind"
-                  stackId="1"
-                  stroke="#00C49F"
-                  fill="#00C49F"
-                  name="Wind"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Production Mix</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={productionMixData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                >
-                  {productionMixData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value) => `${value}%`} />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Tabs defaultValue="trends" className="w-full space-y-6">
-        <TabsList>
-          <TabsTrigger value="trends">Production Trends</TabsTrigger>
-          <TabsTrigger value="efficiency">Efficiency Analysis</TabsTrigger>
-          <TabsTrigger value="forecast">Production Forecast</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="trends" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Monthly Production Trends</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={350}>
-                <BarChart
-                  data={monthlyProduction}
-                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                >
+    <AppLayout>
+      <div className="p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">Energy Production</h1>
+          <TimeframeSelector 
+            timeframes={timeframes} 
+            selected={timeframe} 
+            onChange={setTimeframe} 
+          />
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <Card className="p-4">
+            <h3 className="text-lg font-medium mb-2">Total Generation</h3>
+            <p className="text-3xl font-bold">{totalProduction} kWh</p>
+            <p className="text-sm text-muted-foreground">+8% from last {timeframe}</p>
+          </Card>
+          
+          <Card className="p-4">
+            <h3 className="text-lg font-medium mb-2">Solar Production</h3>
+            <p className="text-3xl font-bold">{solarTotal} kWh</p>
+            <p className="text-sm text-muted-foreground">+12% from last {timeframe}</p>
+          </Card>
+          
+          <Card className="p-4">
+            <h3 className="text-lg font-medium mb-2">Peak Generation</h3>
+            <p className="text-3xl font-bold">12.4 kW</p>
+            <p className="text-sm text-muted-foreground">At 13:45, June 14</p>
+          </Card>
+        </div>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card className="p-4">
+            <h3 className="text-lg font-medium mb-4">Production Over Time</h3>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis label={{ value: 'kWh', angle: -90, position: 'insideLeft' }} />
+                  <XAxis dataKey="date" />
+                  <YAxis unit=" kWh" />
                   <Tooltip />
-                  <Bar dataKey="production" name="Energy Production" fill="#82ca9d" />
+                  <Legend />
+                  <Line type="monotone" dataKey="total" stroke="#8884d8" name="Total" strokeWidth={2} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+          
+          <Card className="p-4">
+            <h3 className="text-lg font-medium mb-4">Production Breakdown</h3>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis unit=" kWh" />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="solar" fill="#ffc658" name="Solar" stackId="a" />
+                  <Bar dataKey="wind" fill="#82ca9d" name="Wind" stackId="a" />
                 </BarChart>
               </ResponsiveContainer>
-            </CardContent>
+            </div>
           </Card>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Production Records</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center pb-2 border-b border-gray-100 dark:border-gray-800">
-                    <div>
-                      <p className="font-medium">Peak Production Day</p>
-                      <p className="text-sm text-muted-foreground">June 21, 2024</p>
-                    </div>
-                    <div className="text-xl font-bold text-green-600">42.7 kWh</div>
-                  </div>
-                  <div className="flex justify-between items-center pb-2 border-b border-gray-100 dark:border-gray-800">
-                    <div>
-                      <p className="font-medium">Highest Solar Hour</p>
-                      <p className="text-sm text-muted-foreground">12:00 PM, June 21</p>
-                    </div>
-                    <div className="text-xl font-bold text-yellow-500">6.2 kWh</div>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="font-medium">Best Production Month</p>
-                      <p className="text-sm text-muted-foreground">July 2024</p>
-                    </div>
-                    <div className="text-xl font-bold text-blue-600">1,180 kWh</div>
-                  </div>
+        </div>
+        
+        <div className="mt-6">
+          <Card className="p-4">
+            <Tabs defaultValue="daily">
+              <TabsList className="mb-4">
+                <TabsTrigger value="hourly">Hourly</TabsTrigger>
+                <TabsTrigger value="daily">Daily</TabsTrigger>
+                <TabsTrigger value="monthly">Monthly</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="hourly">
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={generateSampleData(24)} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" />
+                      <YAxis unit=" kWh" />
+                      <Tooltip />
+                      <Legend />
+                      <Line type="monotone" dataKey="solar" stroke="#ffc658" name="Solar" />
+                      <Line type="monotone" dataKey="wind" stroke="#82ca9d" name="Wind" />
+                    </LineChart>
+                  </ResponsiveContainer>
                 </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Annual Production Goal</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-col items-center mb-4">
-                  <div className="text-3xl font-bold text-green-600 mb-2">8,920 kWh</div>
-                  <p className="text-sm text-muted-foreground">of 12,000 kWh annual goal</p>
-                  <div className="w-full mt-4 bg-gray-200 dark:bg-gray-700 rounded-full h-4">
-                    <div className="bg-green-500 h-4 rounded-full" style={{ width: '74%' }}></div>
-                  </div>
-                  <p className="mt-2 text-sm text-green-600 font-medium">74% of annual goal achieved</p>
+              </TabsContent>
+              
+              <TabsContent value="daily">
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={generateSampleData(7)} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" />
+                      <YAxis unit=" kWh" />
+                      <Tooltip />
+                      <Legend />
+                      <Line type="monotone" dataKey="solar" stroke="#ffc658" name="Solar" />
+                      <Line type="monotone" dataKey="wind" stroke="#82ca9d" name="Wind" />
+                    </LineChart>
+                  </ResponsiveContainer>
                 </div>
-                <div className="text-center">
-                  <p className="text-sm text-muted-foreground">
-                    Projected to exceed goal by 5% based on current production trends
-                  </p>
+              </TabsContent>
+              
+              <TabsContent value="monthly">
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={generateSampleData(12)} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" />
+                      <YAxis unit=" kWh" />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="solar" fill="#ffc658" name="Solar" stackId="a" />
+                      <Bar dataKey="wind" fill="#82ca9d" name="Wind" stackId="a" />
+                    </BarChart>
+                  </ResponsiveContainer>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="efficiency">
-          <Card>
-            <CardHeader>
-              <CardTitle>System Efficiency Analysis</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="mb-4 text-muted-foreground">Track and optimize your energy production system efficiency</p>
-              <div className="h-[400px] flex items-center justify-center text-muted-foreground">
-                Efficiency analysis charts will be displayed here
-              </div>
-            </CardContent>
+              </TabsContent>
+            </Tabs>
           </Card>
-        </TabsContent>
-
-        <TabsContent value="forecast">
-          <Card>
-            <CardHeader>
-              <CardTitle>Production Forecast</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="mb-4 text-muted-foreground">Forecasted energy production based on weather and historical data</p>
-              <div className="h-[400px] flex items-center justify-center text-muted-foreground">
-                Production forecast charts will be displayed here
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </Main>
+        </div>
+      </div>
+    </AppLayout>
   );
 };
 
-export default Production;
+export default ProductionPage;

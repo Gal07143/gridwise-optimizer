@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -23,6 +24,9 @@ import MicrogridControl from '@/pages/MicrogridControl';
 import SystemStatus from '@/pages/SystemStatus';
 import Security from '@/pages/Security';
 import MQTTIntegration from '@/pages/MQTTIntegration';
+import BatteryManagement from '@/pages/BatteryManagement';
+import EnergyOptimization from '@/pages/EnergyOptimization';
+import WeatherForecast from '@/pages/WeatherForecast';
 
 // Integration pages
 import IntegrationsHome from '@/pages/integrations/IntegrationsHome';
@@ -133,6 +137,23 @@ const AppRoutes = () => {
       <Route path="/microgrid-control" element={
         <ProtectedRoute>
           <MicrogridControl />
+        </ProtectedRoute>
+      } />
+      
+      {/* New Energy Management Pages */}
+      <Route path="/battery-management" element={
+        <ProtectedRoute>
+          <BatteryManagement />
+        </ProtectedRoute>
+      } />
+      <Route path="/energy-optimization" element={
+        <ProtectedRoute>
+          <EnergyOptimization />
+        </ProtectedRoute>
+      } />
+      <Route path="/weather-forecast" element={
+        <ProtectedRoute>
+          <WeatherForecast />
         </ProtectedRoute>
       } />
       
