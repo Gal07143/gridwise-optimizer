@@ -1,5 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { toast } from 'sonner';
 
 export interface User {
   id: string;
@@ -135,6 +136,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Clear user data
       setUser(null);
       localStorage.removeItem('user');
+      toast.success('Signed out successfully');
       console.log('User signed out');
       
     } catch (error) {
@@ -160,6 +162,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       setUser(updatedUser);
       localStorage.setItem('user', JSON.stringify(updatedUser));
+      toast.success('Profile updated successfully');
       console.log('User profile updated:', updatedUser);
       
     } catch (error) {

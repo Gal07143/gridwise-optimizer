@@ -36,6 +36,10 @@ const signUpSchema = z.object({
   rememberMe: z.boolean().optional()
 });
 
+// Define types based on the schemas
+type SignInFormValues = z.infer<typeof signInSchema>;
+type SignUpFormValues = z.infer<typeof signUpSchema>;
+
 // Auth page component
 const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -45,12 +49,18 @@ const Auth = () => {
   const { user, signIn, signUp } = useAuth();
   const navigate = useNavigate();
   
-  // Determine which schema to use based on form mode
-  const formSchema = isSignUp ? signUpSchema : signInSchema;
-  
   // Set up form with validation
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const signInForm = useForm<SignInFormValues>({
+    resolver: zodResolver(signInSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+      rememberMe: false
+    }
+  });
+  
+  const signUpForm = useForm<SignUpFormValues>({
+    resolver: zodResolver(signUpSchema),
     defaultValues: {
       email: '',
       password: '',
@@ -59,6 +69,9 @@ const Auth = () => {
       rememberMe: false
     }
   });
+  
+  // Use the active form based on current mode
+  const form = isSignUp ? signUpForm : signInForm;
   
   // Redirect if already logged in
   useEffect(() => {
@@ -69,21 +82,34 @@ const Auth = () => {
   
   const toggleFormMode = () => {
     setIsSignUp(!isSignUp);
-    form.reset();
+    setShowPassword(false);
+    signInForm.reset();
+    signUpForm.reset();
+    
+    // Load remembered email if switching to sign in
+    if (!isSignUp) {
+      const rememberedEmail = localStorage.getItem('rememberedEmail');
+      if (rememberedEmail) {
+        signInForm.setValue('email', rememberedEmail);
+        signInForm.setValue('rememberMe', true);
+      }
+    }
   };
   
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (values: SignInFormValues | SignUpFormValues) => {
     setIsSubmitting(true);
     
     try {
       if (isSignUp) {
-        await signUp(values.email, values.password, { 
-          firstName: values.firstName, 
-          lastName: values.lastName 
+        const signUpValues = values as SignUpFormValues;
+        await signUp(signUpValues.email, signUpValues.password, { 
+          firstName: signUpValues.firstName, 
+          lastName: signUpValues.lastName 
         });
         toast.success('Account created successfully! Welcome aboard.');
       } else {
-        await signIn(values.email, values.password);
+        const signInValues = values as SignInFormValues;
+        await signIn(signInValues.email, signInValues.password);
         toast.success('Signed in successfully! Welcome back.');
       }
       
@@ -123,11 +149,11 @@ const Auth = () => {
   // Load remembered email if available
   useEffect(() => {
     const rememberedEmail = localStorage.getItem('rememberedEmail');
-    if (rememberedEmail) {
-      form.setValue('email', rememberedEmail);
-      form.setValue('rememberMe', true);
+    if (rememberedEmail && !isSignUp) {
+      signInForm.setValue('email', rememberedEmail);
+      signInForm.setValue('rememberMe', true);
     }
-  }, [form]);
+  }, [signInForm, isSignUp]);
   
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-slate-50 to-slate-100 py-12 px-4 sm:px-6 lg:px-8">
@@ -244,7 +270,7 @@ const Auth = () => {
                       id="remember-me"
                       type="checkbox"
                       className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                      checked={field.value}
+                      checked={field.value || false}
                       onChange={field.onChange}
                     />
                     <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
