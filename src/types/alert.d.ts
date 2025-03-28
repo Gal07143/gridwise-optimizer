@@ -5,6 +5,7 @@ export interface Alert {
   message: string;
   severity: 'info' | 'warning' | 'critical';
   timestamp: string;
+  source?: string;
   deviceId?: string;
   deviceName?: string;
   acknowledged: boolean;

@@ -19,7 +19,7 @@ const mockTelemetry = {
   timestamp: new Date().toISOString()
 };
 
-// Mock faults data
+// Mock faults data - but now mutable
 const mockFaults = [
   {
     id: 'fault-1',
@@ -48,10 +48,11 @@ const mockFaults = [
     status: 'active',
     device: { id: 'dev-3', name: 'Solar Controller' }
   }
-] as const;
+];
 
 const DashboardSummary = () => {
   const [telemetry, setTelemetry] = useState<any | null>(mockTelemetry);
+  const [faults, setFaults] = useState(mockFaults);
 
   useEffect(() => {
     // In a real implementation, this would subscribe to telemetry events
@@ -149,7 +150,7 @@ const DashboardSummary = () => {
 
       {/* Fault Summary */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <FaultSummaryCard faults={mockFaults} />
+        <FaultSummaryCard faults={faults} />
       </div>
 
       {/* Live Telemetry Charts */}

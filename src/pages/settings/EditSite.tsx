@@ -9,15 +9,7 @@ import SiteForm from '@/components/sites/SiteForm';
 import { Button } from '@/components/ui/button';
 import { CornerDownLeft, Loader2, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Site } from '@/types/energy';
-
-interface SiteFormValues {
-  name: string;
-  location: string;
-  timezone: string;
-  lat?: number | null;
-  lng?: number | null;
-}
+import { Site, SiteFormValues } from '@/types/site';
 
 const EditSite = () => {
   const { siteId } = useParams<{ siteId: string }>();
@@ -37,6 +29,9 @@ const EditSite = () => {
     setIsSubmitting(true);
     
     try {
+      // Update site with form values
+      // Since we've fixed the type discrepancy in the Site interface,
+      // this should now work correctly
       const result = await updateSite(siteId, data);
       
       if (result) {
@@ -93,7 +88,7 @@ const EditSite = () => {
   const initialValues: SiteFormValues = {
     name: site.name,
     location: site.location,
-    timezone: site.timezone,
+    timezone: site.timezone || '',
     lat: site.lat,
     lng: site.lng
   };

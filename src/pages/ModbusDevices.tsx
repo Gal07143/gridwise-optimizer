@@ -1,144 +1,109 @@
-import React, { useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL || '',
-  import.meta.env.VITE_SUPABASE_ANON_KEY || ''
-);
+import React, { useEffect, useState } from 'react';
+import { Main } from '@/components/ui/main';
+import { supabase } from '@/integrations/supabase/client';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 
 interface ModbusDevice {
   id: string;
   name: string;
-  ip: string;
+  device_id: string;
+  ip_address: string;
   port: number;
-  unit_id: number;
-  is_active: boolean;
+  slave_id: number;
+  status: string;
+  last_poll_time: string;
 }
 
-export default function ModbusDevices() {
+const ModbusDevices = () => {
   const [devices, setDevices] = useState<ModbusDevice[]>([]);
-  const [name, setName] = useState('');
-  const [ip, setIp] = useState('');
-  const [port, setPort] = useState(502);
-  const [unitId, setUnitId] = useState(1);
-  const [isActive, setIsActive] = useState(true);
-
-  // Fetch existing devices
-  const fetchDevices = async () => {
-    const { data, error } = await supabase
-      .from('modbus_devices')
-      .select('*')
-      .order('inserted_at', { ascending: false });
-    if (!error && data) {
-      setDevices(data as ModbusDevice[]);
-    }
-  };
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchDevices();
-    // Optional: Subscribe to real-time changes
-    const channel = supabase
-      .channel('modbus_devices_changes')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'modbus_devices',
-      }, () => {
-        fetchDevices(); // Re-fetch whenever there's an insert/update/delete
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
+    const fetchDevices = async () => {
+      setLoading(true);
+      
+      try {
+        const { data, error } = await supabase
+          .from('modbus_devices')
+          .select('*')
+          .order('name');
+          
+        if (error) {
+          throw error;
+        }
+        
+        setDevices(data as ModbusDevice[]);
+      } catch (error) {
+        console.error('Error fetching Modbus devices:', error);
+      } finally {
+        setLoading(false);
+      }
     };
+    
+    fetchDevices();
   }, []);
 
-  // Add a new device
-  const handleAddDevice = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const { error } = await supabase.from('modbus_devices').insert([{
-      name: name || 'Unnamed Modbus Device',
-      ip,
-      port,
-      unit_id: unitId,
-      is_active: isActive,
-    }]);
-    if (!error) {
-      setName('');
-      setIp('');
-      setPort(502);
-      setUnitId(1);
-      setIsActive(true);
-    }
-  };
-
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Modbus Devices</h1>
-
-      {/* Add Device Form */}
-      <form onSubmit={handleAddDevice} className="space-y-4 mb-8 p-4 border rounded">
-        <div>
-          <label className="block mb-1">Name</label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Optional name"
-            className="border p-2 w-full"
-          />
-        </div>
-        <div>
-          <label className="block mb-1">IP Address</label>
-          <input
-            type="text"
-            value={ip}
-            onChange={(e) => setIp(e.target.value)}
-            placeholder="192.168.1.100"
-            className="border p-2 w-full"
-            required
-          />
-        </div>
-        <div>
-          <label className="block mb-1">Port</label>
-          <input
-            type="number"
-            value={port}
-            onChange={(e) => setPort(Number(e.target.value))}
-            className="border p-2 w-full"
-          />
-        </div>
-        <div>
-          <label className="block mb-1">Unit ID</label>
-          <input
-            type="number"
-            value={unitId}
-            onChange={(e) => setUnitId(Number(e.target.value))}
-            className="border p-2 w-full"
-          />
-        </div>
-        <div>
-          <label className="block mb-1">Is Active?</label>
-          <input
-            type="checkbox"
-            checked={isActive}
-            onChange={(e) => setIsActive(e.target.checked)}
-          />
-        </div>
-        <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded">
-          Add Device
-        </button>
-      </form>
-
-      {/* Device List */}
-      <ul className="space-y-2">
-        {devices.map((device) => (
-          <li key={device.id} className="p-2 border rounded">
-            <strong>{device.name}</strong> - {device.ip}:{device.port} (Unit {device.unit_id})  
-            {device.is_active ? ' [Active]' : ' [Inactive]'}
-          </li>
-        ))}
-      </ul>
-    </div>
+    <Main title="Modbus Devices">
+      <div className="space-y-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Modbus Devices</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="text-center py-4">Loading devices...</div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Device ID</TableHead>
+                    <TableHead>IP Address</TableHead>
+                    <TableHead>Port</TableHead>
+                    <TableHead>Slave ID</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Last Poll</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {devices.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center">
+                        No devices found
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    devices.map((device) => (
+                      <TableRow key={device.id}>
+                        <TableCell className="font-medium">{device.name}</TableCell>
+                        <TableCell>{device.device_id}</TableCell>
+                        <TableCell>{device.ip_address}</TableCell>
+                        <TableCell>{device.port}</TableCell>
+                        <TableCell>{device.slave_id}</TableCell>
+                        <TableCell>
+                          <span className={`inline-block px-2 py-1 rounded-full ${
+                            device.status === 'online' ? 'bg-green-100 text-green-800' : 
+                            device.status === 'error' ? 'bg-red-100 text-red-800' : 
+                            'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {device.status}
+                          </span>
+                        </TableCell>
+                        <TableCell>{new Date(device.last_poll_time).toLocaleString()}</TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </Main>
   );
-}
+};
+
+export default ModbusDevices;

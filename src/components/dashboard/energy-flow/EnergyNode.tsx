@@ -49,6 +49,7 @@ const EnergyNode: React.FC<EnergyNodeProps> = ({
       case 'error':
         return "bg-red-500";
       case 'maintenance':
+        return "bg-blue-500";
       case 'inactive':
       case 'offline':
       default:

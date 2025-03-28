@@ -1,168 +1,91 @@
 
-import { toast } from 'sonner';
-import { DeviceFormValues } from '@/components/devices/deviceValidationSchema';
+import { supabase } from '@/integrations/supabase/client';
+import { DeviceType, DeviceStatus } from '@/types/energy';
 
 export interface Device {
   id: string;
   name: string;
-  type: string;
-  status: string;
-  capacity?: number;
+  type: DeviceType;
+  status: DeviceStatus;
   location?: string;
-  description?: string;
-  manufacturer?: string;
-  model?: string;
-  serialNumber?: string;
+  capacity?: number;
   firmware?: string;
   installation_date?: string;
-  lastMaintenanceDate?: string;
-  latitude?: number;
-  longitude?: number;
-  energyCapacity?: number;
-  efficiency?: number;
-  maxVoltage?: number;
-  minVoltage?: number;
-  maxCurrent?: number;
-  minCurrent?: number;
-  nominalVoltage?: number;
-  nominalCurrent?: number;
-  communicationProtocol?: string;
-  dataUpdateFrequency?: number;
+  created_at?: string;
+  updated_at?: string;
+  site_id?: string;
 }
 
-// Mock device data
-const mockDevices: Device[] = [
-  {
-    id: 'device-1',
-    name: 'Solar Panel Array 1',
-    type: 'solar',
-    status: 'online',
-    capacity: 10,
-    location: 'Roof - North',
-    description: 'Main solar panel array',
-    manufacturer: 'SunPower',
-    model: 'X-Series',
-    installation_date: '2022-05-15T00:00:00.000Z'
-  },
-  {
-    id: 'device-2',
-    name: 'Battery Storage 1',
-    type: 'battery',
-    status: 'online',
-    capacity: 13.5,
-    location: 'Utility Room',
-    description: 'Main battery storage',
-    manufacturer: 'Tesla',
-    model: 'Powerwall',
-    installation_date: '2022-05-20T00:00:00.000Z'
+export const getDeviceById = async (deviceId: string): Promise<Device> => {
+  const { data, error } = await supabase
+    .from('devices')
+    .select('*')
+    .eq('id', deviceId)
+    .single();
+    
+  if (error) {
+    console.error("Error fetching device:", error);
+    throw new Error(`Failed to fetch device: ${error.message}`);
   }
-];
+  
+  return data as Device;
+};
 
-// Get all devices
 export const getDevices = async (): Promise<Device[]> => {
-  // This would be a real API call in production
-  return mockDevices;
-};
-
-// Get device by ID
-export const getDeviceById = async (id: string): Promise<Device | null> => {
-  // This would be a real API call in production
-  const device = mockDevices.find(device => device.id === id);
-  return device || null;
-};
-
-// Create a new device
-export const createDevice = async (deviceData: DeviceFormValues): Promise<Device> => {
-  // This would be a real API call in production
-  const newDevice: Device = {
-    id: `device-${Date.now()}`,
-    name: deviceData.name,
-    type: deviceData.type,
-    status: deviceData.status,
-    capacity: deviceData.capacity,
-    location: deviceData.location,
-    description: deviceData.description,
-    manufacturer: deviceData.manufacturer,
-    model: deviceData.model,
-    serialNumber: deviceData.serialNumber,
-    firmware: deviceData.firmware,
-    installation_date: deviceData.installation_date?.toISOString(),
-    lastMaintenanceDate: deviceData.lastMaintenanceDate?.toISOString(),
-    latitude: deviceData.latitude,
-    longitude: deviceData.longitude,
-    energyCapacity: deviceData.energyCapacity,
-    efficiency: deviceData.efficiency,
-    maxVoltage: deviceData.maxVoltage,
-    minVoltage: deviceData.minVoltage,
-    maxCurrent: deviceData.maxCurrent,
-    minCurrent: deviceData.minCurrent,
-    nominalVoltage: deviceData.nominalVoltage,
-    nominalCurrent: deviceData.nominalCurrent,
-    communicationProtocol: deviceData.communicationProtocol,
-    dataUpdateFrequency: deviceData.dataUpdateFrequency,
-  };
-
-  // Add to mock devices
-  mockDevices.push(newDevice);
-  
-  return newDevice;
-};
-
-// Update an existing device
-export const updateDevice = async (id: string, deviceData: DeviceFormValues): Promise<Device | null> => {
-  // This would be a real API call in production
-  const deviceIndex = mockDevices.findIndex(device => device.id === id);
-  
-  if (deviceIndex === -1) {
-    return null;
+  const { data, error } = await supabase
+    .from('devices')
+    .select('*')
+    .order('created_at', { ascending: false });
+    
+  if (error) {
+    console.error("Error fetching devices:", error);
+    throw new Error(`Failed to fetch devices: ${error.message}`);
   }
   
-  const updatedDevice: Device = {
-    ...mockDevices[deviceIndex],
-    name: deviceData.name,
-    type: deviceData.type,
-    status: deviceData.status,
-    capacity: deviceData.capacity,
-    location: deviceData.location,
-    description: deviceData.description,
-    manufacturer: deviceData.manufacturer,
-    model: deviceData.model,
-    serialNumber: deviceData.serialNumber,
-    firmware: deviceData.firmware,
-    installation_date: deviceData.installation_date?.toISOString(),
-    lastMaintenanceDate: deviceData.lastMaintenanceDate?.toISOString(),
-    latitude: deviceData.latitude,
-    longitude: deviceData.longitude,
-    energyCapacity: deviceData.energyCapacity,
-    efficiency: deviceData.efficiency,
-    maxVoltage: deviceData.maxVoltage,
-    minVoltage: deviceData.minVoltage,
-    maxCurrent: deviceData.maxCurrent,
-    minCurrent: deviceData.minCurrent,
-    nominalVoltage: deviceData.nominalVoltage,
-    nominalCurrent: deviceData.nominalCurrent,
-    communicationProtocol: deviceData.communicationProtocol,
-    dataUpdateFrequency: deviceData.dataUpdateFrequency,
-  };
-  
-  mockDevices[deviceIndex] = updatedDevice;
-  
-  return updatedDevice;
+  return data as Device[];
 };
 
-// Delete a device
-export const deleteDevice = async (id: string): Promise<boolean> => {
-  // This would be a real API call in production
-  const deviceIndex = mockDevices.findIndex(device => device.id === id);
-  
-  if (deviceIndex === -1) {
-    return false;
+export const createDevice = async (deviceData: Partial<Device>): Promise<Device> => {
+  const { data, error } = await supabase
+    .from('devices')
+    .insert([deviceData])
+    .select()
+    .single();
+    
+  if (error) {
+    console.error("Error creating device:", error);
+    throw new Error(`Failed to create device: ${error.message}`);
   }
   
-  mockDevices.splice(deviceIndex, 1);
-  
-  return true;
+  return data as Device;
 };
 
-// Alias for compatibility
-export const fetchDeviceById = getDeviceById;
+export const updateDevice = async (deviceId: string, deviceData: Partial<Device>): Promise<Device> => {
+  const { data, error } = await supabase
+    .from('devices')
+    .update(deviceData)
+    .eq('id', deviceId)
+    .select()
+    .single();
+    
+  if (error) {
+    console.error("Error updating device:", error);
+    throw new Error(`Failed to update device: ${error.message}`);
+  }
+  
+  return data as Device;
+};
+
+export const deleteDevice = async (deviceId: string): Promise<void> => {
+  const { error } = await supabase
+    .from('devices')
+    .delete()
+    .eq('id', deviceId);
+    
+  if (error) {
+    console.error("Error deleting device:", error);
+    throw new Error(`Failed to delete device: ${error.message}`);
+  }
+};
+
+export const fetchDeviceById = getDeviceById; // Alias for compatibility

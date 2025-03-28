@@ -1,3 +1,4 @@
+
 // types/system.ts
 
 export type ComponentStatus = 'operational' | 'degraded' | 'maintenance' | 'down';
@@ -22,4 +23,5 @@ export interface SystemEvent {
   component_id: string | null;
   component_name?: string;        // optional override display
   acknowledged: boolean;
+  title?: string;                 // Added to fix the error
 }

@@ -1,5 +1,5 @@
 
-// Types for the site management functionality
+// Updated Site type
 export interface Site {
   id: string;
   name: string;
@@ -10,13 +10,11 @@ export interface Site {
   zipCode?: string;
   timezone?: string;
   capacity?: number;
-  location?: {
-    latitude: number;
-    longitude: number;
-  };
-  created_at?: string;
-  updated_at?: string;
-  // Enhanced fields inspired by MyEMS
+  location: string;        // This is a string, not an object (fixed from previous definition)
+  lat?: number | null;
+  lng?: number | null;
+  created_at: string;
+  updated_at: string;
   description?: string;
   area?: number; // in square meters
   building_type?: string;
@@ -31,7 +29,6 @@ export interface Site {
     energy_cost?: number;
     carbon_emissions?: number;
   };
-  // Additional new fields
   site_code?: string;
   owner?: string;
   construction_year?: number;
@@ -46,19 +43,13 @@ export interface Site {
   };
   photo_url?: string;
   custom_fields?: Record<string, any>;
-  lat?: number; // For compatibility with Supabase
-  lng?: number; // For compatibility with Supabase
 }
 
-export interface SiteContextType {
-  sites: Site[];
-  activeSite: Site | null;
-  isLoading: boolean;
-  error: Error | null;
-  setSites: (sites: Site[]) => void;
-  setActiveSite: (site: Site | null) => void;
-  addSite: (site: Omit<Site, 'id' | 'created_at' | 'updated_at'>) => Promise<Site | null>;
-  updateSite: (id: string, site: Partial<Site>) => Promise<Site | null>;
-  deleteSite: (id: string) => Promise<boolean>;
-  refreshSites: () => Promise<void>;
+// Added for compatibility with EditSite component
+export interface SiteFormValues {
+  name: string;
+  location: string;
+  timezone: string;
+  lat?: number | null;
+  lng?: number | null;
 }
