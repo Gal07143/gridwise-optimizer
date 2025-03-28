@@ -12,7 +12,7 @@ export interface SystemRecommendation {
   status: 'new' | 'in_progress' | 'completed' | 'rejected';
   created_at: string;
   category: string;
-  type: string;
+  type: 'cost' | 'efficiency' | 'maintenance' | 'operational';
   priority: 'high' | 'medium' | 'low';
   estimated_roi: number;
   potential_savings: number;
@@ -69,7 +69,7 @@ export const usePredictions = (initialTimeframe: 'day' | 'week' | 'month' | 'yea
           status: "new",
           created_at: new Date().toISOString(),
           category: "efficiency",
-          type: "schedule_optimization",
+          type: "efficiency",
           priority: "high",
           estimated_roi: 120,
           potential_savings: 240,
@@ -85,7 +85,7 @@ export const usePredictions = (initialTimeframe: 'day' | 'week' | 'month' | 'yea
           status: "new",
           created_at: new Date().toISOString(),
           category: "expansion",
-          type: "capacity_increase",
+          type: "operational",
           priority: "medium",
           estimated_roi: 350,
           potential_savings: 850,
@@ -101,7 +101,7 @@ export const usePredictions = (initialTimeframe: 'day' | 'week' | 'month' | 'yea
           status: "new",
           created_at: new Date().toISOString(),
           category: "optimization",
-          type: "hvac_optimization",
+          type: "cost",
           priority: "low",
           estimated_roi: 90,
           potential_savings: 180,

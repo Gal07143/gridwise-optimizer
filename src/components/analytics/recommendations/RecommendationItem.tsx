@@ -1,7 +1,6 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Lightbulb, DollarSign, Wrench, LineChart, AlertTriangle } from 'lucide-react';
 import { 
   Accordion,
@@ -10,34 +9,27 @@ import {
   AccordionTrigger
 } from '@/components/ui/accordion';
 import { Progress } from '@/components/ui/progress';
-import { SystemRecommendation } from '@/services/predictions/energyPredictionService';
-import { Dialog, DialogTrigger } from '@/components/ui/dialog';
-import RecommendationDialog from './RecommendationDialog';
+import { SystemRecommendation } from '@/hooks/usePredictions';
 
 interface RecommendationItemProps {
   recommendation: SystemRecommendation;
-  onApply: (recommendation: SystemRecommendation, notes: string) => Promise<void>;
-  isApplying: boolean;
+  onClick: () => void;
 }
 
-const RecommendationItem = ({ 
+const RecommendationItem: React.FC<RecommendationItemProps> = ({ 
   recommendation, 
-  onApply,
-  isApplying 
-}: RecommendationItemProps) => {
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [implementationNotes, setImplementationNotes] = useState('');
-
+  onClick 
+}) => {
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'behavioral':
-        return <LineChart className="h-4 w-4" />;
-      case 'system':
-        return <Wrench className="h-4 w-4" />;
+      case 'cost':
+        return <DollarSign className="h-4 w-4" />;
+      case 'efficiency':
+        return <Lightbulb className="h-4 w-4" />;
       case 'maintenance':
         return <AlertTriangle className="h-4 w-4" />;
-      case 'optimization':
-        return <Lightbulb className="h-4 w-4" />;
+      case 'operational':
+        return <LineChart className="h-4 w-4" />;
       default:
         return <Lightbulb className="h-4 w-4" />;
     }
@@ -54,12 +46,6 @@ const RecommendationItem = ({
       default:
         return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
     }
-  };
-
-  const handleApplyRecommendation = async () => {
-    await onApply(recommendation, implementationNotes);
-    setDialogOpen(false);
-    setImplementationNotes('');
   };
 
   return (
@@ -105,36 +91,21 @@ const RecommendationItem = ({
             <div className="flex justify-between items-center mb-1">
               <span className="text-xs text-muted-foreground">Confidence</span>
               <span className="text-xs font-medium">
-                {Math.round(recommendation.confidence * 100)}%
+                {Math.round(recommendation.confidence)}%
               </span>
             </div>
             <Progress 
-              value={recommendation.confidence * 100} 
+              value={recommendation.confidence} 
               className="h-1.5" 
             />
           </div>
           
-          <Dialog 
-            open={dialogOpen} 
-            onOpenChange={setDialogOpen}
+          <button
+            onClick={onClick}
+            className="mt-2 w-full px-4 py-2 bg-primary text-primary-foreground text-sm font-medium rounded-md hover:bg-primary/90 transition-colors"
           >
-            <DialogTrigger asChild>
-              <Button
-                size="sm"
-                className="mt-2 w-full"
-              >
-                Apply Recommendation
-              </Button>
-            </DialogTrigger>
-            <RecommendationDialog
-              recommendation={recommendation}
-              notes={implementationNotes}
-              onNotesChange={setImplementationNotes}
-              onApply={handleApplyRecommendation}
-              onCancel={() => setDialogOpen(false)}
-              isApplying={isApplying}
-            />
-          </Dialog>
+            Apply Recommendation
+          </button>
         </div>
       </AccordionContent>
     </AccordionItem>
