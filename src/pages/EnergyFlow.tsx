@@ -4,19 +4,7 @@ import { Main } from '@/components/ui/main';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useSiteContext } from '@/contexts/SiteContext';
-
-// Import a simpler placeholder component that doesn't have errors
-const EnergyFlowPlaceholder = ({ siteId }: { siteId: string }) => {
-  return (
-    <div className="p-6 bg-white dark:bg-gridx-dark-gray/90 border border-gray-100 dark:border-gray-700/30 rounded-xl shadow-sm">
-      <h3 className="text-lg font-medium mb-4 text-gridx-navy dark:text-white">Energy Flow Visualization</h3>
-      <p className="text-gridx-gray dark:text-gray-400 mb-4 text-sm">Site ID: {siteId}</p>
-      <div className="h-[400px] bg-gray-50 dark:bg-gridx-navy/30 rounded-lg flex items-center justify-center">
-        <p className="text-gridx-gray dark:text-gray-400">Energy flow visualization will be displayed here.</p>
-      </div>
-    </div>
-  );
-};
+import MinimalistEnergyFlow from '@/components/energy/MinimalistEnergyFlow';
 
 const EnergyFlow: React.FC = () => {
   const { activeSite } = useSiteContext();
@@ -39,7 +27,7 @@ const EnergyFlow: React.FC = () => {
         
         <TabsContent value="realtime" className="space-y-4 mt-4">
           {activeSite ? (
-            <EnergyFlowPlaceholder siteId={activeSite.id} />
+            <MinimalistEnergyFlow siteId={activeSite.id} />
           ) : (
             <Card className="bg-white dark:bg-gridx-dark-gray/90 border border-gray-100 dark:border-gray-700/30 shadow-sm">
               <CardContent className="py-6">
