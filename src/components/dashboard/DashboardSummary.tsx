@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Zap, Battery, Sun, Wind, Activity } from 'lucide-react';
 import MetricsCard from '@/components/dashboard/MetricsCard';
@@ -9,6 +8,7 @@ import DeviceManagement from './DeviceManagement';
 import FaultSummaryCard from './FaultSummaryCard';
 import LiveTelemetryChart from './LiveTelemetryChart';
 import AlertSummaryCard from './AlertSummaryCard';
+import { Fault } from '@/types/fault';
 
 // Mock telemetry data
 const mockTelemetry = {
@@ -19,8 +19,8 @@ const mockTelemetry = {
   timestamp: new Date().toISOString()
 };
 
-// Mock faults data - but now mutable
-const mockFaults = [
+// Mock faults data with correct typing
+const mockFaults: Fault[] = [
   {
     id: 'fault-1',
     title: 'Inverter Overheating',
@@ -52,7 +52,7 @@ const mockFaults = [
 
 const DashboardSummary = () => {
   const [telemetry, setTelemetry] = useState<any | null>(mockTelemetry);
-  const [faults, setFaults] = useState(mockFaults);
+  const [faults, setFaults] = useState<Fault[]>(mockFaults);
 
   useEffect(() => {
     // In a real implementation, this would subscribe to telemetry events

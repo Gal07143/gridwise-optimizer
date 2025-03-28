@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,7 +14,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Building2, Users, Clock, GanttChart, Map, Info } from 'lucide-react';
 
-// Validation schema - enhanced with more fields
 const siteFormSchema = z.object({
   name: z.string().min(2, { message: "Site name must be at least 2 characters." }),
   description: z.string().optional(),
@@ -71,8 +69,8 @@ const SiteForm = ({ initialData, onSubmit, isSubmitting }: SiteFormProps) => {
       country: initialData?.country || '',
       zipCode: initialData?.zipCode || '',
       timezone: initialData?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
-      lat: initialData?.location?.latitude || initialData?.lat || null,
-      lng: initialData?.location?.longitude || initialData?.lng || null,
+      lat: initialData?.lat || null,
+      lng: initialData?.lng || null,
       capacity: initialData?.capacity || null,
       area: initialData?.area || null,
       building_type: initialData?.building_type || '',

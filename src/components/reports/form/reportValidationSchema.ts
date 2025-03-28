@@ -21,7 +21,11 @@ export const reportValidationSchema = z.object({
   parameters: z.record(z.any()).optional(),
 });
 
-export type ReportFormValues = z.infer<typeof reportValidationSchema>;
+export type ReportFormValues = z.infer<typeof reportValidationSchema> & {
+  template_id?: string;
+  is_template?: boolean;
+  parameters?: Record<string, any>;
+};
 
 export const getDefaultValues = (): ReportFormValues => ({
   title: '',

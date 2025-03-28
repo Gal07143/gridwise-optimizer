@@ -1,427 +1,353 @@
 import React, { useState, useEffect } from 'react';
 import AppLayout from '@/components/layout/AppLayout';
-import SystemOverview from '@/components/system-status/SystemOverview';
-import IntegrationStatus from '@/components/system-status/IntegrationStatus';
-import PerformanceMetrics from '@/components/system-status/PerformanceMetrics';
-import EventsList from '@/components/system-status/EventsList';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { toast } from 'sonner';
-import { 
-  RefreshCw, 
-  AlertTriangle, 
-  Settings, 
-  Download, 
-  HardDrive, 
-  ArrowDownToLine, 
-  Clock, 
-  CheckCircle,
-  Zap
-} from 'lucide-react';
-import { SystemComponent, SystemEvent } from '@/services/systemStatusService';
-
-// Mock system status data
-const mockComponents: SystemComponent[] = [
-  {
-    id: '1',
-    name: 'Database Server',
-    status: 'healthy',
-    type: 'infrastructure',
-    lastUpdated: new Date().toISOString(),
-    metrics: {
-      uptime: '99.998%',
-      responseTime: '45ms'
-    }
-  },
-  {
-    id: '2',
-    name: 'MQTT Broker',
-    status: 'healthy',
-    type: 'service',
-    lastUpdated: new Date().toISOString(),
-    metrics: {
-      connections: '23',
-      messageRate: '250/min'
-    }
-  },
-  {
-    id: '3',
-    name: 'Energy Prediction Engine',
-    status: 'degraded',
-    type: 'service',
-    lastUpdated: new Date(Date.now() - 3600000).toISOString(),
-    metrics: {
-      accuracy: '89%',
-      latency: '1.2s'
-    }
-  },
-  {
-    id: '4',
-    name: 'Modbus Interface',
-    status: 'healthy',
-    type: 'controller',
-    lastUpdated: new Date().toISOString(),
-    metrics: {
-      devices: '12',
-      pollRate: '5s'
-    }
-  },
-  {
-    id: '5',
-    name: 'Storage Backup',
-    status: 'maintenance',
-    type: 'storage',
-    lastUpdated: new Date(Date.now() - 86400000).toISOString(),
-    metrics: {
-      spaceUsed: '68%',
-      backupStatus: 'Scheduled'
-    }
-  },
-  {
-    id: '6',
-    name: 'User Authentication',
-    status: 'healthy',
-    type: 'security',
-    lastUpdated: new Date().toISOString(),
-    metrics: {
-      activeUsers: '8',
-      failedLogins: '2'
-    }
-  }
-];
-
-// Mock system events data
-const systemEvents: SystemEvent[] = [
-  {
-    id: "event-1",
-    title: "Database Connection Issue",
-    timestamp: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
-    severity: "warning",
-    message: "Database connection latency exceeded threshold (150ms)",
-    component_id: "db-primary",
-    component_name: "Primary Database",
-    acknowledged: false
-  },
-  {
-    id: "event-2",
-    title: "API Rate Limit Warning",
-    timestamp: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
-    severity: "info",
-    message: "External API rate limit at 80% of maximum",
-    component_id: "api-service",
-    component_name: "API Service",
-    acknowledged: true
-  },
-  {
-    id: "event-3",
-    title: "Storage Space Critical",
-    timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
-    severity: "critical",
-    message: "Time series database storage below 10% free space",
-    component_id: "tsdb",
-    component_name: "Time Series Database",
-    acknowledged: false
-  }
-];
+import { SystemComponent, SystemEvent, ComponentStatus } from '@/types/system';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { formatTimestamp } from '@/lib/utils';
+import { Separator } from '@/components/ui/separator';
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { Search } from 'lucide-react';
+import { Alert } from '@/types/alert';
 
 const SystemStatus = () => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('overview');
   const [components, setComponents] = useState<SystemComponent[]>([]);
-  
+  const [events, setEvents] = useState<SystemEvent[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredComponents, setFilteredComponents] = useState<SystemComponent[]>([]);
+
   useEffect(() => {
-    // Simulate loading data
-    const timer = setTimeout(() => {
-      setComponents(mockComponents);
-      setIsLoading(false);
-    }, 1200);
-    
-    return () => clearTimeout(timer);
+    // Mock data for system components
+    const mockComponents: SystemComponent[] = [
+      {
+        id: 'core-001',
+        component_name: 'Core Services',
+        status: 'operational',
+        details: 'All core services are running smoothly.',
+        latency: 25,
+        last_restart: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
+        updated_at: new Date().toISOString()
+      },
+      {
+        id: 'db-001',
+        component_name: 'Main Database',
+        status: 'operational',
+        details: 'Database is online and responding to queries.',
+        latency: 15,
+        last_restart: new Date(Date.now() - 7200000).toISOString(), // 2 hours ago
+        updated_at: new Date().toISOString()
+      },
+      {
+        id: 'api-001',
+        component_name: 'API Gateway',
+        status: 'degraded',
+        details: 'Experiencing higher than normal latency.',
+        latency: 150,
+        last_restart: new Date(Date.now() - 1800000).toISOString(), // 30 minutes ago
+        updated_at: new Date().toISOString()
+      },
+      {
+        id: 'auth-001',
+        component_name: 'Authentication Service',
+        status: 'operational',
+        details: 'Authentication service is functioning normally.',
+        latency: 10,
+        last_restart: new Date(Date.now() - 86400000).toISOString(), // 24 hours ago
+        updated_at: new Date().toISOString()
+      },
+      {
+        id: 'cache-001',
+        component_name: 'Cache Server',
+        status: 'operational',
+        details: 'Cache server is online and serving requests.',
+        latency: 5,
+        last_restart: new Date(Date.now() - 43200000).toISOString(), // 12 hours ago
+        updated_at: new Date().toISOString()
+      },
+      {
+        id: 'mqtt-001',
+        component_name: 'MQTT Broker',
+        status: 'operational',
+        details: 'MQTT broker is online and handling messages.',
+        latency: 8,
+        last_restart: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
+        updated_at: new Date().toISOString()
+      },
+      {
+        id: 'ingest-001',
+        component_name: 'Data Ingestion Service',
+        status: 'operational',
+        details: 'Data ingestion service is processing data.',
+        latency: 30,
+        last_restart: new Date(Date.now() - 900000).toISOString(), // 15 minutes ago
+        updated_at: new Date().toISOString()
+      },
+      {
+        id: 'report-001',
+        component_name: 'Reporting Service',
+        status: 'operational',
+        details: 'Reporting service is generating reports.',
+        latency: 40,
+        last_restart: new Date(Date.now() - 10800000).toISOString(), // 3 hours ago
+        updated_at: new Date().toISOString()
+      },
+      {
+        id: 'alert-001',
+        component_name: 'Alerting Service',
+        status: 'operational',
+        details: 'Alerting service is monitoring system health.',
+        latency: 12,
+        last_restart: new Date(Date.now() - 14400000).toISOString(), // 4 hours ago
+        updated_at: new Date().toISOString()
+      },
+      {
+        id: 'ui-001',
+        component_name: 'User Interface',
+        status: 'operational',
+        details: 'User interface is responsive and accessible.',
+        latency: 50,
+        last_restart: new Date(Date.now() - 5400000).toISOString(), // 1.5 hours ago
+        updated_at: new Date().toISOString()
+      }
+    ];
+
+    // Mock data for system events
+    const newEvents: SystemEvent[] = [
+      {
+        id: crypto.randomUUID(),
+        timestamp: new Date().toISOString(),
+        severity: 'error',
+        message: 'Database connection failed - retrying',
+        component_id: 'db-001',
+        component_name: 'Main Database',
+        acknowledged: false,
+        title: 'Database Connection Error'
+      },
+      {
+        id: crypto.randomUUID(),
+        timestamp: new Date(Date.now() - 60000).toISOString(), // 1 minute ago
+        severity: 'warning',
+        message: 'High latency detected in API gateway',
+        component_id: 'api-001',
+        component_name: 'API Gateway',
+        acknowledged: false,
+        title: 'API Latency Issue'
+      },
+      {
+        id: crypto.randomUUID(),
+        timestamp: new Date(Date.now() - 120000).toISOString(), // 2 minutes ago
+        severity: 'info',
+        message: 'Cache server restarted successfully',
+        component_id: 'cache-001',
+        component_name: 'Cache Server',
+        acknowledged: true,
+        title: 'Cache Server Restart'
+      },
+      {
+        id: crypto.randomUUID(),
+        timestamp: new Date(Date.now() - 180000).toISOString(), // 3 minutes ago
+        severity: 'critical',
+        message: 'MQTT Broker is down',
+        component_id: 'mqtt-001',
+        component_name: 'MQTT Broker',
+        acknowledged: false,
+        title: 'MQTT Broker Down'
+      },
+      {
+        id: crypto.randomUUID(),
+        timestamp: new Date(Date.now() - 240000).toISOString(), // 4 minutes ago
+        severity: 'warning',
+        message: 'Data Ingestion Service is running slow',
+        component_id: 'ingest-001',
+        component_name: 'Data Ingestion Service',
+        acknowledged: true,
+        title: 'Data Ingestion Slow'
+      },
+      {
+        id: crypto.randomUUID(),
+        timestamp: new Date(Date.now() - 300000).toISOString(), // 5 minutes ago
+        severity: 'info',
+        message: 'Reporting Service generated a new report',
+        component_id: 'report-001',
+        component_name: 'Reporting Service',
+        acknowledged: false,
+        title: 'New Report Generated'
+      },
+      {
+        id: crypto.randomUUID(),
+        timestamp: new Date(Date.now() - 360000).toISOString(), // 6 minutes ago
+        severity: 'error',
+        message: 'Alerting Service failed to send an email',
+        component_id: 'alert-001',
+        component_name: 'Alerting Service',
+        acknowledged: false,
+        title: 'Alerting Service Email Failure'
+      },
+      {
+        id: crypto.randomUUID(),
+        timestamp: new Date(Date.now() - 420000).toISOString(), // 7 minutes ago
+        severity: 'info',
+        message: 'User Interface is updated',
+        component_id: 'ui-001',
+        component_name: 'User Interface',
+        acknowledged: true,
+        title: 'UI Updated'
+      },
+      {
+        id: crypto.randomUUID(),
+        timestamp: new Date(Date.now() - 480000).toISOString(), // 8 minutes ago
+        severity: 'warning',
+        message: 'Authentication Service is under heavy load',
+        component_id: 'auth-001',
+        component_name: 'Authentication Service',
+        acknowledged: false,
+        title: 'Auth Service Load'
+      },
+      {
+        id: crypto.randomUUID(),
+        timestamp: new Date(Date.now() - 540000).toISOString(), // 9 minutes ago
+        severity: 'info',
+        message: 'Core Services are running smoothly',
+        component_id: 'core-001',
+        component_name: 'Core Services',
+        acknowledged: true,
+        title: 'Core Services OK'
+      }
+    ];
+
+    setComponents(mockComponents);
+    setEvents(newEvents);
   }, []);
-  
-  const handleRefresh = () => {
-    setIsLoading(true);
-    toast.info('Refreshing system status...');
-    
-    // Simulate refresh delay
-    setTimeout(() => {
-      setComponents(mockComponents);
-      setIsLoading(false);
-      toast.success('System status refreshed');
-    }, 1500);
+
+  useEffect(() => {
+    const filtered = components.filter(component =>
+      component.component_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      component.details.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    setFilteredComponents(filtered);
+  }, [searchQuery, components]);
+
+  const getStatusBadge = (status: ComponentStatus) => {
+    switch (status) {
+      case 'operational':
+        return <Badge variant="success">Operational</Badge>;
+      case 'degraded':
+        return <Badge variant="warning">Degraded</Badge>;
+      case 'maintenance':
+        return <Badge variant="secondary">Maintenance</Badge>;
+      case 'down':
+        return <Badge variant="destructive">Down</Badge>;
+      default:
+        return <Badge>Unknown</Badge>;
+    }
   };
-  
+
+  const getSeverityBadge = (severity: SystemEvent['severity']) => {
+    switch (severity) {
+      case 'info':
+        return <Badge variant="outline">Info</Badge>;
+      case 'warning':
+        return <Badge variant="warning">Warning</Badge>;
+      case 'error':
+        return <Badge variant="destructive">Error</Badge>;
+      case 'critical':
+        return <Badge variant="destructive">Critical</Badge>;
+      default:
+        return <Badge>Unknown</Badge>;
+    }
+  };
+
   return (
     <AppLayout>
-      <div className="p-6 space-y-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h1 className="text-2xl font-semibold mb-1">System Status</h1>
-            <p className="text-muted-foreground">
-              Monitor the health and performance of all system components
-            </p>
-          </div>
-          
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handleRefresh} disabled={isLoading}>
-              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
-            <Button variant="outline">
-              <Download className="h-4 w-4 mr-2" />
-              Export Report
-            </Button>
-            <Button variant="default">
-              <Settings className="h-4 w-4 mr-2" />
-              Configure
-            </Button>
-          </div>
+      <div className="flex-1 p-6">
+        <div className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>System Components</CardTitle>
+              <CardDescription>Status of key system components</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-4 flex items-center space-x-2">
+                <Search className="h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Filter components..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="h-8"
+                />
+              </div>
+              <ScrollArea className="h-[400px] w-full rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[200px]">Component</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Details</TableHead>
+                      <TableHead>Latency (ms)</TableHead>
+                      <TableHead>Last Restart</TableHead>
+                      <TableHead>Updated At</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredComponents.map((component) => (
+                      <TableRow key={component.id}>
+                        <TableCell className="font-medium">{component.component_name}</TableCell>
+                        <TableCell>{getStatusBadge(component.status)}</TableCell>
+                        <TableCell>{component.details}</TableCell>
+                        <TableCell>{component.latency}</TableCell>
+                        <TableCell>{formatTimestamp(component.last_restart)}</TableCell>
+                        <TableCell>{formatTimestamp(component.updated_at)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>System Events</CardTitle>
+              <CardDescription>Recent system events and logs</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-[400px] w-full rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[150px]">Timestamp</TableHead>
+                      <TableHead className="w-[120px]">Severity</TableHead>
+                      <TableHead>Message</TableHead>
+                      <TableHead className="w-[150px]">Component</TableHead>
+                      <TableHead className="w-[100px]">Acknowledged</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {events.map((event) => (
+                      <TableRow key={event.id}>
+                        <TableCell>{formatTimestamp(event.timestamp)}</TableCell>
+                        <TableCell>{getSeverityBadge(event.severity)}</TableCell>
+                        <TableCell>{event.message}</TableCell>
+                        <TableCell>{event.component_name || 'N/A'}</TableCell>
+                        <TableCell>{event.acknowledged ? 'Yes' : 'No'}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </ScrollArea>
+            </CardContent>
+          </Card>
         </div>
-        
-        <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="performance">Performance</TabsTrigger>
-            <TabsTrigger value="integrations">Integrations</TabsTrigger>
-            <TabsTrigger value="events">Events</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="overview" className="pt-4">
-            <SystemOverview components={components} isLoading={isLoading} />
-            
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <HardDrive className="mr-2 h-5 w-5 text-blue-500" />
-                    Storage Status
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <div className="flex justify-between mb-1">
-                        <span className="text-sm">Database Storage</span>
-                        <span className="text-sm font-medium">68% (34GB/50GB)</span>
-                      </div>
-                      <div className="h-2 bg-gray-200 rounded-full">
-                        <div className="h-2 bg-blue-500 rounded-full" style={{ width: '68%' }}></div>
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex justify-between mb-1">
-                        <span className="text-sm">Telemetry Archive</span>
-                        <span className="text-sm font-medium">42% (210GB/500GB)</span>
-                      </div>
-                      <div className="h-2 bg-gray-200 rounded-full">
-                        <div className="h-2 bg-green-500 rounded-full" style={{ width: '42%' }}></div>
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex justify-between mb-1">
-                        <span className="text-sm">Log Storage</span>
-                        <span className="text-sm font-medium">91% (9.1GB/10GB)</span>
-                      </div>
-                      <div className="h-2 bg-gray-200 rounded-full">
-                        <div className="h-2 bg-red-500 rounded-full" style={{ width: '91%' }}></div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <ArrowDownToLine className="mr-2 h-5 w-5 text-green-500" />
-                    Latest Updates
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-start gap-3">
-                      <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
-                      <div>
-                        <p className="font-medium">System update v2.4.0 installed</p>
-                        <p className="text-sm text-muted-foreground">30 minutes ago</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <AlertTriangle className="h-5 w-5 text-yellow-500 mt-0.5" />
-                      <div>
-                        <p className="font-medium">Database maintenance completed</p>
-                        <p className="text-sm text-muted-foreground">2 hours ago</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
-                      <div>
-                        <p className="font-medium">Security patches applied</p>
-                        <p className="text-sm text-muted-foreground">Yesterday</p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Clock className="mr-2 h-5 w-5 text-orange-500" />
-                    Scheduled Maintenance
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-start gap-3">
-                      <div className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-semibold">
-                        Tomorrow
-                      </div>
-                      <div>
-                        <p className="font-medium">Database optimization</p>
-                        <p className="text-sm text-muted-foreground">02:00 - 03:00 AM</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <div className="px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs font-semibold">
-                        Jul 15
-                      </div>
-                      <div>
-                        <p className="font-medium">API Gateway upgrade</p>
-                        <p className="text-sm text-muted-foreground">01:00 - 02:00 AM</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <div className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs font-semibold">
-                        Jul 20
-                      </div>
-                      <div>
-                        <p className="font-medium">System backup</p>
-                        <p className="text-sm text-muted-foreground">03:00 - 04:00 AM</p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="performance" className="pt-4">
-            <PerformanceMetrics 
-              metrics={[
-                {
-                  id: 'cpu-usage',
-                  name: 'CPU Usage',
-                  value: 32,
-                  unit: '%',
-                  status: 'good',
-                  trend: 'stable',
-                  change: 0,
-                  history: Array(24).fill(0).map((_, i) => ({
-                    timestamp: new Date(Date.now() - i * 3600000).toISOString(),
-                    value: 30 + Math.random() * 10
-                  }))
-                },
-                {
-                  id: 'memory-usage',
-                  name: 'Memory Usage',
-                  value: 58,
-                  unit: '%',
-                  status: 'good',
-                  trend: 'up',
-                  change: 5,
-                  history: Array(24).fill(0).map((_, i) => ({
-                    timestamp: new Date(Date.now() - i * 3600000).toISOString(),
-                    value: 50 + Math.random() * 15
-                  }))
-                },
-                {
-                  id: 'disk-usage',
-                  name: 'Disk Usage',
-                  value: 72,
-                  unit: '%',
-                  status: 'warning',
-                  trend: 'up',
-                  change: 8,
-                  threshold: 80,
-                  history: Array(24).fill(0).map((_, i) => ({
-                    timestamp: new Date(Date.now() - i * 3600000).toISOString(),
-                    value: 65 + Math.random() * 15
-                  }))
-                }
-              ]}
-            />
-          </TabsContent>
-          
-          <TabsContent value="integrations" className="pt-4">
-            <IntegrationStatus 
-              integrations={[
-                {
-                  id: 'modbus-gateway',
-                  name: 'Modbus Gateway',
-                  type: 'modbus',
-                  status: 'online',
-                  latency: 48,
-                  successRate: 99.8,
-                  lastSync: new Date(Date.now() - 1200000).toISOString()
-                },
-                {
-                  id: 'mqtt-broker',
-                  name: 'MQTT Broker',
-                  type: 'mqtt',
-                  status: 'online',
-                  latency: 32,
-                  successRate: 100,
-                  lastSync: new Date(Date.now() - 300000).toISOString()
-                },
-                {
-                  id: 'rest-api',
-                  name: 'Weather API',
-                  type: 'api',
-                  status: 'degraded',
-                  latency: 257,
-                  successRate: 95.5,
-                  lastSync: new Date(Date.now() - 900000).toISOString()
-                }
-              ]}
-            />
-          </TabsContent>
-          
-          <TabsContent value="events" className="pt-4">
-            <EventsList 
-              events={[
-                {
-                  id: 'evt-001',
-                  title: 'System Update Available',
-                  description: 'A new system update v3.5.2 is available for installation',
-                  severity: 'info',
-                  timestamp: new Date(Date.now() - 8600000).toISOString(),
-                  source: 'system',
-                  acknowledged: false
-                },
-                {
-                  id: 'evt-002',
-                  title: 'Database Backup Completed',
-                  description: 'Scheduled database backup completed successfully',
-                  severity: 'info',
-                  timestamp: new Date(Date.now() - 36000000).toISOString(),
-                  source: 'database',
-                  acknowledged: true
-                },
-                {
-                  id: 'evt-003',
-                  title: 'High CPU Usage Detected',
-                  description: 'System CPU usage exceeded 85% for more than 10 minutes',
-                  severity: 'warning',
-                  timestamp: new Date(Date.now() - 1800000).toISOString(),
-                  source: 'monitoring',
-                  acknowledged: false
-                }
-              ]}
-            />
-          </TabsContent>
-        </Tabs>
       </div>
     </AppLayout>
   );

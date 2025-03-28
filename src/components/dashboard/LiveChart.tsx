@@ -12,7 +12,7 @@ export interface LiveChartProps {
   animated?: boolean; // Alias for animate for backward compatibility
   showAxis?: boolean;
   showGrid?: boolean;
-  animationDelay?: string; // Added missing property
+  animationDelay?: string; // Added property
 }
 
 const LiveChart: React.FC<LiveChartProps> = ({

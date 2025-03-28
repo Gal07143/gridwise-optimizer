@@ -8,7 +8,7 @@ import usePredictions from '@/hooks/usePredictions';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface PredictionsCardProps {
-  timeframe: string;
+  timeframe: 'day' | 'week' | 'month' | 'year';
   customData?: any[];
 }
 

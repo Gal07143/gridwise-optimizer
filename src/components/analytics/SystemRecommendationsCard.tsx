@@ -1,112 +1,96 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Lightbulb } from 'lucide-react';
-import { 
-  Accordion
-} from '@/components/ui/accordion';
+import { Lightbulb, ChevronRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { SystemRecommendation, applyRecommendation } from '@/services/predictions/energyPredictionService';
-import { toast } from 'sonner';
 import NoRecommendations from './recommendations/NoRecommendations';
 import RecommendationItem from './recommendations/RecommendationItem';
+import RecommendationDialog from './recommendations/RecommendationDialog';
+import { toast } from 'sonner';
+import { SystemRecommendation, applyRecommendation } from '@/hooks/usePredictions';
 
 interface SystemRecommendationsCardProps {
   recommendations: SystemRecommendation[];
   isLoading: boolean;
-  onRefresh?: () => void;
 }
 
-const SystemRecommendationsCard = ({ 
-  recommendations,
-  isLoading,
-  onRefresh 
-}: SystemRecommendationsCardProps) => {
+const SystemRecommendationsCard: React.FC<SystemRecommendationsCardProps> = ({ 
+  recommendations, 
+  isLoading 
+}) => {
+  const [selectedRecommendation, setSelectedRecommendation] = useState<SystemRecommendation | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isApplying, setIsApplying] = useState(false);
-  
-  const handleApplyRecommendation = async (recommendation: SystemRecommendation, notes: string) => {
+
+  const handleApply = async (recommendationId: string) => {
     setIsApplying(true);
-    
     try {
-      const success = await applyRecommendation(
-        recommendation.id,
-        notes
-      );
-      
-      if (success) {
-        toast.success("Recommendation applied successfully", {
-          description: "The system will adapt based on this feedback"
-        });
-        
-        // Refresh recommendations if a refresh handler was provided
-        if (onRefresh) {
-          setTimeout(onRefresh, 500);
-        }
-      }
+      await applyRecommendation(recommendationId);
+      toast.success('Recommendation applied successfully');
+      setIsDialogOpen(false);
     } catch (error) {
-      console.error("Error applying recommendation:", error);
-      toast.error("Failed to apply recommendation");
+      toast.error('Failed to apply recommendation');
+      console.error('Error applying recommendation:', error);
     } finally {
       setIsApplying(false);
     }
   };
 
-  const renderContent = () => {
-    if (isLoading) {
-      return (
-        <div className="space-y-4">
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-24 w-full" />
-        </div>
-      );
-    }
-    
-    if (recommendations.length === 0) {
-      return <NoRecommendations />;
-    }
-    
-    return (
-      <Accordion type="single" collapsible className="w-full">
-        {recommendations.map((recommendation) => (
-          <RecommendationItem 
-            key={recommendation.id}
-            recommendation={recommendation}
-            onApply={handleApplyRecommendation}
-            isApplying={isApplying}
-          />
-        ))}
-      </Accordion>
-    );
-  };
-
   return (
     <Card className="shadow-md">
       <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Lightbulb className="h-5 w-5 text-amber-500" />
-              System Recommendations
-            </CardTitle>
-            <CardDescription>
-              ML-powered suggestions to optimize your energy system
-            </CardDescription>
-          </div>
-          {!isLoading && recommendations.length > 0 && (
-            <Badge 
-              variant="outline" 
-              className="bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400"
-            >
-              {recommendations.length} recommendations
-            </Badge>
-          )}
-        </div>
+        <CardTitle className="text-lg flex items-center gap-2">
+          <Lightbulb className="h-5 w-5 text-amber-500" />
+          System Recommendations
+        </CardTitle>
+        <CardDescription>
+          AI-powered suggestions to improve your energy system
+        </CardDescription>
       </CardHeader>
       <CardContent>
-        {renderContent()}
+        {isLoading ? (
+          <div className="space-y-3">
+            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-20 w-full" />
+          </div>
+        ) : recommendations.length === 0 ? (
+          <NoRecommendations />
+        ) : (
+          <div className="space-y-3">
+            {recommendations.slice(0, 3).map((recommendation) => (
+              <RecommendationItem 
+                key={recommendation.id}
+                recommendation={recommendation}
+                onClick={() => {
+                  setSelectedRecommendation(recommendation);
+                  setIsDialogOpen(true);
+                }}
+              />
+            ))}
+            
+            {recommendations.length > 3 && (
+              <div className="pt-2">
+                <Button variant="ghost" size="sm" className="w-full text-muted-foreground">
+                  View all recommendations
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
       </CardContent>
+      
+      {selectedRecommendation && (
+        <RecommendationDialog
+          open={isDialogOpen}
+          onOpenChange={setIsDialogOpen}
+          recommendation={selectedRecommendation}
+          onApply={() => handleApply(selectedRecommendation.id)}
+          isApplying={isApplying}
+        />
+      )}
     </Card>
   );
 };

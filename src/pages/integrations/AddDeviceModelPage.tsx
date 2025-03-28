@@ -25,7 +25,7 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
-import { categoryNames } from '@/hooks/useDeviceModels';
+import { categoryNames } from '@/types/device-model';
 import { toast } from 'sonner';
 
 const AddDeviceModelPage = () => {

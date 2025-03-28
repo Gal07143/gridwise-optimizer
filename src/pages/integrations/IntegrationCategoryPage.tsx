@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 import AppLayout from '@/components/layout/AppLayout';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import ErrorMessage from '@/components/ui/error-message';
-import { useDeviceModels } from '@/hooks/useDeviceModels';
+import { useIntegrationCategory } from '@/hooks/useIntegrationCategory';
 import IntegrationDeviceModelsCard from '@/components/integrations/IntegrationDeviceModelsCard';
 import IntegrationInstallationCard from '@/components/integrations/IntegrationInstallationCard';
 import PageHeader from '@/components/pages/PageHeader';
@@ -26,7 +26,7 @@ const IntegrationCategoryPage = () => {
     handleSort,
     deviceCount,
     categoryName
-  } = useDeviceModels(categoryId !== 'all' ? categoryId : undefined);
+  } = useIntegrationCategory(categoryId !== 'all' ? categoryId : '');
   
   if (isLoading) {
     return (
