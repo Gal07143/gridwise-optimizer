@@ -9,22 +9,25 @@ import {
 } from '@/services/predictions/energyPredictionService';
 
 export interface UsePredictionsResult {
-  predictionData: PredictionDataPoint[];
+  predictions: PredictionDataPoint[];
   recommendations: SystemRecommendation[];
   isLoading: boolean;
   error: Error | null;
-  refreshData: () => void;
+  predictionDays: number;
+  setPredictionDays: (days: number) => void;
+  refetch: () => void;
 }
 
 export function usePredictions(
   timeframe: 'day' | 'week' | 'month' | 'year' = 'day',
-  dataType: 'energy_consumption' | 'energy_production' | 'cost_analysis' | 'device_performance' | 'efficiency_analysis' = 'energy_consumption'
+  dataType: string = 'energy_consumption'
 ): UsePredictionsResult {
   const { activeSite } = useSiteContext();
-  const [predictionData, setPredictionData] = useState<PredictionDataPoint[]>([]);
+  const [predictions, setPredictions] = useState<PredictionDataPoint[]>([]);
   const [recommendations, setRecommendations] = useState<SystemRecommendation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [predictionDays, setPredictionDays] = useState(7);
 
   const fetchData = async () => {
     if (!activeSite) return;
@@ -35,7 +38,7 @@ export function usePredictions(
     try {
       // Fetch prediction data
       const predData = await generatePredictionData(timeframe, dataType);
-      setPredictionData(predData);
+      setPredictions(predData);
       
       // Fetch recommendations
       const recData = await getSystemRecommendations();
@@ -55,11 +58,13 @@ export function usePredictions(
   }, [activeSite?.id, timeframe, dataType]);
 
   return {
-    predictionData,
+    predictions,
     recommendations,
     isLoading,
     error,
-    refreshData: fetchData
+    predictionDays,
+    setPredictionDays,
+    refetch: fetchData
   };
 }
 

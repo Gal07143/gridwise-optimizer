@@ -86,17 +86,17 @@ const RecommendationItem = ({
                 <span>Potential Savings</span>
               </div>
               <div className="text-sm font-medium text-green-700 dark:text-green-400">
-                {recommendation.potentialSavings}
+                {recommendation.potential_savings}
               </div>
             </div>
             
             <div className="bg-blue-50 dark:bg-blue-900/20 p-2 rounded-md">
               <div className="flex items-center text-xs text-muted-foreground mb-1 gap-1">
                 <Wrench className="h-3 w-3" />
-                <span>Implementation Cost</span>
+                <span>Implementation Effort</span>
               </div>
               <div className="text-sm font-medium">
-                {recommendation.implementationCost}
+                {recommendation.implementation_effort}
               </div>
             </div>
           </div>

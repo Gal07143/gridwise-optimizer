@@ -1,60 +1,79 @@
 import React from 'react';
-import { SidebarNavSection } from './SidebarNavSection';
-import { useSiteContext } from '@/contexts/SiteContext';
-import { sidebarNavData } from './sidebarNavData';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet"
-import { Menu } from 'lucide-react';
-import { SiteSelector } from '@/components/sites/SiteSelector';
+import SidebarNavSection from "./SidebarNavSection";
+import { NavItem } from './NavItem';
+import { sidebarNavData } from "./sidebarNavData";
+import { 
+  BarChart3, 
+  BatteryFull, 
+  Blocks, 
+  Cloud, 
+  Cpu, 
+  Gauge, 
+  Home, 
+  Plug, 
+  Settings, 
+  Thermometer, 
+  Wind 
+} from 'lucide-react';
+import SiteSelector from "@/components/sites/SiteSelector";
 
 interface SidebarProps {
   className?: string;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ className }) => {
-  const { activeSite } = useSiteContext();
+  const navSections = [
+    {
+      title: 'Overview',
+      items: [
+        { name: 'Dashboard', href: '/', icon: <Home className="h-4 w-4" /> },
+        { name: 'Analytics', href: '/analytics', icon: <BarChart3 className="h-4 w-4" /> },
+        { name: 'Energy Flow', href: '/energy-flow', icon: <Plug className="h-4 w-4" /> },
+      ],
+    },
+    {
+      title: 'Energy Management',
+      items: [
+        { name: 'Devices', href: '/devices', icon: <Cpu className="h-4 w-4" /> },
+        { name: 'Microgrid Control', href: '/microgrid', icon: <Gauge className="h-4 w-4" /> },
+        { name: 'Battery Storage', href: '/battery', icon: <BatteryFull className="h-4 w-4" /> },
+        { name: 'Weather', href: '/weather', icon: <Cloud className="h-4 w-4" /> },
+      ],
+    },
+    {
+      title: 'System',
+      items: [
+        { name: 'Alerts', href: '/alerts', icon: <Thermometer className="h-4 w-4" /> },
+        { name: 'Reports', href: '/reports', icon: <Blocks className="h-4 w-4" /> },
+        { name: 'Settings', href: '/settings', icon: <Settings className="h-4 w-4" /> },
+      ],
+    },
+  ];
 
   return (
-    <aside className={`hidden md:block flex-shrink-0 w-64 border-r ${className}`}>
-      <div className="p-4">
-        <SiteSelector />
-      </div>
-      <nav className="flex flex-col h-full">
-        {sidebarNavData.map((section, index) => (
-          <SidebarNavSection key={index} section={section} />
-        ))}
-        <div className="mt-auto p-4 text-center text-muted-foreground text-sm">
-          {activeSite ? `Active Site: ${activeSite.name}` : 'No Active Site'}
-        </div>
-      </nav>
-    </aside>
-  );
-};
-
-export const MobileSidebar = () => {
-  return (
-    <Sheet>
-      <SheetTrigger asChild>
-        <Menu className="md:hidden h-6 w-6" />
-      </SheetTrigger>
-      <SheetContent side="left" className="w-64 p-0 border-r">
-        <div className="p-4">
+    <div className={`pb-12 ${className}`}>
+      <div className="space-y-4 py-4">
+        <div className="px-3 py-2">
           <SiteSelector />
         </div>
-        <nav className="flex flex-col h-full">
-          {sidebarNavData.map((section, index) => (
-            <SidebarNavSection key={index} section={section} />
-          ))}
-        </nav>
-      </SheetContent>
-    </Sheet>
-  )
-}
+        
+        <div className="px-3 py-2">
+          <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">
+            Energy Management
+          </h2>
+          <div className="space-y-1">
+            {navSections.map((section) => (
+              <SidebarNavSection 
+                key={section.title} 
+                title={section.title}
+                items={section.items}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default Sidebar;

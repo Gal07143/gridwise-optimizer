@@ -1,29 +1,32 @@
-
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Site } from '@/types/energy';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { Site } from '@/types/site';
 import { getSites } from '@/services/sites/siteService';
 
-interface SiteContextType {
+export interface SiteContextType {
   sites: Site[];
   activeSite: Site | null;
+  currentSite: Site | null; // Alias for activeSite for backward compatibility
   loading: boolean;
   error: Error | null;
-  setSites: (sites: Site[]) => void;
-  setActiveSite: (site: Site | null) => void;
+  setActiveSite: (site: Site) => void;
   refreshSites: () => Promise<void>;
 }
 
-const SiteContext = createContext<SiteContextType | undefined>(undefined);
+const SiteContext = createContext<SiteContextType>({
+  sites: [],
+  activeSite: null,
+  currentSite: null,
+  loading: false,
+  error: null,
+  setActiveSite: () => {},
+  refreshSites: async () => {}
+});
 
-export const useSiteContext = () => {
-  const context = useContext(SiteContext);
-  if (context === undefined) {
-    throw new Error('useSiteContext must be used within a SiteProvider');
-  }
-  return context;
-};
+interface SiteProviderProps {
+  children: ReactNode;
+}
 
-export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const SiteProvider: React.FC<SiteProviderProps> = ({ children }) => {
   const [sites, setSites] = useState<Site[]>([]);
   const [activeSite, setActiveSite] = useState<Site | null>(null);
   const [loading, setLoading] = useState(true);
@@ -60,14 +63,20 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const value = {
     sites,
     activeSite,
+    currentSite: activeSite,
     loading,
     error,
-    setSites,
     setActiveSite,
     refreshSites
   };
 
-  return <SiteContext.Provider value={value}>{children}</SiteContext.Provider>;
+  return (
+    <SiteContext.Provider value={value}>
+      {children}
+    </SiteContext.Provider>
+  );
 };
+
+export const useSiteContext = () => useContext(SiteContext);
 
 export default SiteContext;

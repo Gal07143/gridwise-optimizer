@@ -16,6 +16,9 @@ export const reportValidationSchema = z.object({
   recipients: z.array(z.string().email()).min(1, 'At least one recipient is required'),
   format: z.enum(['pdf', 'csv', 'excel']),
   site_id: z.string().uuid('Invalid site ID'),
+  template_id: z.string().optional(),
+  is_template: z.boolean().optional(),
+  parameters: z.record(z.any()).optional(),
 });
 
 export type ReportFormValues = z.infer<typeof reportValidationSchema>;
@@ -29,4 +32,7 @@ export const getDefaultValues = (): ReportFormValues => ({
   recipients: [],
   format: 'pdf',
   site_id: '',
+  template_id: undefined,
+  is_template: false,
+  parameters: {},
 });

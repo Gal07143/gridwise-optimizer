@@ -1,5 +1,5 @@
 
-// Updated Site type
+// Updated Site type with capacity property
 export interface Site {
   id: string;
   name: string;
@@ -9,7 +9,7 @@ export interface Site {
   country?: string;
   zipCode?: string;
   timezone?: string;
-  capacity?: number;
+  capacity?: number;        // Added to fix errors
   location: string;        // This is a string, not an object (fixed from previous definition)
   lat?: number | null;
   lng?: number | null;

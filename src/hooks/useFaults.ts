@@ -1,42 +1,71 @@
 
-import { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useState, useEffect } from 'react';
 
-interface Fault {
+export interface Fault {
   id: string;
-  device_id: string;
-  timestamp: string;
+  title: string;
   description: string;
-  severity: string;
+  severity: 'info' | 'warning' | 'critical';
+  timestamp: string;
   status: string;
+  device: {
+    id: string;
+    name: string;
+  };
 }
 
-export function useFaults(limit = 10) {
+export const useFaults = () => {
   const [faults, setFaults] = useState<Fault[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    async function fetchFaults() {
-      const { data, error } = await supabase
-        .from('faults')
-        .select('*')
-        .eq('status', 'open')
-        .order('timestamp', { ascending: false })
-        .limit(limit);
-
-      if (!error) {
-        setFaults(data || []);
-      } else {
-        console.error("Error fetching faults:", error);
+    const fetchFaults = async () => {
+      try {
+        setLoading(true);
+        // Mock data
+        const mockFaults: Fault[] = [
+          {
+            id: 'fault-1',
+            title: 'Inverter Overheating',
+            description: 'Inverter temperature exceeds normal operating range',
+            severity: 'critical',
+            timestamp: new Date().toISOString(),
+            status: 'active',
+            device: { id: 'dev-1', name: 'Main Inverter' }
+          },
+          {
+            id: 'fault-2',
+            title: 'Battery Low Charge',
+            description: 'Battery charge below 15% threshold',
+            severity: 'warning',
+            timestamp: new Date().toISOString(),
+            status: 'active',
+            device: { id: 'dev-2', name: 'Home Battery' }
+          },
+          {
+            id: 'fault-3',
+            title: 'Communication Error',
+            description: 'Communication lost with solar panels',
+            severity: 'info',
+            timestamp: new Date().toISOString(),
+            status: 'resolved',
+            device: { id: 'dev-3', name: 'Solar Array' }
+          }
+        ];
+        
+        setFaults(mockFaults);
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err : new Error('Failed to fetch faults'));
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
-    }
+    };
 
     fetchFaults();
+    // In a real implementation, we might set up a polling interval here
+  }, []);
 
-    const interval = setInterval(fetchFaults, 60000); // Refresh every minute
-    return () => clearInterval(interval);
-  }, [limit]);
-
-  return { faults, loading };
-}
+  return { faults, loading, error };
+};

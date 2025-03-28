@@ -1,107 +1,81 @@
 
-// Prediction data types
+// Mock data and interfaces for energy predictions
 export interface PredictionDataPoint {
-  timestamp: string;
+  day: string;
   value: number;
-  prediction: number;
-  lowerBound?: number;
-  upperBound?: number;
+  confidence: number;
 }
 
 export interface SystemRecommendation {
   id: string;
   title: string;
   description: string;
-  impact: 'high' | 'medium' | 'low';
-  category: 'efficiency' | 'cost' | 'maintenance' | 'operations';
-  potential_savings?: number;
-  implementation_effort?: 'easy' | 'medium' | 'complex';
-  created_at: string;
+  type: string;
+  priority: string;
+  potential_savings: string;
+  implementation_effort: string;
+  confidence: number;
   applied: boolean;
   applied_at?: string;
   applied_by?: string;
-  notes?: string;
 }
 
-// Mock prediction data generation
 export const generatePredictionData = async (
-  timeframe: 'day' | 'week' | 'month' | 'year',
-  dataType: 'energy_consumption' | 'energy_production' | 'cost_analysis' | 'device_performance' | 'efficiency_analysis' = 'energy_consumption'
+  timeframe: 'day' | 'week' | 'month' | 'year' = 'day',
+  dataType: string = 'energy_consumption'
 ): Promise<PredictionDataPoint[]> => {
-  const now = new Date();
-  const data: PredictionDataPoint[] = [];
+  // Simulate API call delay
+  await new Promise(resolve => setTimeout(resolve, 1000));
   
-  // Generate appropriate number of data points based on timeframe
-  const points = timeframe === 'day' ? 24 : 
-                timeframe === 'week' ? 7 : 
-                timeframe === 'month' ? 30 : 365;
+  // Generate sample data based on timeframe
+  const days = timeframe === 'day' ? 1 : 
+              timeframe === 'week' ? 7 : 
+              timeframe === 'month' ? 30 : 365;
   
-  // Scale for different data types
-  const scale = dataType === 'energy_consumption' ? 100 : 
-               dataType === 'energy_production' ? 80 : 
-               dataType === 'cost_analysis' ? 200 : 50;
-  
-  for (let i = 0; i < points; i++) {
-    const timestamp = new Date();
-    
-    if (timeframe === 'day') {
-      timestamp.setHours(now.getHours() - (points - i));
-    } else if (timeframe === 'week') {
-      timestamp.setDate(now.getDate() - (points - i));
-    } else if (timeframe === 'month') {
-      timestamp.setDate(now.getDate() - (points - i));
-    } else {
-      timestamp.setDate(now.getDate() - (points - i));
-    }
-    
-    const baseValue = Math.random() * scale;
-    const variance = baseValue * 0.2; // 20% variance
-    
-    data.push({
-      timestamp: timestamp.toISOString(),
-      value: baseValue,
-      prediction: baseValue + (Math.random() - 0.5) * variance,
-      lowerBound: baseValue - variance,
-      upperBound: baseValue + variance
-    });
-  }
-  
-  return data;
+  return Array.from({ length: days }, (_, i) => ({
+    day: `Day ${i + 1}`,
+    value: Math.round(Math.random() * 100 + 50),
+    confidence: Math.random() * 0.3 + 0.7 // Between 70% and 100%
+  }));
 };
 
 export const getSystemRecommendations = async (): Promise<SystemRecommendation[]> => {
-  // Mock data for system recommendations
+  // Simulate API call delay
+  await new Promise(resolve => setTimeout(resolve, 1200));
+  
+  // Sample recommendations
   return [
     {
       id: '1',
-      title: 'Shift Battery Charging to Off-Peak Hours',
-      description: 'Shifting battery charging to off-peak electricity rate hours could save approximately 15% on electricity costs.',
-      impact: 'high',
-      category: 'cost',
-      potential_savings: 125.45,
-      implementation_effort: 'easy',
-      created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
+      title: 'Optimize Battery Charging Schedule',
+      description: 'Shifting battery charging to off-peak hours could reduce energy costs by approximately 15%.',
+      type: 'optimization',
+      priority: 'high',
+      potential_savings: '$120-150/month',
+      implementation_effort: 'Low',
+      confidence: 0.89,
       applied: false
     },
     {
       id: '2',
-      title: 'Optimize Solar Panel Tilt Angle',
-      description: 'Current solar panel angle is sub-optimal for this season. Adjusting to 32° would increase production by approximately 8%.',
-      impact: 'medium',
-      category: 'efficiency',
-      potential_savings: 78.20,
-      implementation_effort: 'medium',
-      created_at: new Date(Date.now() - 86400000 * 5).toISOString(),
+      title: 'Increase Solar Panel Cleaning Frequency',
+      description: 'Current dust accumulation is reducing efficiency by an estimated 8%. Increasing cleaning frequency to monthly would improve output.',
+      type: 'maintenance',
+      priority: 'medium',
+      potential_savings: '$80-100/month',
+      implementation_effort: 'Medium',
+      confidence: 0.76,
       applied: false
     },
     {
       id: '3',
-      title: 'Schedule Inverter Maintenance',
-      description: 'Inverter efficiency has decreased by 3% over the past month. Scheduling maintenance could prevent further degradation.',
-      impact: 'medium',
-      category: 'maintenance',
-      implementation_effort: 'medium',
-      created_at: new Date(Date.now() - 86400000 * 1).toISOString(),
+      title: 'Adjust HVAC Operating Hours',
+      description: 'Analysis shows the HVAC system runs 2 hours longer than necessary on weekends. Adjusting the schedule could save energy.',
+      type: 'behavioral',
+      priority: 'medium',
+      potential_savings: '$50-70/month',
+      implementation_effort: 'Low',
+      confidence: 0.92,
       applied: false
     }
   ];
@@ -111,24 +85,10 @@ export const applyRecommendation = async (
   recommendationId: string,
   notes: string
 ): Promise<boolean> => {
-  // In a real implementation, this would update the database
-  console.log(`Applied recommendation ${recommendationId} with notes: ${notes}`);
+  // Simulate API call
+  console.log('Applying recommendation:', recommendationId, 'with notes:', notes);
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  // Return success
   return true;
-};
-
-export const getModelStatus = async () => {
-  return {
-    status: 'active',
-    lastTrained: new Date(Date.now() - 7 * 86400000).toISOString(),
-    accuracy: 0.92,
-    version: '1.2.3'
-  };
-};
-
-export const trainModel = async () => {
-  // Mock implementation - would trigger model training in real app
-  return {
-    success: true,
-    message: 'Model training initiated'
-  };
 };
