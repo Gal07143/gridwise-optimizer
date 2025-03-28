@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* Add base styles here */
+}
+
+@layer components {
+  /* Add component styles here */
+  .energy-node {
+    @apply transition-all duration-300 hover:scale-105 hover:shadow-2xl;
+  }
+}
+
+@layer utilities {
+  .animate-flow {
+    animation: flow 10s linear infinite;
+  }
+  
+  @keyframes flow {
+    from {
+      stroke-dashoffset: 100;
+    }
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+}
