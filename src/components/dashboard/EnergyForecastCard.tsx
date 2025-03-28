@@ -56,7 +56,7 @@ const EnergyForecastCard = ({ className, animationDelay }: EnergyForecastCardPro
       >
         <div className="flex flex-col justify-center items-center h-60 space-y-4">
           <p className="text-red-500">Error loading forecast data</p>
-          <Button size="sm" variant="outline" onClick={refreshData}>
+          <Button size="sm" variant="outline" onClick={refreshData} className="glass-button">
             <RefreshCw className="mr-1 h-4 w-4" /> Try Again
           </Button>
         </div>
@@ -92,7 +92,7 @@ const EnergyForecastCard = ({ className, animationDelay }: EnergyForecastCardPro
                 <span>{Math.abs(forecastMetrics.netEnergy).toFixed(1)} kWh</span>
               </Badge>
             </HoverCardTrigger>
-            <HoverCardContent className="w-80 p-2">
+            <HoverCardContent className="w-80 p-4 glass-panel">
               <p className="text-sm">
                 {hasEnergySurplus 
                   ? "Your system is predicted to generate more energy than it consumes during this period."
@@ -103,7 +103,7 @@ const EnergyForecastCard = ({ className, animationDelay }: EnergyForecastCardPro
           
           {/* Weather information */}
           {currentWeather && (
-            <Badge variant="outline" className="flex items-center gap-1">
+            <Badge variant="outline" className="flex items-center gap-1 bg-white/5 backdrop-blur-sm">
               <CloudRain size={14} />
               <span>{currentWeather.condition}</span>
               <span>{currentWeather.temperature}°C</span>
@@ -118,14 +118,14 @@ const EnergyForecastCard = ({ className, animationDelay }: EnergyForecastCardPro
           )}
           
           {/* Refresh button */}
-          <Button variant="ghost" size="icon" onClick={refreshData} className="h-8 w-8">
+          <Button variant="ghost" size="icon" onClick={refreshData} className="h-8 w-8 rounded-full hover:bg-gray-100/20 dark:hover:bg-gray-800/20">
             <RefreshCw size={14} />
           </Button>
         </div>
       }
     >
       {isUsingLocalData && (
-        <div className="mb-2 text-xs rounded bg-blue-50 dark:bg-blue-950 p-2 text-blue-600 dark:text-blue-300">
+        <div className="mb-4 text-xs rounded-lg bg-blue-50/30 dark:bg-blue-950/30 p-2 text-blue-600 dark:text-blue-300 backdrop-blur-sm">
           Using demo forecast data. Live API data unavailable.
         </div>
       )}

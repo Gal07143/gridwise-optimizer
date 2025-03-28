@@ -16,22 +16,22 @@ interface ForecastMetricsPanelProps {
 
 const ForecastMetricsPanel = ({ metrics }: ForecastMetricsPanelProps) => {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 mt-2 mb-4">
-      <div className="glass-panel p-2 rounded-lg">
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 mt-2 mb-6">
+      <div className="glass-panel p-3 rounded-lg transition-all duration-300 hover:bg-white/20 dark:hover:bg-white/10">
         <div className="text-xs text-muted-foreground">Forecast Production</div>
-        <div className="text-lg font-semibold">{metrics.totalGeneration.toFixed(1)} kWh</div>
+        <div className="text-lg font-semibold text-energy-green">{metrics.totalGeneration.toFixed(1)} kWh</div>
       </div>
-      <div className="glass-panel p-2 rounded-lg">
+      <div className="glass-panel p-3 rounded-lg transition-all duration-300 hover:bg-white/20 dark:hover:bg-white/10">
         <div className="text-xs text-muted-foreground">Forecast Consumption</div>
-        <div className="text-lg font-semibold">{metrics.totalConsumption.toFixed(1)} kWh</div>
+        <div className="text-lg font-semibold text-energy-purple">{metrics.totalConsumption.toFixed(1)} kWh</div>
       </div>
-      <div className="glass-panel p-2 rounded-lg">
+      <div className="glass-panel p-3 rounded-lg transition-all duration-300 hover:bg-white/20 dark:hover:bg-white/10">
         <div className="text-xs text-muted-foreground">Net Energy</div>
         <div className={`text-lg font-semibold ${metrics.netEnergy >= 0 ? 'text-energy-green' : 'text-energy-red'}`}>
           {metrics.netEnergy > 0 ? '+' : ''}{metrics.netEnergy.toFixed(1)} kWh
         </div>
       </div>
-      <div className="glass-panel p-2 rounded-lg">
+      <div className="glass-panel p-3 rounded-lg transition-all duration-300 hover:bg-white/20 dark:hover:bg-white/10">
         <div className="text-xs text-muted-foreground">Peak Times</div>
         <div className="flex justify-between">
           <div className="text-xs">

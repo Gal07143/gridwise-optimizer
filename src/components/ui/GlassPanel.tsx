@@ -7,6 +7,7 @@ interface GlassPanelProps extends React.HTMLAttributes<HTMLDivElement> {
   interactive?: boolean;
   className?: string;
   intensity?: "low" | "medium" | "high";
+  gradient?: boolean;
 }
 
 const GlassPanel = ({ 
@@ -14,6 +15,7 @@ const GlassPanel = ({
   interactive = false, 
   className, 
   intensity = "medium",
+  gradient = false,
   ...props 
 }: GlassPanelProps) => {
   const intensityClasses = {
@@ -27,7 +29,8 @@ const GlassPanel = ({
       className={cn(
         "rounded-xl border border-white/20 dark:border-white/10 shadow-lg",
         intensityClasses[intensity],
-        interactive && "transition-all duration-300 hover:bg-white/15 dark:hover:bg-white/[0.07] hover:shadow-xl",
+        gradient && "bg-gradient-to-br from-white/10 to-transparent dark:from-white/[0.03] dark:to-transparent",
+        interactive && "transition-all duration-300 hover:bg-white/15 dark:hover:bg-white/[0.07] hover:shadow-xl hover:translate-y-[-2px]",
         className
       )}
       {...props}

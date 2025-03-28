@@ -48,13 +48,13 @@ const Dashboard: React.FC = () => {
         <DashboardHeader />
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm mb-4 -mx-4 px-4 pt-4 pb-2">
-            <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
+          <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm mb-6 -mx-4 px-4 pt-4 pb-2">
+            <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 bg-gray-100/50 dark:bg-gray-900/50 backdrop-blur-md p-1 rounded-lg">
               {tabs.map((tab) => (
                 <TabsTrigger
                   key={tab.id}
                   value={tab.id}
-                  className="flex items-center"
+                  className="flex items-center data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:shadow-md transition-all duration-200"
                 >
                   {tab.icon}
                   {tab.label}
@@ -63,25 +63,25 @@ const Dashboard: React.FC = () => {
             </TabsList>
           </div>
 
-          <TabsContent value="overview" className="space-y-6">
+          <TabsContent value="overview" className="space-y-6 animate-in fade-in">
             <DashboardSummary />
             <DashboardCharts />
           </TabsContent>
 
-          <TabsContent value="consumption">
-            <div className="h-96 flex items-center justify-center bg-muted/20 rounded-lg">
+          <TabsContent value="consumption" className="animate-in fade-in">
+            <div className="glass-panel p-8 flex items-center justify-center">
               <p className="text-xl text-muted-foreground">Consumption Analysis</p>
             </div>
           </TabsContent>
 
-          <TabsContent value="production">
-            <div className="h-96 flex items-center justify-center bg-muted/20 rounded-lg">
+          <TabsContent value="production" className="animate-in fade-in">
+            <div className="glass-panel p-8 flex items-center justify-center">
               <p className="text-xl text-muted-foreground">Production Analysis</p>
             </div>
           </TabsContent>
 
-          <TabsContent value="analytics">
-            <div className="h-96 flex items-center justify-center bg-muted/20 rounded-lg">
+          <TabsContent value="analytics" className="animate-in fade-in">
+            <div className="glass-panel p-8 flex items-center justify-center">
               <p className="text-xl text-muted-foreground">Analytics Dashboard</p>
             </div>
           </TabsContent>

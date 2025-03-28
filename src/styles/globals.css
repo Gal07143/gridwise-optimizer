@@ -1,15 +1,55 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   /* Add base styles here */
+  :root {
+    --card-highlight: rgba(255, 255, 255, 0.1);
+    --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  }
+  
+  .dark {
+    --card-highlight: rgba(255, 255, 255, 0.05);
+    --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.15);
+  }
+  
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
 }
 
 @layer components {
   /* Add component styles here */
   .energy-node {
     @apply transition-all duration-300 hover:scale-105 hover:shadow-2xl;
+  }
+  
+  .glass-panel {
+    @apply bg-white/10 dark:bg-black/10 backdrop-blur-md border border-white/20 dark:border-white/10 rounded-xl;
+  }
+  
+  .dashboard-card {
+    @apply bg-gradient-to-br from-white/50 to-white/10 dark:from-gray-800/50 dark:to-gray-900/30 
+           backdrop-blur-md border border-white/20 dark:border-white/5
+           rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl 
+           hover:translate-y-[-2px] overflow-hidden;
+  }
+  
+  .stats-card {
+    @apply p-4 dashboard-card;
+  }
+  
+  .glass-button {
+    @apply px-4 py-2 bg-white/10 dark:bg-white/5 backdrop-blur-md 
+           rounded-lg border border-white/20 dark:border-white/10 
+           shadow-sm transition-all duration-200 hover:bg-white/20 
+           dark:hover:bg-white/10 hover:shadow-md;
   }
 }
 
@@ -26,4 +66,27 @@
       stroke-dashoffset: 0;
     }
   }
+  
+  .animate-pulse-slow {
+    animation: pulse-slow 3s infinite;
+  }
+  
+  @keyframes pulse-slow {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.7;
+    }
+  }
+  
+  .hover-scale {
+    @apply transition-transform duration-300 hover:scale-[1.02];
+  }
+  
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent;
+  }
 }
+
+/* Keep other existing styles */

@@ -14,6 +14,7 @@ export interface MetricsCardProps {
   icon?: React.ReactNode;
   animationDelay?: string;
   className?: string;
+  gradient?: boolean;
 }
 
 const MetricsCard: React.FC<MetricsCardProps> = ({
@@ -25,12 +26,15 @@ const MetricsCard: React.FC<MetricsCardProps> = ({
   description,
   icon,
   animationDelay = '0ms',
-  className
+  className,
+  gradient = true
 }) => {
   return (
     <Card 
       className={cn(
-        "overflow-hidden",
+        "overflow-hidden border border-white/10 dark:border-white/5 shadow-md",
+        gradient && "bg-gradient-to-br from-white/30 to-white/5 dark:from-gray-800/40 dark:to-gray-900/20 backdrop-blur-md",
+        "hover-scale",
         "animate-in fade-in slide-in-from-bottom-4 duration-700",
         className
       )}
@@ -46,7 +50,7 @@ const MetricsCard: React.FC<MetricsCardProps> = ({
             </div>
           </div>
           {icon && (
-            <div className="p-2 bg-primary/10 rounded-lg">
+            <div className="p-2 bg-primary/10 rounded-lg backdrop-blur-sm">
               {icon}
             </div>
           )}
