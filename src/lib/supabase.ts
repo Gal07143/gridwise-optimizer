@@ -3,6 +3,24 @@ import type { Database } from '@/integrations/supabase/types';
 
 // Mock createClient function since we can't import from @supabase/supabase-js
 const createClient = (url: string, key: string) => {
+  // Create a mock channel for real-time functionality
+  const createChannel = (channelName: string) => {
+    return {
+      on: (event: string, config: any, callback: (payload: any) => void) => {
+        // Return self for chaining
+        return {
+          subscribe: (statusCallback?: (status: string) => void) => {
+            if (statusCallback) statusCallback('SUBSCRIBED');
+            console.log(`Subscribed to ${channelName} with event ${event}`);
+            return {
+              unsubscribe: () => console.log(`Unsubscribed from ${channelName}`)
+            };
+          }
+        };
+      }
+    };
+  };
+  
   return {
     auth: {
       getUser: () => Promise.resolve({ data: { user: null }, error: null }),
@@ -30,6 +48,9 @@ const createClient = (url: string, key: string) => {
         eq: () => Promise.resolve({ data: null, error: null }),
       }),
     }),
+    // Add real-time functionality
+    channel: (channelName: string) => createChannel(channelName),
+    removeChannel: (channel: any) => console.log('Removing channel', channel),
   };
 };
 
