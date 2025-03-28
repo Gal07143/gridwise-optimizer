@@ -1,106 +1,74 @@
-
-import React, { useState } from 'react';
-import { Check, ChevronsUpDown, MapPin, PlusCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-  CommandSeparator,
-} from '@/components/ui/command';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import { Site } from '@/types/energy';
+import { PlusCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useSite } from '@/contexts/SiteContext';
-import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+import { Site } from '@/types/energy';
+import { useSiteContext } from '@/contexts/SiteContext';
 
 interface SiteSelectorProps {
-  className?: string;
-  showAddOption?: boolean;
+  onSiteChange?: (site: Site) => void;
 }
 
-const SiteSelector = ({ className, showAddOption = true }: SiteSelectorProps) => {
-  const { currentSite, sites, setCurrentSite } = useSite();
-  const [open, setOpen] = useState(false);
+const SiteSelector: React.FC<SiteSelectorProps> = ({ onSiteChange }) => {
+  const { sites, activeSite, setActiveSite, loading, error } = useSiteContext();
   const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
 
-  if (!currentSite) {
-    return <div className="h-10 w-[200px] skeleton" />;
-  }
+  useEffect(() => {
+    if (activeSite && onSiteChange) {
+      onSiteChange(activeSite);
+    }
+  }, [activeSite, onSiteChange]);
 
-  const handleSelectSite = (site: Site) => {
-    setCurrentSite(site);
-    setOpen(false);
+  const handleSiteChange = (siteId: string) => {
+    const selectedSite = sites.find((site) => site.id === siteId);
+    if (selectedSite) {
+      setActiveSite(selectedSite);
+      if (onSiteChange) {
+        onSiteChange(selectedSite);
+      }
+      toast.success(`Active site changed to ${selectedSite.name}`);
+    }
   };
 
   const handleAddSite = () => {
-    setOpen(false);
     navigate('/settings/sites/add');
   };
 
+  if (loading) {
+    return <p>Loading sites...</p>;
+  }
+
+  if (error) {
+    return <p>Error: {error.message}</p>;
+  }
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className={cn("w-[200px] justify-between", className)}
-        >
-          <div className="flex items-center gap-2 truncate">
-            <MapPin size={16} className="text-muted-foreground" />
-            <span className="truncate">{currentSite?.name}</span>
-          </div>
-          <ChevronsUpDown size={16} className="ml-2 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-[200px] p-0">
-        <Command>
-          <CommandInput placeholder="Search sites..." />
-          <CommandEmpty>No sites found.</CommandEmpty>
-          <CommandList>
-            <CommandGroup heading="Sites">
-              {sites.map((site) => (
-                <CommandItem
-                  key={site.id}
-                  onSelect={() => handleSelectSite(site)}
-                  className="cursor-pointer"
-                >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      currentSite?.id === site.id ? "opacity-100" : "opacity-0"
-                    )}
-                  />
-                  <span className="truncate">{site.name}</span>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-            {showAddOption && (
-              <>
-                <CommandSeparator />
-                <CommandGroup>
-                  <CommandItem
-                    onSelect={handleAddSite}
-                    className="cursor-pointer text-primary"
-                  >
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Add New Site
-                  </CommandItem>
-                </CommandGroup>
-              </>
-            )}
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+    <div className="flex items-center space-x-4">
+      <Select open={open} onOpenChange={setOpen} value={activeSite?.id} onValueChange={handleSiteChange}>
+        <SelectTrigger className="w-[280px]">
+          <SelectValue placeholder="Select a site" />
+        </SelectTrigger>
+        <SelectContent>
+          {sites.map((site) => (
+            <SelectItem key={site.id} value={site.id}>
+              {site.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Button variant="outline" size="icon" onClick={handleAddSite}>
+        <PlusCircle className="h-4 w-4" />
+      </Button>
+    </div>
   );
 };
 

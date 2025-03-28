@@ -1,10 +1,9 @@
-
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useSite } from '@/contexts/SiteContext';
+import { reportValidationSchema, ReportFormValues } from './reportValidationSchema';
+import { useSiteContext } from '@/contexts/SiteContext';
 import { toast } from 'sonner';
-import { reportSchema, ReportFormValues, getDefaultValues } from './reportValidationSchema';
 
 // Mock implementations for report services
 const mockCreateReport = async (reportData: any) => {
@@ -44,13 +43,13 @@ interface UseReportFormProps {
 }
 
 export const useReportForm = ({ onSuccess }: UseReportFormProps) => {
-  const { currentSite } = useSite();
+  const { currentSite } = useSiteContext();
   const [isScheduled, setIsScheduled] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   
   const form = useForm<ReportFormValues>({
-    resolver: zodResolver(reportSchema),
+    resolver: zodResolver(reportValidationSchema),
     defaultValues: getDefaultValues(),
     mode: 'onChange',
   });

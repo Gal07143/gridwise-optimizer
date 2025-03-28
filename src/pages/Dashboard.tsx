@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Main } from '@/components/ui/main';
 import DashboardCharts from '@/components/dashboard/DashboardCharts';
 import DashboardSummary from '@/components/dashboard/DashboardSummary';
@@ -45,7 +45,7 @@ const Dashboard: React.FC = () => {
   return (
     <TooltipProvider>
       <Main containerSize="default" className="max-w-[1600px] mx-auto pt-0">
-        <DashboardHeader title={`Dashboard: ${activeSite?.name || 'Main Site'}`} />
+        <DashboardHeader />
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm mb-4 -mx-4 px-4 pt-4 pb-2">

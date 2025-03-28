@@ -1,113 +1,56 @@
-
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { EnergyNode, EnergyConnection } from './types';
-import { fetchEnergyFlowData } from '@/services/energyFlowService';
-import { toast } from 'sonner';
+import React, { createContext, useContext, useState } from 'react';
+import { EnergyFlowData, EnergyNode } from './types';
 import { useSiteContext } from '@/contexts/SiteContext';
 
-export interface EnergyFlowContextType {
-  nodes: EnergyNode[];
-  connections: EnergyConnection[];
-  isLoading: boolean;
-  lastUpdated: string | null;
-  refreshData: () => void;
-  sendCommand: (command: string, params: any) => Promise<boolean>;
-  totalGeneration: number;
-  totalConsumption: number;
-  batteryPercentage: number;
-  selfConsumptionRate: number;
-  gridDependencyRate: number;
+interface EnergyFlowContextType {
+  energyFlowData: EnergyFlowData;
+  setEnergyFlowData: (data: EnergyFlowData) => void;
+  selectedNode: EnergyNode | null;
+  setSelectedNode: (node: EnergyNode | null) => void;
+  isModalOpen: boolean;
+  setIsModalOpen: (isOpen: boolean) => void;
 }
 
 const EnergyFlowContext = createContext<EnergyFlowContextType | undefined>(undefined);
 
-export const useEnergyFlow = () => {
+export const useEnergyFlowContext = () => {
   const context = useContext(EnergyFlowContext);
-  if (context === undefined) {
-    throw new Error('useEnergyFlow must be used within an EnergyFlowProvider');
+  if (!context) {
+    throw new Error('useEnergyFlowContext must be used within a EnergyFlowProvider');
   }
   return context;
 };
 
-export const EnergyFlowProvider: React.FC<{ children: React.ReactNode }> = ({ 
-  children 
-}) => {
+export const EnergyFlowProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [energyFlowData, setEnergyFlowData] = useState<EnergyFlowData>({
+    nodes: [],
+    links: [],
+  });
+  const [selectedNode, setSelectedNode] = useState<EnergyNode | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const { activeSite } = useSiteContext();
-  const [nodes, setNodes] = useState<EnergyNode[]>([]);
-  const [connections, setConnections] = useState<EnergyConnection[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
-  const [totalGeneration, setTotalGeneration] = useState(0);
-  const [totalConsumption, setTotalConsumption] = useState(0);
-  const [batteryPercentage, setBatteryPercentage] = useState(0);
-  const [selfConsumptionRate, setSelfConsumptionRate] = useState(0);
-  const [gridDependencyRate, setGridDependencyRate] = useState(0);
 
-  const loadData = async () => {
-    if (!activeSite) return;
-    
-    setIsLoading(true);
-    try {
-      const data = await fetchEnergyFlowData(activeSite.id);
-      setNodes(data.nodes);
-      setConnections(data.connections);
-      setLastUpdated(data.timestamp);
-      setTotalGeneration(data.totalGeneration);
-      setTotalConsumption(data.totalConsumption);
-      setBatteryPercentage(data.batteryPercentage);
-      setSelfConsumptionRate(data.selfConsumptionRate);
-      setGridDependencyRate(data.gridDependencyRate);
-    } catch (error) {
-      console.error('Error loading energy flow data:', error);
-      toast.error('Failed to load energy flow data');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (activeSite) {
-      loadData();
-      
-      // Refresh data every minute
-      const intervalId = setInterval(() => {
-        loadData();
-      }, 60000);
-      
-      return () => clearInterval(intervalId);
-    }
-  }, [activeSite]);
-
-  const refreshData = () => {
-    loadData();
-    toast.success('Energy flow data refreshed');
-  };
-
-  const sendCommand = async (command: string, params: any): Promise<boolean> => {
-    // Implementation for sending commands to the system
-    console.log(`Sending command: ${command}`, params);
-    toast.success(`Command "${command}" sent successfully`);
-    // Refresh data after command
-    setTimeout(() => loadData(), 1000);
-    return true;
-  };
-
-  const value = {
-    nodes,
-    connections,
-    isLoading,
-    lastUpdated,
-    refreshData,
-    sendCommand,
-    totalGeneration,
-    totalConsumption,
-    batteryPercentage,
-    selfConsumptionRate,
-    gridDependencyRate
+  // Example function to update a node's data
+  const updateNodeData = (nodeId: string, newData: Partial<EnergyNode>) => {
+    setEnergyFlowData(prevData => {
+      const updatedNodes = prevData.nodes.map(node =>
+        node.id === nodeId ? { ...node, ...newData } : node
+      );
+      return { ...prevData, nodes: updatedNodes };
+    });
   };
 
   return (
-    <EnergyFlowContext.Provider value={value}>
+    <EnergyFlowContext.Provider
+      value={{
+        energyFlowData,
+        setEnergyFlowData,
+        selectedNode,
+        setSelectedNode,
+        isModalOpen,
+        setIsModalOpen,
+      }}
+    >
       {children}
     </EnergyFlowContext.Provider>
   );

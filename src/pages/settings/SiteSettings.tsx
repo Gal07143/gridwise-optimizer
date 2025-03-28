@@ -57,12 +57,14 @@ const SiteSettings: React.FC = () => {
     if (!siteToDelete) return;
     
     try {
-      await deleteSite(siteToDelete.id);
-      toast.success(`Site "${siteToDelete.name}" deleted successfully`);
-      fetchSites();
-      refreshSites(); // Update the site context
-      setShowDeleteConfirm(false);
-      setSiteToDelete(null);
+      const success = await deleteSite(siteToDelete.id);
+      if (success) {
+        toast.success(`Site "${siteToDelete.name}" deleted successfully`);
+        fetchSites();
+        refreshSites(); // Update the site context
+        setShowDeleteConfirm(false);
+        setSiteToDelete(null);
+      }
     } catch (error: any) {
       console.error("Error deleting site:", error);
       toast.error(`Failed to delete site: ${error?.message || 'Unknown error'}`);
