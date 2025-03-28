@@ -15,6 +15,7 @@ export interface Alert {
   category?: string;
   actionRequired?: boolean;
   notified?: boolean;
+  resolved: boolean;
 }
 
 const mockAlerts: Alert[] = [
@@ -30,7 +31,8 @@ const mockAlerts: Alert[] = [
     devices: ['bat-001'],
     category: 'energy',
     actionRequired: true,
-    notified: true
+    notified: true,
+    resolved: false
   },
   {
     id: '2',
@@ -46,7 +48,8 @@ const mockAlerts: Alert[] = [
     devices: ['inv-002'],
     category: 'connectivity',
     actionRequired: true,
-    notified: true
+    notified: true,
+    resolved: false
   },
   {
     id: '3',
@@ -58,7 +61,8 @@ const mockAlerts: Alert[] = [
     acknowledged: false,
     category: 'maintenance',
     actionRequired: false,
-    notified: true
+    notified: true,
+    resolved: false
   },
   {
     id: '4',
@@ -74,7 +78,8 @@ const mockAlerts: Alert[] = [
     devices: ['ctrl-main', 'inv-001', 'inv-002'],
     category: 'energy',
     actionRequired: false,
-    notified: true
+    notified: true,
+    resolved: false
   },
   {
     id: '5',
@@ -88,7 +93,8 @@ const mockAlerts: Alert[] = [
     devices: ['modem-01'],
     category: 'connectivity',
     actionRequired: false,
-    notified: false
+    notified: false,
+    resolved: false
   }
 ];
 
@@ -174,7 +180,8 @@ export const acknowledgeAlert = async (id: string, userId: string): Promise<Aler
     ...mockAlerts[alertIndex],
     acknowledged: true,
     acknowledgedBy: userId,
-    acknowledgedAt: new Date().toISOString()
+    acknowledgedAt: new Date().toISOString(),
+    resolved: true
   };
   
   // In a real app, we would update the database
@@ -192,7 +199,8 @@ export const createAlert = async (alert: Omit<Alert, 'id' | 'timestamp'>): Promi
   const newAlert: Alert = {
     ...alert,
     id: Math.random().toString(36).substring(2, 11),
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    resolved: false
   };
   
   // In a real app, we would add to the database

@@ -2,26 +2,37 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { SystemRecommendation } from '@/services/predictions/energyPredictionService';
-import { DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { SystemRecommendation } from '@/hooks/usePredictions';
+import { 
+  DialogContent, 
+  DialogDescription, 
+  DialogFooter, 
+  DialogHeader, 
+  DialogTitle 
+} from '@/components/ui/dialog';
+import { useState } from 'react';
 
 interface RecommendationDialogProps {
   recommendation: SystemRecommendation;
-  notes: string;
-  onNotesChange: (notes: string) => void;
   onApply: () => void;
-  onCancel: () => void;
   isApplying: boolean;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
 const RecommendationDialog = ({
   recommendation,
-  notes,
-  onNotesChange,
   onApply,
-  onCancel,
-  isApplying
+  isApplying,
+  open,
+  onOpenChange
 }: RecommendationDialogProps) => {
+  const [notes, setNotes] = useState('');
+
+  const handleCancel = () => {
+    onOpenChange(false);
+  };
+
   return (
     <DialogContent>
       <DialogHeader>
@@ -39,7 +50,7 @@ const RecommendationDialog = ({
             <Textarea
               placeholder="Add any notes about how you're implementing this recommendation..."
               value={notes}
-              onChange={(e) => onNotesChange(e.target.value)}
+              onChange={(e) => setNotes(e.target.value)}
               className="mt-1"
             />
           </div>
@@ -49,7 +60,7 @@ const RecommendationDialog = ({
       <DialogFooter>
         <Button 
           variant="outline" 
-          onClick={onCancel}
+          onClick={handleCancel}
         >
           Cancel
         </Button>
