@@ -1,12 +1,18 @@
 
-// Export all site-related functions from this index file
-export { 
-  getAllSites, 
+import { 
+  getSites, 
   getSiteById, 
   createSite, 
   updateSite, 
   deleteSite,
   getOrCreateDummySite
 } from './siteService';
-export * from './siteStats';
 
+export {
+  getSites,
+  getSiteById,
+  createSite,
+  updateSite,
+  deleteSite,
+  getOrCreateDummySite
+};

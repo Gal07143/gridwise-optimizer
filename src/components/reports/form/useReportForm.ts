@@ -1,11 +1,43 @@
+
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useSite } from '@/contexts/SiteContext';
-import { createReport } from '@/services/reports/reportService';
-import { createReportFromTemplate, getReportTemplateById } from '@/services/reports/templateService';
 import { toast } from 'sonner';
 import { reportSchema, ReportFormValues, getDefaultValues } from './reportValidationSchema';
+
+// Mock implementations for report services
+const mockCreateReport = async (reportData: any) => {
+  console.log('Creating report:', reportData);
+  // Simulate API call
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  return { id: `report-${Date.now()}`, ...reportData };
+};
+
+const mockCreateReportFromTemplate = async (templateId: string, siteId: string, data: any) => {
+  console.log('Creating report from template:', { templateId, siteId, data });
+  // Simulate API call
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  return { id: `report-${Date.now()}`, template_id: templateId, site_id: siteId, ...data };
+};
+
+const mockGetReportTemplateById = async (templateId: string) => {
+  console.log('Getting template by ID:', templateId);
+  // Simulate API call
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
+  // Return mock template data
+  return {
+    id: templateId,
+    title: `Template ${templateId}`,
+    description: 'A sample report template',
+    type: 'energy_consumption',
+    parameters: {
+      timeframe: 'last_30_days',
+      groupBy: 'day'
+    }
+  };
+};
 
 interface UseReportFormProps {
   onSuccess: () => void;
@@ -31,7 +63,7 @@ export const useReportForm = ({ onSuccess }: UseReportFormProps) => {
       
       const loadTemplateData = async () => {
         try {
-          const template = await getReportTemplateById(templateId);
+          const template = await mockGetReportTemplateById(templateId);
           if (template) {
             form.setValue('title', template.title);
             form.setValue('description', template.description);
@@ -63,7 +95,7 @@ export const useReportForm = ({ onSuccess }: UseReportFormProps) => {
       let result;
       
       if (data.template_id) {
-        result = await createReportFromTemplate(data.template_id, currentSite.id, data);
+        result = await mockCreateReportFromTemplate(data.template_id, currentSite.id, data);
       } else {
         const reportData = {
           site_id: currentSite.id,
@@ -76,7 +108,7 @@ export const useReportForm = ({ onSuccess }: UseReportFormProps) => {
           parameters: data.parameters || {},
         };
         
-        result = await createReport(reportData);
+        result = await mockCreateReport(reportData);
       }
       
       if (result) {

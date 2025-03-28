@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import AppLayout from '@/components/layout/AppLayout';
 import SystemOverview from '@/components/system-status/SystemOverview';
@@ -275,15 +274,118 @@ const SystemStatus = () => {
           </TabsContent>
           
           <TabsContent value="performance" className="pt-4">
-            <PerformanceMetrics />
+            <PerformanceMetrics 
+              metrics={[
+                {
+                  id: 'cpu-usage',
+                  name: 'CPU Usage',
+                  value: 32,
+                  unit: '%',
+                  status: 'good',
+                  trend: 'stable',
+                  change: 0,
+                  history: Array(24).fill(0).map((_, i) => ({
+                    timestamp: new Date(Date.now() - i * 3600000).toISOString(),
+                    value: 30 + Math.random() * 10
+                  }))
+                },
+                {
+                  id: 'memory-usage',
+                  name: 'Memory Usage',
+                  value: 58,
+                  unit: '%',
+                  status: 'good',
+                  trend: 'up',
+                  change: 5,
+                  history: Array(24).fill(0).map((_, i) => ({
+                    timestamp: new Date(Date.now() - i * 3600000).toISOString(),
+                    value: 50 + Math.random() * 15
+                  }))
+                },
+                {
+                  id: 'disk-usage',
+                  name: 'Disk Usage',
+                  value: 72,
+                  unit: '%',
+                  status: 'warning',
+                  trend: 'up',
+                  change: 8,
+                  threshold: 80,
+                  history: Array(24).fill(0).map((_, i) => ({
+                    timestamp: new Date(Date.now() - i * 3600000).toISOString(),
+                    value: 65 + Math.random() * 15
+                  }))
+                }
+              ]}
+            />
           </TabsContent>
           
           <TabsContent value="integrations" className="pt-4">
-            <IntegrationStatus />
+            <IntegrationStatus 
+              integrations={[
+                {
+                  id: 'modbus-gateway',
+                  name: 'Modbus Gateway',
+                  type: 'modbus',
+                  status: 'online',
+                  latency: 48,
+                  successRate: 99.8,
+                  lastSync: new Date(Date.now() - 1200000).toISOString()
+                },
+                {
+                  id: 'mqtt-broker',
+                  name: 'MQTT Broker',
+                  type: 'mqtt',
+                  status: 'online',
+                  latency: 32,
+                  successRate: 100,
+                  lastSync: new Date(Date.now() - 300000).toISOString()
+                },
+                {
+                  id: 'rest-api',
+                  name: 'Weather API',
+                  type: 'api',
+                  status: 'degraded',
+                  latency: 257,
+                  successRate: 95.5,
+                  lastSync: new Date(Date.now() - 900000).toISOString()
+                }
+              ]}
+            />
           </TabsContent>
           
           <TabsContent value="events" className="pt-4">
-            <EventsList />
+            <EventsList 
+              events={[
+                {
+                  id: 'evt-001',
+                  title: 'System Update Available',
+                  description: 'A new system update v3.5.2 is available for installation',
+                  severity: 'info',
+                  timestamp: new Date(Date.now() - 8600000).toISOString(),
+                  source: 'system',
+                  acknowledged: false
+                },
+                {
+                  id: 'evt-002',
+                  title: 'Database Backup Completed',
+                  description: 'Scheduled database backup completed successfully',
+                  severity: 'info',
+                  timestamp: new Date(Date.now() - 36000000).toISOString(),
+                  source: 'database',
+                  acknowledged: true
+                },
+                {
+                  id: 'evt-003',
+                  title: 'High CPU Usage Detected',
+                  description: 'System CPU usage exceeded 85% for more than 10 minutes',
+                  severity: 'warning',
+                  timestamp: new Date(Date.now() - 1800000).toISOString(),
+                  source: 'monitoring',
+                  acknowledged: false
+                }
+              ]}
+            />
           </TabsContent>
         </Tabs>
       </div>

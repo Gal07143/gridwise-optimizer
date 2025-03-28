@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -30,17 +29,18 @@ const DeviceModelDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
-  
+  const [selectedParameter, setSelectedParameter] = useState(null);
+
   const { data: device, isLoading, error } = useQuery({
     queryKey: ['deviceModel', id],
     queryFn: () => fetchDeviceModelById(id || ''),
     enabled: !!id,
   });
-  
+
   const handleEditDevice = () => {
     navigate(`/integrations/device-model/${id}/edit`);
   };
-  
+
   const handleDownloadManual = () => {
     if (device?.has_manual) {
       toast.success(`Downloading manual for ${device.name}...`);
@@ -52,7 +52,7 @@ const DeviceModelDetailPage = () => {
       toast.info("Manual not available for this device");
     }
   };
-  
+
   const handleDownloadDatasheet = () => {
     if (device?.has_datasheet) {
       toast.success(`Downloading datasheet for ${device.name}...`);
@@ -63,7 +63,7 @@ const DeviceModelDetailPage = () => {
       toast.info("Datasheet not available for this device");
     }
   };
-  
+
   const handleViewVideo = () => {
     if (device?.has_video) {
       toast.success(`Opening video for ${device.name}...`);
@@ -75,7 +75,7 @@ const DeviceModelDetailPage = () => {
       toast.info("Video not available for this device");
     }
   };
-  
+
   if (isLoading) {
     return (
       <AppLayout>
@@ -88,7 +88,7 @@ const DeviceModelDetailPage = () => {
       </AppLayout>
     );
   }
-  
+
   if (error || !device) {
     return (
       <AppLayout>
@@ -121,7 +121,7 @@ const DeviceModelDetailPage = () => {
       </AppLayout>
     );
   }
-  
+
   const getSupportBadge = (supportLevel: 'full' | 'partial' | 'none') => {
     switch (supportLevel) {
       case 'full':
@@ -147,7 +147,7 @@ const DeviceModelDetailPage = () => {
         );
     }
   };
-  
+
   return (
     <AppLayout>
       <div className="p-6 animate-in fade-in duration-500">
@@ -576,6 +576,23 @@ const DeviceModelDetailPage = () => {
             </Card>
           </TabsContent>
         </Tabs>
+        
+        {selectedParameter && (
+          <div className="p-4 border rounded-md mt-4 bg-slate-50 dark:bg-slate-900">
+            <h3 className="text-sm font-medium mb-2">{selectedParameter.name}</h3>
+            <p className="text-sm text-muted-foreground mb-2">{selectedParameter.description || 'No description available'}</p>
+            {selectedParameter.options && (
+              <div className="mt-2">
+                <h4 className="text-xs font-medium mb-1">Options:</h4>
+                <ul className="text-xs list-disc list-inside space-y-1">
+                  {(selectedParameter.options as string[]).map((option, idx) => (
+                    <li key={idx}>{option}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </AppLayout>
   );

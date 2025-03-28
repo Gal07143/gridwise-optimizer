@@ -1,524 +1,561 @@
 
-import React, { useState, useEffect } from 'react';
-import { Search, BookOpen, Server, Cpu, Broadcast, 
-  HardDrive, WifiIcon, HelpCircle, ChevronRight, ArrowLeft } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import React, { useState } from 'react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Book, BookOpen, FileText, HelpCircle, Search, Tag, Zap, Package, Settings, FileQuestion, Info, AlertCircle, CheckCircle, Lightbulb, LifeBuoy, BookOpenCheck } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
-// Knowledge base categories
+// Knowledge database articles
+const articles = [
+  {
+    id: 'kb-001',
+    title: 'Getting Started with Energy Management System',
+    category: 'guides',
+    tags: ['beginner', 'setup', 'introduction'],
+    summary: 'A comprehensive guide to setting up and configuring your new energy management system.',
+    views: 1254,
+    lastUpdated: '2023-08-15',
+    content: `
+      # Getting Started with Energy Management System
+      
+      Welcome to your new Energy Management System (EMS). This guide will help you navigate through the initial setup and configuration process.
+      
+      ## Initial Setup
+      
+      1. **Connect to your devices**: Ensure all supported devices are properly connected to your network.
+      2. **Configure site settings**: Set up your location, timezone, and preferred units of measurement.
+      3. **Add users**: Invite team members and assign appropriate permissions.
+      
+      ## Basic Navigation
+      
+      The main dashboard provides an overview of your energy usage and production. From there, you can access:
+      
+      - **Devices**: Monitor and control individual devices
+      - **Analytics**: View detailed reports and insights
+      - **Settings**: Configure system preferences
+      
+      ## Next Steps
+      
+      After completing the initial setup, we recommend:
+      
+      - Setting up alert notifications
+      - Configuring scheduled reports
+      - Exploring optimization features
+      
+      If you need additional help, please refer to our detailed documentation or contact support.
+    `
+  },
+  {
+    id: 'kb-002',
+    title: 'Understanding Battery Storage Performance Metrics',
+    category: 'technical',
+    tags: ['battery', 'performance', 'metrics'],
+    summary: 'Learn how to interpret battery performance indicators and optimize your storage system.',
+    views: 876,
+    lastUpdated: '2023-09-02',
+    content: `
+      # Understanding Battery Storage Performance Metrics
+      
+      Battery performance can be measured in several ways. This article explains key metrics and how to interpret them.
+      
+      ## Key Performance Indicators
+      
+      ### State of Charge (SoC)
+      
+      The State of Charge represents the current battery level as a percentage of its total capacity. Maintaining optimal SoC ranges can extend battery life.
+      
+      ### Depth of Discharge (DoD)
+      
+      DoD represents how deeply a battery is discharged relative to its total capacity. Most batteries have recommended DoD limits to prevent degradation.
+      
+      ### Cycle Efficiency
+      
+      This metric shows how efficiently the battery converts input energy to output energy. Higher percentages indicate better performance.
+      
+      ### Capacity Degradation
+      
+      Over time, batteries lose their ability to hold a full charge. Monitoring capacity degradation helps predict replacement needs.
+      
+      ## Optimizing Battery Performance
+      
+      - Avoid frequent deep discharges
+      - Maintain appropriate temperature ranges
+      - Schedule regular maintenance
+      - Configure appropriate charge/discharge rates
+      
+      Using these metrics effectively can significantly extend the lifespan of your battery storage system and improve overall energy efficiency.
+    `
+  },
+  {
+    id: 'kb-003',
+    title: 'Troubleshooting Common Communication Issues',
+    category: 'troubleshooting',
+    tags: ['connectivity', 'modbus', 'network'],
+    summary: 'Solutions for common device communication problems and connectivity issues.',
+    views: 1120,
+    lastUpdated: '2023-10-10',
+    content: `
+      # Troubleshooting Common Communication Issues
+      
+      This guide addresses frequent communication issues between the energy management system and connected devices.
+      
+      ## Modbus Connection Failures
+      
+      If devices aren't responding over Modbus:
+      
+      1. Verify physical connections
+      2. Check device address settings
+      3. Confirm baud rate and parity settings
+      4. Test with a Modbus scanner tool
+      
+      ## Network Connectivity Issues
+      
+      For TCP/IP communication problems:
+      
+      1. Verify IP address configuration
+      2. Check network firewall settings
+      3. Ensure ports are open (typically 502 for Modbus TCP)
+      4. Confirm subnet mask settings
+      
+      ## Data Logging Gaps
+      
+      If you notice missing data:
+      
+      1. Check device polling frequency
+      2. Verify logger service is running
+      3. Inspect database storage capacity
+      4. Review error logs for timeout issues
+      
+      ## Advanced Diagnostics
+      
+      For persistent issues:
+      
+      1. Enable debug logging
+      2. Capture packet traces
+      3. Verify firmware versions
+      4. Test with alternative communication methods
+      
+      Most communication issues can be resolved by systematically checking each component in the communication chain.
+    `
+  },
+  {
+    id: 'kb-004',
+    title: 'Optimizing Solar Production',
+    category: 'optimization',
+    tags: ['solar', 'efficiency', 'maintenance'],
+    summary: 'Maximize your solar energy production with these optimization strategies and maintenance tips.',
+    views: 932,
+    lastUpdated: '2023-09-18',
+    content: `
+      # Optimizing Solar Production
+      
+      This guide provides practical advice for maximizing your solar energy production.
+      
+      ## Panel Positioning and Maintenance
+      
+      ### Optimal Positioning
+      
+      - Ensure panels face true south (northern hemisphere) or true north (southern hemisphere)
+      - Set tilt angle to approximately your latitude angle
+      - Consider adjustable mounts for seasonal optimization
+      
+      ### Regular Maintenance
+      
+      - Clean panels quarterly or more frequently in dusty environments
+      - Remove snow accumulation promptly
+      - Check for and remove debris or vegetation causing shading
+      
+      ## System Performance Monitoring
+      
+      ### Key Metrics to Track
+      
+      - Daily/monthly production compared to theoretical maximum
+      - Performance ratio (actual vs. expected production)
+      - Inverter efficiency
+      - Panel degradation rate
+      
+      ### Alert Configuration
+      
+      Set up alerts for:
+      - Sudden drops in production
+      - Inverter errors
+      - Panel string anomalies
+      
+      ## Advanced Optimization
+      
+      - Install power optimizers for partial shading conditions
+      - Upgrade inverters for better efficiency
+      - Consider adding tracking systems for large installations
+      - Implement predictive maintenance using AI analytics
+      
+      Regular monitoring and maintenance can increase solar production by 10-30% compared to neglected systems.
+    `
+  },
+  {
+    id: 'kb-005',
+    title: 'Energy Management System Security Best Practices',
+    category: 'security',
+    tags: ['security', 'privacy', 'protection'],
+    summary: 'Essential security measures to protect your energy management system from unauthorized access.',
+    views: 754,
+    lastUpdated: '2023-10-25',
+    content: `
+      # Energy Management System Security Best Practices
+      
+      Protecting your energy management system from unauthorized access is critical. Follow these guidelines to enhance security.
+      
+      ## Access Control
+      
+      ### User Management
+      
+      - Implement role-based access control
+      - Enforce strong password policies
+      - Enable multi-factor authentication
+      - Review and audit user accounts quarterly
+      
+      ### Network Security
+      
+      - Isolate energy management systems on separate VLANs
+      - Implement firewall rules to restrict access
+      - Use VPN for remote management
+      - Disable unnecessary services and ports
+      
+      ## Data Protection
+      
+      ### Encryption
+      
+      - Enable TLS/SSL for all communications
+      - Encrypt sensitive data at rest
+      - Use secure protocols (HTTPS, SFTP, SSH)
+      
+      ### Backup and Recovery
+      
+      - Implement regular automated backups
+      - Test restoration procedures
+      - Store backups securely off-site
+      
+      ## Software Management
+      
+      - Keep all system components updated
+      - Apply security patches promptly
+      - Verify integrity of software updates
+      - Maintain an inventory of all installed software
+      
+      ## Monitoring and Response
+      
+      - Enable security logging
+      - Implement intrusion detection
+      - Develop an incident response plan
+      - Conduct regular security assessments
+      
+      Following these practices will significantly reduce the risk of security breaches and ensure the integrity of your energy data.
+    `
+  }
+];
+
+// Categories for the knowledge base
 const categories = [
-  { id: 'devices', name: 'Devices', icon: <HardDrive className="h-5 w-5" /> },
-  { id: 'protocols', name: 'Communication Protocols', icon: <Broadcast className="h-5 w-5" /> },
-  { id: 'inverters', name: 'Inverters', icon: <Cpu className="h-5 w-5" /> },
-  { id: 'meters', name: 'Energy Meters', icon: <Server className="h-5 w-5" /> },
-  { id: 'wireless', name: 'Wireless Solutions', icon: <WifiIcon className="h-5 w-5" /> },
+  {
+    id: 'guides',
+    name: 'Setup Guides',
+    icon: <BookOpen className="h-5 w-5" />,
+    description: 'Step-by-step instructions for configuring and using the system',
+    count: articles.filter(a => a.category === 'guides').length,
+    color: 'text-blue-500'
+  },
+  {
+    id: 'technical',
+    name: 'Technical References',
+    icon: <FileText className="h-5 w-5" />,
+    description: 'Detailed information about system components and specifications',
+    count: articles.filter(a => a.category === 'technical').length,
+    color: 'text-purple-500'
+  },
+  {
+    id: 'troubleshooting',
+    name: 'Troubleshooting',
+    icon: <HelpCircle className="h-5 w-5" />,
+    description: 'Solutions for common issues and problems',
+    count: articles.filter(a => a.category === 'troubleshooting').length,
+    color: 'text-red-500'
+  },
+  {
+    id: 'optimization',
+    name: 'Optimization Guides',
+    icon: <Zap className="h-5 w-5" />,
+    description: 'Tips and methods to improve system performance',
+    count: articles.filter(a => a.category === 'optimization').length,
+    color: 'text-green-500'
+  },
+  {
+    id: 'security',
+    name: 'Security',
+    icon: <Settings className="h-5 w-5" />,
+    description: 'Best practices for securing your energy management system',
+    count: articles.filter(a => a.category === 'security').length,
+    color: 'text-amber-500'
+  }
 ];
 
-// Mock knowledge base items
-const knowledgeItems = [
-  // Devices
-  {
-    id: 'device-1',
-    category: 'devices',
-    title: 'Battery Storage Systems',
-    description: 'Overview of battery storage technologies and integration with energy systems.',
-    tags: ['battery', 'storage', 'lithium-ion', 'lead-acid'],
-    content: `
-      # Battery Storage Systems
-      
-      Battery energy storage systems (BESS) store electricity for use at a later time. They are critical components in modern energy management systems, especially those with renewable energy sources.
-      
-      ## Common Battery Technologies
-      
-      - **Lithium-ion**: High energy density, long cycle life, but more expensive
-      - **Lead-acid**: Lower cost, proven technology, but shorter lifespan
-      - **Flow batteries**: Excellent for long-duration storage, scalable
-      
-      ## Integration Considerations
-      
-      When integrating battery storage with your energy management system:
-      
-      1. **Sizing**: Carefully consider capacity needs based on load profiles
-      2. **Inverter compatibility**: Ensure DC/AC conversion is efficient
-      3. **Management systems**: Battery management systems (BMS) are critical
-      4. **Temperature control**: Batteries require proper thermal management
-      
-      ## Maintenance Requirements
-      
-      Regular maintenance ensures optimal performance and longevity:
-      
-      - Monitor cell balancing and voltage
-      - Check thermal management systems
-      - Perform capacity tests periodically
-      - Update firmware as recommended
-    `,
-    lastUpdated: '2023-11-15',
-  },
-  {
-    id: 'device-2',
-    category: 'devices',
-    title: 'Solar PV Systems',
-    description: 'Components, installation, and maintenance of solar photovoltaic systems.',
-    tags: ['solar', 'pv', 'panels', 'renewable'],
-    content: `
-      # Solar PV Systems
-      
-      Solar photovoltaic (PV) systems convert sunlight directly into electricity through semiconductor materials.
-      
-      ## Key Components
-      
-      - **PV modules/panels**: Convert sunlight to DC electricity
-      - **Inverters**: Convert DC to AC electricity
-      - **Mounting systems**: Secure panels to roofs or ground
-      - **Monitoring systems**: Track performance and identify issues
-      
-      ## Integration with EMS
-      
-      Solar PV systems can be integrated with energy management systems to:
-      
-      1. Optimize self-consumption
-      2. Manage excess generation
-      3. Coordinate with battery storage
-      4. Provide data for energy forecasting
-      
-      ## Maintenance Best Practices
-      
-      - Clean panels regularly to remove dust and debris
-      - Inspect for physical damage or degradation
-      - Monitor inverter performance
-      - Check electrical connections
-    `,
-    lastUpdated: '2023-10-20',
-  },
-  // Protocols
-  {
-    id: 'protocol-1',
-    category: 'protocols',
-    title: 'Modbus Protocol',
-    description: 'Implementation and use of Modbus in energy management systems.',
-    tags: ['modbus', 'communication', 'RTU', 'TCP/IP'],
-    content: `
-      # Modbus Protocol
-      
-      Modbus is a serial communications protocol developed in 1979 for use with programmable logic controllers (PLCs). It has become a de facto standard for industrial electronic device communication.
-      
-      ## Modbus Variants
-      
-      - **Modbus RTU**: Serial protocol using binary encoding
-      - **Modbus ASCII**: Serial protocol using ASCII encoding
-      - **Modbus TCP/IP**: Ethernet-based implementation
-      
-      ## Register Types
-      
-      Modbus uses four types of registers:
-      
-      1. **Coils** (00001-09999): Single-bit, read-write
-      2. **Discrete Inputs** (10001-19999): Single-bit, read-only
-      3. **Input Registers** (30001-39999): 16-bit, read-only
-      4. **Holding Registers** (40001-49999): 16-bit, read-write
-      
-      ## Implementation Tips
-      
-      - Ensure proper termination in RTU networks
-      - Set consistent baud rates and parity
-      - Use proper addressing for all devices
-      - Consider timeouts and retry mechanisms
-      
-      ## Common Issues
-      
-      - Addressing offsets (zero vs one-based)
-      - Byte order (endianness)
-      - Timing issues in RTU implementations
-      - Network collisions
-    `,
-    lastUpdated: '2023-09-05',
-  },
-  {
-    id: 'protocol-2',
-    category: 'protocols',
-    title: 'BACnet Protocol',
-    description: 'Understanding BACnet for building automation and control networks.',
-    tags: ['bacnet', 'building', 'automation', 'HVAC'],
-    content: `
-      # BACnet Protocol
-      
-      BACnet (Building Automation and Control Networks) is a data communication protocol designed specifically for building automation and control equipment.
-      
-      ## BACnet Network Types
-      
-      - **BACnet/IP**: Uses standard IP networks
-      - **BACnet MS/TP**: Master-Slave/Token-Passing over RS-485
-      - **BACnet ARCNET**: Token-passing protocol
-      - **BACnet Ethernet**: Direct Ethernet implementation
-      
-      ## Object Types
-      
-      BACnet uses an object-oriented approach with standard object types:
-      
-      - Analog Input, Output, Value
-      - Binary Input, Output, Value
-      - Multi-state Input, Output, Value
-      - Schedule, Calendar
-      - Trend Log
-      - Device
-      
-      ## Integration Considerations
-      
-      When integrating BACnet devices:
-      
-      1. Ensure device instance IDs are unique
-      2. Configure proper network numbers
-      3. Consider routing between networks
-      4. Test discovery and binding procedures
-      
-      ## Troubleshooting
-      
-      - Use Wireshark with BACnet plugins
-      - Verify device IDs and network numbers
-      - Check MS/TP polarity and termination
-      - Validate service support in devices
-    `,
-    lastUpdated: '2023-08-12',
-  },
-  // Inverters
-  {
-    id: 'inverter-1',
-    category: 'inverters',
-    title: 'String Inverters',
-    description: 'Selection, installation, and maintenance of string inverters for solar PV systems.',
-    tags: ['inverter', 'string', 'solar', 'conversion'],
-    content: `
-      # String Inverters
-      
-      String inverters convert DC electricity from a string (series) of solar panels into AC electricity for use in buildings or the grid.
-      
-      ## Key Features
-      
-      - Typically used for residential and small commercial installations
-      - Cost-effective for systems with consistent panel orientation
-      - Central monitoring and control point
-      - Efficiency typically 95-98%
-      
-      ## Selection Criteria
-      
-      When selecting a string inverter:
-      
-      1. **Sizing**: Match capacity to PV array size (typically 80-100% DC:AC ratio)
-      2. **Voltage window**: Ensure PV string voltage matches inverter input range
-      3. **Grid compatibility**: Verify compliance with local grid requirements
-      4. **Monitoring capabilities**: Consider data logging and remote monitoring needs
-      
-      ## Installation Best Practices
-      
-      - Install in shaded, well-ventilated areas
-      - Maintain clearances for cooling
-      - Ensure proper grounding
-      - Protect from water and dust ingress
-      
-      ## Maintenance
-      
-      - Clean cooling fins and vents
-      - Check for error codes
-      - Monitor DC and AC connections
-      - Update firmware as recommended
-    `,
-    lastUpdated: '2023-07-25',
-  },
-  // Meters
-  {
-    id: 'meter-1',
-    category: 'meters',
-    title: 'Advanced Metering Infrastructure',
-    description: 'Understanding AMI systems and smart meters for energy management.',
-    tags: ['ami', 'smart meter', 'measurement', 'monitoring'],
-    content: `
-      # Advanced Metering Infrastructure (AMI)
-      
-      AMI systems include smart meters, communication networks, and data management systems that enable two-way communication between utilities and customers.
-      
-      ## Components of AMI
-      
-      - **Smart meters**: Digital meters with communication capabilities
-      - **Communication network**: Wireless, PLC, cellular, or fiber
-      - **Head-end system**: Manages communications and data collection
-      - **Meter data management system**: Stores and processes meter data
-      
-      ## Benefits for Energy Management
-      
-      - Granular energy consumption data (15-minute to hourly intervals)
-      - Remote monitoring and diagnostics
-      - Support for time-of-use pricing
-      - Outage detection and restoration confirmation
-      
-      ## Integration with EMS
-      
-      When integrating AMI with energy management systems:
-      
-      1. Consider data format compatibility
-      2. Determine polling frequency requirements
-      3. Plan for data storage and archiving
-      4. Implement data validation processes
-      
-      ## Data Security Considerations
-      
-      - Encryption for data transmission
-      - Access control for meter data
-      - Compliance with privacy regulations
-      - Regular security assessments
-    `,
-    lastUpdated: '2023-06-18',
-  },
-  // Wireless
-  {
-    id: 'wireless-1',
-    category: 'wireless',
-    title: 'LoRaWAN for Energy Monitoring',
-    description: 'Implementing low-power, long-range communication for energy devices.',
-    tags: ['lorawan', 'lpwan', 'iot', 'wireless'],
-    content: `
-      # LoRaWAN for Energy Monitoring
-      
-      LoRaWAN (Long Range Wide Area Network) is a low-power, wide-area networking protocol designed for wireless battery-operated devices in regional, national, or global networks.
-      
-      ## Key Characteristics
-      
-      - Long range: 2-5 km in urban areas, 15+ km in rural areas
-      - Low power consumption: 10+ years battery life possible
-      - Low bandwidth: 0.3-50 kbps
-      - Secure: End-to-end encryption
-      
-      ## Network Architecture
-      
-      - **End devices**: Sensors and actuators with LoRa capability
-      - **Gateways**: Receive LoRa signals and connect to network server
-      - **Network server**: Manages the network and eliminates duplicates
-      - **Application server**: Processes and presents data
-      
-      ## Energy Monitoring Applications
-      
-      - Remote meter reading
-      - Submetering in large facilities
-      - Equipment monitoring
-      - Environmental sensing
-      
-      ## Implementation Considerations
-      
-      1. Coverage planning and site surveys
-      2. Gateway placement for optimal coverage
-      3. Device class selection (A, B, or C)
-      4. Payload optimization for battery life
-      
-      ## Limitations
-      
-      - Not suitable for high-bandwidth applications
-      - Potential interference in dense deployments
-      - Regional frequency regulations
-      - Limited downlink capabilities
-    `,
-    lastUpdated: '2023-05-10',
-  },
+// Popular tags used across articles
+const popularTags = [
+  'setup', 'configuration', 'battery', 'solar', 'efficiency', 
+  'troubleshooting', 'maintenance', 'optimization', 'security', 'connectivity'
 ];
 
-interface KnowledgeItemProps {
-  item: (typeof knowledgeItems)[0];
-  onSelect: (item: (typeof knowledgeItems)[0]) => void;
-}
-
-const KnowledgeItem: React.FC<KnowledgeItemProps> = ({ item, onSelect }) => {
-  return (
-    <div 
-      className="p-4 border-b cursor-pointer hover:bg-muted/50 transition-colors flex justify-between items-center"
-      onClick={() => onSelect(item)}
-    >
-      <div>
-        <h3 className="font-medium">{item.title}</h3>
-        <p className="text-sm text-muted-foreground mt-1">{item.description}</p>
-        <div className="flex flex-wrap gap-1 mt-2">
-          {item.tags.slice(0, 3).map(tag => (
-            <Badge key={tag} variant="outline" className="text-xs">
-              {tag}
-            </Badge>
-          ))}
-          {item.tags.length > 3 && (
-            <Badge variant="outline" className="text-xs">
-              +{item.tags.length - 3} more
-            </Badge>
-          )}
-        </div>
-      </div>
-      <ChevronRight className="h-5 w-5 text-muted-foreground" />
-    </div>
-  );
-};
-
-export const KnowledgeDatabase: React.FC = () => {
-  const [selectedCategory, setSelectedCategory] = useState('devices');
+export default function KnowledgeDatabase() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedItem, setSelectedItem] = useState<(typeof knowledgeItems)[0] | null>(null);
-  const [filteredItems, setFilteredItems] = useState<(typeof knowledgeItems)>([]);
-
-  useEffect(() => {
-    // Filter items based on category and search query
-    const filtered = knowledgeItems.filter(item => {
-      const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
-      const matchesSearch = searchQuery === '' || 
-        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+  const [activeCategory, setActiveCategory] = useState('all');
+  const [selectedArticle, setSelectedArticle] = useState<typeof articles[0] | null>(null);
+  
+  // Filter articles based on search and category
+  const filteredArticles = articles.filter(article => {
+    const matchesSearch = searchQuery === '' || 
+      article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      article.summary.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      article.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
       
-      return matchesCategory && matchesSearch;
-    });
+    const matchesCategory = activeCategory === 'all' || article.category === activeCategory;
     
-    setFilteredItems(filtered);
-  }, [selectedCategory, searchQuery]);
+    return matchesSearch && matchesCategory;
+  });
+  
+  const handleArticleSelect = (article: typeof articles[0]) => {
+    setSelectedArticle(article);
+  };
+  
+  const handleBackToList = () => {
+    setSelectedArticle(null);
+  };
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="p-4 border-b bg-card">
-        <h2 className="text-2xl font-semibold flex items-center">
-          <BookOpen className="mr-2 h-6 w-6" />
-          Knowledge Database
-        </h2>
-        <p className="text-muted-foreground mt-1">
-          Reference materials for devices and protocols used in energy management systems
-        </p>
-      </div>
-
-      {selectedItem ? (
-        <div className="flex flex-col h-full">
-          <div className="p-4 flex items-center border-b">
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => setSelectedItem(null)}
-              className="mr-2"
-            >
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              Back
-            </Button>
-            <div>
-              <h3 className="font-medium">{selectedItem.title}</h3>
-              <p className="text-xs text-muted-foreground">Last updated: {selectedItem.lastUpdated}</p>
-            </div>
+    <Card className="w-full shadow-md">
+      <CardHeader>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <CardTitle className="text-xl flex items-center">
+              <Book className="mr-2 h-5 w-5 text-primary" />
+              Knowledge Database
+            </CardTitle>
+            <CardDescription>
+              Browse guides, technical documentation, and troubleshooting resources
+            </CardDescription>
           </div>
           
-          <ScrollArea className="flex-1 p-4">
-            <div className="prose prose-sm dark:prose-invert max-w-none">
-              {selectedItem.content.split('\n\n').map((paragraph, idx) => {
-                if (paragraph.startsWith('# ')) {
-                  return <h1 key={idx} className="text-2xl font-bold mt-4 mb-2">{paragraph.replace('# ', '')}</h1>;
-                } else if (paragraph.startsWith('## ')) {
-                  return <h2 key={idx} className="text-xl font-semibold mt-4 mb-2">{paragraph.replace('## ', '')}</h2>;
-                } else if (paragraph.startsWith('- ')) {
-                  return (
-                    <ul key={idx} className="list-disc pl-5 my-2">
-                      {paragraph.split('\n').map((item, i) => (
-                        <li key={i}>{item.replace('- ', '')}</li>
-                      ))}
-                    </ul>
-                  );
-                } else if (paragraph.match(/^\d\./)) {
-                  return (
-                    <ol key={idx} className="list-decimal pl-5 my-2">
-                      {paragraph.split('\n').map((item, i) => {
-                        const content = item.replace(/^\d+\.\s/, '');
-                        return <li key={i}>{content}</li>;
-                      })}
-                    </ol>
-                  );
-                } else {
-                  return <p key={idx} className="my-2">{paragraph}</p>;
-                }
-              })}
-            </div>
-          </ScrollArea>
-          
-          <div className="p-4 border-t">
-            <div className="flex flex-wrap gap-1 mt-2">
-              {selectedItem.tags.map(tag => (
-                <Badge key={tag} variant="secondary" className="text-xs">
-                  {tag}
-                </Badge>
-              ))}
-            </div>
+          <div className="relative w-full sm:w-64 md:w-96">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search knowledge base..."
+              className="pl-9 w-full"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
         </div>
-      ) : (
-        <>
-          <div className="p-4 border-b">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search knowledge base..."
-                className="pl-8"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+      </CardHeader>
+      
+      <CardContent>
+        {selectedArticle ? (
+          <div className="space-y-4">
+            <Button variant="outline" size="sm" onClick={handleBackToList} className="mb-4">
+              ← Back to articles
+            </Button>
+            
+            <div className="space-y-4">
+              <div>
+                <h2 className="text-2xl font-semibold">{selectedArticle.title}</h2>
+                <div className="flex flex-wrap items-center gap-2 mt-2 text-sm text-muted-foreground">
+                  <span>Last updated: {selectedArticle.lastUpdated}</span>
+                  <span>•</span>
+                  <span>{selectedArticle.views} views</span>
+                  <span>•</span>
+                  <div className="flex items-center">
+                    <Tag className="h-3.5 w-3.5 mr-1" />
+                    {selectedArticle.tags.map(tag => (
+                      <Badge key={tag} variant="outline" className="mr-1 text-xs">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="prose prose-sm dark:prose-invert max-w-none">
+                {/* In a real app, you would render Markdown here */}
+                <pre className="p-4 bg-muted rounded-md overflow-auto text-sm">
+                  {selectedArticle.content}
+                </pre>
+              </div>
+              
+              <div className="pt-4 border-t">
+                <h3 className="text-sm font-medium mb-2">Was this article helpful?</h3>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm">
+                    <CheckCircle className="h-4 w-4 mr-1" /> Yes
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    <AlertCircle className="h-4 w-4 mr-1" /> No
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
-          
-          <Tabs defaultValue="devices" value={selectedCategory} onValueChange={setSelectedCategory}>
-            <div className="p-4 border-b">
-              <TabsList className="w-full">
-                <TabsTrigger value="all" className="flex items-center">
-                  <HelpCircle className="h-4 w-4 mr-2" />
-                  All
-                </TabsTrigger>
-                {categories.map(category => (
-                  <TabsTrigger key={category.id} value={category.id} className="flex items-center">
-                    {category.icon}
-                    <span className="ml-2 hidden sm:inline">{category.name}</span>
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </div>
+        ) : (
+          <Tabs defaultValue="articles" className="w-full">
+            <TabsList className="mb-4">
+              <TabsTrigger value="articles">Articles</TabsTrigger>
+              <TabsTrigger value="categories">Categories</TabsTrigger>
+              <TabsTrigger value="tags">Popular Tags</TabsTrigger>
+            </TabsList>
             
-            <div className="flex-1 overflow-auto">
-              <TabsContent value="all" className="m-0">
-                {filteredItems.length > 0 ? (
-                  filteredItems.map(item => (
-                    <KnowledgeItem key={item.id} item={item} onSelect={setSelectedItem} />
-                  ))
-                ) : (
-                  <div className="p-8 text-center">
-                    <HelpCircle className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                    <h3 className="font-medium">No items found</h3>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Try adjusting your search criteria
-                    </p>
-                  </div>
-                )}
-              </TabsContent>
+            <TabsContent value="articles" className="space-y-4">
+              <div className="flex gap-2 flex-wrap mb-4">
+                <Button 
+                  variant={activeCategory === 'all' ? "default" : "outline"} 
+                  size="sm" 
+                  onClick={() => setActiveCategory('all')}
+                >
+                  All
+                </Button>
+                {categories.map(category => (
+                  <Button 
+                    key={category.id}
+                    variant={activeCategory === category.id ? "default" : "outline"} 
+                    size="sm"
+                    onClick={() => setActiveCategory(category.id)}
+                  >
+                    {React.cloneElement(category.icon, { className: 'h-4 w-4 mr-1' })}
+                    {category.name}
+                  </Button>
+                ))}
+              </div>
               
-              {categories.map(category => (
-                <TabsContent key={category.id} value={category.id} className="m-0">
-                  {filteredItems.length > 0 ? (
-                    filteredItems.map(item => (
-                      <KnowledgeItem key={item.id} item={item} onSelect={setSelectedItem} />
-                    ))
-                  ) : (
-                    <div className="p-8 text-center">
-                      <category.icon className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                      <h3 className="font-medium">No {category.name.toLowerCase()} found</h3>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Try adjusting your search criteria
-                      </p>
-                    </div>
-                  )}
-                </TabsContent>
-              ))}
-            </div>
+              {filteredArticles.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <FileQuestion className="h-12 w-12 mx-auto mb-3 text-muted-foreground/60" />
+                  <p>No articles match your search criteria</p>
+                  <Button variant="link" onClick={() => {setSearchQuery(''); setActiveCategory('all');}}>
+                    Clear filters
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                  {filteredArticles.map(article => (
+                    <Card key={article.id} className="group hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleArticleSelect(article)}>
+                      <CardHeader className="pb-2">
+                        <div>
+                          {/* Icon based on category */}
+                          {article.category === 'guides' && <BookOpen className="h-8 w-8 text-blue-500 mb-2" />}
+                          {article.category === 'technical' && <FileText className="h-8 w-8 text-purple-500 mb-2" />}
+                          {article.category === 'troubleshooting' && <HelpCircle className="h-8 w-8 text-red-500 mb-2" />}
+                          {article.category === 'optimization' && <Zap className="h-8 w-8 text-green-500 mb-2" />}
+                          {article.category === 'security' && <Settings className="h-8 w-8 text-amber-500 mb-2" />}
+                          
+                          <CardTitle className="text-base group-hover:text-primary transition-colors">
+                            {article.title}
+                          </CardTitle>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="pb-3">
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {article.summary}
+                        </p>
+                        
+                        <div className="flex flex-wrap gap-1 mt-3">
+                          {article.tags.slice(0, 3).map(tag => (
+                            <Badge key={tag} variant="secondary" className="text-xs">
+                              {tag}
+                            </Badge>
+                          ))}
+                          {article.tags.length > 3 && (
+                            <Badge variant="outline" className="text-xs">
+                              +{article.tags.length - 3} more
+                            </Badge>
+                          )}
+                        </div>
+                      </CardContent>
+                      <CardFooter className="pt-0 text-xs text-muted-foreground flex justify-between">
+                        <span>{article.views} views</span>
+                        <span>Updated {article.lastUpdated}</span>
+                      </CardFooter>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="categories">
+              <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                {categories.map((category) => (
+                  <Card 
+                    key={category.id} 
+                    className="cursor-pointer hover:shadow-md transition-shadow"
+                    onClick={() => {
+                      setActiveCategory(category.id);
+                      document.querySelector('[data-value="articles"]')?.click();
+                    }}
+                  >
+                    <CardHeader>
+                      <CardTitle className={`text-lg flex items-center ${category.color}`}>
+                        {React.cloneElement(category.icon, { className: 'mr-2 h-5 w-5' })}
+                        {category.name}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground">{category.description}</p>
+                      <p className="mt-2 text-sm">{category.count} articles</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="tags">
+              <div className="flex flex-wrap gap-3 p-4">
+                {popularTags.map(tag => (
+                  <Badge 
+                    key={tag} 
+                    variant="secondary"
+                    className="text-sm py-2 px-3 cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
+                    onClick={() => {
+                      setSearchQuery(tag);
+                      document.querySelector('[data-value="articles"]')?.click();
+                    }}
+                  >
+                    <Tag className="h-3.5 w-3.5 mr-1.5" />
+                    {tag}
+                    <span className="ml-1.5 text-xs bg-background text-foreground rounded-full px-1.5">
+                      {articles.filter(a => a.tags.includes(tag)).length}
+                    </span>
+                  </Badge>
+                ))}
+              </div>
+            </TabsContent>
           </Tabs>
-        </>
-      )}
-    </div>
+        )}
+      </CardContent>
+      
+      <CardFooter className="border-t px-6 py-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 w-full text-sm text-muted-foreground">
+          <div className="flex items-center">
+            <Info className="h-4 w-4 mr-1.5 text-primary" />
+            <span>Can't find what you're looking for?</span>
+          </div>
+          <div className="flex gap-3">
+            <Button variant="outline" size="sm">
+              <LifeBuoy className="h-4 w-4 mr-1.5" />
+              Contact Support
+            </Button>
+            <Button variant="outline" size="sm">
+              <Lightbulb className="h-4 w-4 mr-1.5" />
+              Suggest New Article
+            </Button>
+          </div>
+        </div>
+      </CardFooter>
+    </Card>
   );
-};
-
-export default KnowledgeDatabase;
+}

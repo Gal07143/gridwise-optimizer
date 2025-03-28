@@ -1,42 +1,37 @@
 
-import * as React from "react"
-import { cn } from "@/lib/utils"
+import React from 'react';
+import { cn } from '@/lib/utils';
 
-// Main wrapper for the main content area
-const Main = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => {
-  return (
-    <main
-      ref={ref}
-      className={cn("flex-1 overflow-auto", className)}
-      style={{ 
-        padding: "var(--content-padding, 1rem)",
-        // Set consistent CSS variables that can be overridden in specific contexts
-        "--content-padding-small": "1rem", 
-        "--content-padding-medium": "1.5rem",
-        "--content-padding-large": "2rem"
-      }}
-      {...props}
-    />
-  )
-})
-Main.displayName = "Main"
+interface MainProps extends React.HTMLAttributes<HTMLDivElement> {
+  children: React.ReactNode;
+  containerSize?: 'default' | 'small' | 'large' | 'full';
+}
 
-// Apply the CSS variable through a global style in index.css
-// :root {
-//   --content-padding: var(--content-padding-medium);
-// }
-// @media (max-width: 640px) {
-//   :root {
-//     --content-padding: var(--content-padding-small);
-//   }
-// }
-// @media (min-width: 1280px) {
-//   :root {
-//     --content-padding: var(--content-padding-large);
-//   }
-// }
+export const Main = React.forwardRef<HTMLDivElement, MainProps>(
+  ({ children, className, containerSize = 'default', style, ...props }, ref) => {
+    const paddingStyles = {
+      small: 'px-4 py-4 sm:px-6',
+      default: 'px-4 py-6 sm:px-6 md:px-8',
+      large: 'px-4 py-8 sm:px-6 md:px-8 lg:px-12',
+      full: 'p-0',
+    };
 
-export { Main }
+    // Specify custom properties in a type-safe way
+    const customProperties = {
+      '--content-padding': paddingStyles[containerSize],
+    } as React.CSSProperties;
+
+    return (
+      <main
+        ref={ref}
+        className={cn('flex-1', className)}
+        style={{ ...customProperties, ...style }}
+        {...props}
+      >
+        {children}
+      </main>
+    );
+  }
+);
+
+Main.displayName = 'Main';

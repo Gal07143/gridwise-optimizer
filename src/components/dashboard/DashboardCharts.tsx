@@ -7,6 +7,17 @@ import EnergyFlowChart from '@/components/dashboard/EnergyFlowChart';
 import PowerQualityCard from '@/components/dashboard/PowerQualityCard';
 import AdvancedBatteryCard from '@/components/dashboard/AdvancedBatteryCard';
 
+// Sample data for the power trend chart
+const powerTrendData = [
+  { time: '00:00', value: 2.5 },
+  { time: '04:00', value: 1.8 },
+  { time: '08:00', value: 4.2 },
+  { time: '12:00', value: 6.5 },
+  { time: '16:00', value: 5.3 },
+  { time: '20:00', value: 3.2 },
+  { time: '24:00', value: 2.8 },
+];
+
 const DashboardCharts = () => {
   return (
     <>
@@ -17,6 +28,7 @@ const DashboardCharts = () => {
         <div className="glass-panel shadow-md p-4 rounded-xl">
           <h3 className="text-lg font-medium mb-3">Power Trend (24h)</h3>
           <LiveChart 
+            data={powerTrendData}
             animationDelay="400ms" 
             type="area" 
             gradientFrom="rgba(14, 165, 233, 0.5)" 

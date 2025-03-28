@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Zap, Battery, Sun, Wind, Activity } from 'lucide-react';
 import MetricsCard from '@/components/dashboard/MetricsCard';
@@ -6,52 +7,67 @@ import TariffHistoryCard from './TariffHistoryCard';
 import ModbusCard from './ModbusCard';
 import DeviceManagement from './DeviceManagement';
 import FaultSummaryCard from './FaultSummaryCard';
-import { useFaults } from '@/hooks/useFaults';
-import { createClient } from '@supabase/supabase-js';
 import LiveTelemetryChart from './LiveTelemetryChart';
 import AlertSummaryCard from './AlertSummaryCard';
 
-// ✅ Initialize Supabase client
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL || '',
-  import.meta.env.VITE_SUPABASE_ANON_KEY || ''
-);
+// Mock telemetry data
+const mockTelemetry = {
+  power: 6.2,
+  voltage: 240.3,
+  current: 25.8,
+  temperature: 43.2,
+  timestamp: new Date().toISOString()
+};
+
+// Mock faults data
+const mockFaults = [
+  {
+    id: 'fault-1',
+    title: 'Inverter Overheating',
+    description: 'Inverter temperature exceeds normal operating range',
+    severity: 'critical',
+    timestamp: new Date().toISOString(),
+    status: 'active',
+    device: { id: 'dev-1', name: 'Inverter 1' }
+  },
+  {
+    id: 'fault-2',
+    title: 'Low Battery Voltage',
+    description: 'Battery voltage below recommended threshold',
+    severity: 'warning',
+    timestamp: new Date().toISOString(),
+    status: 'acknowledged',
+    device: { id: 'dev-2', name: 'Battery Storage' }
+  },
+  {
+    id: 'fault-3',
+    title: 'Communication Loss',
+    description: 'Lost communication with solar controller',
+    severity: 'warning',
+    timestamp: new Date().toISOString(),
+    status: 'active',
+    device: { id: 'dev-3', name: 'Solar Controller' }
+  }
+] as const;
 
 const DashboardSummary = () => {
-  const { faults } = useFaults();
-  const [telemetry, setTelemetry] = useState<any | null>(null);
+  const [telemetry, setTelemetry] = useState<any | null>(mockTelemetry);
 
   useEffect(() => {
-    // ✅ Fetch initial telemetry
-    const fetchInitialTelemetry = async () => {
-      const { data, error } = await supabase
-        .from('telemetry_log')
-        .select('*')
-        .order('timestamp', { ascending: false })
-        .limit(1)
-        .single();
-
-      if (!error && data) {
-        setTelemetry(data);
-      }
-    };
-
-    fetchInitialTelemetry();
-
-    // ✅ Set up realtime subscription
-    const channel = supabase
-      .channel('telemetry_channel')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'telemetry_log' },
-        (payload) => {
-          setTelemetry(payload.new);
-        }
-      )
-      .subscribe();
+    // In a real implementation, this would subscribe to telemetry events
+    const interval = setInterval(() => {
+      // Update with slightly different values to simulate real-time changes
+      setTelemetry({
+        power: mockTelemetry.power + (Math.random() * 0.4 - 0.2),
+        voltage: mockTelemetry.voltage + (Math.random() * 2 - 1),
+        current: mockTelemetry.current + (Math.random() * 0.6 - 0.3),
+        temperature: mockTelemetry.temperature + (Math.random() * 0.2 - 0.1),
+        timestamp: new Date().toISOString()
+      });
+    }, 5000);
 
     return () => {
-      supabase.removeChannel(channel);
+      clearInterval(interval);
     };
   }, []);
 
@@ -68,7 +84,6 @@ const DashboardSummary = () => {
           description="Current system power flow"
           icon={<Zap className="h-5 w-5" />}
           animationDelay="0ms"
-          className="shadow-md"
         />
         <MetricsCard 
           title="Solar Generation" 
@@ -79,7 +94,6 @@ const DashboardSummary = () => {
           description="Energy generated today"
           icon={<Sun className="h-5 w-5" />}
           animationDelay="100ms"
-          className="shadow-md"
         />
         <MetricsCard 
           title="Wind Generation" 
@@ -90,7 +104,6 @@ const DashboardSummary = () => {
           description="Wind power today"
           icon={<Wind className="h-5 w-5" />}
           animationDelay="150ms"
-          className="shadow-md"
         />
         <MetricsCard 
           title="Battery Storage"
@@ -101,7 +114,6 @@ const DashboardSummary = () => {
           description="Current battery level"
           icon={<Battery className="h-5 w-5" />}
           animationDelay="200ms"
-          className="shadow-md"
         />
       </div>
 
@@ -115,7 +127,6 @@ const DashboardSummary = () => {
             description="Latest voltage reading"
             icon={<Activity className="h-5 w-5 text-blue-500" />}
             animationDelay="250ms"
-            className="shadow-md"
           />
           <MetricsCard 
             title="Live Current"
@@ -124,7 +135,6 @@ const DashboardSummary = () => {
             description="Latest current reading"
             icon={<Activity className="h-5 w-5 text-green-500" />}
             animationDelay="300ms"
-            className="shadow-md"
           />
           <MetricsCard 
             title="Live Power"
@@ -133,14 +143,13 @@ const DashboardSummary = () => {
             description="Real-time power"
             icon={<Zap className="h-5 w-5 text-yellow-500" />}
             animationDelay="350ms"
-            className="shadow-md"
           />
         </div>
       )}
 
       {/* Fault Summary */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <FaultSummaryCard faults={faults} />
+        <FaultSummaryCard faults={mockFaults} />
       </div>
 
       {/* Live Telemetry Charts */}

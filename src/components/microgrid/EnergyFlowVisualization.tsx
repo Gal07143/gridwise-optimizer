@@ -78,7 +78,7 @@ const EnergyNode: React.FC<EnergyNodeProps> = ({
           <div className="text-xs text-white/70">{detail}</div>
         )}
         {status !== 'active' && (
-          <Badge variant={status === 'warning' ? "warning" : "destructive"} className="mt-1">
+          <Badge variant={status === 'warning' ? "outline" : "destructive"} className="mt-1">
             {status === 'warning' ? 'Warning' : status === 'error' ? 'Error' : 'Inactive'}
           </Badge>
         )}
