@@ -1,198 +1,141 @@
 
 import { useState, useEffect } from 'react';
-
-// Define the correct types for our prediction data
-export interface PredictionDataPoint {
-  day: string;
-  value: number;
-  confidence: number;
-}
+import { useSiteContext } from '@/contexts/SiteContext';
+import { toast } from 'sonner';
 
 export interface SystemRecommendation {
   id: string;
   title: string;
   description: string;
-  type: string;
-  priority: 'high' | 'medium' | 'low';
+  impact: 'high' | 'medium' | 'low';
+  difficulty: 'easy' | 'moderate' | 'complex';
+  status: 'new' | 'in_progress' | 'completed' | 'rejected';
+  created_at: string;
+  category: string;
+  estimated_roi: number;
   potential_savings: number;
   implementation_effort: string;
   confidence: number;
-  created_at: string;
-  applied?: boolean;
 }
 
-// Mock function to generate prediction data
-export const generatePredictionData = (
-  timeframe: 'day' | 'week' | 'month' | 'year' = 'week',
-  days: number = 7
-): PredictionDataPoint[] => {
-  const data: PredictionDataPoint[] = [];
-  const now = new Date();
-  
-  for (let i = 0; i < days; i++) {
-    const date = new Date(now);
-    date.setDate(date.getDate() + i);
-    
-    // Generate a value based on the timeframe
-    let value: number;
-    switch (timeframe) {
-      case 'day':
-        value = 10 + Math.random() * 5;
-        break;
-      case 'week':
-        value = 15 + Math.random() * 10;
-        break;
-      case 'month':
-        value = 25 + Math.random() * 15;
-        break;
-      case 'year':
-        value = 40 + Math.random() * 20;
-        break;
-      default:
-        value = 20 + Math.random() * 10;
-    }
-    
-    data.push({
-      day: date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
-      value: parseFloat(value.toFixed(1)),
-      confidence: 0.7 + Math.random() * 0.25
-    });
-  }
-  
-  return data;
-};
-
-// Mock function to get system recommendations
-export const getSystemRecommendations = (): SystemRecommendation[] => {
-  return [
-    {
-      id: '1',
-      title: 'Optimize battery charging schedule',
-      description: 'Adjusting the battery charging schedule to off-peak hours could reduce electricity costs.',
-      type: 'cost_optimization',
-      priority: 'high',
-      potential_savings: 120.5,
-      implementation_effort: 'low',
-      confidence: 0.85,
-      created_at: new Date().toISOString(),
-      applied: false
-    },
-    {
-      id: '2',
-      title: 'Reduce HVAC load during peak hours',
-      description: 'Reducing HVAC usage during peak demand hours could save significant energy costs.',
-      type: 'energy_efficiency',
-      priority: 'medium',
-      potential_savings: 75.8,
-      implementation_effort: 'medium',
-      confidence: 0.72,
-      created_at: new Date().toISOString(),
-      applied: false
-    },
-    {
-      id: '3',
-      title: 'Install additional solar panels',
-      description: 'Based on your energy usage patterns, installing 4 more solar panels would optimize cost savings.',
-      type: 'system_expansion',
-      priority: 'low',
-      potential_savings: 210.3,
-      implementation_effort: 'high',
-      confidence: 0.68,
-      created_at: new Date().toISOString(),
-      applied: false
-    }
-  ];
-};
-
-// Mock function to apply a recommendation
-export const applyRecommendation = (recommendationId: string): Promise<boolean> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      console.log(`Applied recommendation ${recommendationId}`);
-      resolve(true);
-    }, 1000);
-  });
-};
-
-// Mock function to get model status
-export const getModelStatus = () => {
-  return {
-    status: 'active',
-    lastTraining: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-    accuracy: 0.87,
-    version: '1.2.3',
-    dataPoints: 4523
-  };
-};
-
-// Mock function to train the model
-export const trainModel = async (): Promise<boolean> => {
-  return new Promise((resolve) => {
-    setTimeout(() => resolve(true), 2000);
-  });
-};
-
 export interface UsePredictionsResult {
-  predictions: PredictionDataPoint[];
+  predictions: any[];
+  recommendations: SystemRecommendation[];
   isLoading: boolean;
   error: Error | null;
-  recommendations: SystemRecommendation[];
   predictionDays: number;
   setPredictionDays: (days: number) => void;
-  refreshData: () => void;
-  modelVersion?: string;
+  timeframe: 'day' | 'week' | 'month' | 'year';
+  setTimeframe: (timeframe: 'day' | 'week' | 'month' | 'year') => void;
   refetch: () => void;
 }
 
-const usePredictions = (
-  timeframe: 'day' | 'week' | 'month' | 'year' = 'week', 
-  customData?: PredictionDataPoint[]
-): UsePredictionsResult => {
-  const [predictions, setPredictions] = useState<PredictionDataPoint[]>([]);
+export const usePredictions = (initialTimeframe: 'day' | 'week' | 'month' | 'year' = 'week'): UsePredictionsResult => {
+  const { activeSite } = useSiteContext();
+  const [predictions, setPredictions] = useState<any[]>([]);
   const [recommendations, setRecommendations] = useState<SystemRecommendation[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const [predictionDays, setPredictionDays] = useState<number>(7);
-  const [modelVersion, setModelVersion] = useState<string>("1.2.3");
+  const [predictionDays, setPredictionDays] = useState(14);
+  const [timeframe, setTimeframe] = useState<'day' | 'week' | 'month' | 'year'>(initialTimeframe);
 
-  const fetchData = async () => {
+  useEffect(() => {
+    if (activeSite) {
+      fetchPredictions();
+    }
+  }, [activeSite, predictionDays, timeframe]);
+
+  const fetchPredictions = async () => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      // Generate prediction data based on timeframe
-      const data = customData || generatePredictionData(timeframe, predictionDays);
-      setPredictions(data);
+      // Mock data for predictions and recommendations
+      const mockPredictions = Array.from({ length: 10 }, (_, i) => ({
+        date: new Date(Date.now() + i * 86400000).toISOString().slice(0, 10),
+        consumption: Math.random() * 100 + 50,
+        production: Math.random() * 80 + 20,
+        cost: Math.random() * 25 + 10,
+      }));
 
-      // Get recommendations
-      const recs = getSystemRecommendations();
-      setRecommendations(recs);
-      
+      const mockRecommendations: SystemRecommendation[] = [
+        {
+          id: "rec-1",
+          title: "Adjust battery charging schedule",
+          description: "Change battery charging to off-peak hours to reduce electricity costs.",
+          impact: "high",
+          difficulty: "easy",
+          status: "new",
+          created_at: new Date().toISOString(),
+          category: "efficiency",
+          estimated_roi: 120,
+          potential_savings: 240,
+          implementation_effort: "low",
+          confidence: 85
+        },
+        {
+          id: "rec-2",
+          title: "Add additional solar panels",
+          description: "Increase solar capacity by 20% to reduce grid dependency.",
+          impact: "high",
+          difficulty: "complex",
+          status: "new",
+          created_at: new Date().toISOString(),
+          category: "expansion",
+          estimated_roi: 350,
+          potential_savings: 850,
+          implementation_effort: "high",
+          confidence: 75
+        },
+        {
+          id: "rec-3",
+          title: "Optimize HVAC schedule",
+          description: "Adjust heating and cooling times based on predicted occupancy.",
+          impact: "medium",
+          difficulty: "moderate",
+          status: "new",
+          created_at: new Date().toISOString(),
+          category: "optimization",
+          estimated_roi: 90,
+          potential_savings: 180,
+          implementation_effort: "medium",
+          confidence: 90
+        }
+      ];
+
+      setPredictions(mockPredictions);
+      setRecommendations(mockRecommendations);
       setError(null);
     } catch (err) {
-      console.error('Error fetching prediction data:', err);
-      setError(err instanceof Error ? err : new Error('Unknown error'));
-      setPredictions([]);
-      setRecommendations([]);
+      console.error("Error fetching predictions:", err);
+      setError(err instanceof Error ? err : new Error("Failed to fetch predictions"));
+      toast.error("Failed to load energy predictions");
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Fetch data when timeframe or predictionDays changes
-  useEffect(() => {
-    fetchData();
-  }, [timeframe, predictionDays]);
+  const refetch = () => {
+    fetchPredictions();
+  };
 
   return {
     predictions,
+    recommendations,
     isLoading,
     error,
-    recommendations,
     predictionDays,
     setPredictionDays,
-    refreshData: fetchData,
-    modelVersion,
-    refetch: fetchData
+    timeframe,
+    setTimeframe,
+    refetch
   };
+};
+
+// Helper function to apply recommendations
+export const applyRecommendation = async (recommendationId: string): Promise<boolean> => {
+  // Mock implementation
+  console.log(`Applying recommendation: ${recommendationId}`);
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  return true;
 };
 
 export default usePredictions;

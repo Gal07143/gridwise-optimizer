@@ -1,39 +1,53 @@
 
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
-interface NavItemProps {
+export interface NavItemProps {
   href: string;
   icon: React.ReactNode;
   label: string;
-  expanded: boolean; // Changed from isExpanded to expanded
+  collapsed?: boolean;
   isLabelledSection?: boolean;
 }
 
 const NavItem: React.FC<NavItemProps> = ({ 
   href, 
   icon, 
-  label, 
-  expanded, // Changed from isExpanded to expanded
-  isLabelledSection 
+  label,
+  collapsed = false,
+  isLabelledSection = false 
 }) => {
-  return (
-    <NavLink
+  const location = useLocation();
+  const isActive = location.pathname === href || location.pathname.startsWith(`${href}/`);
+
+  const content = (
+    <Link
       to={href}
-      className={({ isActive }) => cn(
-        "flex items-center py-2 px-3 text-sm rounded-md transition-colors",
-        "hover:bg-accent hover:text-accent-foreground",
-        isActive ? "bg-accent text-accent-foreground font-medium" : "text-muted-foreground",
-        !expanded && "justify-center"
+      className={cn(
+        "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors",
+        isActive
+          ? "bg-accent text-accent-foreground"
+          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+        isLabelledSection && "mb-2 font-semibold"
       )}
     >
-      <span className={`${!expanded ? 'mx-auto' : 'mr-2'}`}>
-        {icon}
-      </span>
-      {expanded && <span>{label}</span>}
-    </NavLink>
+      <span className="mr-2">{icon}</span>
+      {!collapsed && <span>{label}</span>}
+    </Link>
   );
+
+  if (collapsed) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>{content}</TooltipTrigger>
+        <TooltipContent side="right">{label}</TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return content;
 };
 
 export default NavItem;

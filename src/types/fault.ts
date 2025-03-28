@@ -5,7 +5,7 @@ export interface Fault {
   description: string;
   severity: 'warning' | 'critical' | 'info';
   timestamp: string;
-  status: string;
+  status: 'active' | 'acknowledged' | 'resolved';
   device: {
     id: string;
     name: string;

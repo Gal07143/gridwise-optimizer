@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { reportValidationSchema, ReportFormValues, getDefaultValues } from './reportValidationSchema';
 import { useSiteContext } from '@/contexts/SiteContext';
 import { toast } from 'sonner';
+import { Site } from '@/types/site';
 
 // Mock implementations for report services
 const mockCreateReport = async (reportData: any) => {
@@ -39,19 +40,12 @@ const mockGetReportTemplateById = async (templateId: string) => {
   };
 };
 
-// Update SiteContextType interface to include currentSite
-declare module '@/contexts/SiteContext' {
-  interface SiteContextType {
-    currentSite: { id: string } | null;
-  }
-}
-
 interface UseReportFormProps {
   onSuccess: () => void;
 }
 
 export const useReportForm = ({ onSuccess }: UseReportFormProps) => {
-  const { currentSite } = useSiteContext();
+  const { activeSite } = useSiteContext();
   const [isScheduled, setIsScheduled] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
@@ -64,7 +58,7 @@ export const useReportForm = ({ onSuccess }: UseReportFormProps) => {
 
   useEffect(() => {
     // Use proper type assertion for the template_id field
-    const templateId = form.watch('template_id');
+    const templateId = form.getValues('template_id');
     
     if (templateId && templateId !== selectedTemplate) {
       setSelectedTemplate(templateId);
@@ -85,10 +79,10 @@ export const useReportForm = ({ onSuccess }: UseReportFormProps) => {
       
       loadTemplateData();
     }
-  }, [form.watch('template_id')]);
+  }, [form, selectedTemplate]);
 
   const handleSubmit = async (data: ReportFormValues) => {
-    if (!currentSite?.id) {
+    if (!activeSite?.id) {
       toast.error('No site selected');
       return;
     }
@@ -107,12 +101,12 @@ export const useReportForm = ({ onSuccess }: UseReportFormProps) => {
       if (submissionData.template_id) {
         result = await mockCreateReportFromTemplate(
           submissionData.template_id, 
-          currentSite.id, 
+          activeSite.id, 
           submissionData
         );
       } else {
         const reportData = {
-          site_id: currentSite.id,
+          site_id: activeSite.id,
           created_by: 'current-user',
           type: submissionData.type,
           title: submissionData.title,
