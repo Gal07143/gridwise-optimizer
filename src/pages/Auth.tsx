@@ -1,164 +1,296 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { 
+  Form, 
+  FormControl, 
+  FormField, 
+  FormItem, 
+  FormLabel, 
+  FormMessage 
+} from '@/components/ui/form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+import { Eye, EyeOff, ArrowRight, UserPlus, LogIn } from 'lucide-react';
+
+// Form validation schemas
+const signInSchema = z.object({
+  email: z.string().email('Please enter a valid email address'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+  rememberMe: z.boolean().optional()
+});
+
+const signUpSchema = z.object({
+  email: z.string().email('Please enter a valid email address'),
+  password: z.string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one number'),
+  firstName: z.string().min(1, 'First name is required'),
+  lastName: z.string().min(1, 'Last name is required'),
+  rememberMe: z.boolean().optional()
+});
 
 // Auth page component
 const Auth = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   
-  const { signIn, signUp } = useAuth();
+  const { user, signIn, signUp } = useAuth();
   const navigate = useNavigate();
   
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Determine which schema to use based on form mode
+  const formSchema = isSignUp ? signUpSchema : signInSchema;
+  
+  // Set up form with validation
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+      firstName: '',
+      lastName: '',
+      rememberMe: false
+    }
+  });
+  
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
+  
+  const toggleFormMode = () => {
+    setIsSignUp(!isSignUp);
+    form.reset();
+  };
+  
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
     
     try {
       if (isSignUp) {
-        await signUp(email, password, { 
-          firstName, 
-          lastName 
+        await signUp(values.email, values.password, { 
+          firstName: values.firstName, 
+          lastName: values.lastName 
         });
-        toast.success('Account created successfully!');
+        toast.success('Account created successfully! Welcome aboard.');
       } else {
-        await signIn(email, password);
-        toast.success('Signed in successfully!');
+        await signIn(values.email, values.password);
+        toast.success('Signed in successfully! Welcome back.');
+      }
+      
+      // Save to localStorage if remember me is checked
+      if (values.rememberMe) {
+        localStorage.setItem('rememberedEmail', values.email);
+      } else {
+        localStorage.removeItem('rememberedEmail');
       }
       
       // Navigate to dashboard on success
       navigate('/dashboard');
     } catch (error) {
       console.error('Authentication error:', error);
-      toast.error(error instanceof Error ? error.message : 'Authentication failed');
+      
+      // Display user-friendly error messages
+      if (error instanceof Error) {
+        // Common error messages with friendly alternatives
+        const errorMessage = error.message.toLowerCase();
+        if (errorMessage.includes('invalid login')) {
+          toast.error('Invalid email or password. Please try again.');
+        } else if (errorMessage.includes('email already exists')) {
+          toast.error('This email is already registered. Try signing in instead.');
+        } else if (errorMessage.includes('network')) {
+          toast.error('Network error. Please check your connection and try again.');
+        } else {
+          toast.error(error.message);
+        }
+      } else {
+        toast.error('An unexpected error occurred. Please try again.');
+      }
     } finally {
       setIsSubmitting(false);
     }
   };
   
+  // Load remembered email if available
+  useEffect(() => {
+    const rememberedEmail = localStorage.getItem('rememberedEmail');
+    if (rememberedEmail) {
+      form.setValue('email', rememberedEmail);
+      form.setValue('rememberMe', true);
+    }
+  }, [form]);
+  
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md space-y-8 bg-white p-8 rounded-lg shadow-lg">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-slate-50 to-slate-100 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-md space-y-8 bg-white p-8 rounded-lg shadow-lg border border-gray-100">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-bold tracking-tight">
+          <h2 className="mt-4 text-center text-3xl font-bold tracking-tight text-gray-900">
             {isSignUp ? 'Create your account' : 'Sign in to your account'}
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
             <button
               type="button"
-              className="font-medium text-blue-600 hover:text-blue-500"
-              onClick={() => setIsSignUp(!isSignUp)}
+              className="font-medium text-blue-600 hover:text-blue-500 focus:outline-none transition-colors"
+              onClick={toggleFormMode}
             >
               {isSignUp ? 'Sign in' : 'Sign up'}
             </button>
           </p>
         </div>
         
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {isSignUp && (
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
-                  First Name
-                </label>
-                <input
-                  id="firstName"
-                  name="firstName"
-                  type="text"
-                  required
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                />
-              </div>
-              <div>
-                <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
-                  Last Name
-                </label>
-                <input
-                  id="lastName"
-                  name="lastName"
-                  type="text"
-                  required
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                />
-              </div>
-            </div>
-          )}
-          
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-              Email address
-            </label>
-            <input
-              id="email"
+        <Form {...form}>
+          <form className="mt-8 space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
+            {/* Email Field */}
+            <FormField
+              control={form.control}
               name="email"
-              type="email"
-              autoComplete="email"
-              required
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email address</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="email" 
+                      placeholder="name@example.com" 
+                      autoComplete="email"
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-              Password
-            </label>
-            <input
-              id="password"
+            
+            {/* Password Field with toggle visibility */}
+            <FormField
+              control={form.control}
               name="password"
-              type="password"
-              autoComplete={isSignUp ? 'new-password' : 'current-password'}
-              required
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Password</FormLabel>
+                  <div className="relative">
+                    <FormControl>
+                      <Input 
+                        type={showPassword ? "text" : "password"} 
+                        placeholder={isSignUp ? "Create a strong password" : "Enter your password"}
+                        autoComplete={isSignUp ? "new-password" : "current-password"}
+                        className="pr-10"
+                        {...field} 
+                      />
+                    </FormControl>
+                    <button 
+                      type="button"
+                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-500"
+                      onClick={() => setShowPassword(!showPassword)}
+                      tabIndex={-1}
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          
-          {!isSignUp && (
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  name="remember-me"
-                  type="checkbox"
-                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            
+            {/* Additional Sign Up Fields */}
+            {isSignUp && (
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="firstName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>First Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="First name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-                  Remember me
-                </label>
+                <FormField
+                  control={form.control}
+                  name="lastName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Last Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Last name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
-              
-              <div className="text-sm">
-                <a href="#" className="font-medium text-blue-600 hover:text-blue-500">
-                  Forgot your password?
-                </a>
-              </div>
-            </div>
-          )}
-          
-          <div>
-            <button
+            )}
+            
+            {/* Remember Me Checkbox */}
+            <FormField
+              control={form.control}
+              name="rememberMe"
+              render={({ field }) => (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <input
+                      id="remember-me"
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      checked={field.value}
+                      onChange={field.onChange}
+                    />
+                    <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
+                      Remember me
+                    </label>
+                  </div>
+                  
+                  {!isSignUp && (
+                    <div className="text-sm">
+                      <a 
+                        href="#" 
+                        className="font-medium text-blue-600 hover:text-blue-500 focus:outline-none transition-colors"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          toast.info('Password reset functionality coming soon!');
+                        }}
+                      >
+                        Forgot your password?
+                      </a>
+                    </div>
+                  )}
+                </div>
+              )}
+            />
+            
+            {/* Submit Button */}
+            <Button
               type="submit"
-              className="group relative flex w-full justify-center rounded-md border border-transparent bg-blue-600 py-2 px-4 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              className="w-full flex items-center justify-center gap-2"
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Processing...' : isSignUp ? 'Sign up' : 'Sign in'}
-            </button>
-          </div>
-        </form>
+              {isSubmitting ? (
+                <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-r-transparent"></span>
+              ) : isSignUp ? (
+                <UserPlus size={18} />
+              ) : (
+                <LogIn size={18} />
+              )}
+              {isSubmitting 
+                ? 'Processing...' 
+                : (isSignUp ? 'Create account' : 'Sign in')
+              }
+              <ArrowRight size={16} className="ml-1 opacity-70" />
+            </Button>
+          </form>
+        </Form>
       </div>
     </div>
   );

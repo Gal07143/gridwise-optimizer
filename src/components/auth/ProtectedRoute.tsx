@@ -1,8 +1,9 @@
 
-import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { toast } from 'sonner';
 
 export interface ProtectedRouteProps {
   children?: React.ReactNode;
@@ -10,13 +11,29 @@ export interface ProtectedRouteProps {
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { user, loading } = useAuth();
+  const location = useLocation();
+  
+  useEffect(() => {
+    if (!loading && !user) {
+      toast.error("Please sign in to access this page", {
+        id: "auth-required",
+        duration: 3000
+      });
+    }
+  }, [user, loading, location.pathname]);
   
   if (loading) {
-    return <div className="flex items-center justify-center h-screen"><LoadingSpinner size="lg" /></div>;
+    return (
+      <div className="flex flex-col items-center justify-center h-screen">
+        <LoadingSpinner size="lg" />
+        <p className="mt-4 text-sm text-gray-500">Loading your profile...</p>
+      </div>
+    );
   }
   
   if (!user) {
-    return <Navigate to="/auth" replace />;
+    // Redirect to auth page but save the current location
+    return <Navigate to="/auth" state={{ from: location }} replace />;
   }
   
   return children ? <>{children}</> : <Outlet />;
