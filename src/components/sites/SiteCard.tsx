@@ -1,13 +1,11 @@
 
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Edit, MapPin, MoreHorizontal, Trash2, User } from 'lucide-react';
-import { getSiteUsers } from '@/services/sites/siteStats';
-import { Site } from '@/types/energy';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Building2, MapPin, Edit, Trash2, Calendar, User, Phone, Mail, Ruler } from 'lucide-react';
+import { Site } from '@/types/site';
+import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface SiteCardProps {
   site: Site;
@@ -16,60 +14,140 @@ interface SiteCardProps {
 }
 
 const SiteCard = ({ site, onEdit, onDelete }: SiteCardProps) => {
-  const { data: userCount = 0 } = useQuery({
-    queryKey: ['site-users', site.id],
-    queryFn: () => getSiteUsers(site.id),
-  });
-
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString();
+  };
+  
+  // Determine site type for the badge
+  const getSiteType = () => {
+    if (!site.energy_category || site.energy_category.length === 0) {
+      return site.building_type || 'General';
+    }
+    
+    // Show the first energy category
+    return site.energy_category[0].charAt(0).toUpperCase() + site.energy_category[0].slice(1);
+  };
+  
   return (
-    <Card key={site.id} className="overflow-hidden">
+    <Card className="h-full flex flex-col overflow-hidden transition-all hover:shadow-md">
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
-          <div className="space-y-1">
-            <CardTitle className="text-xl">{site.name}</CardTitle>
-            <CardDescription className="flex items-center">
-              <MapPin size={14} className="mr-1" />
-              {site.location}
-            </CardDescription>
-          </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <MoreHorizontal size={16} />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => onEdit(site.id)}>
-                <Edit size={14} className="mr-2" />
-                Edit Site
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={() => onDelete(site.id)}
-                className="text-destructive focus:text-destructive"
-              >
-                <Trash2 size={14} className="mr-2" />
-                Delete Site
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <CardTitle className="text-xl font-semibold truncate" title={site.name}>
+            {site.name}
+          </CardTitle>
+          <Badge variant="outline">{getSiteType()}</Badge>
         </div>
+        {site.address && (
+          <div className="flex items-center text-sm text-muted-foreground mt-1">
+            <MapPin className="h-4 w-4 mr-1 flex-shrink-0" />
+            <span className="truncate" title={site.address}>
+              {site.address}
+            </span>
+          </div>
+        )}
       </CardHeader>
-      <CardContent className="pb-2">
-        <div className="text-sm text-muted-foreground mb-2">
-          <div>Timezone: {site.timezone}</div>
-          {site.lat && site.lng && (
-            <div>
-              Coordinates: {site.lat.toFixed(4)}, {site.lng.toFixed(4)}
-            </div>
+      
+      <CardContent className="flex-grow pb-2">
+        <div className="grid grid-cols-1 gap-2 text-sm">
+          {site.description && (
+            <p className="text-muted-foreground line-clamp-2" title={site.description}>
+              {site.description}
+            </p>
           )}
+          
+          <div className="space-y-2 mt-2">
+            {site.building_type && (
+              <div className="flex items-center gap-2">
+                <Building2 className="h-4 w-4 text-muted-foreground" />
+                <span>{site.building_type}</span>
+              </div>
+            )}
+            
+            {site.area && (
+              <div className="flex items-center gap-2">
+                <Ruler className="h-4 w-4 text-muted-foreground" />
+                <span>{site.area.toLocaleString()} m²</span>
+              </div>
+            )}
+            
+            {site.contact_person && (
+              <div className="flex items-center gap-2">
+                <User className="h-4 w-4 text-muted-foreground" />
+                <span className="truncate" title={site.contact_person}>
+                  {site.contact_person}
+                </span>
+              </div>
+            )}
+            
+            {site.contact_phone && (
+              <div className="flex items-center gap-2">
+                <Phone className="h-4 w-4 text-muted-foreground" />
+                <span className="truncate" title={site.contact_phone}>
+                  {site.contact_phone}
+                </span>
+              </div>
+            )}
+            
+            {site.contact_email && (
+              <div className="flex items-center gap-2">
+                <Mail className="h-4 w-4 text-muted-foreground" />
+                <span className="truncate" title={site.contact_email}>
+                  {site.contact_email}
+                </span>
+              </div>
+            )}
+            
+            {site.created_at && (
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <span>Added: {formatDate(site.created_at)}</span>
+              </div>
+            )}
+          </div>
         </div>
       </CardContent>
-      <CardFooter className="border-t pt-3 flex justify-between">
-        <div className="flex items-center text-sm text-muted-foreground">
-          <User size={14} className="mr-1" />
-          <span>{userCount} Users</span>
+      
+      <CardFooter className="pt-2">
+        <div className="flex justify-between w-full">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => onEdit(site.id)}
+                  className="flex items-center gap-1"
+                >
+                  <Edit className="h-4 w-4" />
+                  Edit
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Edit site details</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => onDelete(site.id)}
+                  className="text-destructive hover:text-destructive flex items-center gap-1"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Delete this site</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
-        <Badge variant="outline">Active</Badge>
       </CardFooter>
     </Card>
   );
