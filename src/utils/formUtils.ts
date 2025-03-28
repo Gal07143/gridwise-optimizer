@@ -1,12 +1,13 @@
 
-import { FieldValues, UseFormReturn, Path, FieldError } from "react-hook-form";
+import { FieldValues, UseFormReturn, Path, FieldError, FieldErrors } from "react-hook-form";
 
 // Get form error for a specific field
 export function getFormError<T extends FieldValues>(
   form: UseFormReturn<T>,
   field: Path<T>
 ): FieldError | undefined {
-  return form.formState.errors[field];
+  // Use "as" to ensure the type matches what TypeScript expects
+  return (form.formState.errors[field] as FieldError | undefined);
 }
 
 // Get error message for a specific field
