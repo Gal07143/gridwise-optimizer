@@ -24,12 +24,12 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children, className }) => {
   };
   
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
+    <div className="flex h-screen bg-[#F8FAFD] dark:bg-[#121826] overflow-hidden">
       <Sidebar 
         isExpanded={sidebarExpanded} 
         toggleSidebar={toggleSidebar} 
         className={cn(
-          "fixed h-full z-30 transition-all duration-300 ease-in-out",
+          "fixed h-full z-30 transition-all duration-300 ease-in-out bg-white dark:bg-gridx-dark-gray border-r border-gray-100 dark:border-gray-700/30",
           sidebarExpanded ? "w-56" : "w-16"
         )} 
       />
@@ -40,7 +40,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children, className }) => {
         "ml-0" // Mobile view doesn't shift content
       )}>
         <Header />
-        <main className={cn("flex-1 overflow-y-auto", className)}>
+        <main className={cn("flex-1 overflow-y-auto p-6", className)}>
           {children}
         </main>
       </div>

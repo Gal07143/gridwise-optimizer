@@ -8,6 +8,7 @@ interface GlassPanelProps extends React.HTMLAttributes<HTMLDivElement> {
   className?: string;
   intensity?: "low" | "medium" | "high";
   gradient?: boolean;
+  bordered?: boolean;
 }
 
 const GlassPanel = ({ 
@@ -16,21 +17,23 @@ const GlassPanel = ({
   className, 
   intensity = "medium",
   gradient = false,
+  bordered = true,
   ...props 
 }: GlassPanelProps) => {
   const intensityClasses = {
-    low: "bg-white/5 dark:bg-white/[0.02] backdrop-blur-sm",
-    medium: "bg-white/10 dark:bg-white/[0.05] backdrop-blur-md",
-    high: "bg-white/20 dark:bg-white/[0.08] backdrop-blur-lg"
+    low: "bg-white dark:bg-gridx-dark-gray/80",
+    medium: "bg-white dark:bg-gridx-dark-gray/90",
+    high: "bg-white dark:bg-gridx-dark-gray/95"
   };
 
   return (
     <div
       className={cn(
-        "rounded-xl border border-white/20 dark:border-white/10 shadow-lg",
+        "rounded-xl shadow-sm",
+        bordered && "border border-gray-100 dark:border-gray-700/30",
         intensityClasses[intensity],
-        gradient && "bg-gradient-to-br from-white/10 to-transparent dark:from-white/[0.03] dark:to-transparent",
-        interactive && "transition-all duration-300 hover:bg-white/15 dark:hover:bg-white/[0.07] hover:shadow-xl hover:translate-y-[-2px]",
+        gradient && "bg-gradient-to-b from-white to-gray-50 dark:from-gridx-dark-gray/95 dark:to-gridx-navy/95",
+        interactive && "transition-all duration-300 hover:shadow-md hover:translate-y-[-2px]",
         className
       )}
       {...props}

@@ -54,6 +54,21 @@ const config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        // GridX-inspired color palette
+        gridx: {
+          blue: "#2D4EF5",
+          teal: "#00B0B9",
+          green: "#04D182",
+          yellow: "#FFC700",
+          orange: "#FF7A00",
+          red: "#FF4758",
+          purple: "#7533E2",
+          navy: "#0E2356",
+          "light-navy": "#1D3064",
+          "dark-gray": "#282D3A",
+          gray: "#6C7693",
+          "light-gray": "#EFF2F9",
+        },
         energy: {
           green: "hsl(var(--energy-green))",
           blue: "hsl(var(--energy-blue))",

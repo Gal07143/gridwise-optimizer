@@ -22,37 +22,41 @@ const DashboardCharts = () => {
   return (
     <>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        <div className="lg:col-span-2 glass-panel shadow-md p-4 rounded-xl">
+        <div className="lg:col-span-2 bg-white dark:bg-gridx-dark-gray/90 shadow-sm p-6 rounded-xl border border-gray-100 dark:border-gray-700/30">
+          <h3 className="text-base font-medium mb-4 text-gridx-navy dark:text-white">System Status Overview</h3>
           <StatusOverview animationDelay="300ms" />
         </div>
-        <div className="glass-panel shadow-md p-4 rounded-xl">
-          <h3 className="text-lg font-medium mb-3">Power Trend (24h)</h3>
+        <div className="bg-white dark:bg-gridx-dark-gray/90 shadow-sm p-6 rounded-xl border border-gray-100 dark:border-gray-700/30">
+          <h3 className="text-base font-medium mb-4 text-gridx-navy dark:text-white">Power Trend (24h)</h3>
           <LiveChart 
             data={powerTrendData}
             animationDelay="400ms" 
             type="area" 
-            gradientFrom="rgba(14, 165, 233, 0.5)" 
-            gradientTo="rgba(14, 165, 233, 0.0)"
-            color="var(--color-primary)"
+            gradientFrom="rgba(45, 78, 245, 0.4)" 
+            gradientTo="rgba(45, 78, 245, 0.0)"
+            color="#2D4EF5"
           />
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <div className="glass-panel shadow-md p-4 rounded-xl">
+        <div className="bg-white dark:bg-gridx-dark-gray/90 shadow-sm p-6 rounded-xl border border-gray-100 dark:border-gray-700/30">
+          <h3 className="text-base font-medium mb-4 text-gridx-navy dark:text-white">Energy Forecast</h3>
           <EnergyForecastCard animationDelay="500ms" />
         </div>
-        <div className="glass-panel shadow-md p-4 rounded-xl">
+        <div className="bg-white dark:bg-gridx-dark-gray/90 shadow-sm p-6 rounded-xl border border-gray-100 dark:border-gray-700/30">
+          <h3 className="text-base font-medium mb-4 text-gridx-navy dark:text-white">Power Quality</h3>
           <PowerQualityCard animationDelay="600ms" />
         </div>
       </div>
 
-      <div className="glass-panel shadow-md p-4 rounded-xl mb-8">
-        <h3 className="text-lg font-medium mb-3">Energy Flow Diagram</h3>
+      <div className="bg-white dark:bg-gridx-dark-gray/90 shadow-sm p-6 rounded-xl border border-gray-100 dark:border-gray-700/30 mb-8">
+        <h3 className="text-base font-medium mb-4 text-gridx-navy dark:text-white">Energy Flow Diagram</h3>
         <EnergyFlowChart animationDelay="700ms" />
       </div>
 
-      <div className="glass-panel shadow-md p-4 rounded-xl">
+      <div className="bg-white dark:bg-gridx-dark-gray/90 shadow-sm p-6 rounded-xl border border-gray-100 dark:border-gray-700/30">
+        <h3 className="text-base font-medium mb-4 text-gridx-navy dark:text-white">Battery System</h3>
         <AdvancedBatteryCard animationDelay="800ms" />
       </div>
     </>

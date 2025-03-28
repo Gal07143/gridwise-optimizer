@@ -8,11 +8,11 @@ import { useSiteContext } from '@/contexts/SiteContext';
 // Import a simpler placeholder component that doesn't have errors
 const EnergyFlowPlaceholder = ({ siteId }: { siteId: string }) => {
   return (
-    <div className="p-4 bg-background border rounded-md">
-      <h3 className="text-lg font-medium mb-2">Energy Flow Visualization</h3>
-      <p className="text-muted-foreground mb-4">Site ID: {siteId}</p>
-      <div className="h-[300px] bg-muted/20 rounded-md flex items-center justify-center">
-        <p className="text-muted-foreground">Energy flow visualization will be displayed here.</p>
+    <div className="p-6 bg-white dark:bg-gridx-dark-gray/90 border border-gray-100 dark:border-gray-700/30 rounded-xl shadow-sm">
+      <h3 className="text-lg font-medium mb-4 text-gridx-navy dark:text-white">Energy Flow Visualization</h3>
+      <p className="text-gridx-gray dark:text-gray-400 mb-4 text-sm">Site ID: {siteId}</p>
+      <div className="h-[400px] bg-gray-50 dark:bg-gridx-navy/30 rounded-lg flex items-center justify-center">
+        <p className="text-gridx-gray dark:text-gray-400">Energy flow visualization will be displayed here.</p>
       </div>
     </div>
   );
@@ -23,34 +23,44 @@ const EnergyFlow: React.FC = () => {
 
   return (
     <Main title="Energy Flow">
-      <Tabs defaultValue="realtime" className="w-full">
-        <TabsList>
-          <TabsTrigger value="realtime">Realtime Flow</TabsTrigger>
-          <TabsTrigger value="historical">Historical Data</TabsTrigger>
-          <TabsTrigger value="optimization">Optimization Strategies</TabsTrigger>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gridx-navy dark:text-white mb-2">Energy Flow</h1>
+        <p className="text-gridx-gray dark:text-gray-400 text-sm">
+          Visualize and analyze the energy flow through your system in real-time
+        </p>
+      </div>
+      
+      <Tabs defaultValue="realtime" className="w-full space-y-6">
+        <TabsList className="bg-white dark:bg-gridx-dark-gray/80 border border-gray-100 dark:border-gray-700/20">
+          <TabsTrigger value="realtime" className="data-[state=active]:bg-gridx-blue data-[state=active]:text-white">Realtime Flow</TabsTrigger>
+          <TabsTrigger value="historical" className="data-[state=active]:bg-gridx-blue data-[state=active]:text-white">Historical Data</TabsTrigger>
+          <TabsTrigger value="optimization" className="data-[state=active]:bg-gridx-blue data-[state=active]:text-white">Optimization</TabsTrigger>
         </TabsList>
-        <TabsContent value="realtime" className="space-y-4">
-          <Card>
-            <CardContent>
-              {activeSite ? (
-                <EnergyFlowPlaceholder siteId={activeSite.id} />
-              ) : (
-                <p>No active site selected.</p>
-              )}
+        
+        <TabsContent value="realtime" className="space-y-4 mt-4">
+          {activeSite ? (
+            <EnergyFlowPlaceholder siteId={activeSite.id} />
+          ) : (
+            <Card className="bg-white dark:bg-gridx-dark-gray/90 border border-gray-100 dark:border-gray-700/30 shadow-sm">
+              <CardContent className="py-6">
+                <p className="text-gridx-gray dark:text-gray-400">No active site selected.</p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+        
+        <TabsContent value="historical" className="mt-4">
+          <Card className="bg-white dark:bg-gridx-dark-gray/90 border border-gray-100 dark:border-gray-700/30 shadow-sm">
+            <CardContent className="py-6">
+              <p className="text-gridx-gray dark:text-gray-400">Historical energy flow data will be displayed here.</p>
             </CardContent>
           </Card>
         </TabsContent>
-        <TabsContent value="historical">
-          <Card>
-            <CardContent>
-              <p>Historical energy flow data will be displayed here.</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="optimization">
-          <Card>
-            <CardContent>
-              <p>Energy flow optimization strategies will be displayed here.</p>
+        
+        <TabsContent value="optimization" className="mt-4">
+          <Card className="bg-white dark:bg-gridx-dark-gray/90 border border-gray-100 dark:border-gray-700/30 shadow-sm">
+            <CardContent className="py-6">
+              <p className="text-gridx-gray dark:text-gray-400">Energy flow optimization strategies will be displayed here.</p>
             </CardContent>
           </Card>
         </TabsContent>

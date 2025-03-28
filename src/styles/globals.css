@@ -6,13 +6,27 @@
 @layer base {
   /* Add base styles here */
   :root {
-    --card-highlight: rgba(255, 255, 255, 0.1);
-    --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --card-highlight: rgba(255, 255, 255, 0.05);
+    --card-shadow: 0 8px 20px -5px rgba(0, 0, 0, 0.08), 0 4px 12px -2px rgba(0, 0, 0, 0.03);
+    
+    /* GridX-inspired color palette */
+    --gridx-blue: #2D4EF5;
+    --gridx-teal: #00B0B9;
+    --gridx-green: #04D182;
+    --gridx-yellow: #FFC700;
+    --gridx-orange: #FF7A00;
+    --gridx-red: #FF4758;
+    --gridx-purple: #7533E2;
+    --gridx-navy: #0E2356;
+    --gridx-light-navy: #1D3064;
+    --gridx-dark-gray: #282D3A;
+    --gridx-gray: #6C7693;
+    --gridx-light-gray: #EFF2F9;
   }
   
   .dark {
-    --card-highlight: rgba(255, 255, 255, 0.05);
-    --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.15);
+    --card-highlight: rgba(255, 255, 255, 0.02);
+    --card-shadow: 0 8px 20px -5px rgba(0, 0, 0, 0.2), 0 4px 12px -2px rgba(0, 0, 0, 0.1);
   }
   
   * {
@@ -21,23 +35,24 @@
   
   body {
     @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
 }
 
 @layer components {
-  /* Add component styles here */
+  /* GridX-inspired component styles */
   .energy-node {
-    @apply transition-all duration-300 hover:scale-105 hover:shadow-2xl;
+    @apply transition-all duration-300 hover:scale-105 hover:shadow-md rounded-xl;
   }
   
   .glass-panel {
-    @apply bg-white/10 dark:bg-black/10 backdrop-blur-md border border-white/20 dark:border-white/10 rounded-xl;
+    @apply bg-white dark:bg-gridx-dark-gray/90 rounded-xl border border-gray-100 dark:border-gray-700/30 shadow-sm;
   }
   
   .dashboard-card {
-    @apply bg-gradient-to-br from-white/50 to-white/10 dark:from-gray-800/50 dark:to-gray-900/30 
-           backdrop-blur-md border border-white/20 dark:border-white/5
-           rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl 
+    @apply bg-white dark:bg-gridx-dark-gray/90 
+           rounded-xl shadow-sm border border-gray-100 dark:border-gray-800/20
+           transition-all duration-300 hover:shadow-md 
            hover:translate-y-[-2px] overflow-hidden;
   }
   
@@ -45,11 +60,37 @@
     @apply p-4 dashboard-card;
   }
   
-  .glass-button {
-    @apply px-4 py-2 bg-white/10 dark:bg-white/5 backdrop-blur-md 
-           rounded-lg border border-white/20 dark:border-white/10 
-           shadow-sm transition-all duration-200 hover:bg-white/20 
-           dark:hover:bg-white/10 hover:shadow-md;
+  .gridx-button {
+    @apply px-4 py-2 bg-gridx-blue text-white
+           rounded-lg shadow-sm transition-all duration-200 
+           hover:bg-gridx-blue/90 hover:shadow;
+  }
+
+  .gridx-button-outline {
+    @apply px-4 py-2 bg-transparent text-gridx-blue
+           rounded-lg border border-gridx-blue/20
+           shadow-sm transition-all duration-200
+           hover:bg-gridx-blue/5 hover:border-gridx-blue/30;
+  }
+  
+  .gridx-badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+  
+  .gridx-badge-blue {
+    @apply gridx-badge bg-gridx-blue/10 text-gridx-blue;
+  }
+  
+  .gridx-badge-green {
+    @apply gridx-badge bg-gridx-green/10 text-gridx-green;
+  }
+  
+  .gridx-badge-yellow {
+    @apply gridx-badge bg-gridx-yellow/10 text-gridx-yellow;
+  }
+  
+  .gridx-badge-red {
+    @apply gridx-badge bg-gridx-red/10 text-gridx-red;
   }
 }
 
@@ -85,8 +126,26 @@
   }
   
   .text-gradient {
-    @apply bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-gridx-blue to-gridx-teal bg-clip-text text-transparent;
+  }
+  
+  .gridx-section-heading {
+    @apply text-xl font-semibold text-gridx-navy dark:text-white mb-4;
+  }
+  
+  .gridx-card-heading {
+    @apply text-base font-medium text-gridx-navy dark:text-white/90;
+  }
+  
+  .gridx-card-subheading {
+    @apply text-sm text-gridx-gray dark:text-gray-400;
+  }
+  
+  .gridx-data-value {
+    @apply text-lg font-semibold;
+  }
+  
+  .gridx-data-label {
+    @apply text-xs text-gridx-gray dark:text-gray-400;
   }
 }
-
-/* Keep other existing styles */
