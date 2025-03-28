@@ -231,7 +231,7 @@ const Auth = () => {
             {isSignUp && (
               <div className="grid grid-cols-2 gap-4">
                 <FormField
-                  control={form.control}
+                  control={signUpForm.control}
                   name="firstName"
                   render={({ field }) => (
                     <FormItem>
@@ -244,7 +244,7 @@ const Auth = () => {
                   )}
                 />
                 <FormField
-                  control={form.control}
+                  control={signUpForm.control}
                   name="lastName"
                   render={({ field }) => (
                     <FormItem>
