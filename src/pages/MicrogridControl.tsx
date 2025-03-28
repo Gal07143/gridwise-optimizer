@@ -1,37 +1,42 @@
 
-import React, { useState } from 'react';
-import AppLayout from '@/components/layout/AppLayout';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { BadgeExtended } from '@/components/ui/badge-extended';
-import MicrogridHeader from '@/components/microgrid/MicrogridHeader';
-import MicrogridTabContent from '@/components/microgrid/MicrogridTabContent';
-import { MicrogridProvider } from '@/components/microgrid/MicrogridProvider';
+import React from 'react';
+import { GlassPanel } from '@/components/ui';
+import LiveTelemetryChart from '@/components/telemetry/LiveTelemetryChart';
+import DashboardCard from '@/components/ui/dashboard/DashboardCard';
+import { StatusOverview } from '@/components/dashboard/status';
+
+// Export the index components
+export * from './StatusItem';
+export * from './StatusOverview';
+export * from './StatusSkeleton';
 
 const MicrogridControl = () => {
-  const [activeTab, setActiveTab] = useState('overview');
-
   return (
-    <MicrogridProvider>
-      <AppLayout>
-        <div className="flex flex-col gap-6 p-6">
-          <MicrogridHeader />
-          
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <div className="flex justify-between items-center">
-              <TabsList>
-                <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="control">Control</TabsTrigger>
-                <TabsTrigger value="flow">Energy Flow</TabsTrigger>
-                <TabsTrigger value="insights">Insights</TabsTrigger>
-              </TabsList>
-            </div>
-            
-            <MicrogridTabContent activeTab={activeTab} />
-          </Tabs>
-        </div>
-      </AppLayout>
-    </MicrogridProvider>
+    <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+      <div className="md:col-span-8">
+        <GlassPanel className="p-5">
+          <h2 className="text-xl font-semibold mb-4">Microgrid Performance</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <LiveTelemetryChart 
+              deviceId="microgrid-controller-1"
+              metric="power"
+              unit="kW"
+              height={200}
+            />
+            <LiveTelemetryChart 
+              deviceId="microgrid-controller-1"
+              metric="voltage"
+              unit="V"
+              height={200}
+            />
+          </div>
+        </GlassPanel>
+      </div>
+      
+      <div className="md:col-span-4">
+        <StatusOverview />
+      </div>
+    </div>
   );
 };
 
