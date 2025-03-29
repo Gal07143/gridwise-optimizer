@@ -1,4 +1,3 @@
-// src/hooks/useDeviceStatus.ts
 import { useEffect, useState } from "react";
 
 export const useDeviceStatus = (deviceId: string) => {
@@ -19,7 +18,7 @@ export const useDeviceStatus = (deviceId: string) => {
     };
 
     fetchStatus();
-    const interval = setInterval(fetchStatus, 5000); // Poll every 5s
+    const interval = setInterval(fetchStatus, 5000);
     return () => clearInterval(interval);
   }, [deviceId]);
 
