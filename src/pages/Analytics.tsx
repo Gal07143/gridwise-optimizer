@@ -15,6 +15,7 @@ import GenerationTab from '@/components/analytics/tabs/GenerationTab';
 import CostTab from '@/components/analytics/tabs/CostTab';
 import InsightsTab from '@/components/analytics/tabs/InsightsTab';
 import LoadingScreen from '@/components/LoadingScreen';
+import { useNavigate } from 'react-router-dom';
 
 // Analytics tabs
 const tabs = [
@@ -52,6 +53,7 @@ const Analytics: React.FC = () => {
   const [activeTab, setActiveTab] = useState('consumption');
   const [timeframe, setTimeframe] = useState('week');
   const [showComparison, setShowComparison] = useState(false);
+  const navigate = useNavigate();
 
   if (loading) {
     return <LoadingScreen />;
@@ -61,6 +63,7 @@ const Analytics: React.FC = () => {
     <Main containerSize="default" className="max-w-[1600px] mx-auto pt-0">
       <AnalyticsHeader 
         timeframe={timeframe}
+        siteName={activeSite?.name || 'Energy Analytics'}
       />
 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
@@ -76,7 +79,21 @@ const Analytics: React.FC = () => {
             timeframe={timeframe}
           />
         </div>
-        <Button variant="outline" size="sm">Export Data</Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => navigate('/reports')}
+          >
+            Generate Report
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
+          >
+            Export Data
+          </Button>
+        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>

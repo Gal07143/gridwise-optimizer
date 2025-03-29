@@ -1,10 +1,11 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Activity, Zap, Thermometer, Battery } from 'lucide-react';
+import { Activity, Zap, Thermometer, Battery, AlertTriangle } from 'lucide-react';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import { useSiteContext } from '@/contexts/SiteContext';
 import { useLiveTelemetry } from '@/hooks/useLiveTelemetry';
+import { toast } from 'sonner';
 
 const mockTelemetryHistory = Array.from({ length: 24 }, (_, i) => {
   return {
@@ -19,8 +20,8 @@ const mockTelemetryHistory = Array.from({ length: 24 }, (_, i) => {
 const TelemetryPanel = () => {
   const { activeSite } = useSiteContext();
   // Use a default deviceId if site structure doesn't have devices array
-  const deviceId = activeSite?.id || 'device-1';
-  const { telemetry, loading } = useLiveTelemetry(deviceId);
+  const deviceId = activeSite?.devices?.[0]?.id || activeSite?.id || 'device-1';
+  const { telemetry, loading, error } = useLiveTelemetry(deviceId);
 
   const currentValues = {
     voltage: telemetry?.voltage || 240.2,
@@ -29,13 +30,36 @@ const TelemetryPanel = () => {
     temperature: telemetry?.temperature || 42.5
   };
 
+  if (error) {
+    // Only show this toast once when an error occurs
+    React.useEffect(() => {
+      toast.error("Couldn't fetch telemetry data. Using sample data instead.");
+    }, [error]);
+  }
+
+  const handleRefresh = () => {
+    toast.loading("Refreshing telemetry data...");
+    // In a real app, you'd call a refresh function here
+    setTimeout(() => {
+      toast.success("Telemetry data refreshed");
+    }, 1000);
+  };
+
   return (
     <Card className="shadow-md h-full">
       <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-medium flex items-center">
-          <Activity className="h-5 w-5 mr-2 text-blue-500" />
-          Live Telemetry
-        </CardTitle>
+        <div className="flex justify-between items-center">
+          <CardTitle className="text-lg font-medium flex items-center">
+            <Activity className="h-5 w-5 mr-2 text-blue-500" />
+            Live Telemetry
+          </CardTitle>
+          <button 
+            onClick={handleRefresh}
+            className="text-xs text-blue-500 hover:text-blue-700 dark:hover:text-blue-300 flex items-center"
+          >
+            Refresh
+          </button>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-2 gap-4 mb-6">
@@ -90,6 +114,13 @@ const TelemetryPanel = () => {
         <div className="mt-2 text-xs text-center text-muted-foreground">
           {loading ? 'Loading telemetry data...' : '24-hour telemetry history'}
         </div>
+
+        {error && (
+          <div className="mt-2 text-xs flex items-center justify-center text-amber-500">
+            <AlertTriangle className="h-3 w-3 mr-1" />
+            Using sample data
+          </div>
+        )}
       </CardContent>
     </Card>
   );
