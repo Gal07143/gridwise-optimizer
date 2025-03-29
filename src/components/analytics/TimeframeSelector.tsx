@@ -1,25 +1,47 @@
 
 import React from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
-interface TimeframeSelectorProps {
+export interface TimeframeSelectorProps {
   timeframe: string;
-  setTimeframe: (value: string) => void;
+  onChange: (value: string) => void;
+  options?: { value: string; label: string }[];
+  className?: string;
 }
 
-const TimeframeSelector = ({ timeframe, setTimeframe }: TimeframeSelectorProps) => {
+const defaultOptions = [
+  { value: 'day', label: 'Day' },
+  { value: 'week', label: 'Week' },
+  { value: 'month', label: 'Month' },
+  { value: 'year', label: 'Year' },
+];
+
+const TimeframeSelector: React.FC<TimeframeSelectorProps> = ({
+  timeframe,
+  onChange,
+  options = defaultOptions,
+  className = '',
+}) => {
   return (
-    <Select value={timeframe} onValueChange={setTimeframe}>
-      <SelectTrigger className="w-[180px]">
-        <SelectValue placeholder="Select timeframe" />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="day">Last 24 Hours</SelectItem>
-        <SelectItem value="week">Last 7 Days</SelectItem>
-        <SelectItem value="month">Last 30 Days</SelectItem>
-        <SelectItem value="year">Last 12 Months</SelectItem>
-      </SelectContent>
-    </Select>
+    <ToggleGroup
+      type="single"
+      value={timeframe}
+      onValueChange={(value) => {
+        if (value) onChange(value);
+      }}
+      className={`inline-flex rounded-md border p-1 bg-background ${className}`}
+    >
+      {options.map((option) => (
+        <ToggleGroupItem
+          key={option.value}
+          value={option.value}
+          className="px-3 py-1 text-sm rounded-sm data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+          aria-label={`Show ${option.label.toLowerCase()} data`}
+        >
+          {option.label}
+        </ToggleGroupItem>
+      ))}
+    </ToggleGroup>
   );
 };
 

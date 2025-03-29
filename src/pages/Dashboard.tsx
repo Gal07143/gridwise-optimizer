@@ -6,9 +6,13 @@ import DashboardSummary from '@/components/dashboard/DashboardSummary';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import LoadingScreen from '@/components/LoadingScreen';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { BarChart2, PieChart, LineChart, Activity } from 'lucide-react';
+import { BarChart2, PieChart, LineChart, Activity, Database, AlertTriangle, Gauge, Zap } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useSiteContext } from '@/contexts/SiteContext';
+import AnalyticsCard from '@/components/ems/AnalyticsCard';
+import AlertsFeed from '@/components/ems/AlertsFeed';
+import TelemetryPanel from '@/components/ems/TelemetryPanel';
+import OptimizationLog from '@/components/ems/OptimizationLog';
 
 // Dashboard tabs
 const tabs = [
@@ -69,20 +73,56 @@ const Dashboard: React.FC = () => {
           </TabsContent>
 
           <TabsContent value="consumption" className="animate-in fade-in">
-            <div className="glass-panel p-8 flex items-center justify-center">
-              <p className="text-xl text-muted-foreground">Consumption Analysis</p>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <TelemetryPanel />
+              <AlertsFeed />
             </div>
           </TabsContent>
 
           <TabsContent value="production" className="animate-in fade-in">
-            <div className="glass-panel p-8 flex items-center justify-center">
-              <p className="text-xl text-muted-foreground">Production Analysis</p>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <AnalyticsCard />
+              <OptimizationLog />
             </div>
           </TabsContent>
 
           <TabsContent value="analytics" className="animate-in fade-in">
-            <div className="glass-panel p-8 flex items-center justify-center">
-              <p className="text-xl text-muted-foreground">Analytics Dashboard</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              <div className="card p-6 glass-panel flex flex-col items-center justify-center text-center md:col-span-3">
+                <h2 className="text-2xl font-bold mb-4">Energy Management System Analytics</h2>
+                <p className="text-muted-foreground mb-6">
+                  Comprehensive analytics and insights for your energy management system. 
+                  Monitor performance, identify optimization opportunities, and make data-driven decisions.
+                </p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6 w-full">
+                  <div className="flex flex-col items-center">
+                    <Database className="h-8 w-8 mb-2 text-blue-500" />
+                    <h3 className="font-medium">Data Analysis</h3>
+                    <p className="text-sm text-muted-foreground">Historical data analysis</p>
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <AlertTriangle className="h-8 w-8 mb-2 text-amber-500" />
+                    <h3 className="font-medium">Alerts</h3>
+                    <p className="text-sm text-muted-foreground">System alerts and notifications</p>
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <Gauge className="h-8 w-8 mb-2 text-green-500" />
+                    <h3 className="font-medium">Performance</h3>
+                    <p className="text-sm text-muted-foreground">System performance metrics</p>
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <Zap className="h-8 w-8 mb-2 text-purple-500" />
+                    <h3 className="font-medium">Optimization</h3>
+                    <p className="text-sm text-muted-foreground">Energy optimization strategies</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <TelemetryPanel />
+              <div className="lg:col-span-2">
+                <OptimizationLog />
+              </div>
             </div>
           </TabsContent>
         </Tabs>
