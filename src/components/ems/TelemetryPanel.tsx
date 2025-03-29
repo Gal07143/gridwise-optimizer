@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Activity, Zap, Thermometer, Battery } from 'lucide-react';
@@ -18,20 +17,16 @@ const mockTelemetryHistory = Array.from({ length: 24 }, (_, i) => {
 
 const TelemetryPanel = () => {
   const { activeSite } = useSiteContext();
-  // In a real application, we would fetch this from the active device
   const deviceId = activeSite?.devices?.[0]?.id || 'device-1';
-  
-  // This hook would normally provide real-time telemetry data
-  // For now, we'll use mock data if the hook doesn't return anything
   const { telemetry, loading } = useLiveTelemetry(deviceId);
-  
+
   const currentValues = {
     voltage: telemetry?.voltage || 240.2,
     current: telemetry?.current || 15.7,
     power: telemetry?.power || 3.8,
     temperature: telemetry?.temperature || 42.5
   };
-  
+
   return (
     <Card className="shadow-md h-full">
       <CardHeader className="pb-2">
@@ -63,7 +58,7 @@ const TelemetryPanel = () => {
             <div className="text-xs text-muted-foreground">Temperature</div>
           </div>
         </div>
-        
+
         <div className="h-48">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={mockTelemetryHistory} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
@@ -89,7 +84,7 @@ const TelemetryPanel = () => {
             </LineChart>
           </ResponsiveContainer>
         </div>
-        
+
         <div className="mt-2 text-xs text-center text-muted-foreground">
           {loading ? 'Loading telemetry data...' : '24-hour telemetry history'}
         </div>
