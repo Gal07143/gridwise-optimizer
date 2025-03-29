@@ -1,0 +1,1 @@
+// TelemetryPanel.tsx component
