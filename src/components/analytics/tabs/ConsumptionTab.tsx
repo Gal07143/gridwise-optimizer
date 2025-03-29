@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
@@ -17,25 +18,51 @@ import {
   XAxis, 
   YAxis 
 } from 'recharts';
-import PredictionsCard from '../PredictionsCard';
 
 interface ConsumptionTabProps {
-  weeklyEnergyData: any[];
-  peakDemandData: any[];
-  energySourcesData: any[];
-  topConsumersData: any[];
-  costBreakdownData: any[];
-  dataComparisonEnabled: boolean;
+  timeframe: string;
+  showComparison: boolean;
 }
 
-const ConsumptionTab = ({ 
-  weeklyEnergyData, 
-  peakDemandData, 
-  energySourcesData, 
-  topConsumersData,
-  costBreakdownData,
-  dataComparisonEnabled
-}: ConsumptionTabProps) => {
+// Sample data for demonstration
+const weeklyEnergyData = Array.from({ length: 7 }, (_, i) => ({
+  time: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i],
+  value: Math.floor(Math.random() * 50) + 30,
+  comparison: Math.floor(Math.random() * 50) + 25,
+}));
+
+const peakDemandData = Array.from({ length: 24 }, (_, i) => ({
+  time: `${i}:00`,
+  value: Math.floor(Math.random() * 15) + 5,
+  comparison: Math.floor(Math.random() * 15) + 3,
+}));
+
+const energySourcesData = [
+  { name: 'Solar', value: 45 },
+  { name: 'Grid', value: 30 },
+  { name: 'Battery', value: 15 },
+  { name: 'Backup Generator', value: 10 },
+];
+
+const topConsumersData = [
+  { device: 'HVAC System', consumption: 325, change: '+2.3%' },
+  { device: 'EV Charger', consumption: 280, change: '-5.1%' },
+  { device: 'Kitchen Appliances', consumption: 210, change: '+1.7%' },
+  { device: 'Lighting', consumption: 165, change: '-0.8%' },
+  { device: 'Office Equipment', consumption: 110, change: '+3.5%' },
+];
+
+const costBreakdownData = [
+  { category: 'Peak Hours', cost: 180 },
+  { category: 'Off-Peak', cost: 95 },
+  { category: 'Mid-Peak', cost: 125 },
+  { category: 'Demand Charges', cost: 75 },
+];
+
+const ConsumptionTab: React.FC<ConsumptionTabProps> = ({ 
+  timeframe,
+  showComparison
+}) => {
   // Color constants
   const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff8042'];
   
@@ -44,7 +71,7 @@ const ConsumptionTab = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Energy Consumption</CardTitle>
+            <CardTitle>Energy Consumption ({timeframe})</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -57,7 +84,7 @@ const ConsumptionTab = ({
                     <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8}/>
                     <stop offset="95%" stopColor="#8884d8" stopOpacity={0}/>
                   </linearGradient>
-                  {dataComparisonEnabled && (
+                  {showComparison && (
                     <linearGradient id="colorComparison" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#82ca9d" stopOpacity={0.8}/>
                       <stop offset="95%" stopColor="#82ca9d" stopOpacity={0}/>
@@ -76,7 +103,7 @@ const ConsumptionTab = ({
                   fill="url(#colorConsumption)" 
                   name="Current"
                 />
-                {dataComparisonEnabled && (
+                {showComparison && (
                   <Area 
                     type="monotone" 
                     dataKey="comparison" 
@@ -91,13 +118,6 @@ const ConsumptionTab = ({
           </CardContent>
         </Card>
         
-        <PredictionsCard 
-          timeframe="week" 
-          customData={weeklyEnergyData}
-        />
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
             <CardTitle>Peak Demand</CardTitle>
@@ -111,10 +131,40 @@ const ConsumptionTab = ({
                 <Tooltip />
                 <Legend />
                 <Line type="monotone" dataKey="value" stroke="#8884d8" name="Demand" />
-                {dataComparisonEnabled && (
+                {showComparison && (
                   <Line type="monotone" dataKey="comparison" stroke="#82ca9d" name="Previous" />
                 )}
               </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Energy Sources</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  dataKey="value"
+                  isAnimationActive={false}
+                  data={energySourcesData}
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={80}
+                  fill="#8884d8"
+                  label
+                >
+                  {energySourcesData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
@@ -153,34 +203,6 @@ const ConsumptionTab = ({
           </CardContent>
         </Card>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Energy Sources</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                dataKey="value"
-                isAnimationActive={false}
-                data={energySourcesData}
-                cx="50%"
-                cy="50%"
-                outerRadius={80}
-                fill="#8884d8"
-                label
-              >
-                {energySourcesData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
 
       <Card>
         <CardHeader>

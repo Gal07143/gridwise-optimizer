@@ -60,7 +60,6 @@ const Analytics: React.FC = () => {
   return (
     <Main containerSize="default" className="max-w-[1600px] mx-auto pt-0">
       <AnalyticsHeader 
-        siteName={activeSite?.name || 'No Site Selected'} 
         timeframe={timeframe}
       />
 
@@ -73,7 +72,8 @@ const Analytics: React.FC = () => {
           />
           <ComparisonToggle 
             checked={showComparison} 
-            onCheckedChange={setShowComparison} 
+            onCheckedChange={setShowComparison}
+            timeframe={timeframe}
           />
         </div>
         <Button variant="outline" size="sm">Export Data</Button>

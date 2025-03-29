@@ -3,22 +3,22 @@ import React from 'react';
 import { Switch } from '@/components/ui/switch';
 
 interface ComparisonToggleProps {
-  timeframe: string;
-  dataComparisonEnabled: boolean;
-  setDataComparisonEnabled: (value: boolean) => void;
+  checked: boolean;
+  onCheckedChange: (value: boolean) => void;
+  timeframe?: string;
 }
 
 const ComparisonToggle = ({
-  timeframe,
-  dataComparisonEnabled,
-  setDataComparisonEnabled
+  checked,
+  onCheckedChange,
+  timeframe = 'period'
 }: ComparisonToggleProps) => {
   return (
     <div className="flex items-center space-x-2">
       <Switch 
         id="comparison-toggle"
-        checked={dataComparisonEnabled}
-        onCheckedChange={setDataComparisonEnabled}
+        checked={checked}
+        onCheckedChange={onCheckedChange}
       />
       <label 
         htmlFor="comparison-toggle" 

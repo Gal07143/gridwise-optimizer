@@ -8,16 +8,21 @@ import SystemRecommendationsCard from '@/components/analytics/SystemRecommendati
 import usePredictions from '@/hooks/usePredictions';
 
 interface InsightsTabProps {
-  timeframe: 'day' | 'week' | 'month' | 'year';
+  timeframe: string;
 }
 
 const InsightsTab: React.FC<InsightsTabProps> = ({ timeframe }) => {
+  // Convert timeframe string to the expected type
+  const timeframeConverted = timeframe === 'day' || timeframe === 'week' || 
+                        timeframe === 'month' || timeframe === 'year' 
+                        ? timeframe : 'week';
+  
   const { 
     recommendations, 
     isLoading, 
     error, 
     refetch
-  } = usePredictions(timeframe);
+  } = usePredictions(timeframeConverted);
 
   return (
     <div className="space-y-6">
@@ -34,7 +39,7 @@ const InsightsTab: React.FC<InsightsTabProps> = ({ timeframe }) => {
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <PredictionsCard timeframe={timeframe} />
+        <PredictionsCard timeframe={timeframeConverted} />
         <SystemRecommendationsCard 
           recommendations={recommendations}
           isLoading={isLoading}

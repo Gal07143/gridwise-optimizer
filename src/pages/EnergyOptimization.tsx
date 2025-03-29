@@ -4,718 +4,534 @@ import { Main } from '@/components/ui/main';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Slider } from '@/components/ui/slider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Settings, Zap, LineChart, BarChart2, Clock, Calendar, Trophy, AlertTriangle, Battery, BatteryCharging } from 'lucide-react';
-import { ResponsiveContainer, LineChart as ReLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart as ReBarChart, Bar, AreaChart, Area } from 'recharts';
-import { useSiteContext } from '@/contexts/SiteContext';
+import { 
+  Battery, 
+  BarChart, 
+  PieChart, 
+  Clock, 
+  LayoutDashboard, 
+  Settings, 
+  Settings2, 
+  ArrowDownUp, 
+  ChevronDown,
+  ChevronUp,
+  Zap, 
+  Sun, 
+  Bolt
+} from 'lucide-react';
+import { 
+  AreaChart, 
+  Area, 
+  LineChart, 
+  Line, 
+  BarChart as RechartsBarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  Legend, 
+  ResponsiveContainer 
+} from 'recharts';
 
-// Mock optimization data
-const optimizationHistory = [
-  { date: '2023-01-01', unoptimized: 32.5, optimized: 26.8, savings: 5.7 },
-  { date: '2023-02-01', unoptimized: 30.2, optimized: 25.5, savings: 4.7 },
-  { date: '2023-03-01', unoptimized: 28.8, optimized: 24.2, savings: 4.6 },
-  { date: '2023-04-01', unoptimized: 26.5, optimized: 22.1, savings: 4.4 },
-  { date: '2023-05-01', unoptimized: 25.2, optimized: 21.5, savings: 3.7 },
-  { date: '2023-06-01', unoptimized: 27.8, optimized: 22.8, savings: 5.0 },
-  { date: '2023-07-01', unoptimized: 32.5, optimized: 26.5, savings: 6.0 },
-  { date: '2023-08-01', unoptimized: 34.2, optimized: 27.8, savings: 6.4 },
-  { date: '2023-09-01', unoptimized: 29.5, optimized: 24.2, savings: 5.3 },
-  { date: '2023-10-01', unoptimized: 27.8, optimized: 23.1, savings: 4.7 },
-  { date: '2023-11-01', unoptimized: 30.5, optimized: 25.2, savings: 5.3 },
-  { date: '2023-12-01', unoptimized: 35.2, optimized: 28.5, savings: 6.7 },
-];
-
-// Demand shifting data
-const demandShiftingData = [
-  { hour: '00:00', rate: 0.08, demand: 2.1, carbon: 180, optimized: true, optimizedDemand: 3.5 },
-  { hour: '02:00', rate: 0.06, demand: 1.5, carbon: 150, optimized: true, optimizedDemand: 2.8 },
-  { hour: '04:00', rate: 0.05, demand: 1.2, carbon: 130, optimized: true, optimizedDemand: 2.5 },
-  { hour: '06:00', rate: 0.07, demand: 2.5, carbon: 160, optimized: true, optimizedDemand: 1.8 },
-  { hour: '08:00', rate: 0.12, demand: 4.2, carbon: 210, optimized: false, optimizedDemand: 3.1 },
-  { hour: '10:00', rate: 0.15, demand: 4.8, carbon: 230, optimized: false, optimizedDemand: 3.6 },
-  { hour: '12:00', rate: 0.14, demand: 5.2, carbon: 220, optimized: false, optimizedDemand: 4.1 },
-  { hour: '14:00', rate: 0.13, demand: 4.5, carbon: 200, optimized: false, optimizedDemand: 3.8 },
-  { hour: '16:00', rate: 0.18, demand: 5.8, carbon: 250, optimized: false, optimizedDemand: 4.2 },
-  { hour: '18:00', rate: 0.22, demand: 7.2, carbon: 280, optimized: false, optimizedDemand: 5.4 },
-  { hour: '20:00', rate: 0.20, demand: 6.5, carbon: 270, optimized: false, optimizedDemand: 4.8 },
-  { hour: '22:00', rate: 0.14, demand: 4.2, carbon: 220, optimized: false, optimizedDemand: 3.7 },
-];
-
-const optimizationRecommendations = [
-  {
-    id: 'rec-1',
-    title: 'Shift EV Charging',
-    description: 'Delay EV charging from 18:00 to 02:00 to save $4.80 per session',
-    savings: 4.80,
-    type: 'load-shifting',
-    applied: false
-  },
-  {
-    id: 'rec-2',
-    title: 'Increase Battery Reserve',
-    description: 'Increase battery reserve to 30% during peak hours (16:00-20:00)',
-    savings: 3.25,
-    type: 'battery',
-    applied: true
-  },
-  {
-    id: 'rec-3',
-    title: 'Optimize HVAC Schedule',
-    description: 'Pre-cool home during off-peak hours to reduce peak load',
-    savings: 2.15,
-    type: 'load-shifting',
-    applied: false
-  },
-  {
-    id: 'rec-4',
-    title: 'Export Excess Solar',
-    description: 'Export excess solar production during 11:00-14:00 when rates are favorable',
-    savings: 1.90,
-    type: 'export',
-    applied: false
-  }
-];
-
-const EnergyOptimization: React.FC = () => {
-  const { activeSite } = useSiteContext();
-  const [activeTab, setActiveTab] = useState('overview');
-  const [batteryOptimizationEnabled, setBatteryOptimizationEnabled] = useState(true);
-  const [loadShiftingEnabled, setLoadShiftingEnabled] = useState(true);
-  const [exportOptimizationEnabled, setExportOptimizationEnabled] = useState(true);
-  const [economicPriority, setEconomicPriority] = useState([70]); // 0-100 economic vs environmental
-  const [peakShavingThreshold, setPeakShavingThreshold] = useState([80]); // % of capacity
+// Simulate daily energy usage data
+const dailyEnergyData = Array.from({ length: 24 }, (_, i) => {
+  const hour = i;
+  const solar = hour >= 6 && hour <= 18 ? Math.sin((hour - 6) * Math.PI / 12) * 4 + Math.random() * 0.5 : 0;
+  const consumption = 1 + Math.sin(hour * Math.PI / 12) * 0.5 + Math.random() * 0.5 + (hour >= 17 && hour <= 21 ? 2 : 0);
+  const grid = Math.max(0, consumption - solar);
+  const battery = hour >= 17 && hour <= 21 ? Math.min(2, Math.max(0, consumption - solar)) : 0;
   
-  // Calculate total savings
-  const totalSavings = optimizationHistory.reduce((sum, record) => sum + record.savings, 0);
-  const averageSavings = totalSavings / optimizationHistory.length;
-  const totalOpportunities = optimizationRecommendations.length;
-  const appliedOpportunities = optimizationRecommendations.filter(rec => rec.applied).length;
+  return {
+    hour: `${hour}:00`,
+    solar: solar.toFixed(1),
+    consumption: consumption.toFixed(1),
+    grid: grid.toFixed(1),
+    battery: battery.toFixed(1),
+    optimized: (grid * 0.7).toFixed(1)
+  };
+});
+
+// Utility function to safely convert a value to a number for formatting
+const toNumber = (value: any): number => {
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string') return parseFloat(value) || 0;
+  return 0;
+};
+
+// Optimization savings data
+const savingsData = [
+  { category: 'Peak Shifting', amount: 142.50 },
+  { category: 'Solar Self-Consumption', amount: 98.75 },
+  { category: 'Time-of-Use Optimization', amount: 63.20 },
+  { category: 'Demand Charge Reduction', amount: 85.30 }
+];
+
+// Rules data
+const optimizationRules = [
+  { id: 1, name: 'Peak Shaving', active: true, description: 'Reduce grid consumption during peak pricing periods' },
+  { id: 2, name: 'Solar Self-Consumption', active: true, description: 'Prioritize using solar energy directly' },
+  { id: 3, name: 'Time-of-Use Optimization', active: true, description: 'Optimize battery charging based on electricity rates' },
+  { id: 4, name: 'Battery Reserve', active: true, description: 'Maintain minimum battery capacity for outages' },
+  { id: 5, name: 'Weather-Adaptive Strategy', active: false, description: 'Adjust strategy based on weather forecast' }
+];
+
+const EnergyOptimization = () => {
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [optimizationEnabled, setOptimizationEnabled] = useState(true);
+  const [expandedRules, setExpandedRules] = useState<number[]>([]);
+  
+  const toggleRuleExpansion = (ruleId: number) => {
+    if (expandedRules.includes(ruleId)) {
+      setExpandedRules(expandedRules.filter(id => id !== ruleId));
+    } else {
+      setExpandedRules([...expandedRules, ruleId]);
+    }
+  };
   
   return (
-    <Main containerSize="default" className="max-w-[1600px] mx-auto pt-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold mb-1">Energy Optimization</h1>
-          <p className="text-muted-foreground">
-            {activeSite ? `Optimizing energy usage for ${activeSite.name}` : 'Select a site to view optimization options'}
-          </p>
+    <Main title="Energy Optimization">
+      <div className="flex flex-col space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold">Energy Optimization</h1>
+            <p className="text-sm text-muted-foreground mt-1">Intelligently manage energy flow to reduce costs and maximize efficiency</p>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Switch 
+              id="optimization-toggle"
+              checked={optimizationEnabled}
+              onCheckedChange={setOptimizationEnabled}
+            />
+            <label htmlFor="optimization-toggle" className="text-sm font-medium">
+              Optimization {optimizationEnabled ? 'Enabled' : 'Disabled'}
+            </label>
+          </div>
         </div>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-medium flex items-center">
-              <Zap className="h-5 w-5 mr-2 text-green-500" />
-              Optimization Savings
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">${totalSavings.toFixed(2)}</div>
-            <div className="text-sm text-muted-foreground mt-1">Total savings this year</div>
-            <div className="text-md font-medium mt-4">${averageSavings.toFixed(2)}/month</div>
-            <div className="text-sm text-muted-foreground">Average monthly savings</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-medium flex items-center">
-              <Calendar className="h-5 w-5 mr-2 text-blue-500" />
-              Optimization Status
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center">
-              <div className="relative w-16 h-16 mr-4">
-                <svg viewBox="0 0 100 100" className="transform -rotate-90 w-full h-full">
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="45"
-                    fill="none"
-                    stroke="#e5e7eb"
-                    strokeWidth="10"
-                  />
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="45"
-                    fill="none"
-                    stroke="#3b82f6"
-                    strokeWidth="10"
-                    strokeDasharray={`${(appliedOpportunities / totalOpportunities) * 283} 283`}
-                  />
-                </svg>
-              </div>
-              <div>
-                <div className="text-xl font-bold">{appliedOpportunities}/{totalOpportunities}</div>
-                <div className="text-sm text-muted-foreground">Optimizations applied</div>
-              </div>
-            </div>
-            <div className="mt-4">
-              <div className="text-sm font-medium">Next optimization in: <span className="text-blue-600">3 hours</span></div>
-              <div className="text-sm text-muted-foreground">Battery charge during off-peak rates</div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-medium flex items-center">
-              <Trophy className="h-5 w-5 mr-2 text-amber-500" />
-              Optimization Impact
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div>
-                <div className="flex justify-between mb-1">
-                  <span className="text-sm">Cost Reduction</span>
-                  <span className="text-sm font-medium">18%</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-                  <div className="bg-green-600 h-2.5 rounded-full" style={{ width: '18%' }}></div>
-                </div>
-              </div>
-              <div>
-                <div className="flex justify-between mb-1">
-                  <span className="text-sm">Self-Consumption</span>
-                  <span className="text-sm font-medium">72%</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-                  <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: '72%' }}></div>
-                </div>
-              </div>
-              <div>
-                <div className="flex justify-between mb-1">
-                  <span className="text-sm">Carbon Reduction</span>
-                  <span className="text-sm font-medium">24%</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-                  <div className="bg-purple-600 h-2.5 rounded-full" style={{ width: '24%' }}></div>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-      
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
-        <TabsList className="grid w-full grid-cols-1 md:grid-cols-4 bg-gray-100/50 dark:bg-gray-900/50 backdrop-blur-md p-1 rounded-lg mb-6">
-          <TabsTrigger value="overview" className="flex items-center">
-            <BarChart2 className="h-4 w-4 mr-2" />
-            Overview
-          </TabsTrigger>
-          <TabsTrigger value="demand-shifting" className="flex items-center">
-            <Clock className="h-4 w-4 mr-2" />
-            Demand Shifting
-          </TabsTrigger>
-          <TabsTrigger value="battery" className="flex items-center">
-            <Battery className="h-4 w-4 mr-2" />
-            Battery Optimization
-          </TabsTrigger>
-          <TabsTrigger value="settings" className="flex items-center">
-            <Settings className="h-4 w-4 mr-2" />
-            Settings
-          </TabsTrigger>
-        </TabsList>
         
-        <TabsContent value="overview" className="space-y-6 animate-in fade-in">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg font-medium flex items-center">
-                <LineChart className="h-5 w-5 mr-2 text-blue-500" />
-                Optimization History
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[350px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <ReBarChart data={optimizationHistory}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
-                    <XAxis dataKey="date" tickFormatter={(value) => {
-                      const date = new Date(value);
-                      return date.toLocaleDateString('en-US', { month: 'short' });
-                    }} />
-                    <YAxis />
-                    <Tooltip 
-                      formatter={(value, name) => {
-                        if (name === 'unoptimized') return [`${value} kWh`, 'Before Optimization'];
-                        if (name === 'optimized') return [`${value} kWh`, 'After Optimization'];
-                        if (name === 'savings') return [`${value} kWh`, 'Energy Saved'];
-                        return [value, name];
-                      }}
-                      labelFormatter={(label) => {
-                        const date = new Date(label);
-                        return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-                      }}
-                    />
-                    <Legend />
-                    <Bar dataKey="unoptimized" name="Before Optimization" fill="#94a3b8" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="optimized" name="After Optimization" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="savings" name="Energy Saved" fill="#10b981" radius={[4, 4, 0, 0]} />
-                  </ReBarChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid grid-cols-3 w-full max-w-md mx-auto">
+            <TabsTrigger value="dashboard" className="flex items-center gap-2">
+              <LayoutDashboard className="h-4 w-4" />
+              <span className="hidden sm:inline">Dashboard</span>
+            </TabsTrigger>
+            <TabsTrigger value="rules" className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              <span className="hidden sm:inline">Rules</span>
+            </TabsTrigger>
+            <TabsTrigger value="history" className="flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              <span className="hidden sm:inline">History</span>
+            </TabsTrigger>
+          </TabsList>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <TabsContent value="dashboard" className="space-y-6 mt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg font-medium flex items-center">
+                    <Zap className="h-5 w-5 mr-2 text-amber-500" />
+                    Daily Energy Flow
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart
+                        data={dailyEnergyData}
+                        margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                        <XAxis dataKey="hour" />
+                        <YAxis label={{ value: 'kW', angle: -90, position: 'insideLeft' }} />
+                        <Tooltip 
+                          formatter={(value) => [`${toNumber(value).toFixed(1)} kW`, '']}
+                          labelFormatter={(label) => `Time: ${label}`}
+                        />
+                        <Legend />
+                        <Area type="monotone" dataKey="solar" stackId="1" stroke="#FFB13B" fill="#FFD699" name="Solar Generation" />
+                        <Area type="monotone" dataKey="battery" stackId="2" stroke="#4F46E5" fill="#C7D2FE" name="Battery Discharge" />
+                        <Area type="monotone" dataKey="grid" stackId="2" stroke="#6B7280" fill="#D1D5DB" name="Grid Import" />
+                        <Line type="monotone" dataKey="consumption" stroke="#EF4444" strokeWidth={2} dot={false} name="Consumption" />
+                        <Line type="monotone" dataKey="optimized" stroke="#10B981" strokeWidth={2} dot={false} name="Optimized Grid" strokeDasharray="5 5" />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg font-medium flex items-center">
+                    <BarChart className="h-5 w-5 mr-2 text-blue-500" />
+                    Monthly Savings
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RechartsBarChart
+                        data={savingsData}
+                        margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                        <XAxis dataKey="category" />
+                        <YAxis 
+                          label={{ value: 'USD ($)', angle: -90, position: 'insideLeft' }} 
+                          tickFormatter={(value) => `$${value}`} 
+                        />
+                        <Tooltip formatter={(value) => [`$${toNumber(value).toFixed(2)}`, 'Savings']} />
+                        <Legend />
+                        <Bar dataKey="amount" fill="#3B82F6" name="Monthly Savings" />
+                      </RechartsBarChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="mt-4 flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-500">$389.75</div>
+                      <div className="text-sm text-muted-foreground">Total Monthly Savings</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg font-medium flex items-center">
+                    <Battery className="h-5 w-5 mr-2 text-purple-500" />
+                    Battery Optimization
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-md">
+                      <div className="flex justify-between mb-1">
+                        <span className="text-sm font-medium">Charge during off-peak</span>
+                        <span className="text-sm font-medium text-green-500">Active</span>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        1:00 AM - 5:00 AM
+                      </div>
+                    </div>
+                    <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-md">
+                      <div className="flex justify-between mb-1">
+                        <span className="text-sm font-medium">Discharge during peak</span>
+                        <span className="text-sm font-medium text-green-500">Active</span>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        5:00 PM - 9:00 PM
+                      </div>
+                    </div>
+                    <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-md">
+                      <div className="flex justify-between mb-1">
+                        <span className="text-sm font-medium">Reserve capacity</span>
+                        <span className="text-sm font-medium">20%</span>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        For grid outages
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg font-medium flex items-center">
+                    <Sun className="h-5 w-5 mr-2 text-amber-500" />
+                    Solar Optimization
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-md">
+                      <div className="flex justify-between mb-1">
+                        <span className="text-sm font-medium">Self-consumption</span>
+                        <span className="text-sm font-medium">78%</span>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        Of solar energy is used directly
+                      </div>
+                    </div>
+                    <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-md">
+                      <div className="flex justify-between mb-1">
+                        <span className="text-sm font-medium">Battery charging</span>
+                        <span className="text-sm font-medium">15%</span>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        Of solar energy stored in battery
+                      </div>
+                    </div>
+                    <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-md">
+                      <div className="flex justify-between mb-1">
+                        <span className="text-sm font-medium">Grid export</span>
+                        <span className="text-sm font-medium">7%</span>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        Of solar energy exported to grid
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg font-medium flex items-center">
+                    <Bolt className="h-5 w-5 mr-2 text-red-500" />
+                    Load Optimization
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-md">
+                      <div className="flex justify-between mb-1">
+                        <span className="text-sm font-medium">EV charging shift</span>
+                        <span className="text-sm font-medium text-green-500">Active</span>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        Shifted from 6 PM to 1 AM
+                      </div>
+                    </div>
+                    <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-md">
+                      <div className="flex justify-between mb-1">
+                        <span className="text-sm font-medium">HVAC pre-cooling</span>
+                        <span className="text-sm font-medium text-green-500">Active</span>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        Scheduled before peak hours
+                      </div>
+                    </div>
+                    <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-md">
+                      <div className="flex justify-between mb-1">
+                        <span className="text-sm font-medium">Smart schedules</span>
+                        <span className="text-sm font-medium">3 active</span>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        For appliances and pool pump
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="rules" className="space-y-6 mt-6">
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg font-medium flex items-center">
-                  <Zap className="h-5 w-5 mr-2 text-amber-500" />
-                  Recommended Optimizations
+                  <Settings2 className="h-5 w-5 mr-2 text-blue-500" />
+                  Optimization Rules
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4 max-h-80 overflow-y-auto pr-2">
-                  {optimizationRecommendations.map(rec => (
-                    <div 
-                      key={rec.id} 
-                      className={`p-3 border rounded-lg flex items-start gap-3 ${
-                        rec.applied ? 'bg-gray-50 dark:bg-gray-800/50 border-green-200 dark:border-green-900' : 'bg-white dark:bg-gray-800'
-                      }`}
-                    >
-                      <div className="flex-shrink-0 mt-1">
-                        {rec.type === 'load-shifting' ? (
-                          <Clock className="h-4 w-4 text-blue-500" />
-                        ) : rec.type === 'battery' ? (
-                          <BatteryCharging className="h-4 w-4 text-green-500" />
-                        ) : (
-                          <Zap className="h-4 w-4 text-amber-500" />
-                        )}
-                      </div>
-                      <div className="flex-grow min-w-0">
-                        <div className="flex justify-between items-start">
-                          <h4 className="font-medium text-sm line-clamp-1">{rec.title}</h4>
-                          <span className="text-xs text-green-600 font-medium ml-2">
-                            ${rec.savings.toFixed(2)}
+                <div className="space-y-4">
+                  {optimizationRules.map(rule => (
+                    <div key={rule.id} className="border rounded-md">
+                      <div 
+                        className="flex justify-between items-center p-3 cursor-pointer"
+                        onClick={() => toggleRuleExpansion(rule.id)}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <Switch checked={rule.active} readOnly />
+                          <span className="font-medium">{rule.name}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 px-2 py-0.5 rounded">
+                            {rule.active ? 'Active' : 'Disabled'}
                           </span>
-                        </div>
-                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                          {rec.description}
-                        </p>
-                        <div className="mt-2">
-                          {rec.applied ? (
-                            <span className="text-xs flex items-center text-green-600">
-                              <Zap className="h-3 w-3 mr-1" /> Applied
-                            </span>
-                          ) : (
-                            <Button size="sm" variant="outline" className="text-xs h-7 px-2">
-                              Apply
-                            </Button>
-                          )}
+                          {expandedRules.includes(rule.id) ? 
+                            <ChevronUp className="h-4 w-4" /> : 
+                            <ChevronDown className="h-4 w-4" />}
                         </div>
                       </div>
+                      {expandedRules.includes(rule.id) && (
+                        <div className="p-3 border-t bg-gray-50 dark:bg-gray-900/50">
+                          <p className="text-sm text-muted-foreground mb-3">{rule.description}</p>
+                          <div className="flex space-x-2">
+                            <Button size="sm" variant="outline">Edit Rule</Button>
+                            <Button size="sm" variant="outline" className={rule.active ? "text-red-500" : "text-green-500"}>
+                              {rule.active ? 'Disable' : 'Enable'}
+                            </Button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg font-medium flex items-center">
-                  <AlertTriangle className="h-5 w-5 mr-2 text-amber-500" />
-                  Optimization Alerts
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="p-3 border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-900/50 rounded-lg">
-                    <h4 className="font-medium text-sm flex items-center">
-                      <AlertTriangle className="h-4 w-4 mr-1 text-amber-500" /> 
-                      Peak Demand Alert
-                    </h4>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Predicted peak demand between 18:00-20:00 today. Battery discharge scheduled.
-                    </p>
-                  </div>
-                  
-                  <div className="p-3 border border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-900/50 rounded-lg">
-                    <h4 className="font-medium text-sm flex items-center">
-                      <Clock className="h-4 w-4 mr-1 text-blue-500" /> 
-                      Off-Peak Charging
-                    </h4>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      EV charging schedule adjusted to 01:00-05:00 to utilize lowest rates.
-                    </p>
-                  </div>
-                  
-                  <div className="p-3 border border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-900/50 rounded-lg">
-                    <h4 className="font-medium text-sm flex items-center">
-                      <Zap className="h-4 w-4 mr-1 text-green-500" /> 
-                      Grid Export Opportunity
-                    </h4>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      High solar production forecasted for tomorrow. Optimized battery storage to maximize grid export.
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="demand-shifting" className="space-y-6 animate-in fade-in">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg font-medium flex items-center">
-                <Clock className="h-5 w-5 mr-2 text-blue-500" />
-                Demand Shifting Analysis
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[350px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={demandShiftingData}>
-                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                    <XAxis dataKey="hour" />
-                    <YAxis yAxisId="left" orientation="left" />
-                    <YAxis yAxisId="right" orientation="right" domain={[0, 0.25]} tickFormatter={tick => `$${tick.toFixed(2)}`} />
-                    <Tooltip 
-                      content={({ active, payload, label }) => {
-                        if (active && payload && payload.length) {
-                          return (
-                            <div className="bg-background border p-3 rounded-md shadow-md">
-                              <p className="font-medium mb-1">{`Time: ${label}`}</p>
-                              <p style={{ color: payload[0].color }}>
-                                {`Current Demand: ${payload[0].value} kW`}
-                              </p>
-                              {payload[0].payload.optimized && (
-                                <p style={{ color: "#10b981" }}>
-                                  {`Optimized Demand: ${payload[0].payload.optimizedDemand} kW`}
-                                </p>
-                              )}
-                              <p style={{ color: payload[1].color }}>
-                                {`Electricity Rate: $${payload[1].value.toFixed(2)}/kWh`}
-                              </p>
-                              <p style={{ color: payload[2].color }}>
-                                {`Carbon Intensity: ${payload[2].value} g/kWh`}
-                              </p>
-                            </div>
-                          );
-                        }
-                        return null;
-                      }}
-                    />
-                    <Legend />
-                    <Area yAxisId="left" type="monotone" dataKey="demand" name="Current Demand (kW)" fill="#3b82f6" stroke="#3b82f6" fillOpacity={0.2} />
-                    <Area yAxisId="right" type="monotone" dataKey="rate" name="Electricity Rate ($/kWh)" fill="#f59e0b" stroke="#f59e0b" fillOpacity={0.2} />
-                    <Area yAxisId="left" type="monotone" dataKey="carbon" name="Carbon Intensity (g/kWh)" fill="#6366f1" stroke="#6366f1" fillOpacity={0.2} />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg font-medium flex items-center">
-                  <Clock className="h-5 w-5 mr-2 text-purple-500" />
-                  Load Shifting Settings
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <label className="text-sm font-medium">Enable Load Shifting</label>
-                      <Switch 
-                        checked={loadShiftingEnabled} 
-                        onCheckedChange={setLoadShiftingEnabled} 
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-3 pt-4 border-t">
-                    <h4 className="text-sm font-medium">Flexible Loads</h4>
-                    
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs text-muted-foreground">EV Charging</label>
-                      <Switch checked={true} />
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs text-muted-foreground">HVAC</label>
-                      <Switch checked={true} />
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs text-muted-foreground">Water Heater</label>
-                      <Switch checked={false} />
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs text-muted-foreground">Pool Pump</label>
-                      <Switch checked={true} />
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="md:col-span-2">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg font-medium flex items-center">
-                  <Calendar className="h-5 w-5 mr-2 text-green-500" />
-                  Optimization Schedule
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex flex-col space-y-1">
-                    <span className="text-sm font-medium">Peak Hours (Avoid Usage)</span>
-                    <div className="flex items-center">
-                      <div className="h-6 bg-red-500/20 border-l border-r border-red-500/30 flex-grow text-center text-xs py-1 rounded-sm text-red-800 dark:text-red-300">
-                        16:00 - 21:00
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex flex-col space-y-1">
-                    <span className="text-sm font-medium">Shoulder Hours (Moderate Usage)</span>
-                    <div className="flex items-center">
-                      <div className="h-6 bg-amber-500/20 border-l border-r border-amber-500/30 flex-grow text-center text-xs py-1 rounded-sm text-amber-800 dark:text-amber-300">
-                        06:00 - 16:00, 21:00 - 23:00
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex flex-col space-y-1">
-                    <span className="text-sm font-medium">Off-Peak Hours (Encourage Usage)</span>
-                    <div className="flex items-center">
-                      <div className="h-6 bg-green-500/20 border-l border-r border-green-500/30 flex-grow text-center text-xs py-1 rounded-sm text-green-800 dark:text-green-300">
-                        23:00 - 06:00
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="mt-6 space-y-3">
-                  <h4 className="text-sm font-medium">Next Scheduled Shifts</h4>
-                  
-                  <div className="flex items-start space-x-3 p-2 border rounded-md">
-                    <Clock className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-sm font-medium">EV Charging</p>
-                      <p className="text-xs text-muted-foreground">Shifted from 18:00 to 01:00</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start space-x-3 p-2 border rounded-md">
-                    <Clock className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-sm font-medium">HVAC Pre-cooling</p>
-                      <p className="text-xs text-muted-foreground">Scheduled for 14:00-15:00 before peak hours</p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="battery" className="space-y-6 animate-in fade-in">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg font-medium flex items-center">
-                <Battery className="h-5 w-5 mr-2 text-green-500" />
-                Battery Optimization Analysis
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[350px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <ReLineChart data={optimizationHistory}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
-                    <XAxis dataKey="date" tickFormatter={(value) => {
-                      const date = new Date(value);
-                      return date.toLocaleDateString('en-US', { month: 'short' });
-                    }} />
-                    <YAxis />
-                    <Tooltip 
-                      labelFormatter={(label) => {
-                        const date = new Date(label);
-                        return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-                      }}
-                    />
-                    <Legend />
-                    <Line type="monotone" dataKey="savings" name="Energy Saved (kWh)" stroke="#10b981" strokeWidth={2} />
-                  </ReLineChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg font-medium flex items-center">
-                  <BatteryCharging className="h-5 w-5 mr-2 text-blue-500" />
-                  Battery Settings
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <label className="text-sm font-medium">Enable Battery Optimization</label>
-                      <Switch 
-                        checked={batteryOptimizationEnabled} 
-                        onCheckedChange={setBatteryOptimizationEnabled} 
-                      />
-                    </div>
-                    
-                    <label className="text-sm font-medium">Peak Shaving Threshold ({peakShavingThreshold}%)</label>
-                    <Slider
-                      disabled={!batteryOptimizationEnabled}
-                      value={peakShavingThreshold}
-                      min={50}
-                      max={100}
-                      step={5}
-                      onValueChange={setPeakShavingThreshold}
-                    />
-                  </div>
-                  
-                  <div className="space-y-3 pt-4 border-t">
-                    <h4 className="text-sm font-medium">Grid Export Settings</h4>
-                    
-                    <div className="flex items-center justify-between">
-                      <label className="text-sm">Enable Grid Export Optimization</label>
-                      <Switch 
-                        checked={exportOptimizationEnabled} 
-                        onCheckedChange={setExportOptimizationEnabled} 
-                      />
-                    </div>
-                    
-                    <p className="text-xs text-muted-foreground">
-                      When enabled, the system will optimize battery usage to maximize grid export during high rate periods.
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg font-medium flex items-center">
-                  <LineChart className="h-5 w-5 mr-2 text-purple-500" />
-                  Optimization Impact
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="text-sm font-medium mb-2">Battery Cycles Saved</h4>
-                    <div className="text-2xl font-bold">42 cycles <span className="text-sm font-normal text-muted-foreground">this year</span></div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Extended battery lifespan by approximately 5.2 months
-                    </p>
-                  </div>
-                  
-                  <div className="pt-3 border-t">
-                    <h4 className="text-sm font-medium mb-2">Grid Import Reduction</h4>
-                    <div className="text-2xl font-bold">32% <span className="text-sm font-normal text-muted-foreground">reduction</span></div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Reduced grid imports during peak hours by optimizing battery discharge
-                    </p>
-                  </div>
-                  
-                  <div className="pt-3 border-t">
-                    <h4 className="text-sm font-medium mb-2">Self-Consumption Increase</h4>
-                    <div className="text-2xl font-bold">18% <span className="text-sm font-normal text-muted-foreground">increase</span></div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Improved utilization of on-site generation through intelligent battery control
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="settings" className="space-y-6 animate-in fade-in">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg font-medium flex items-center">
-                <Settings className="h-5 w-5 mr-2 text-gray-500" />
-                Optimization Preferences
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                <div className="space-y-4">
-                  <h4 className="text-sm font-medium">Optimization Priority</h4>
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-xs">Environmental</span>
-                      <span className="text-xs">Economic</span>
-                    </div>
-                    <Slider 
-                      value={economicPriority} 
-                      min={0} 
-                      max={100} 
-                      step={10}
-                      onValueChange={setEconomicPriority}
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Slide to adjust the balance between cost savings and environmental impact.
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="space-y-3 pt-4 border-t">
-                  <h4 className="text-sm font-medium">Notification Preferences</h4>
-                  
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs text-muted-foreground">Daily Optimization Summary</label>
-                    <Switch checked={true} />
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs text-muted-foreground">Optimization Recommendations</label>
-                    <Switch checked={true} />
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs text-muted-foreground">Price Alerts</label>
-                    <Switch checked={true} />
-                  </div>
-                </div>
-                
-                <div className="space-y-3 pt-4 border-t">
-                  <h4 className="text-sm font-medium">Data Sources</h4>
-                  
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs text-muted-foreground">Utility Rate Data</label>
-                    <div className="text-xs text-green-600">Connected</div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs text-muted-foreground">Weather Forecast</label>
-                    <div className="text-xs text-green-600">Connected</div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs text-muted-foreground">Grid Carbon Intensity</label>
-                    <div className="text-xs text-green-600">Connected</div>
-                  </div>
-                </div>
-                
-                <div className="pt-4">
-                  <Button className="w-full">
-                    Save Preferences
+                <div className="mt-4 flex justify-end">
+                  <Button className="flex items-center gap-2">
+                    <Settings className="h-4 w-4" />
+                    Add Custom Rule
                   </Button>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+              </CardContent>
+            </Card>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg font-medium flex items-center">
+                    <ArrowDownUp className="h-5 w-5 mr-2 text-green-500" />
+                    Rate Structure
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center p-2 border-b">
+                      <div>
+                        <div className="font-medium">Off-Peak</div>
+                        <div className="text-xs text-muted-foreground">12 AM - 2 PM, 9 PM - 12 AM</div>
+                      </div>
+                      <div className="text-sm font-bold">$0.12/kWh</div>
+                    </div>
+                    <div className="flex justify-between items-center p-2 border-b">
+                      <div>
+                        <div className="font-medium">Mid-Peak</div>
+                        <div className="text-xs text-muted-foreground">2 PM - 5 PM</div>
+                      </div>
+                      <div className="text-sm font-bold">$0.18/kWh</div>
+                    </div>
+                    <div className="flex justify-between items-center p-2">
+                      <div>
+                        <div className="font-medium">Peak</div>
+                        <div className="text-xs text-muted-foreground">5 PM - 9 PM</div>
+                      </div>
+                      <div className="text-sm font-bold">$0.32/kWh</div>
+                    </div>
+                  </div>
+                  <div className="mt-3 text-xs text-right text-muted-foreground">
+                    Based on your utility provider's current rates
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg font-medium flex items-center">
+                    <PieChart className="h-5 w-5 mr-2 text-purple-500" />
+                    Optimization Overview
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={[
+                            { name: 'Peak Shifting', value: 40 },
+                            { name: 'Solar Self-Consumption', value: 25 },
+                            { name: 'Time-of-Use', value: 20 },
+                            { name: 'Demand Charges', value: 15 }
+                          ]}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={60}
+                          outerRadius={80}
+                          fill="#8884d8"
+                          dataKey="value"
+                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        >
+                          <Area fill="#3B82F6" />
+                          <Area fill="#10B981" />
+                          <Area fill="#F59E0B" />
+                          <Area fill="#8B5CF6" />
+                        </Pie>
+                        <Tooltip formatter={(value) => [`${value}%`, 'Savings Impact']} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="text-center text-sm text-muted-foreground">
+                    Distribution of cost savings from optimization strategies
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="history" className="space-y-6 mt-6">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg font-medium flex items-center">
+                  <Clock className="h-5 w-5 mr-2 text-amber-500" />
+                  Optimization History
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      data={Array.from({ length: 30 }, (_, i) => ({
+                        day: `Day ${i + 1}`,
+                        standard: 35 + Math.random() * 15,
+                        optimized: 25 + Math.random() * 10
+                      }))}
+                      margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                      <XAxis dataKey="day" />
+                      <YAxis label={{ value: 'Cost ($)', angle: -90, position: 'insideLeft' }} />
+                      <Tooltip formatter={(value) => [`$${toNumber(value).toFixed(2)}`, '']} />
+                      <Legend />
+                      <Line type="monotone" dataKey="standard" stroke="#EF4444" strokeWidth={2} name="Standard Cost" dot={false} />
+                      <Line type="monotone" dataKey="optimized" stroke="#10B981" strokeWidth={2} name="Optimized Cost" dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-800">
+                  <tr>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Event</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Impact</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Savings</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-800">
+                  <tr>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">Today, 6:30 PM</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">Battery discharge during peak</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">Avoided 3.2 kWh from grid</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-500">$1.02</td>
+                  </tr>
+                  <tr>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">Today, 2:15 PM</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">Shifted EV charging</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">Moved 10.5 kWh to off-peak</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-500">$2.10</td>
+                  </tr>
+                  <tr>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">Today, 11:30 AM</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">Solar excess to battery</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">Stored 2.8 kWh</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-500">$0.89</td>
+                  </tr>
+                  <tr>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">Yesterday, 7:45 PM</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">Peak demand reduction</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">Reduced peak by 2.1 kW</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-500">$4.50</td>
+                  </tr>
+                  <tr>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">Yesterday, 2:00 AM</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">Off-peak battery charging</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">Charged 8.5 kWh</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-500">$1.36</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
     </Main>
   );
 };

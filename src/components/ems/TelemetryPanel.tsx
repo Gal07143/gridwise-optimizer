@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Activity, Zap, Thermometer, Battery } from 'lucide-react';
@@ -17,7 +18,8 @@ const mockTelemetryHistory = Array.from({ length: 24 }, (_, i) => {
 
 const TelemetryPanel = () => {
   const { activeSite } = useSiteContext();
-  const deviceId = activeSite?.devices?.[0]?.id || 'device-1';
+  // Use a default deviceId if site structure doesn't have devices array
+  const deviceId = activeSite?.id || 'device-1';
   const { telemetry, loading } = useLiveTelemetry(deviceId);
 
   const currentValues = {
@@ -39,22 +41,22 @@ const TelemetryPanel = () => {
         <div className="grid grid-cols-2 gap-4 mb-6">
           <div className="flex flex-col items-center justify-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
             <Zap className="h-6 w-6 text-blue-500 mb-1" />
-            <div className="text-xl font-semibold">{currentValues.power.toFixed(1)} kW</div>
+            <div className="text-xl font-semibold">{typeof currentValues.power === 'number' ? currentValues.power.toFixed(1) : currentValues.power} kW</div>
             <div className="text-xs text-muted-foreground">Current Power</div>
           </div>
           <div className="flex flex-col items-center justify-center p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
             <Battery className="h-6 w-6 text-amber-500 mb-1" />
-            <div className="text-xl font-semibold">{currentValues.voltage.toFixed(1)} V</div>
+            <div className="text-xl font-semibold">{typeof currentValues.voltage === 'number' ? currentValues.voltage.toFixed(1) : currentValues.voltage} V</div>
             <div className="text-xs text-muted-foreground">Voltage</div>
           </div>
           <div className="flex flex-col items-center justify-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
             <Activity className="h-6 w-6 text-green-500 mb-1" />
-            <div className="text-xl font-semibold">{currentValues.current.toFixed(1)} A</div>
+            <div className="text-xl font-semibold">{typeof currentValues.current === 'number' ? currentValues.current.toFixed(1) : currentValues.current} A</div>
             <div className="text-xs text-muted-foreground">Current</div>
           </div>
           <div className="flex flex-col items-center justify-center p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
             <Thermometer className="h-6 w-6 text-red-500 mb-1" />
-            <div className="text-xl font-semibold">{currentValues.temperature.toFixed(1)} °C</div>
+            <div className="text-xl font-semibold">{typeof currentValues.temperature === 'number' ? currentValues.temperature.toFixed(1) : currentValues.temperature} °C</div>
             <div className="text-xs text-muted-foreground">Temperature</div>
           </div>
         </div>
@@ -71,8 +73,8 @@ const TelemetryPanel = () => {
                     return (
                       <div className="bg-background border p-2 text-xs rounded-md shadow-md">
                         <p className="font-medium">{`Time: ${label}`}</p>
-                        <p className="text-blue-500">{`Power: ${payload[0].value.toFixed(1)} kW`}</p>
-                        <p className="text-amber-500">{`Voltage: ${payload[1].value.toFixed(1)} V`}</p>
+                        <p className="text-blue-500">{`Power: ${Number(payload[0].value).toFixed(1)} kW`}</p>
+                        <p className="text-amber-500">{`Voltage: ${Number(payload[1].value).toFixed(1)} V`}</p>
                       </div>
                     );
                   }
