@@ -20,4 +20,13 @@ async def broadcast_alert(message: dict):
         try:
             await client.send_json(message)
         except:
-            clients.remove(client)# websocket.py
+            clients.remove(client)
+
+# Advanced admin commands
+@router.get("/ping")
+def ping():
+    return {"status": "alive"}
+
+@router.get("/clients")
+def active_clients():
+    return {"connected_clients": len(clients)}
