@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -17,7 +16,7 @@ const DeviceManagement = () => {
     firmware: '',
     lat: 0,
     lng: 0,
-    installation_date: new Date().toISOString().slice(0,10),
+    installation_date: new Date().toISOString().slice(0, 10),
   });
 
   const fetchDevices = async () => {
@@ -32,8 +31,6 @@ const DeviceManagement = () => {
   const handleAddDevice = async () => {
     await supabase.from('devices').insert([newDevice]);
     fetchDevices();
-    
-    // Reset form after submission
     setNewDevice({
       name: '',
       type: '',
@@ -43,7 +40,7 @@ const DeviceManagement = () => {
       firmware: '',
       lat: 0,
       lng: 0,
-      installation_date: new Date().toISOString().slice(0,10),
+      installation_date: new Date().toISOString().slice(0, 10),
     });
   };
 
@@ -92,10 +89,7 @@ const DeviceManagement = () => {
           />
         </div>
 
-        <Button
-          onClick={handleAddDevice}
-          className="mb-4"
-        >
+        <Button onClick={handleAddDevice} className="mb-4">
           Add Device
         </Button>
 
