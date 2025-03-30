@@ -1056,6 +1056,7 @@ export type Database = {
         Row: {
           alert_source: string | null
           created_at: string | null
+          enabled: boolean
           id: string
           is_active: boolean | null
           name: string
@@ -1067,6 +1068,7 @@ export type Database = {
         Insert: {
           alert_source?: string | null
           created_at?: string | null
+          enabled?: boolean
           id?: string
           is_active?: boolean | null
           name: string
@@ -1078,6 +1080,7 @@ export type Database = {
         Update: {
           alert_source?: string | null
           created_at?: string | null
+          enabled?: boolean
           id?: string
           is_active?: boolean | null
           name?: string
@@ -1689,6 +1692,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      system_status: {
+        Row: {
+          category: string
+          created_at: string | null
+          details: string | null
+          id: string
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          details?: string | null
+          id?: string
+          status: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          details?: string | null
+          id?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       tariffs: {
         Row: {
