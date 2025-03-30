@@ -1,33 +1,72 @@
-// src/pages/AIOverview.tsx
+// components/ai/RealtimeDispatchAdvice.tsx
+import React, { useEffect, useState } from 'react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import axios from 'axios';
+
+const RealtimeDispatchAdvice = () => {
+  const [advice, setAdvice] = useState<any>(null);
+
+  useEffect(() => {
+    axios.get('/api/optimize')
+      .then(res => setAdvice(res.data))
+      .catch(console.error);
+  }, []);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Real-Time Dispatch</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {advice ? (
+          <div className="text-sm space-y-1">
+            <p><strong>Action:</strong> {advice.dispatch}</p>
+            <p><strong>Tariff:</strong> {advice.tariff?.rate} ₪/kWh</p>
+            <p><strong>SoC:</strong> {advice.battery?.soc}%</p>
+            <p><strong>Predicted Savings:</strong> {advice.roi?.estimated_return} ₪</p>
+            <p><strong>Confidence:</strong> {advice.ai_advisory?.confidence}</p>
+          </div>
+        ) : (
+          <p className="text-muted-foreground">Loading advisory data...</p>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
+export default RealtimeDispatchAdvice;
+
+// pages/AIOverview.tsx
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import BatteryLifecycleChart from '@/components/ai/BatteryLifecycleChart';
-import ROIChart from '@/components/ai/ROIChart';
 import RealtimeDispatchAdvice from '@/components/ai/RealtimeDispatchAdvice';
-import AnomalyAlerts from '@/components/ai/AnomalyAlerts';
-import AIModelTrainer from '@/components/admin/AIModelTrainer';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 
 const AIOverview = () => {
   return (
-    <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3 p-4">
-      <div className="md:col-span-2 xl:col-span-1">
-        <RealtimeDispatchAdvice />
-      </div>
-      <BatteryLifecycleChart />
-      <ROIChart />
-      <AnomalyAlerts />
-      <div className="md:col-span-2 xl:col-span-3">
-        <Card>
-          <CardHeader>
-            <CardTitle>Model Training</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <AIModelTrainer />
-          </CardContent>
-        </Card>
-      </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <RealtimeDispatchAdvice />
+      {/* Future: add components for AI Training, Alerts, Battery Health */}
+      <Card>
+        <CardHeader>
+          <CardTitle>AI Model Trainer</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <button
+            onClick={() => fetch('/api/train')}
+            className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/80"
+          >
+            Trigger Training</button>
+        </CardContent>
+      </Card>
     </div>
   );
 };
 
 export default AIOverview;
+
+// AppRoutes.tsx (add this route under protected routes)
+<Route path="/ai/overview" element={
+  <ProtectedRoute>
+    <AIOverview />
+  </ProtectedRoute>
+} />
