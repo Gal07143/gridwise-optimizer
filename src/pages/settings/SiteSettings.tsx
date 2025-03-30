@@ -1,165 +1,197 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { getSites } from '@/services/sites/siteService';
+import { useSiteContext } from '@/contexts/SiteContext';
+import { useSiteActions } from '@/hooks/useSiteActions';
+import { PlusCircle, Trash2, Edit, Loader2, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import SettingsPageTemplate from '@/components/settings/SettingsPageTemplate';
-import { Button } from '@/components/ui/button';
-import { Plus, Edit, Trash2, RefreshCw, AlertTriangle } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Site } from '@/types/energy';
-import { getSites, deleteSite } from '@/services/sites/siteService';
-import { useSiteContext } from '@/contexts/SiteContext';
-import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { Site } from '@/types/site';
 
-const SiteSettings: React.FC = () => {
+const SiteSettings = () => {
   const navigate = useNavigate();
-  const { refreshSites } = useSiteContext();
-  const [sites, setSites] = useState<Site[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const { setActiveSite } = useSiteContext();
+  const { deleteSite, isLoading: isActionLoading } = useSiteActions();
   const [siteToDelete, setSiteToDelete] = useState<Site | null>(null);
   
-  useEffect(() => {
-    fetchSites();
-  }, []);
-  
-  const fetchSites = async () => {
-    try {
-      setLoading(true);
-      const result = await getSites();
-      setSites(result);
-      setError(null);
-    } catch (error: any) {
-      console.error("Error fetching sites:", error);
-      setError(error instanceof Error ? error : new Error(error?.message || 'Unknown error'));
-    } finally {
-      setLoading(false);
+  const { data: sites = [], isLoading, error, refetch, isFetching } = useQuery({
+    queryKey: ['sites'],
+    queryFn: getSites,
+    retry: 3,
+    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 10000),
+    onError: (error: Error) => {
+      toast.error(`Failed to load sites: ${error.message}`);
     }
+  });
+  
+  const onSetActive = (site: Site) => {
+    setActiveSite(site);
+    toast.success(`${site.name} set as active site`);
   };
   
-  const handleAddSite = () => {
-    navigate('/settings/sites/add');
+  const onRefresh = () => {
+    toast.info('Refreshing sites list...');
+    refetch();
   };
   
-  const handleEditSite = (siteId: string) => {
-    navigate(`/settings/sites/edit/${siteId}`);
-  };
-  
-  const confirmDelete = (site: Site) => {
-    setSiteToDelete(site);
-    setShowDeleteConfirm(true);
-  };
-  
-  const handleDelete = async () => {
+  const onConfirmDelete = async () => {
     if (!siteToDelete) return;
     
-    try {
-      const success = await deleteSite(siteToDelete.id);
-      if (success) {
-        toast.success(`Site "${siteToDelete.name}" deleted successfully`);
-        fetchSites();
-        refreshSites(); // Update the site context
-        setShowDeleteConfirm(false);
-        setSiteToDelete(null);
-      }
-    } catch (error: any) {
-      console.error("Error deleting site:", error);
-      toast.error(`Failed to delete site: ${error?.message || 'Unknown error'}`);
+    const success = await deleteSite(siteToDelete.id);
+    if (success) {
+      toast.success(`Site "${siteToDelete.name}" deleted successfully`);
+      refetch();
     }
+    setSiteToDelete(null);
   };
   
   return (
     <SettingsPageTemplate
       title="Site Management"
-      description="Add, edit, and remove sites from your account."
+      description="Add, edit, and manage your energy management sites"
       actions={
-        <Button onClick={handleAddSite} className="flex items-center gap-2">
-          <Plus size={16} />
-          Add Site
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={onRefresh} 
+            disabled={isFetching} 
+            className="flex items-center gap-1"
+          >
+            <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
+            {isFetching ? 'Refreshing...' : 'Refresh'}
+          </Button>
+          <Button 
+            onClick={() => navigate('/settings/sites/add')}
+            className="flex items-center gap-1"
+          >
+            <PlusCircle className="h-4 w-4" />
+            Add Site
+          </Button>
+        </div>
       }
     >
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-lg font-semibold">Sites</CardTitle>
-          <Button variant="outline" size="sm" onClick={fetchSites}>
-            <RefreshCw size={16} className="mr-2" />
-            Refresh
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {error && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertTitle>Error</AlertTitle>
-              <AlertDescription>
-                {error.message}
-              </AlertDescription>
-            </Alert>
-          )}
-          
-          {loading ? (
-            <div className="flex justify-center py-8">
-              <RefreshCw size={24} className="animate-spin text-muted-foreground" />
-            </div>
-          ) : sites.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <p>No sites found. Click the "Add Site" button to create your first site.</p>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Timezone</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sites.map((site) => (
-                  <TableRow key={site.id}>
-                    <TableCell className="font-medium">{site.name}</TableCell>
-                    <TableCell>{site.location}</TableCell>
-                    <TableCell>{site.timezone}</TableCell>
-                    <TableCell>{new Date(site.created_at).toLocaleDateString()}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => handleEditSite(site.id)}
-                        >
-                          <Edit size={16} />
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => confirmDelete(site)}
-                        >
-                          <Trash2 size={16} />
-                        </Button>
+      {isLoading ? (
+        <div className="flex justify-center items-center h-64">
+          <div className="flex flex-col items-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="mt-4 text-muted-foreground">Loading sites...</p>
+          </div>
+        </div>
+      ) : error ? (
+        <Card className="border-red-300 bg-red-50 dark:bg-red-900/10">
+          <CardHeader>
+            <CardTitle className="text-red-600">Error Loading Sites</CardTitle>
+            <CardDescription>
+              {error instanceof Error ? error.message : 'An unexpected error occurred'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={onRefresh} className="w-full">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Try Again
+            </Button>
+          </CardContent>
+        </Card>
+      ) : sites.length === 0 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>No Sites Found</CardTitle>
+            <CardDescription>
+              You haven't added any sites yet. Add your first site to get started.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button 
+              onClick={() => navigate('/settings/sites/add')}
+              className="w-full flex items-center justify-center gap-2"
+            >
+              <PlusCircle className="h-5 w-5" />
+              Add Your First Site
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          {sites.map((site) => (
+            <Card key={site.id} className="overflow-hidden">
+              <div className="flex flex-col lg:flex-row lg:items-center">
+                <div className="p-6 flex-grow">
+                  <h3 className="text-lg font-semibold mb-1">{site.name}</h3>
+                  <p className="text-muted-foreground mb-3">{site.location}</p>
+                  <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+                    <div className="flex items-center">
+                      <span className="font-medium">Timezone:</span>
+                      <span className="ml-1">{site.timezone || 'None'}</span>
+                    </div>
+                    {(site.lat !== undefined && site.lat !== null && site.lng !== undefined && site.lng !== null) && (
+                      <div className="flex items-center">
+                        <span className="font-medium">Coordinates:</span>
+                        <span className="ml-1">{site.lat}, {site.lng}</span>
                       </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                    )}
+                  </div>
+                </div>
+                <div className="flex lg:flex-col gap-2 p-4 lg:border-l lg:min-w-48 bg-muted/20">
+                  <Button 
+                    variant="default" 
+                    size="sm" 
+                    className="flex-1 flex items-center gap-1"
+                    onClick={() => onSetActive(site)}
+                  >
+                    Set Active
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1 flex items-center gap-1"
+                    onClick={() => navigate(`/settings/sites/edit/${site.id}`)}
+                  >
+                    <Edit className="h-4 w-4" />
+                    Edit
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1 flex items-center gap-1 border-red-200 hover:bg-red-50 hover:text-red-600"
+                    onClick={() => setSiteToDelete(site)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Delete
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
       
-      <ConfirmDialog
-        open={showDeleteConfirm}
-        onOpenChange={setShowDeleteConfirm}
-        title="Delete Site"
-        description={`Are you sure you want to delete "${siteToDelete?.name}"? This action cannot be undone.`}
-        onConfirm={handleDelete}
-      />
+      <AlertDialog open={!!siteToDelete} onOpenChange={(open) => !open && setSiteToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to delete this site?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the site
+              "{siteToDelete?.name}" and all associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isActionLoading}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={onConfirmDelete}
+              disabled={isActionLoading}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              {isActionLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Trash2 className="h-4 w-4 mr-2" />}
+              {isActionLoading ? 'Deleting...' : 'Delete Site'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </SettingsPageTemplate>
   );
 };

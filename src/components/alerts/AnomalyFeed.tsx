@@ -5,7 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import axios from 'axios';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ExclamationTriangleIcon } from 'lucide-react';
+import { ExclamationTriangleIcon, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 interface Anomaly {
   id: string;
@@ -28,10 +30,16 @@ const fetchAnomalies = async (): Promise<Anomaly[]> => {
 };
 
 const AnomalyFeed = () => {
-  const { data: logs = [], isLoading, error } = useQuery({
+  const { data: logs = [], isLoading, error, refetch, isFetching } = useQuery({
     queryKey: ['anomalies'],
     queryFn: fetchAnomalies,
     refetchInterval: 30000, // Refresh every 30 seconds
+    retry: 3,
+    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
+    onError: (error: Error) => {
+      console.error('Error fetching anomalies:', error);
+      toast.error(`Failed to load anomalies: ${error.message}`);
+    }
   });
 
   // Function to determine severity color
@@ -41,8 +49,13 @@ const AnomalyFeed = () => {
       case 'high': return 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800/50';
       case 'medium': return 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800/50';
       case 'low':
-      default: return 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/50';
+      default: return 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800/50';
     }
+  };
+
+  const handleRetry = () => {
+    toast.info('Refreshing anomaly data...');
+    refetch();
   };
 
   if (isLoading) {
@@ -62,34 +75,35 @@ const AnomalyFeed = () => {
     );
   }
 
-  if (error) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Anomaly Events</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center p-4 text-red-500">
-            <ExclamationTriangleIcon className="h-5 w-5 mr-2" />
-            <span>Failed to load anomalies</span>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="flex items-center">
           <ExclamationTriangleIcon className="h-5 w-5 mr-2 text-red-500" />
           Anomaly Events
         </CardTitle>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={handleRetry} 
+          disabled={isFetching}
+          className={isFetching ? 'animate-spin' : ''}
+        >
+          <RefreshCw className="h-4 w-4" />
+        </Button>
       </CardHeader>
       <CardContent className="space-y-2 text-sm max-h-[400px] overflow-y-auto">
-        {logs.length === 0 && (
+        {error && (
+          <div className="flex items-center justify-center p-4 text-red-500 border border-red-200 rounded-md bg-red-50 dark:bg-red-900/20 dark:border-red-800/50">
+            <ExclamationTriangleIcon className="h-5 w-5 mr-2" />
+            <span>Error loading data. Click refresh to try again.</span>
+          </div>
+        )}
+        
+        {!error && logs.length === 0 && (
           <p className="text-center text-muted-foreground py-4">No recent anomalies detected.</p>
         )}
+        
         {logs.map((log) => (
           <div 
             key={log.id} 

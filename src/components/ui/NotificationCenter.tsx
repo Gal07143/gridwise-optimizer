@@ -2,16 +2,16 @@
 // components/ui/NotificationCenter.tsx
 import React, { useEffect, useState } from 'react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
-import { X } from 'lucide-react';
+import { X, AlertCircle } from 'lucide-react';
 
 interface Notification {
   id: string;
   title: string;
   message: string;
-  type: 'info' | 'warning' | 'error';
+  type: 'info' | 'warning' | 'error' | 'success';
   timestamp: string;
   read?: boolean;
 }
@@ -52,6 +52,8 @@ const NotificationCenter = () => {
     queryKey: ['notifications'],
     queryFn: fetchNotifications,
     refetchInterval: 60000, // Refresh every minute
+    retry: 3, // Retry failed requests up to 3 times
+    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
   });
 
   useEffect(() => {
@@ -75,7 +77,7 @@ const NotificationCenter = () => {
       ws.onmessage = (event) => {
         try {
           const alert = JSON.parse(event.data);
-          setNotifications((prev) => [alert, ...prev.slice(0, 4)]);
+          setNotifications((prev) => [alert, ...prev.slice(0, 9)]); // Keep the last 10 notifications
           
           // Show toast for new notifications
           toast({
@@ -90,6 +92,19 @@ const NotificationCenter = () => {
       
       ws.onerror = (error) => {
         console.error('WebSocket error:', error);
+        toast({
+          title: 'Connection Error',
+          description: 'Failed to connect to notification service. Retrying...',
+          variant: 'destructive',
+        });
+      };
+
+      ws.onclose = () => {
+        console.log('WebSocket connection closed. Attempting to reconnect in 5 seconds...');
+        // Attempt to reconnect after 5 seconds
+        setTimeout(() => {
+          console.log('Attempting to reconnect WebSocket...');
+        }, 5000);
       };
     } catch (error) {
       console.warn('WebSocket connection failed:', error);
@@ -101,6 +116,24 @@ const NotificationCenter = () => {
       }
     };
   }, [toast]);
+
+  // Function to add a system notification programmatically
+  const addSystemNotification = (notification: Omit<Notification, 'id' | 'timestamp'>) => {
+    const newNotification: Notification = {
+      ...notification,
+      id: `local-${Date.now()}`,
+      timestamp: new Date().toISOString(),
+    };
+    
+    setNotifications(prev => [newNotification, ...prev]);
+    
+    // Also show as toast
+    toast({
+      title: notification.title,
+      description: notification.message,
+      variant: notification.type === 'error' ? 'destructive' : 'default',
+    });
+  };
 
   const dismissNotification = (id: string) => {
     setNotifications(notifications.filter(n => n.id !== id));
@@ -117,7 +150,17 @@ const NotificationCenter = () => {
   }
 
   if (error) {
-    return <div className="p-4 text-center text-red-500">Failed to load notifications</div>;
+    return (
+      <div className="p-4">
+        <Alert variant="destructive" className="mb-2">
+          <AlertCircle className="h-4 w-4 mr-2" />
+          <AlertTitle>Failed to load notifications</AlertTitle>
+          <AlertDescription>
+            {error instanceof Error ? error.message : 'Unknown error occurred'}
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
   }
 
   if (notifications.length === 0) {
@@ -129,8 +172,14 @@ const NotificationCenter = () => {
       {notifications.map((n) => (
         <Alert 
           key={n.id} 
-          variant={n.type === 'error' ? 'destructive' : n.type === 'warning' ? 'default' : 'default'}
-          className={`relative ${n.read ? 'opacity-70' : ''}`}
+          variant={
+            n.type === 'error' ? 'destructive' : 
+            n.type === 'warning' ? 'default' : 
+            n.type === 'success' ? 'default' : 'default'
+          }
+          className={`relative ${n.read ? 'opacity-70' : ''} ${
+            n.type === 'success' ? 'border-green-500 bg-green-50 dark:bg-green-900/20' : ''
+          }`}
           onClick={() => markAsRead(n.id)}
         >
           <button 
@@ -155,4 +204,6 @@ const NotificationCenter = () => {
   );
 };
 
+// Export both the component and the function to add notifications
+export { NotificationCenter, type Notification };
 export default NotificationCenter;
