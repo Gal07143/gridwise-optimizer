@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -49,6 +48,12 @@ import NotificationServices from '@/pages/settings/NotificationServices';
 import OperationalThresholds from "./pages/settings/OperationalThresholds";
 import OptimizationAlgorithms from "./pages/settings/OptimizationAlgorithms";
 import ExternalServices from "@/pages/settings/ExternalServices";
+
+// Device Catalog Routes
+import DeviceCatalog from '@/pages/devices/DeviceCatalog';
+import DeviceCategoryDetail from '@/pages/devices/DeviceCategoryDetail';
+import DeviceModelDetail from '@/pages/devices/DeviceModelDetail';
+import AddDevice from '@/pages/devices/AddDevice';
 
 // Authentication components
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
@@ -295,6 +300,12 @@ const AppRoutes = () => {
       <Route path="/device-view/:deviceId" element={
         <Navigate to={`/devices/${window.location.pathname.split('/').pop()}`} replace />
       } />
+      
+      {/* Device Catalog Routes */}
+      <Route path="/devices/catalog" element={<DeviceCatalog />} />
+      <Route path="/devices/category/:categoryId" element={<DeviceCategoryDetail />} />
+      <Route path="/devices/model/:modelId" element={<DeviceModelDetail />} />
+      <Route path="/devices/add" element={<AddDevice />} />
       
       {/* 404 route - must be last */}
       <Route path="*" element={<NotFound />} />
