@@ -64,7 +64,9 @@ const AIOverview = () => {
 
 export default AIOverview;
 
-// AppRoutes.tsx (add this route under protected routes)
+// routes/AppRoutes.tsx (add this route under protected routes)
+import AIOverview from '@/pages/AIOverview';
+
 <Route path="/ai/overview" element={
   <ProtectedRoute>
     <AIOverview />
