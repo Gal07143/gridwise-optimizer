@@ -7,6 +7,7 @@ import { useSiteContext } from '@/contexts/SiteContext';
 import { useLiveTelemetry } from '@/hooks/useLiveTelemetry';
 import { toast } from 'sonner';
 
+// Sample data for the telemetry history chart
 const mockTelemetryHistory = Array.from({ length: 24 }, (_, i) => {
   return {
     time: `${i}:00`,
@@ -19,8 +20,9 @@ const mockTelemetryHistory = Array.from({ length: 24 }, (_, i) => {
 
 const TelemetryPanel = () => {
   const { activeSite } = useSiteContext();
-  // Use a default deviceId if site structure doesn't have devices array
-  const deviceId = activeSite?.devices?.[0]?.id || activeSite?.id || 'device-1';
+  
+  // Use a default deviceId directly instead of trying to access site.devices
+  const deviceId = activeSite?.id || 'device-1';
   const { telemetry, loading, error } = useLiveTelemetry(deviceId);
 
   const currentValues = {

@@ -29,11 +29,19 @@ const InsightsTab: React.FC<InsightsTabProps> = ({ timeframe }) => {
   } = usePredictions(timeframeConverted);
 
   const handleRefetch = () => {
-    toast.promise(refetch(), {
-      loading: 'Refreshing energy insights...',
-      success: 'Energy insights updated successfully',
-      error: 'Failed to refresh energy insights',
-    });
+    const refetchPromise = refetch();
+    
+    if (refetchPromise && typeof refetchPromise.then === 'function') {
+      toast.promise(refetchPromise, {
+        loading: 'Refreshing energy insights...',
+        success: 'Energy insights updated successfully',
+        error: 'Failed to refresh energy insights',
+      });
+    } else {
+      // Handle non-promise refetch
+      toast.success('Refreshing energy insights...');
+      refetch();
+    }
   };
 
   return (

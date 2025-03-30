@@ -1,5 +1,7 @@
+
 import { useDeviceStatus } from "@/hooks/useDeviceStatus";
 import { TableRow, TableCell } from "@/components/ui/table";
+import DeviceActionMenu from "@/components/DeviceActionMenu";
 
 export const DeviceTableRow = ({ device }: { device: any }) => {
   const { status } = useDeviceStatus(device.id);
@@ -23,6 +25,11 @@ export const DeviceTableRow = ({ device }: { device: any }) => {
         {status?.voltage ? `${status.voltage} V` : '-'} / {status?.current ? `${status.current} A` : '-'}
       </TableCell>
       <TableCell>{status?.temperature ? `${status.temperature} °C` : '-'}</TableCell>
+      <TableCell>
+        <DeviceActionMenu deviceId={device.id} />
+      </TableCell>
     </TableRow>
   );
 };
+
+export default DeviceTableRow;
