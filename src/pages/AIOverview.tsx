@@ -36,26 +36,38 @@ const RealtimeDispatchAdvice = () => {
 
 export default RealtimeDispatchAdvice;
 
-// pages/AIOverview.tsx
+
+// components/ai/AIOverview.tsx
 import React from 'react';
 import RealtimeDispatchAdvice from '@/components/ai/RealtimeDispatchAdvice';
+import AIBatteryHealthChart from '@/components/ai/AIBatteryHealthChart';
+import AIROIChart from '@/components/ai/AIROIChart';
+import AIAlertHistory from '@/components/ai/AIAlertHistory';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 
 const AIOverview = () => {
+  const triggerTraining = async () => {
+    await fetch('/api/train', { method: 'POST' });
+    alert('Training started');
+  };
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
       <RealtimeDispatchAdvice />
-      {/* Future: add components for AI Training, Alerts, Battery Health */}
+      <AIBatteryHealthChart />
+      <AIROIChart />
+      <AIAlertHistory />
       <Card>
         <CardHeader>
           <CardTitle>AI Model Trainer</CardTitle>
         </CardHeader>
         <CardContent>
           <button
-            onClick={() => fetch('/api/train')}
+            onClick={triggerTraining}
             className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/80"
           >
-            Trigger Training</button>
+            Trigger Training
+          </button>
         </CardContent>
       </Card>
     </div>
@@ -63,6 +75,7 @@ const AIOverview = () => {
 };
 
 export default AIOverview;
+
 
 // routes/AppRoutes.tsx (add this route under protected routes)
 import AIOverview from '@/pages/AIOverview';
@@ -72,3 +85,52 @@ import AIOverview from '@/pages/AIOverview';
     <AIOverview />
   </ProtectedRoute>
 } />
+
+
+// sidebar/SidebarConfig.ts (example)
+{
+  name: 'AI Overview',
+  path: '/ai/overview',
+  icon: <Brain className="h-5 w-5" />
+}
+
+
+// backend/api/optimize.py
+from fastapi import APIRouter
+
+router = APIRouter()
+
+@router.get("/api/optimize")
+def get_dispatch_advice():
+    return {
+        "dispatch": "charge",
+        "tariff": {"rate": 0.49},
+        "battery": {"soc": 65},
+        "roi": {"estimated_return": 12.3},
+        "ai_advisory": {"confidence": 0.92}
+    }
+
+
+// backend/api/train.py
+from fastapi import APIRouter
+
+router = APIRouter()
+
+@router.post("/api/train")
+def train_model():
+    print("Training AI model...")
+    return {"status": "training started"}
+
+
+// backend/api/alerts.py
+from fastapi import APIRouter
+from datetime import datetime
+
+router = APIRouter()
+
+@router.get("/api/alerts")
+def get_alerts():
+    return [
+        {"type": "anomaly", "message": "Unexpected spike in usage", "timestamp": datetime.now().isoformat()},
+        {"type": "battery", "message": "SoC dropped rapidly", "timestamp": datetime.now().isoformat()}
+    ]
