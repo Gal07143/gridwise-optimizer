@@ -24,6 +24,23 @@ export const handleError = (error: unknown, context: string = 'operation'): void
     errorMessage = 'An unknown error occurred';
   }
   
+  // Check for specific error patterns
+  if (errorMessage.toLowerCase().includes('network') || 
+      errorMessage.toLowerCase().includes('offline') ||
+      errorMessage.toLowerCase().includes('internet')) {
+    errorMessage = `Network error: Please check your connection and try again. (${errorMessage})`;
+  }
+  
+  if (errorMessage.toLowerCase().includes('dependency') || 
+      errorMessage.toLowerCase().includes('install')) {
+    errorMessage = `Dependency error: Failed to install required package. Please try refreshing the page. (${errorMessage})`;
+  }
+  
+  if (errorMessage.toLowerCase().includes('timeout') || 
+      errorMessage.toLowerCase().includes('timed out')) {
+    errorMessage = `Operation timed out: The server took too long to respond. Please try again later. (${errorMessage})`;
+  }
+  
   // Show toast notification
   toast.error(`Failed to ${context}: ${errorMessage}`);
 };
@@ -65,6 +82,12 @@ export const formatApiError = (error: unknown): string => {
       return error.response.data.error;
     }
     
+    // Check for network errors
+    // @ts-ignore - dynamic property access
+    if (error.message && error.message.includes('Network Error')) {
+      return 'Network error: Please check your connection and try again';
+    }
+    
     // @ts-ignore - dynamic property access
     if (error.message) {
       // @ts-ignore - dynamic property access
@@ -94,3 +117,77 @@ export function withErrorHandling<T extends (...args: any[]) => Promise<any>>(
     }
   };
 }
+
+/**
+ * Retry a function multiple times with exponential backoff
+ * @param fn - Async function to retry
+ * @param maxRetries - Maximum number of retry attempts
+ * @param retryDelay - Base delay between retries in ms
+ * @returns Result of the function or throws after all retries fail
+ */
+export async function retryWithBackoff<T>(
+  fn: () => Promise<T>, 
+  maxRetries: number = 3, 
+  retryDelay: number = 1000
+): Promise<T> {
+  let lastError: unknown;
+  
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      console.warn(`Attempt ${attempt + 1}/${maxRetries} failed:`, error);
+      lastError = error;
+      
+      // Don't delay on the last attempt
+      if (attempt < maxRetries - 1) {
+        const delay = retryDelay * Math.pow(2, attempt);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  }
+  
+  throw lastError;
+}
+
+/**
+ * Check if error is related to network or connectivity
+ * @param error - The error to check
+ * @returns Boolean indicating if it's a network error
+ */
+export function isNetworkError(error: unknown): boolean {
+  if (!error) return false;
+  
+  const errorMessage = error instanceof Error 
+    ? error.message 
+    : typeof error === 'string' 
+      ? error 
+      : String(error);
+  
+  return /network|offline|internet|connectivity|connection|fetch|timeout/i.test(errorMessage);
+}
+
+/**
+ * Handle dependency installation errors
+ * @param error - The error object
+ * @returns void
+ */
+export function handleDependencyError(error: unknown): void {
+  console.error('Dependency installation error:', error);
+  
+  const errorMessage = error instanceof Error 
+    ? error.message 
+    : typeof error === 'string' 
+      ? error 
+      : 'Failed to install dependency';
+  
+  // Show more detailed error message
+  toast.error(`Dependency error: ${errorMessage}`, {
+    duration: 8000, // Show for longer
+    action: {
+      label: 'Refresh',
+      onClick: () => window.location.reload(),
+    },
+  });
+}
+

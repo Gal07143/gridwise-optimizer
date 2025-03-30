@@ -1,228 +1,218 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Save } from 'lucide-react';
-import { SiteFormValues } from '@/types/site';
 import { z } from 'zod';
-import { toast } from 'sonner';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Card, CardContent } from '@/components/ui/card';
+import { Loader2 } from 'lucide-react';
+import { Site } from '@/types/site';
+import useConnectionStatus from '@/hooks/useConnectionStatus';
+import { AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+
+// Define the form schema with validation
+const siteFormSchema = z.object({
+  name: z.string().min(2, { message: 'Site name must be at least 2 characters' }).max(100),
+  location: z.string().min(2, { message: 'Location must be at least 2 characters' }).max(100),
+  timezone: z.string().optional(),
+  lat: z.union([
+    z.number(),
+    z.string().transform((val) => {
+      const num = parseFloat(val);
+      return isNaN(num) ? undefined : num;
+    })
+  ]).optional().nullable(),
+  lng: z.union([
+    z.number(),
+    z.string().transform((val) => {
+      const num = parseFloat(val);
+      return isNaN(num) ? undefined : num;
+    })
+  ]).optional().nullable(),
+});
+
+// Infer the form value type from the schema
+type SiteFormValues = z.infer<typeof siteFormSchema>;
 
 interface SiteFormProps {
-  initialData?: SiteFormValues;
-  onSubmit: (data: SiteFormValues) => Promise<void>;
+  initialData?: Partial<Site>;
+  onSubmit: (data: SiteFormValues) => Promise<void | Site | null>;
   isSubmitting: boolean;
 }
 
-// Validation schema
-const siteSchema = z.object({
-  name: z.string().min(2, { message: "Name must be at least 2 characters" }),
-  location: z.string().min(2, { message: "Location is required" }),
-  timezone: z.string().min(1, { message: "Timezone is required" }),
-  lat: z.number().nullable().optional(),
-  lng: z.number().nullable().optional(),
-});
-
 const SiteForm: React.FC<SiteFormProps> = ({ initialData, onSubmit, isSubmitting }) => {
-  const [formData, setFormData] = useState<SiteFormValues>({
+  const { isOnline } = useConnectionStatus({ showToasts: false });
+  const [formError, setFormError] = useState<string | null>(null);
+
+  // Set default form values from initialData or use defaults
+  const defaultValues: SiteFormValues = {
     name: initialData?.name || '',
     location: initialData?.location || '',
     timezone: initialData?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
-    lat: initialData?.lat || null,
-    lng: initialData?.lng || null
+    lat: initialData?.lat !== undefined ? initialData.lat : null,
+    lng: initialData?.lng !== undefined ? initialData.lng : null,
+  };
+
+  // Initialize the form with react-hook-form
+  const form = useForm<SiteFormValues>({
+    resolver: zodResolver(siteFormSchema),
+    defaultValues,
   });
-  
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type } = e.target;
-    let parsedValue: string | number | null = value;
-    
-    if (type === 'number') {
-      parsedValue = value ? parseFloat(value) : null;
-    }
-    
-    setFormData({
-      ...formData,
-      [name]: parsedValue
-    });
-    
-    // Clear error for this field
-    if (errors[name]) {
-      setErrors({
-        ...errors,
-        [name]: ''
-      });
-    }
-  };
-  
-  const handleTimezoneChange = (value: string) => {
-    setFormData({
-      ...formData,
-      timezone: value
-    });
-    
-    // Clear error for timezone
-    if (errors.timezone) {
-      setErrors({
-        ...errors,
-        timezone: ''
-      });
-    }
-  };
-  
-  const validateForm = () => {
+
+  // Handle form submission
+  const handleSubmit = async (values: SiteFormValues) => {
     try {
-      siteSchema.parse(formData);
-      setErrors({});
-      return true;
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        const newErrors: Record<string, string> = {};
-        error.errors.forEach((err) => {
-          if (err.path[0]) {
-            newErrors[err.path[0] as string] = err.message;
-          }
-        });
-        setErrors(newErrors);
-      }
-      return false;
-    }
-  };
-  
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    
-    if (!validateForm()) {
-      toast.error('Please fix the form errors before submitting');
-      return;
-    }
-    
-    try {
-      await onSubmit(formData);
+      setFormError(null);
+      await onSubmit(values);
     } catch (error) {
       console.error('Form submission error:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to save site');
+      setFormError(
+        error instanceof Error
+          ? error.message
+          : 'An unexpected error occurred. Please try again.'
+      );
     }
   };
-  
-  // Generate a list of common timezones
-  const timezones = [
-    'America/New_York',
-    'America/Chicago',
-    'America/Denver',
-    'America/Los_Angeles',
-    'America/Toronto',
-    'Europe/London',
-    'Europe/Paris',
-    'Europe/Berlin',
-    'Asia/Tokyo',
-    'Asia/Shanghai',
-    'Australia/Sydney',
-    'Pacific/Auckland'
-  ];
-  
+
   return (
-    <form onSubmit={handleSubmit}>
-      <Card>
-        <CardContent className="space-y-4 pt-6">
-          <div className="space-y-2">
-            <label htmlFor="name" className="text-sm font-medium">Site Name</label>
-            <Input
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              placeholder="Enter site name"
-              className={errors.name ? 'border-red-500' : ''}
-            />
-            {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
-          </div>
+    <div className="space-y-6">
+      {formError && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{formError}</AlertDescription>
+        </Alert>
+      )}
+      
+      {!isOnline && (
+        <Alert variant="warning" className="bg-amber-50 border-amber-200 text-amber-800 dark:bg-amber-900/30 dark:border-amber-700 dark:text-amber-200">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            You are currently offline. Form submission will be saved locally and processed when you reconnect.
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Site Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter site name" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        Provide a unique name for this site
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="location"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Location</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter site location" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        Physical address or location identifier
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="timezone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Timezone</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Select timezone" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        Timezone for all site data and operations
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="lat"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Latitude</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            step="0.000001" 
+                            placeholder="Latitude coordinate" 
+                            {...field} 
+                            value={field.value === null ? '' : field.value}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              field.onChange(value === '' ? null : parseFloat(value));
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="lng"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Longitude</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            step="0.000001" 
+                            placeholder="Longitude coordinate" 
+                            {...field} 
+                            value={field.value === null ? '' : field.value}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              field.onChange(value === '' ? null : parseFloat(value));
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
           
-          <div className="space-y-2">
-            <label htmlFor="location" className="text-sm font-medium">Location</label>
-            <Input
-              id="location"
-              name="location"
-              value={formData.location}
-              onChange={handleChange}
-              placeholder="Enter site location"
-              className={errors.location ? 'border-red-500' : ''}
-            />
-            {errors.location && <p className="text-sm text-red-500">{errors.location}</p>}
+          <div className="flex justify-end">
+            <Button type="submit" disabled={isSubmitting} className="w-full md:w-auto">
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isSubmitting ? 'Saving...' : 'Save Site'}
+            </Button>
           </div>
-          
-          <div className="space-y-2">
-            <label htmlFor="timezone" className="text-sm font-medium">Timezone</label>
-            <Select value={formData.timezone} onValueChange={handleTimezoneChange}>
-              <SelectTrigger className={errors.timezone ? 'border-red-500' : ''}>
-                <SelectValue placeholder="Select timezone" />
-              </SelectTrigger>
-              <SelectContent>
-                {timezones.map((tz) => (
-                  <SelectItem key={tz} value={tz}>
-                    {tz.replace('_', ' ')}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.timezone && <p className="text-sm text-red-500">{errors.timezone}</p>}
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label htmlFor="lat" className="text-sm font-medium">Latitude (optional)</label>
-              <Input
-                id="lat"
-                name="lat"
-                type="number"
-                step="any"
-                value={formData.lat !== null ? formData.lat : ''}
-                onChange={handleChange}
-                placeholder="Enter latitude"
-                className={errors.lat ? 'border-red-500' : ''}
-              />
-              {errors.lat && <p className="text-sm text-red-500">{errors.lat}</p>}
-            </div>
-            
-            <div className="space-y-2">
-              <label htmlFor="lng" className="text-sm font-medium">Longitude (optional)</label>
-              <Input
-                id="lng"
-                name="lng"
-                type="number"
-                step="any"
-                value={formData.lng !== null ? formData.lng : ''}
-                onChange={handleChange}
-                placeholder="Enter longitude"
-                className={errors.lng ? 'border-red-500' : ''}
-              />
-              {errors.lng && <p className="text-sm text-red-500">{errors.lng}</p>}
-            </div>
-          </div>
-        </CardContent>
-        
-        <CardFooter className="flex justify-end space-x-2 pt-2">
-          <Button variant="outline" type="button" disabled={isSubmitting}>
-            Cancel
-          </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <Save className="mr-2 h-4 w-4" />
-                Save Site
-              </>
-            )}
-          </Button>
-        </CardFooter>
-      </Card>
-    </form>
+        </form>
+      </Form>
+    </div>
   );
 };
 

@@ -5,9 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import axios from 'axios';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ExclamationTriangleIcon, RefreshCw } from 'lucide-react';
+import { ExclamationTriangleIcon, RefreshCw, WifiOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { retryWithBackoff, isNetworkError } from '@/utils/errorUtils';
+import useConnectionStatus from '@/hooks/useConnectionStatus';
 
 interface Anomaly {
   id: string;
@@ -18,29 +20,97 @@ interface Anomaly {
   status?: 'new' | 'acknowledged' | 'resolved';
 }
 
+// Fallback mock data when network is unavailable
+const fallbackAnomalyData: Anomaly[] = [
+  {
+    id: 'mock-1',
+    device_id: 'INV-001',
+    message: 'Inverter efficiency below threshold',
+    timestamp: new Date().toISOString(),
+    severity: 'medium',
+    status: 'new'
+  },
+  {
+    id: 'mock-2',
+    device_id: 'BAT-002',
+    message: 'Battery temperature high',
+    timestamp: new Date(Date.now() - 3600000).toISOString(),
+    severity: 'high',
+    status: 'acknowledged'
+  }
+];
+
 const fetchAnomalies = async (): Promise<Anomaly[]> => {
   try {
-    const res = await axios.get('/api/anomaly');
-    return res.data;
+    // Use retry with backoff for more reliability
+    return await retryWithBackoff(
+      async () => {
+        const res = await axios.get('/api/anomaly');
+        return res.data;
+      },
+      2, // max 2 retries
+      1000 // starting with 1s delay
+    );
   } catch (err) {
     console.error('Failed to fetch anomalies:', err);
-    // Return empty array instead of throwing to avoid crashing the UI
+    
+    // If it's a network error, throw it so that React Query can handle the retry
+    if (isNetworkError(err)) {
+      throw err;
+    }
+    
+    // For other errors, return empty array instead of throwing to avoid crashing the UI
     return [];
   }
 };
 
 const AnomalyFeed = () => {
-  const { data: logs = [], isLoading, error, refetch, isFetching } = useQuery({
+  const { isOnline } = useConnectionStatus({ showToasts: false });
+  const [useFallbackData, setUseFallbackData] = useState(false);
+  
+  // Use different settings based on network connectivity
+  const queryOptions = {
     queryKey: ['anomalies'],
     queryFn: fetchAnomalies,
-    refetchInterval: 30000, // Refresh every 30 seconds
-    retry: 3,
+    refetchInterval: isOnline ? 30000 : false, // Only auto-refresh when online
+    retry: isOnline ? 3 : 1, // More retries when online
     retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
     onError: (error: Error) => {
       console.error('Error fetching anomalies:', error);
-      toast.error(`Failed to load anomalies: ${error.message}`);
+      
+      if (isNetworkError(error)) {
+        // Don't show toast for network errors if we already know we're offline
+        if (isOnline) {
+          toast.error(`Network error loading anomalies: ${error.message}`);
+        }
+        
+        // Use fallback data after network errors
+        setUseFallbackData(true);
+      } else {
+        toast.error(`Failed to load anomalies: ${error.message}`);
+      }
     }
-  });
+  };
+  
+  const { 
+    data: fetchedLogs = [], 
+    isLoading, 
+    error, 
+    refetch, 
+    isFetching 
+  } = useQuery(queryOptions);
+  
+  // Use fallback data when offline or after network errors
+  const logs = useFallbackData ? fallbackAnomalyData : fetchedLogs;
+  
+  // Reset to using real data when coming back online
+  useEffect(() => {
+    if (isOnline && useFallbackData) {
+      refetch().then(() => {
+        setUseFallbackData(false);
+      });
+    }
+  }, [isOnline, useFallbackData, refetch]);
 
   // Function to determine severity color
   const getSeverityClass = (severity?: string) => {
@@ -54,11 +124,12 @@ const AnomalyFeed = () => {
   };
 
   const handleRetry = () => {
+    setUseFallbackData(false);
     toast.info('Refreshing anomaly data...');
     refetch();
   };
 
-  if (isLoading) {
+  if (isLoading && !useFallbackData) {
     return (
       <Card>
         <CardHeader>
@@ -81,6 +152,11 @@ const AnomalyFeed = () => {
         <CardTitle className="flex items-center">
           <ExclamationTriangleIcon className="h-5 w-5 mr-2 text-red-500" />
           Anomaly Events
+          {useFallbackData && (
+            <span className="ml-2 text-xs bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200 px-2 py-0.5 rounded-full">
+              Offline Data
+            </span>
+          )}
         </CardTitle>
         <Button 
           variant="ghost" 
@@ -88,12 +164,17 @@ const AnomalyFeed = () => {
           onClick={handleRetry} 
           disabled={isFetching}
           className={isFetching ? 'animate-spin' : ''}
+          title={isOnline ? 'Refresh data' : 'Currently offline'}
         >
-          <RefreshCw className="h-4 w-4" />
+          {isOnline ? (
+            <RefreshCw className="h-4 w-4" />
+          ) : (
+            <WifiOff className="h-4 w-4 text-muted-foreground" />
+          )}
         </Button>
       </CardHeader>
       <CardContent className="space-y-2 text-sm max-h-[400px] overflow-y-auto">
-        {error && (
+        {error && !useFallbackData && (
           <div className="flex items-center justify-center p-4 text-red-500 border border-red-200 rounded-md bg-red-50 dark:bg-red-900/20 dark:border-red-800/50">
             <ExclamationTriangleIcon className="h-5 w-5 mr-2" />
             <span>Error loading data. Click refresh to try again.</span>

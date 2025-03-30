@@ -1,102 +1,118 @@
 
-import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { getSiteById, updateSite } from '@/services/sites/siteService';
 import SettingsPageTemplate from '@/components/settings/SettingsPageTemplate';
 import SiteForm from '@/components/sites/SiteForm';
+import { CornerDownLeft, Loader2, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { CornerDownLeft, Loader2, AlertCircle } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Site, SiteFormValues } from '@/types/site';
+import { Site } from '@/types/site';
+import { useSiteActions } from '@/hooks/useSiteActions';
+import { Card, CardContent } from '@/components/ui/card';
+import useConnectionStatus from '@/hooks/useConnectionStatus';
 
 const EditSite = () => {
-  const { siteId } = useParams<{ siteId: string }>();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [site, setSite] = useState<Site | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { updateSite: updateSiteAction, isLoading: isUpdating } = useSiteActions();
+  const { isOnline } = useConnectionStatus({ showToasts: false });
   
-  const { data: site, isLoading, isError, error } = useQuery({
-    queryKey: ['site', siteId],
-    queryFn: () => getSiteById(siteId as string),
-    enabled: !!siteId,
-    retry: 1,
-  });
-  
-  const handleSubmit = async (data: SiteFormValues) => {
-    if (!siteId) return;
+  useEffect(() => {
+    const fetchSite = async () => {
+      if (!id) return;
+      
+      setIsLoading(true);
+      setError(null);
+      
+      try {
+        const siteData = await getSiteById(id);
+        
+        if (!siteData) {
+          setError(`Site with ID ${id} not found`);
+        } else {
+          setSite(siteData);
+        }
+      } catch (err) {
+        console.error('Error fetching site:', err);
+        setError(err instanceof Error ? err.message : 'Failed to fetch site data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
     
-    setIsSubmitting(true);
+    fetchSite();
+  }, [id]);
+  
+  const handleSubmit = async (data: any) => {
+    if (!id) return;
     
     try {
-      // Update site with form values
-      // Since we've fixed the type discrepancy in the Site interface,
-      // this should now work correctly
-      const result = await updateSite(siteId, data);
+      const result = await updateSiteAction(id, data);
       
       if (result) {
-        toast.success("Site updated successfully");
+        toast.success(`Site "${data.name}" updated successfully`);
+        navigate('/settings/sites');
+      } else if (!isOnline) {
+        toast.success(`Site update saved and will be processed when you reconnect`);
         navigate('/settings/sites');
       } else {
-        toast.error("Failed to update site");
+        throw new Error('Failed to update site');
       }
     } catch (error: any) {
-      console.error("Error updating site:", error);
+      console.error('Error updating site:', error);
       toast.error(`An error occurred: ${error?.message || 'Unknown error'}`);
-    } finally {
-      setIsSubmitting(false);
+      throw error; // Re-throw so the form can handle it
     }
   };
   
   if (isLoading) {
     return (
       <SettingsPageTemplate
-        title="Edit Site"
-        description="Update site details"
+        title="Editing Site"
+        description="Loading site information..."
         backLink="/settings/sites"
       >
-        <div className="flex justify-center items-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <div className="flex justify-center items-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       </SettingsPageTemplate>
     );
   }
   
-  if (isError || !site) {
+  if (error || !site) {
     return (
       <SettingsPageTemplate
-        title="Edit Site"
-        description="Update site details"
+        title="Error"
+        description="Failed to load site"
         backLink="/settings/sites"
       >
-        <Alert variant="destructive" className="mb-6">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Site Not Found</AlertTitle>
-          <AlertDescription>
-            {error instanceof Error ? error.message : 'The site you are trying to edit could not be found.'}
-          </AlertDescription>
-        </Alert>
-        
-        <Button onClick={() => navigate('/settings/sites')}>
-          Back to Sites
-        </Button>
+        <Card className="border-red-200 bg-red-50 dark:bg-red-900/10">
+          <CardContent className="pt-6">
+            <div className="text-center mb-4">
+              <p className="text-red-600 dark:text-red-400">{error || 'Site not found'}</p>
+            </div>
+            <Button 
+              variant="default" 
+              onClick={() => navigate('/settings/sites')}
+              className="w-full"
+            >
+              <CornerDownLeft className="mr-2 h-4 w-4" />
+              Back to Sites
+            </Button>
+          </CardContent>
+        </Card>
       </SettingsPageTemplate>
     );
   }
   
-  // Convert site to SiteFormValues
-  const initialValues: SiteFormValues = {
-    name: site.name,
-    location: site.location,
-    timezone: site.timezone || '',
-    lat: site.lat,
-    lng: site.lng
-  };
-  
   return (
     <SettingsPageTemplate
-      title={`Edit Site: ${site.name}`}
-      description="Update site information and settings"
+      title={`Editing ${site.name}`}
+      description="Update site information"
       backLink="/settings/sites"
       actions={
         <Button 
@@ -111,9 +127,9 @@ const EditSite = () => {
     >
       <div className="max-w-3xl mx-auto">
         <SiteForm 
-          initialData={initialValues} 
+          initialData={site} 
           onSubmit={handleSubmit} 
-          isSubmitting={isSubmitting} 
+          isSubmitting={isUpdating}
         />
       </div>
     </SettingsPageTemplate>
