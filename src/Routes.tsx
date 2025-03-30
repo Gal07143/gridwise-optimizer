@@ -119,7 +119,6 @@ const AppRoutes = () => {
       <Route path="/settings/thresholds" element={<OperationalThresholds />} />
       <Route path="/settings/algorithms" element={<OptimizationAlgorithms />} />
       <Route path="/settings/external" element={<ExternalServices />} />
-
       <Route path="/ai/trainer" element={<AIModelTrainer />} />
       <Route path="/device-view/:deviceId" element={<Navigate to={`/devices/${window.location.pathname.split('/').pop()}`} replace />} />
       <Route path="/devices/catalog" element={<DeviceCatalog />} />
