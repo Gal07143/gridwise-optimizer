@@ -11,6 +11,7 @@ import EditDevice from '@/pages/EditDevice';
 import ReviewDevices from '@/pages/devices/ReviewDevices';
 import ManageDevices from '@/pages/devices/ManageDevices';
 import SmartDevices from '@/pages/devices/SmartDevices';
+import DeviceDetails from '@/pages/devices/DeviceDetails';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -33,6 +34,7 @@ function App() {
             <Route path="/" element={<Dashboard />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/devices/:deviceId/edit" element={<EditDevice />} />
+            <Route path="/devices/:deviceId" element={<DeviceDetails />} />
             <Route path="/devices/review" element={<ReviewDevices />} />
             <Route path="/devices/manage" element={<ManageDevices />} />
             <Route path="/devices/smart-devices" element={<SmartDevices />} />

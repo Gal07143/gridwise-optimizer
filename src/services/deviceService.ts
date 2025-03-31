@@ -1,6 +1,6 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { DeviceType, DeviceStatus } from '@/types/energy';
+import { toast } from 'sonner';
 
 export interface Device {
   id: string;
@@ -16,19 +16,49 @@ export interface Device {
   site_id?: string;
 }
 
+// Check if a string is a valid UUID
+export const isValidUuid = (id: string): boolean => {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(id);
+};
+
 export const getDeviceById = async (deviceId: string): Promise<Device> => {
-  const { data, error } = await supabase
-    .from('devices')
-    .select('*')
-    .eq('id', deviceId)
-    .single();
+  try {
+    // Sample device data for non-UUID IDs (for testing/demo purposes)
+    if (!isValidUuid(deviceId)) {
+      console.log("Non-UUID device ID detected, providing demo data", deviceId);
+      return {
+        id: deviceId,
+        name: `Device ${deviceId}`,
+        type: 'solar',
+        status: 'online',
+        location: 'Demo Location',
+        capacity: 5000,
+        firmware: 'v1.0.0',
+        installation_date: new Date().toISOString().slice(0, 10),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        site_id: '00000000-0000-0000-0000-000000000000'
+      };
+    }
     
-  if (error) {
-    console.error("Error fetching device:", error);
-    throw new Error(`Failed to fetch device: ${error.message}`);
+    // Regular database query for valid UUIDs
+    const { data, error } = await supabase
+      .from('devices')
+      .select('*')
+      .eq('id', deviceId)
+      .single();
+      
+    if (error) {
+      console.error("Error fetching device:", error);
+      throw new Error(`Failed to fetch device: ${error.message}`);
+    }
+    
+    return data as Device;
+  } catch (error) {
+    console.error("Error in getDeviceById:", error);
+    throw error;
   }
-  
-  return data as Device;
 };
 
 export const getDevices = async (): Promise<Device[]> => {
