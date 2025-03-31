@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { 
   LayoutDashboard, 
@@ -153,11 +154,6 @@ export const adminItems = [
     href: "/settings",
     icon: <Settings size={18} />,
     label: "Settings"
-  },
-  {
-    href: "/security",
-    icon: <Shield size={18} />,
-    label: "Security"
   },
   {
     href: "/documentation",

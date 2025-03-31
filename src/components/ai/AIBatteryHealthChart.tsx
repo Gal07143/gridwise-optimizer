@@ -1,102 +1,84 @@
-// components/ai/AIBatteryHealthChart.tsx
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { Battery, Activity } from 'lucide-react';
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 
-const data = Array.from({ length: 12 }, (_, i) => ({
-  month: `M${i + 1}`,
-  soc: 100 - i * 2.3, // simulate degradation
-}));
-
-const AIBatteryHealthChart = () => (
-  <Card>
-    <CardHeader>
-      <CardTitle>Battery Lifecycle</CardTitle>
-    </CardHeader>
-    <CardContent>
-      <ResponsiveContainer width="100%" height={200}>
-        <LineChart data={data} margin={{ top: 10, right: 10, bottom: 0, left: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="month" />
-          <YAxis domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
-          <Tooltip formatter={(value) => `${value.toFixed(1)}%`} />
-          <Line type="monotone" dataKey="soc" stroke="#4ade80" strokeWidth={2} dot={false} />
-        </LineChart>
-      </ResponsiveContainer>
-    </CardContent>
-  </Card>
-);
-
-export default AIBatteryHealthChart;
-
-
-// components/ai/AIROIChart.tsx
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-
-const roiData = [
-  { name: 'Jan', roi: 1200 },
-  { name: 'Feb', roi: 1350 },
-  { name: 'Mar', roi: 1500 },
-  { name: 'Apr', roi: 1600 },
-  { name: 'May', roi: 1850 },
+// Sample battery health data
+const batteryhealthData = [
+  { month: 'Jan', health: 98 },
+  { month: 'Feb', health: 98 },
+  { month: 'Mar', health: 97 },
+  { month: 'Apr', health: 97 },
+  { month: 'May', health: 96 },
+  { month: 'Jun', health: 96 },
+  { month: 'Jul', health: 95 },
+  { month: 'Aug', health: 95 },
+  { month: 'Sep', health: 94 },
+  { month: 'Oct', health: 94 },
+  { month: 'Nov', health: 93 },
+  { month: 'Dec', health: 93 },
 ];
 
-const AIROIChart = () => (
-  <Card>
-    <CardHeader>
-      <CardTitle>ROI Over Time</CardTitle>
-    </CardHeader>
-    <CardContent>
-      <ResponsiveContainer width="100%" height={200}>
-        <BarChart data={roiData}>
-          <XAxis dataKey="name" />
-          <YAxis />
-          <Tooltip formatter={(value) => `₪${value}`} />
-          <Bar dataKey="roi" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-        </BarChart>
-      </ResponsiveContainer>
-    </CardContent>
-  </Card>
-);
-
-export default AIROIChart;
-
-
-// components/ai/AIAlertHistory.tsx
-import React, { useEffect, useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-
-const AIAlertHistory = () => {
-  const [alerts, setAlerts] = useState<any[]>([]);
-
-  useEffect(() => {
-    fetch('/api/alerts')
-      .then(res => res.json())
-      .then(data => setAlerts(data))
-      .catch(console.error);
-  }, []);
-
+const AIBatteryHealthChart = () => {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Alert History</CardTitle>
+    <Card className="col-span-1">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base font-medium flex items-center gap-2">
+          <Battery className="h-4 w-4 text-blue-500" />
+          Battery Health Prediction
+        </CardTitle>
       </CardHeader>
-      <CardContent className="text-sm space-y-2">
-        {alerts.length === 0 ? (
-          <p className="text-muted-foreground">No alerts recorded.</p>
-        ) : (
-          alerts.map((alert, i) => (
-            <div key={i} className="border-b pb-1">
-              <p><strong>{alert.type}</strong> – {alert.message}</p>
-              <p className="text-xs text-muted-foreground">{new Date(alert.timestamp).toLocaleString()}</p>
-            </div>
-          ))
-        )}
+      <CardContent>
+        <div className="flex justify-between items-center mb-2">
+          <div>
+            <div className="text-2xl font-bold">93%</div>
+            <div className="text-xs text-muted-foreground">Current Health</div>
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-amber-500">-5%</div>
+            <div className="text-xs text-muted-foreground">Annual Degradation</div>
+          </div>
+        </div>
+        
+        <div className="h-48">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={batteryhealthData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
+              <XAxis 
+                dataKey="month" 
+                tick={{ fontSize: 10 }}
+                tickLine={false}
+              />
+              <YAxis 
+                domain={[85, 100]} 
+                tickCount={4} 
+                tick={{ fontSize: 10 }}
+                tickLine={false}
+                tickFormatter={(value) => `${value}%`}
+              />
+              <Tooltip 
+                formatter={(value) => [`${value}%`, 'Health']}
+                labelFormatter={(label) => `Month: ${label}`}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="health" 
+                stroke="#3b82f6" 
+                strokeWidth={2} 
+                dot={false}
+                activeDot={{ r: 5 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+        
+        <div className="text-xs text-muted-foreground mt-2">
+          Predictive analysis shows battery is aging normally. Expected replacement: 7-9 years.
+        </div>
       </CardContent>
     </Card>
   );
 };
 
-export default AIAlertHistory;
+export default AIBatteryHealthChart;

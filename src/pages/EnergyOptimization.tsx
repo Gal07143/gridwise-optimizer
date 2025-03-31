@@ -1,555 +1,593 @@
 
 import React, { useState } from 'react';
+import AppLayout from '@/components/layout/AppLayout';
 import { Main } from '@/components/ui/main';
-import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend, 
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  PieChart,
-  Pie,
-  Cell,
-  BarChart,
-  Bar
-} from 'recharts';
-import { ArrowUpRight, ZapOff, Zap, Battery, BatteryMedium, Power, Settings, Activity, Calendar, FileText } from 'lucide-react';
-import { useSiteContext } from '@/contexts/SiteContext';
-import LoadingScreen from '@/components/LoadingScreen';
+import { Sparkles, Zap, Clock, LineChart, Calendar, DollarSign, BatteryCharging, Gauge, LightbulbIcon, AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Slider } from '@/components/ui/slider';
+import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from 'sonner';
+import ErrorBoundary from '@/components/ui/ErrorBoundary';
 
-// Sample data for charts
-const optimizationData = [
-  { name: 'Mon', original: 400, optimized: 240, savings: 160 },
-  { name: 'Tue', original: 380, optimized: 218, savings: 162 },
-  { name: 'Wed', original: 450, optimized: 280, savings: 170 },
-  { name: 'Thu', original: 470, optimized: 300, savings: 170 },
-  { name: 'Fri', original: 540, optimized: 350, savings: 190 },
-  { name: 'Sat', original: 580, optimized: 390, savings: 190 },
-  { name: 'Sun', original: 600, optimized: 420, savings: 180 },
-];
+const EnergyOptimization = () => {
+  const [activeTab, setActiveTab] = useState('overview');
+  const [isOptimizationEnabled, setIsOptimizationEnabled] = useState(true);
+  const [optimizationMode, setOptimizationMode] = useState('balanced');
+  const [costWeight, setCostWeight] = useState([40]);
+  const [environmentWeight, setEnvironmentWeight] = useState([30]);
+  const [reliabilityWeight, setReliabilityWeight] = useState([30]);
 
-const storageUtilizationData = [
-  { name: 'Jan', value: 58 },
-  { name: 'Feb', value: 62 },
-  { name: 'Mar', value: 70 },
-  { name: 'Apr', value: 74 },
-  { name: 'May', value: 78 },
-  { name: 'Jun', value: 84 },
-  { name: 'Jul', value: 89 },
-  { name: 'Aug', value: 88 },
-  { name: 'Sep', value: 85 },
-  { name: 'Oct', value: 77 },
-  { name: 'Nov', value: 68 },
-  { name: 'Dec', value: 60 },
-];
-
-const energySourcesData = [
-  { name: 'Solar', value: 45 },
-  { name: 'Grid', value: 30 },
-  { name: 'Storage', value: 15 },
-  { name: 'Backup', value: 10 },
-];
-
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
-
-const EnergyOptimization: React.FC = () => {
-  const { activeSite, loading } = useSiteContext();
-  const [optimizationEnabled, setOptimizationEnabled] = useState(true);
-  const [activeTab, setActiveTab] = useState('optimization');
-  const [scheduleType, setScheduleType] = useState('auto');
-
-  if (loading) {
-    return <LoadingScreen />;
-  }
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'critical':
-        return 'text-red-500';
-      case 'warning':
-        return 'text-yellow-500';
-      case 'good':
-        return 'text-green-500';
-      default:
-        return 'text-blue-500';
-    }
+  const handleRunOptimization = () => {
+    toast.success('Optimization cycle started');
+    setTimeout(() => {
+      toast.success('Optimization complete. New settings applied.');
+    }, 2000);
   };
 
   return (
-    <Main>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold mb-2">Energy Optimization</h1>
-        <p className="text-muted-foreground">
-          Intelligent energy management and optimization for your site.
-        </p>
-      </div>
-
-      <div className="flex flex-col lg:flex-row justify-between gap-4 mb-6">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <Card className="sm:w-56">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-muted-foreground text-sm">Optimization</div>
-                  <div className="font-semibold mt-1">{optimizationEnabled ? 'Enabled' : 'Disabled'}</div>
-                </div>
-                <Switch 
-                  checked={optimizationEnabled} 
-                  onCheckedChange={setOptimizationEnabled}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="sm:w-56">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-muted-foreground text-sm">Current Savings</div>
-                  <div className="font-semibold mt-1">$247.80 <span className="text-green-500 text-xs">+12.4%</span></div>
-                </div>
-                <div className="h-10 w-10 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center">
-                  <ArrowUpRight className="h-5 w-5 text-green-500" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="sm:w-56">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-muted-foreground text-sm">Storage Utilization</div>
-                  <div className="font-semibold mt-1">76.4% <span className="text-amber-500 text-xs">+3.2%</span></div>
-                </div>
-                <div className="h-10 w-10 rounded-full bg-amber-100 dark:bg-amber-900/20 flex items-center justify-center">
-                  <Battery className="h-5 w-5 text-amber-500" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="flex gap-2 self-start">
-          <Button variant="outline" size="sm">
-            <FileText className="h-4 w-4 mr-2" />
-            Export Report
-          </Button>
-          <Button variant="outline" size="sm">
-            <Settings className="h-4 w-4 mr-2" />
-            Configure
-          </Button>
-        </div>
-      </div>
-
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-6 bg-gray-100/50 dark:bg-gray-900/50 backdrop-blur-md p-1 rounded-lg">
-          <TabsTrigger value="optimization" className="flex items-center">
-            <Activity className="h-4 w-4 mr-2" />
-            Optimization
-          </TabsTrigger>
-          <TabsTrigger value="schedules" className="flex items-center">
-            <Calendar className="h-4 w-4 mr-2" />
-            Schedules
-          </TabsTrigger>
-          <TabsTrigger value="storage" className="flex items-center">
-            <Battery className="h-4 w-4 mr-2" />
-            Storage
-          </TabsTrigger>
-          <TabsTrigger value="sources" className="flex items-center">
-            <Power className="h-4 w-4 mr-2" />
-            Sources
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="optimization" className="space-y-6 animate-in fade-in">
-          <Card>
-            <CardHeader>
-              <CardTitle>Energy Consumption Optimization</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[350px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart
-                    data={optimizationData}
-                    margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-                  >
-                    <defs>
-                      <linearGradient id="colorOriginal" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8} />
-                        <stop offset="95%" stopColor="#8884d8" stopOpacity={0} />
-                      </linearGradient>
-                      <linearGradient id="colorOptimized" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#82ca9d" stopOpacity={0.8} />
-                        <stop offset="95%" stopColor="#82ca9d" stopOpacity={0} />
-                      </linearGradient>
-                      <linearGradient id="colorSavings" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#ffc658" stopOpacity={0.8} />
-                        <stop offset="95%" stopColor="#ffc658" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Area type="monotone" dataKey="original" stroke="#8884d8" fillOpacity={1} fill="url(#colorOriginal)" name="Original Consumption" />
-                    <Area type="monotone" dataKey="optimized" stroke="#82ca9d" fillOpacity={1} fill="url(#colorOptimized)" name="Optimized Consumption" />
-                    <Area type="monotone" dataKey="savings" stroke="#ffc658" fillOpacity={1} fill="url(#colorSavings)" name="Energy Savings" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Peak Shaving</CardTitle>
+    <AppLayout>
+      <Main title="Energy Optimization" description="AI-powered optimization of your energy system">
+        <ErrorBoundary>
+          <div className="mb-6 flex flex-col md:flex-row gap-4 items-start">
+            <Card className="w-full md:w-3/4">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                  Intelligent Energy Optimization
+                </CardTitle>
               </CardHeader>
-              <CardContent className="pt-0">
-                <div className="flex justify-between mb-3">
-                  <div className="text-sm text-muted-foreground">Status</div>
-                  <div className="flex items-center">
-                    <div className="h-2 w-2 rounded-full bg-green-500 mr-2"></div>
-                    <span className="text-sm font-medium">Active</span>
-                  </div>
-                </div>
-                <div className="flex justify-between mb-3">
-                  <div className="text-sm text-muted-foreground">Peak Reduction</div>
-                  <div className="text-sm font-medium">24.8%</div>
-                </div>
-                <div className="flex justify-between">
-                  <div className="text-sm text-muted-foreground">Monthly Savings</div>
-                  <div className="text-sm font-medium text-green-500">$127.50</div>
-                </div>
-                <div className="mt-4">
-                  <Switch checked={true} disabled={true} />
-                  <span className="ml-2 text-sm text-muted-foreground">Automatic threshold adjustment</span>
-                </div>
+              <CardContent className="text-sm">
+                <p>The optimization engine continuously analyzes your energy production, consumption, market prices, and weather forecasts to maximize efficiency and minimize costs.</p>
               </CardContent>
             </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Load Shifting</CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="flex justify-between mb-3">
-                  <div className="text-sm text-muted-foreground">Status</div>
-                  <div className="flex items-center">
-                    <div className="h-2 w-2 rounded-full bg-green-500 mr-2"></div>
-                    <span className="text-sm font-medium">Active</span>
-                  </div>
-                </div>
-                <div className="flex justify-between mb-3">
-                  <div className="text-sm text-muted-foreground">Shifted Load</div>
-                  <div className="text-sm font-medium">18.6%</div>
-                </div>
-                <div className="flex justify-between">
-                  <div className="text-sm text-muted-foreground">Monthly Savings</div>
-                  <div className="text-sm font-medium text-green-500">$92.30</div>
-                </div>
-                <div className="mt-4">
-                  <Switch checked={true} disabled={true} />
-                  <span className="ml-2 text-sm text-muted-foreground">Optimize for time-of-use rates</span>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Self-Consumption</CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="flex justify-between mb-3">
-                  <div className="text-sm text-muted-foreground">Status</div>
-                  <div className="flex items-center">
-                    <div className="h-2 w-2 rounded-full bg-green-500 mr-2"></div>
-                    <span className="text-sm font-medium">Active</span>
-                  </div>
-                </div>
-                <div className="flex justify-between mb-3">
-                  <div className="text-sm text-muted-foreground">Self-Consumption Rate</div>
-                  <div className="text-sm font-medium">78.2%</div>
-                </div>
-                <div className="flex justify-between">
-                  <div className="text-sm text-muted-foreground">Grid Import Reduction</div>
-                  <div className="text-sm font-medium text-green-500">34.6%</div>
-                </div>
-                <div className="mt-4">
-                  <Switch checked={true} disabled={true} />
-                  <span className="ml-2 text-sm text-muted-foreground">Prioritize self-consumption</span>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="schedules" className="space-y-6 animate-in fade-in">
-          <Card>
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <CardTitle>Optimization Schedules</CardTitle>
-                <div className="flex space-x-2">
-                  <Button variant="outline" size="sm" className={scheduleType === 'auto' ? 'bg-primary text-primary-foreground' : ''} onClick={() => setScheduleType('auto')}>Auto</Button>
-                  <Button variant="outline" size="sm" className={scheduleType === 'custom' ? 'bg-primary text-primary-foreground' : ''} onClick={() => setScheduleType('custom')}>Custom</Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-md">
-                  <div className="flex items-center">
-                    <BatteryMedium className="h-5 w-5 text-green-500 mr-3" />
-                    <div>
-                      <div className="font-medium">Battery Charging</div>
-                      <div className="text-sm text-muted-foreground">Off-peak hours (22:00 - 06:00)</div>
-                    </div>
-                  </div>
-                  <Switch checked={true} onCheckedChange={() => {}} />
-                </div>
-
-                <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-md">
-                  <div className="flex items-center">
-                    <Zap className="h-5 w-5 text-blue-500 mr-3" />
-                    <div>
-                      <div className="font-medium">Peak Demand Management</div>
-                      <div className="text-sm text-muted-foreground">Peak hours (17:00 - 21:00)</div>
-                    </div>
-                  </div>
-                  <Switch checked={true} onCheckedChange={() => {}} />
-                </div>
-
-                <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-md">
-                  <div className="flex items-center">
-                    <ZapOff className="h-5 w-5 text-purple-500 mr-3" />
-                    <div>
-                      <div className="font-medium">Non-Essential Load Shedding</div>
-                      <div className="text-sm text-muted-foreground">Critical peak events</div>
-                    </div>
-                  </div>
-                  <Switch checked={true} onCheckedChange={() => {}} />
-                </div>
-
-                <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-md">
-                  <div className="flex items-center">
-                    <Power className="h-5 w-5 text-amber-500 mr-3" />
-                    <div>
-                      <div className="font-medium">Renewable Energy Priority</div>
-                      <div className="text-sm text-muted-foreground">Daylight hours (08:00 - 16:00)</div>
-                    </div>
-                  </div>
-                  <Switch checked={true} onCheckedChange={() => {}} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="storage" className="space-y-6 animate-in fade-in">
-          <Card>
-            <CardHeader>
-              <CardTitle>Storage Utilization</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[350px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart
-                    data={storageUtilizationData}
-                    margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip formatter={(value: number) => [`${value}%`, 'Utilization']} />
-                    <Legend />
-                    <Line type="monotone" dataKey="value" stroke="#8884d8" name="Utilization %" activeDot={{ r: 8 }} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Battery Management Settings</CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <div className="text-sm text-muted-foreground mb-1">Minimum SOC</div>
-                      <div className="font-medium">20%</div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-muted-foreground mb-1">Maximum SOC</div>
-                      <div className="font-medium">95%</div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-muted-foreground mb-1">Charge Rate</div>
-                      <div className="font-medium">2.5 kW</div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-muted-foreground mb-1">Discharge Rate</div>
-                      <div className="font-medium">3.0 kW</div>
-                    </div>
-                  </div>
-                  
-                  <div className="pt-2">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm">Prioritize longevity</span>
-                      <Switch checked={true} onCheckedChange={() => {}} />
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      Enabling this will optimize charging cycles to extend battery lifespan.
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Storage Performance</CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <div className="text-sm text-muted-foreground">Current State of Charge</div>
-                    <div className="font-medium">78%</div>
-                  </div>
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
-                    <div className="bg-green-500 h-2.5 rounded-full" style={{ width: '78%' }}></div>
-                  </div>
-                  
-                  <div className="flex justify-between items-center mt-4">
-                    <div className="text-sm text-muted-foreground">Health Status</div>
-                    <div className="font-medium text-green-500">Excellent</div>
-                  </div>
-                  
-                  <div className="flex justify-between items-center">
-                    <div className="text-sm text-muted-foreground">Cycle Count</div>
-                    <div className="font-medium">247</div>
-                  </div>
-                  
-                  <div className="flex justify-between items-center">
-                    <div className="text-sm text-muted-foreground">Estimated Capacity</div>
-                    <div className="font-medium">97.3%</div>
-                  </div>
-                  
-                  <div className="flex justify-between items-center">
-                    <div className="text-sm text-muted-foreground">Last Full Charge</div>
-                    <div className="font-medium">Yesterday, 06:42</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="sources" className="space-y-6 animate-in fade-in">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Energy Sources</CardTitle>
+            <Card className="w-full md:w-1/4">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2">
+                  <Zap className="h-5 w-5 text-primary" />
+                  Optimization Status
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={energySourcesData}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="value"
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                      >
-                        {energySourcesData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">Auto-Optimize</span>
+                  <Switch 
+                    checked={isOptimizationEnabled}
+                    onCheckedChange={setIsOptimizationEnabled}
+                  />
+                </div>
+                <div className="mt-4">
+                  <Button 
+                    onClick={handleRunOptimization}
+                    className="w-full"
+                  >
+                    Run Now
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="settings">Optimization Settings</TabsTrigger>
+              <TabsTrigger value="schedule">Optimized Schedule</TabsTrigger>
+              <TabsTrigger value="savings">Savings & Impact</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="overview" className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg font-medium">Current Mode</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex justify-between items-center">
+                      <Badge className="text-sm bg-blue-100 text-blue-800 hover:bg-blue-100 dark:bg-blue-900 dark:text-blue-300">
+                        {optimizationMode === 'cost' && 'Cost Saving'}
+                        {optimizationMode === 'eco' && 'Eco-Friendly'}
+                        {optimizationMode === 'reliability' && 'High Reliability'}
+                        {optimizationMode === 'balanced' && 'Balanced'}
+                      </Badge>
+                      <Select value={optimizationMode} onValueChange={setOptimizationMode}>
+                        <SelectTrigger className="w-[140px]">
+                          <SelectValue placeholder="Select mode" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="cost">Cost Saving</SelectItem>
+                          <SelectItem value="eco">Eco-Friendly</SelectItem>
+                          <SelectItem value="reliability">High Reliability</SelectItem>
+                          <SelectItem value="balanced">Balanced</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="mt-4 text-sm text-muted-foreground">
+                      {optimizationMode === 'cost' && 'Prioritizes minimizing energy costs above all other factors.'}
+                      {optimizationMode === 'eco' && 'Maximizes use of renewable energy sources to reduce carbon footprint.'}
+                      {optimizationMode === 'reliability' && 'Ensures the most stable and reliable power supply.'}
+                      {optimizationMode === 'balanced' && 'Balances cost savings, environmental impact, and system reliability.'}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg font-medium">Last Optimization</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-sm space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Timestamp:</span>
+                        <span className="font-medium">Today, 14:32</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Duration:</span>
+                        <span className="font-medium">2.3 seconds</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Changes Made:</span>
+                        <span className="font-medium">7 adjustments</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Projected Savings:</span>
+                        <span className="font-medium text-green-600">$3.42 / day</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg font-medium">Next Steps</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-2 text-sm">
+                      <li className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-blue-500" />
+                        <span>Scheduled optimization at 20:00</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <BatteryCharging className="h-4 w-4 text-green-500" />
+                        <span>Battery discharge at peak rates (18:00-21:00)</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <LightbulbIcon className="h-4 w-4 text-amber-500" />
+                        <span>Load shifting of non-critical devices</span>
+                      </li>
+                    </ul>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>System Efficiency Metrics</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="p-4 bg-slate-100 dark:bg-slate-800 rounded-lg text-center">
+                      <div className="text-muted-foreground text-sm mb-1">Energy Self-Consumption</div>
+                      <div className="text-2xl font-bold">78%</div>
+                      <div className="text-xs text-green-500">+5% from last week</div>
+                    </div>
+                    <div className="p-4 bg-slate-100 dark:bg-slate-800 rounded-lg text-center">
+                      <div className="text-muted-foreground text-sm mb-1">Grid Independence</div>
+                      <div className="text-2xl font-bold">62%</div>
+                      <div className="text-xs text-green-500">+3% from last week</div>
+                    </div>
+                    <div className="p-4 bg-slate-100 dark:bg-slate-800 rounded-lg text-center">
+                      <div className="text-muted-foreground text-sm mb-1">Cost Optimization</div>
+                      <div className="text-2xl font-bold">85%</div>
+                      <div className="text-xs text-green-500">+8% from last week</div>
+                    </div>
+                    <div className="p-4 bg-slate-100 dark:bg-slate-800 rounded-lg text-center">
+                      <div className="text-muted-foreground text-sm mb-1">Carbon Reduction</div>
+                      <div className="text-2xl font-bold">54%</div>
+                      <div className="text-xs text-green-500">+2% from last week</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="settings" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Optimization Preferences</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    <div>
+                      <div className="flex justify-between mb-2">
+                        <label className="text-sm font-medium">
+                          Cost Savings Priority
+                        </label>
+                        <span className="text-sm">{costWeight}%</span>
+                      </div>
+                      <Slider 
+                        value={costWeight} 
+                        min={0} 
+                        max={100} 
+                        step={10}
+                        onValueChange={(values) => {
+                          setCostWeight(values);
+                          const remaining = 100 - values[0];
+                          setEnvironmentWeight([Math.floor(remaining/2)]);
+                          setReliabilityWeight([Math.ceil(remaining/2)]);
+                        }}
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Higher value places more emphasis on reducing energy costs
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <div className="flex justify-between mb-2">
+                        <label className="text-sm font-medium">
+                          Environmental Impact Priority
+                        </label>
+                        <span className="text-sm">{environmentWeight}%</span>
+                      </div>
+                      <Slider 
+                        value={environmentWeight} 
+                        min={0} 
+                        max={100} 
+                        step={10}
+                        onValueChange={(values) => {
+                          setEnvironmentWeight(values);
+                          const remaining = 100 - values[0];
+                          setCostWeight([Math.floor(remaining/2)]);
+                          setReliabilityWeight([Math.ceil(remaining/2)]);
+                        }}
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Higher value prioritizes renewable energy and carbon reduction
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <div className="flex justify-between mb-2">
+                        <label className="text-sm font-medium">
+                          System Reliability Priority
+                        </label>
+                        <span className="text-sm">{reliabilityWeight}%</span>
+                      </div>
+                      <Slider 
+                        value={reliabilityWeight} 
+                        min={0} 
+                        max={100} 
+                        step={10}
+                        onValueChange={(values) => {
+                          setReliabilityWeight(values);
+                          const remaining = 100 - values[0];
+                          setCostWeight([Math.floor(remaining/2)]);
+                          setEnvironmentWeight([Math.ceil(remaining/2)]);
+                        }}
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Higher value ensures more stable and consistent power supply
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-4 rounded-lg border">
+                      <h3 className="text-lg font-medium mb-2">Optimization Frequency</h3>
+                      <Select defaultValue="4">
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select frequency" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1">Every hour</SelectItem>
+                          <SelectItem value="2">Every 2 hours</SelectItem>
+                          <SelectItem value="4">Every 4 hours</SelectItem>
+                          <SelectItem value="6">Every 6 hours</SelectItem>
+                          <SelectItem value="12">Every 12 hours</SelectItem>
+                          <SelectItem value="24">Once a day</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="p-4 rounded-lg border">
+                      <h3 className="text-lg font-medium mb-2">Advanced Options</h3>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm">Use Weather Forecast</span>
+                        <Switch defaultChecked />
+                      </div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm">Consider Tariff Pricing</span>
+                        <Switch defaultChecked />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Use AI Predictions</span>
+                        <Switch defaultChecked />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 flex justify-end">
+                    <Button>Save Settings</Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="schedule" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Optimized Energy Schedule</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <div className="min-w-[800px]">
+                      <div className="grid grid-cols-24 gap-0 border-b pb-2 mb-2">
+                        {Array.from({ length: 24 }, (_, i) => (
+                          <div key={i} className="text-center text-xs text-muted-foreground">{i}:00</div>
                         ))}
-                      </Pie>
-                      <Tooltip />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Source Prioritization</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-md">
-                    <div className="flex items-center">
-                      <div className="h-6 w-6 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mr-3">
-                        <span className="text-blue-500 text-xs font-bold">1</span>
                       </div>
-                      <div>
-                        <div className="font-medium">Solar Energy</div>
-                        <div className="text-sm text-muted-foreground">Local generation priority</div>
+
+                      <div className="space-y-4">
+                        <div>
+                          <div className="flex items-center mb-1">
+                            <BatteryCharging className="h-4 w-4 mr-2 text-green-500" />
+                            <span className="text-sm font-medium">Battery</span>
+                          </div>
+                          <div className="grid grid-cols-24 gap-0 h-8">
+                            {Array.from({ length: 24 }, (_, i) => (
+                              <div 
+                                key={i} 
+                                className={`${
+                                  i >= 9 && i < 16 ? 'bg-green-500' : // Charging
+                                  i >= 18 && i < 22 ? 'bg-blue-500' : // Discharging
+                                  'bg-gray-200 dark:bg-gray-700' // Idle
+                                } border-r border-background`}
+                                title={`${
+                                  i >= 9 && i < 16 ? 'Charging' : 
+                                  i >= 18 && i < 22 ? 'Discharging' : 
+                                  'Idle'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+
+                        <div>
+                          <div className="flex items-center mb-1">
+                            <LightbulbIcon className="h-4 w-4 mr-2 text-amber-500" />
+                            <span className="text-sm font-medium">Load Shifting</span>
+                          </div>
+                          <div className="grid grid-cols-24 gap-0 h-8">
+                            {Array.from({ length: 24 }, (_, i) => (
+                              <div 
+                                key={i} 
+                                className={`${
+                                  (i >= 11 && i < 14) || (i >= 2 && i < 5) ? 'bg-purple-500' : // Shifted loads
+                                  'bg-gray-200 dark:bg-gray-700' // Normal
+                                } border-r border-background`}
+                                title={`${
+                                  (i >= 11 && i < 14) || (i >= 2 && i < 5) ? 'Shifted non-critical loads' : 
+                                  'Normal operation'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+
+                        <div>
+                          <div className="flex items-center mb-1">
+                            <Zap className="h-4 w-4 mr-2 text-blue-500" />
+                            <span className="text-sm font-medium">Grid Exchange</span>
+                          </div>
+                          <div className="grid grid-cols-24 gap-0 h-8">
+                            {Array.from({ length: 24 }, (_, i) => (
+                              <div 
+                                key={i} 
+                                className={`${
+                                  i >= 0 && i < 5 ? 'bg-blue-500' : // Import
+                                  i >= 12 && i < 16 ? 'bg-green-500' : // Export
+                                  'bg-gray-200 dark:bg-gray-700' // Neutral
+                                } border-r border-background`}
+                                title={`${
+                                  i >= 0 && i < 5 ? 'Import from grid' : 
+                                  i >= 12 && i < 16 ? 'Export to grid' : 
+                                  'Neutral'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 bg-green-500 rounded-sm"></div>
+                          <span>Charging / Export to grid</span>
+                          <div className="w-3 h-3 bg-blue-500 rounded-sm ml-4"></div>
+                          <span>Discharging / Import from grid</span>
+                          <div className="w-3 h-3 bg-purple-500 rounded-sm ml-4"></div>
+                          <span>Load shifting</span>
+                          <div className="w-3 h-3 bg-gray-200 dark:bg-gray-700 rounded-sm ml-4"></div>
+                          <span>Idle/Normal operation</span>
+                        </div>
                       </div>
                     </div>
                   </div>
+                </CardContent>
+              </Card>
 
-                  <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-md">
-                    <div className="flex items-center">
-                      <div className="h-6 w-6 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mr-3">
-                        <span className="text-green-500 text-xs font-bold">2</span>
-                      </div>
-                      <div>
-                        <div className="font-medium">Storage Battery</div>
-                        <div className="text-sm text-muted-foreground">When solar is unavailable</div>
-                      </div>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Schedule Summary</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="border rounded-lg p-4">
+                      <h3 className="text-lg font-medium mb-2">Battery Usage</h3>
+                      <ul className="space-y-1 text-sm">
+                        <li className="flex justify-between">
+                          <span className="text-muted-foreground">Charging Period:</span>
+                          <span>9:00 - 16:00</span>
+                        </li>
+                        <li className="flex justify-between">
+                          <span className="text-muted-foreground">Discharging Period:</span>
+                          <span>18:00 - 22:00</span>
+                        </li>
+                        <li className="flex justify-between">
+                          <span className="text-muted-foreground">Expected Energy Cycled:</span>
+                          <span>8.3 kWh</span>
+                        </li>
+                      </ul>
+                    </div>
+
+                    <div className="border rounded-lg p-4">
+                      <h3 className="text-lg font-medium mb-2">Load Management</h3>
+                      <ul className="space-y-1 text-sm">
+                        <li className="flex justify-between">
+                          <span className="text-muted-foreground">Peak Avoidance:</span>
+                          <span>17:00 - 21:00</span>
+                        </li>
+                        <li className="flex justify-between">
+                          <span className="text-muted-foreground">Shifted Loads:</span>
+                          <span>HVAC, Water Heating</span>
+                        </li>
+                        <li className="flex justify-between">
+                          <span className="text-muted-foreground">Load Reduction:</span>
+                          <span>1.7 kW</span>
+                        </li>
+                      </ul>
+                    </div>
+
+                    <div className="border rounded-lg p-4">
+                      <h3 className="text-lg font-medium mb-2">Grid Exchange</h3>
+                      <ul className="space-y-1 text-sm">
+                        <li className="flex justify-between">
+                          <span className="text-muted-foreground">Import Period:</span>
+                          <span>00:00 - 05:00</span>
+                        </li>
+                        <li className="flex justify-between">
+                          <span className="text-muted-foreground">Export Period:</span>
+                          <span>12:00 - 16:00</span>
+                        </li>
+                        <li className="flex justify-between">
+                          <span className="text-muted-foreground">Net Exchange:</span>
+                          <span className="text-green-600">+2.4 kWh (export)</span>
+                        </li>
+                      </ul>
                     </div>
                   </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-                  <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-md">
-                    <div className="flex items-center">
-                      <div className="h-6 w-6 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mr-3">
-                        <span className="text-amber-500 text-xs font-bold">3</span>
+            <TabsContent value="savings" className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <DollarSign className="h-5 w-5 text-green-600" />
+                      Financial Savings
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg text-center">
+                          <div className="text-muted-foreground text-sm mb-1">Today</div>
+                          <div className="text-2xl font-bold text-green-600">$3.42</div>
+                        </div>
+                        <div className="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg text-center">
+                          <div className="text-muted-foreground text-sm mb-1">This Month</div>
+                          <div className="text-2xl font-bold text-green-600">$87.16</div>
+                        </div>
                       </div>
-                      <div>
-                        <div className="font-medium">Grid (Off-Peak)</div>
-                        <div className="text-sm text-muted-foreground">For battery charging</div>
+                      <div className="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg text-center">
+                        <div className="text-muted-foreground text-sm mb-1">Projected Annual Savings</div>
+                        <div className="text-3xl font-bold text-green-600">$1,246.35</div>
                       </div>
                     </div>
-                  </div>
+                  </CardContent>
+                </Card>
 
-                  <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-md">
-                    <div className="flex items-center">
-                      <div className="h-6 w-6 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mr-3">
-                        <span className="text-red-500 text-xs font-bold">4</span>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Gauge className="h-5 w-5 text-blue-600" />
+                      Environmental Impact
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg text-center">
+                          <div className="text-muted-foreground text-sm mb-1">CO₂ Avoided Today</div>
+                          <div className="text-2xl font-bold">4.8 kg</div>
+                        </div>
+                        <div className="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg text-center">
+                          <div className="text-muted-foreground text-sm mb-1">This Month</div>
+                          <div className="text-2xl font-bold">126 kg</div>
+                        </div>
                       </div>
-                      <div>
-                        <div className="font-medium">Grid (Peak)</div>
-                        <div className="text-sm text-muted-foreground">Last resort</div>
+                      <div className="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg text-center">
+                        <div className="text-muted-foreground text-sm mb-1">Equivalent Trees Planted</div>
+                        <div className="text-3xl font-bold">87</div>
                       </div>
                     </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Optimization History</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-64 flex items-center justify-center text-muted-foreground">
+                    <p>Optimization history charts will be displayed here</p>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-      </Tabs>
-    </Main>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Optimization Recommendations</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-900/40">
+                      <h3 className="font-medium flex items-center gap-2">
+                        <Gauge className="h-4 w-4 text-blue-600" />
+                        Increase Battery Capacity
+                      </h3>
+                      <p className="text-sm text-muted-foreground mt-1">Based on your energy usage patterns, increasing battery storage by 5kWh could improve self-consumption by 23% and provide an additional $342 in annual savings.</p>
+                    </div>
+
+                    <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-100 dark:border-amber-900/40">
+                      <h3 className="font-medium flex items-center gap-2">
+                        <AlertCircle className="h-4 w-4 text-amber-600" />
+                        Shift Major Appliances
+                      </h3>
+                      <p className="text-sm text-muted-foreground mt-1">Consider running your dishwasher and washing machine during 10:00-15:00 to utilize excess solar production instead of evening hours.</p>
+                    </div>
+
+                    <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-100 dark:border-green-900/40">
+                      <h3 className="font-medium flex items-center gap-2">
+                        <LightbulbIcon className="h-4 w-4 text-green-600" />
+                        Add Smart Plugs
+                      </h3>
+                      <p className="text-sm text-muted-foreground mt-1">Adding smart plugs to your entertainment system and non-critical loads could save an additional $78 annually through automated load shifting.</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </ErrorBoundary>
+      </Main>
+    </AppLayout>
   );
 };
 
