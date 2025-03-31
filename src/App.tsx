@@ -1,51 +1,45 @@
 
 import React from 'react';
-import { BrowserRouter as Router } from 'react-router-dom';
-import { Toaster } from '@/components/ui/toaster';
-import { AuthProvider } from '@/contexts/AuthContext';
-import { SiteProvider } from '@/contexts/SiteContext';
-import { ThemeProvider } from 'next-themes';
-import { Toaster as SonnerToaster } from 'sonner';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import AppRoutes from './Routes';
-import DependencyErrorBoundary from './components/ui/DependencyErrorBoundary';
-import './App.css';
+import { Toaster } from 'sonner';
+import { ThemeProvider } from '@/components/theme-provider';
 
-// Create a client with better error handling
+// Import your pages
+import Dashboard from '@/pages/Dashboard';
+import EditDevice from '@/pages/EditDevice';
+import ReviewDevices from '@/pages/devices/ReviewDevices';
+import ManageDevices from '@/pages/devices/ManageDevices';
+import SmartDevices from '@/pages/devices/SmartDevices';
+
+// Create a client
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
       retry: 1,
-      onError: (error) => {
-        console.error('Query error:', error);
-      }
+      refetchOnWindowFocus: false,
+      staleTime: 5 * 60 * 1000, // 5 minutes
     },
-    mutations: {
-      onError: (error) => {
-        console.error('Mutation error:', error);
-      }
-    }
   },
 });
 
 function App() {
   return (
-    <DependencyErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <Router>
-            <AuthProvider>
-              <SiteProvider>
-                <AppRoutes />
-                <Toaster />
-                <SonnerToaster position="top-right" />
-              </SiteProvider>
-            </AuthProvider>
-          </Router>
-        </ThemeProvider>
-      </QueryClientProvider>
-    </DependencyErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider defaultTheme="system" storageKey="ems-theme">
+        <Toaster position="top-right" />
+        <Router>
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/devices/:deviceId/edit" element={<EditDevice />} />
+            <Route path="/devices/review" element={<ReviewDevices />} />
+            <Route path="/devices/manage" element={<ManageDevices />} />
+            <Route path="/devices/smart-devices" element={<SmartDevices />} />
+          </Routes>
+        </Router>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 }
 

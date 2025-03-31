@@ -8,7 +8,7 @@ import SiteSelector from '@/components/sites/SiteSelector';
 import Logo from './Logo';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { mainNavItems, systemControlItems, adminItems, integrationItems } from './sidebarNavData';
+import { mainNavItems, systemControlItems, adminItems, integrationItems, deviceManagementItems } from './sidebarNavData';
 
 export interface SidebarProps {
   className?: string;
@@ -49,6 +49,22 @@ const Sidebar: React.FC<SidebarProps> = ({ className = '', isExpanded, toggleSid
           collapsed={!isExpanded}
         >
           {mainNavItems.map((item) => (
+            <NavItem 
+              key={item.href} 
+              href={item.href} 
+              icon={item.icon} 
+              label={item.label}
+              collapsed={!isExpanded}
+            />
+          ))}
+        </SidebarNavSection>
+
+        <SidebarNavSection 
+          key="device-management" 
+          heading="Device Management"
+          collapsed={!isExpanded}
+        >
+          {deviceManagementItems.map((item) => (
             <NavItem 
               key={item.href} 
               href={item.href} 

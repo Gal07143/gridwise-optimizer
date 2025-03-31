@@ -27,7 +27,10 @@ import {
   Gauge,
   BatteryFull,
   Sparkles,
-  Brain
+  Brain,
+  Wrench,
+  Edit,
+  Smartphone
 } from 'lucide-react';
 
 export const mainNavItems = [
@@ -113,6 +116,24 @@ export const systemControlItems = [
     href: "/integrations",
     icon: <Workflow size={18} />,
     label: "Integrations"
+  }
+];
+
+export const deviceManagementItems = [
+  {
+    href: "/devices/review",
+    icon: <Edit size={18} />,
+    label: "Review Devices"
+  },
+  {
+    href: "/devices/manage",
+    icon: <Wrench size={18} />,
+    label: "Manage Devices"
+  },
+  {
+    href: "/devices/smart-devices",
+    icon: <Smartphone size={18} />,
+    label: "Smart Devices"
   }
 ];
 
