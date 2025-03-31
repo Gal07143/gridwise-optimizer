@@ -8,7 +8,7 @@ import SiteSelector from '@/components/sites/SiteSelector';
 import Logo from './Logo';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { mainNavItems, systemControlItems, adminItems } from './sidebarNavData';
+import { mainNavItems, systemControlItems, adminItems, integrationItems } from './sidebarNavData';
 
 export interface SidebarProps {
   className?: string;
