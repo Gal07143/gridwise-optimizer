@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   LayoutDashboard, 
@@ -26,7 +25,8 @@ import {
   CloudSun,
   Gauge,
   BatteryFull,
-  Sparkles
+  Sparkles,
+  Brain
 } from 'lucide-react';
 
 export const mainNavItems = [
@@ -79,11 +79,6 @@ export const mainNavItems = [
     href: "/reports",
     icon: <FileBarChart size={18} />,
     label: "Reports"
-  },
-  {
-    href: "/security",
-    icon: <ShieldAlert size={18} />,
-    label: "Security"
   }
 ];
 
@@ -102,6 +97,16 @@ export const systemControlItems = [
     href: "/system-status",
     icon: <MonitorCheck size={18} />,
     label: "System Status"
+  },
+  {
+    href: "/security",
+    icon: <Shield size={18} />,
+    label: "Security"
+  },
+  {
+    href: "/ai/overview",
+    icon: <Brain size={18} />,
+    label: "AI Overview"
   },
   {
     href: "/integrations",

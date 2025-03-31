@@ -1,4 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
+import AppLayout from '@/components/layout/AppLayout';
 import { Main } from '@/components/ui/main';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -6,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, AlertTriangle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useToast } from "@/components/ui/use-toast"
+import { useToast } from "@/components/ui/use-toast";
 import {
   SystemComponent,
   SystemEvent,
@@ -14,6 +16,7 @@ import {
   SystemEventSeverity
 } from '@/types/system';
 import { formatTimestamp } from '@/lib/utils';
+import ErrorBoundary from '@/components/ui/ErrorBoundary';
 
 const mockComponents: SystemComponent[] = [
   {
@@ -148,7 +151,7 @@ const SystemStatus: React.FC = () => {
     toast({
       title: "System status refreshed.",
       description: "The component and event data has been updated.",
-    })
+    });
   };
 
   // Update the BadgeVariant function to map to valid variants
@@ -184,115 +187,123 @@ const SystemStatus: React.FC = () => {
   };
 
   return (
-    <Main title="System Status">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-2xl font-bold">System Components</CardTitle>
-          <Button variant="outline" size="sm" onClick={handleRefresh} disabled={loading}>
-            {loading ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
-            Refresh
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="space-y-3">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="flex items-center space-x-4">
-                  <Skeleton className="h-10 w-10 rounded-full" />
-                  <div className="space-y-2">
-                    <Skeleton className="h-4 w-[250px]" />
-                    <Skeleton className="h-4 w-[200px]" />
-                  </div>
+    <AppLayout>
+      <Main title="System Status">
+        <ErrorBoundary>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-2xl font-bold">System Components</CardTitle>
+              <Button variant="outline" size="sm" onClick={handleRefresh} disabled={loading}>
+                {loading ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+                Refresh
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="space-y-3">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="flex items-center space-x-4">
+                      <Skeleton className="h-10 w-10 rounded-full" />
+                      <div className="space-y-2">
+                        <Skeleton className="h-4 w-[250px]" />
+                        <Skeleton className="h-4 w-[200px]" />
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          ) : components.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Component</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Details</TableHead>
-                  <TableHead>Latency (ms)</TableHead>
-                  <TableHead>Last Restart</TableHead>
-                  <TableHead>Last Update</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {components.map((component) => (
-                  <TableRow key={component.id}>
-                    <TableCell className="font-medium">{component.component_name}</TableCell>
-                    <TableCell>
-                      <Badge variant={getBadgeVariant(component.status)}>
-                        {component.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{component.details}</TableCell>
-                    <TableCell>{component.latency}</TableCell>
-                    <TableCell>{formatTimestamp(component.last_restart)}</TableCell>
-                    <TableCell>{formatTimestamp(component.updated_at)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <div className="flex items-center justify-center h-32 text-muted-foreground">
-              No components found.
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              ) : components.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Component</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Details</TableHead>
+                        <TableHead>Latency (ms)</TableHead>
+                        <TableHead>Last Restart</TableHead>
+                        <TableHead>Last Update</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {components.map((component) => (
+                        <TableRow key={component.id}>
+                          <TableCell className="font-medium">{component.component_name}</TableCell>
+                          <TableCell>
+                            <Badge variant={getBadgeVariant(component.status)}>
+                              {component.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{component.details}</TableCell>
+                          <TableCell>{component.latency}</TableCell>
+                          <TableCell>{formatTimestamp(component.last_restart)}</TableCell>
+                          <TableCell>{formatTimestamp(component.updated_at)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-32 text-muted-foreground">
+                  No components found.
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-      <Card className="mt-6">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-2xl font-bold">System Events</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="space-y-3">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="flex items-center space-x-4">
-                  <AlertTriangle className="h-4 w-4 text-yellow-500" />
-                  <div className="space-y-2">
-                    <Skeleton className="h-4 w-[250px]" />
-                    <Skeleton className="h-4 w-[200px]" />
-                  </div>
+          <Card className="mt-6">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-2xl font-bold">System Events</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="space-y-3">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="flex items-center space-x-4">
+                      <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                      <div className="space-y-2">
+                        <Skeleton className="h-4 w-[250px]" />
+                        <Skeleton className="h-4 w-[200px]" />
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          ) : events.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Time</TableHead>
-                  <TableHead>Severity</TableHead>
-                  <TableHead>Component</TableHead>
-                  <TableHead>Message</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {events.map((event) => (
-                  <TableRow key={event.id}>
-                    <TableCell>{formatTimestamp(event.timestamp)}</TableCell>
-                    <TableCell>
-                      <Badge variant={getEventBadgeVariant(event.severity)}>
-                        {event.severity}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{event.component_name}</TableCell>
-                    <TableCell>{event.message}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <div className="flex items-center justify-center h-32 text-muted-foreground">
-              No events found.
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </Main>
+              ) : events.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Time</TableHead>
+                        <TableHead>Severity</TableHead>
+                        <TableHead>Component</TableHead>
+                        <TableHead>Message</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {events.map((event) => (
+                        <TableRow key={event.id}>
+                          <TableCell>{formatTimestamp(event.timestamp)}</TableCell>
+                          <TableCell>
+                            <Badge variant={getEventBadgeVariant(event.severity)}>
+                              {event.severity}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{event.component_name}</TableCell>
+                          <TableCell>{event.message}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-32 text-muted-foreground">
+                  No events found.
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </ErrorBoundary>
+      </Main>
+    </AppLayout>
   );
 };
 

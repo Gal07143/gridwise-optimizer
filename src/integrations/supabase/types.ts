@@ -1383,6 +1383,44 @@ export type Database = {
         }
         Relationships: []
       }
+      modbus_registers: {
+        Row: {
+          created_at: string | null
+          device_id: string | null
+          id: string
+          register_address: number
+          register_length: number
+          register_name: string
+          scaling_factor: number
+        }
+        Insert: {
+          created_at?: string | null
+          device_id?: string | null
+          id?: string
+          register_address: number
+          register_length: number
+          register_name: string
+          scaling_factor: number
+        }
+        Update: {
+          created_at?: string | null
+          device_id?: string | null
+          id?: string
+          register_address?: number
+          register_length?: number
+          register_name?: string
+          scaling_factor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "modbus_registers_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "modbus_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       optimization_results: {
         Row: {
           cost_estimate: number | null
