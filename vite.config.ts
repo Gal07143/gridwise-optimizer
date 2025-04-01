@@ -23,5 +23,24 @@ export default defineConfig(({ mode }) => ({
   define: {
     // This enables compatibility with packages that use process.env
     'process.env': {}
+  },
+  // Increase build performance and manage memory usage
+  build: {
+    sourcemap: mode !== 'production',
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          ui: [
+            '@radix-ui/react-dialog',
+            '@radix-ui/react-dropdown-menu',
+            '@radix-ui/react-tabs',
+            '@radix-ui/react-tooltip',
+          ],
+          charts: ['recharts']
+        }
+      }
+    }
   }
 }));

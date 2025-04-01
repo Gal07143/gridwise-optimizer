@@ -13,13 +13,16 @@ import ManageDevices from '@/pages/devices/ManageDevices';
 import SmartDevices from '@/pages/devices/SmartDevices';
 import DeviceDetails from '@/pages/devices/DeviceDetails';
 
-// Create a client
+// Create a client with error handling and retry logic
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 1,
       refetchOnWindowFocus: false,
       staleTime: 5 * 60 * 1000, // 5 minutes
+      onError: (error) => {
+        console.error('Query error:', error);
+      }
     },
   },
 });
@@ -28,7 +31,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="system" storageKey="ems-theme">
-        <Toaster position="top-right" />
+        <Toaster position="top-right" closeButton richColors />
         <Router>
           <Routes>
             <Route path="/" element={<Dashboard />} />
