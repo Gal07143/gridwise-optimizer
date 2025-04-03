@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
 import { ThemeProvider } from '@/components/theme-provider';
+import GlobalErrorBoundary from '@/components/ui/GlobalErrorBoundary';
 
 // Import your pages
 import Dashboard from '@/pages/Dashboard';
@@ -35,28 +36,30 @@ const queryClient = new QueryClient({
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="system" storageKey="ems-theme">
-        <Toaster position="top-right" closeButton richColors />
-        <Router>
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/devices/:deviceId/edit" element={<EditDevice />} />
-            <Route path="/devices/:deviceId" element={<DeviceDetails />} />
-            <Route path="/devices/review" element={<ReviewDevices />} />
-            <Route path="/devices/manage" element={<ManageDevices />} />
-            <Route path="/devices/smart-devices" element={<SmartDevices />} />
-            <Route path="/energy-flow" element={<EnergyFlow />} />
-            <Route path="/energy-flow-advanced" element={<EnergyFlowAdvanced />} />
-            <Route path="/ai-overview" element={<AIOverview />} />
-            <Route path="/optimization" element={<OptimizationAlgorithms />} />
-            <Route path="/battery-management" element={<BatteryManagement />} />
-            <Route path="/analytics" element={<Analytics />} />
-          </Routes>
-        </Router>
-      </ThemeProvider>
-    </QueryClientProvider>
+    <GlobalErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider defaultTheme="system" storageKey="ems-theme">
+          <Toaster position="top-right" closeButton richColors />
+          <Router>
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/devices/:deviceId/edit" element={<EditDevice />} />
+              <Route path="/devices/:deviceId" element={<DeviceDetails />} />
+              <Route path="/devices/review" element={<ReviewDevices />} />
+              <Route path="/devices/manage" element={<ManageDevices />} />
+              <Route path="/devices/smart-devices" element={<SmartDevices />} />
+              <Route path="/energy-flow" element={<EnergyFlow />} />
+              <Route path="/energy-flow-advanced" element={<EnergyFlowAdvanced />} />
+              <Route path="/ai-overview" element={<AIOverview />} />
+              <Route path="/optimization" element={<OptimizationAlgorithms />} />
+              <Route path="/battery-management" element={<BatteryManagement />} />
+              <Route path="/analytics" element={<Analytics />} />
+            </Routes>
+          </Router>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </GlobalErrorBoundary>
   );
 }
 

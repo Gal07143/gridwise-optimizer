@@ -1,37 +1,66 @@
 
-import React from 'react';
+import React, { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
+import ErrorBoundary from './ErrorBoundary';
+import { useIsMobile } from '@/hooks/use-mobile';
 
-interface MainProps extends React.HTMLAttributes<HTMLDivElement> {
-  children: React.ReactNode;
-  containerSize?: 'default' | 'small' | 'large' | 'full';
+interface MainProps {
+  children: ReactNode;
+  className?: string;
+  title?: string;
+  containerSize?: 'sm' | 'default' | 'lg' | 'xl' | 'full';
+  noPadding?: boolean;
+  isLoading?: boolean;
+  loadingText?: string;
+  error?: Error | null;
+  retry?: () => void;
+  fluid?: boolean;
 }
 
-export const Main = React.forwardRef<HTMLDivElement, MainProps>(
-  ({ children, className, containerSize = 'default', style, ...props }, ref) => {
-    const paddingStyles = {
-      small: 'px-4 py-4 sm:px-6',
-      default: 'px-4 py-6 sm:px-6 md:px-8',
-      large: 'px-4 py-8 sm:px-6 md:px-8 lg:px-12',
-      full: 'p-0',
-    };
+export const Main: React.FC<MainProps> = ({
+  children,
+  className,
+  title,
+  containerSize = 'default',
+  noPadding = false,
+  isLoading = false,
+  loadingText = 'Loading...',
+  error = null,
+  retry,
+  fluid = false,
+}) => {
+  const isMobile = useIsMobile();
+  
+  const containerSizeClass = {
+    sm: 'max-w-screen-sm',
+    default: 'max-w-7xl',
+    lg: 'max-w-screen-lg',
+    xl: 'max-w-screen-xl',
+    full: 'max-w-full',
+  }[containerSize];
 
-    // Fix: Use CSS custom properties in a type-safe way
-    const customStyle = {
-      '--content-padding': paddingStyles[containerSize],
-    } as React.CSSProperties;
-
-    return (
-      <main
-        ref={ref}
-        className={cn('flex-1', className)}
-        style={{ ...customStyle, ...style }}
-        {...props}
-      >
-        {children}
-      </main>
-    );
-  }
-);
-
-Main.displayName = 'Main';
+  return (
+    <main
+      className={cn(
+        'flex-1 overflow-auto py-6 px-4',
+        noPadding && 'p-0',
+        'bg-background dark:bg-background',
+        className
+      )}
+    >
+      <ErrorBoundary>
+        <div className={cn(
+          'mx-auto',
+          !fluid && containerSizeClass
+        )}>
+          {title && (
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold">{title}</h1>
+            </div>
+          )}
+          {children}
+        </div>
+      </ErrorBoundary>
+    </main>
+  );
+};

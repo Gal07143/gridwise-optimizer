@@ -3,6 +3,8 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { Home, Battery, Zap, LineChart, BarChart3, Settings, CircuitBoard, Cloud, Cpu, Brain, CloudLightning } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export const navLinks = [
   {
@@ -62,7 +64,45 @@ export const navLinks = [
   },
 ];
 
-const SidebarLinks = () => {
+interface SidebarLinksProps {
+  collapsed?: boolean;
+}
+
+const SidebarLinks: React.FC<SidebarLinksProps> = ({ collapsed = false }) => {
+  const isMobile = useIsMobile();
+  
+  if (collapsed) {
+    return (
+      <TooltipProvider delayDuration={0}>
+        <nav className="space-y-1">
+          {navLinks.map((link) => (
+            <Tooltip key={link.href} side="right">
+              <TooltipTrigger asChild>
+                <NavLink
+                  to={link.href}
+                  className={({ isActive }) =>
+                    cn(
+                      'flex items-center justify-center rounded-lg p-2 text-sm transition-all',
+                      isActive
+                        ? 'bg-gridx-blue/10 text-gridx-blue dark:bg-gridx-blue/20 dark:text-white'
+                        : 'text-muted-foreground hover:bg-gridx-blue/5 hover:text-gridx-blue dark:hover:bg-gridx-blue/10 dark:hover:text-white'
+                    )
+                  }
+                  end={link.href === '/'}
+                >
+                  {link.icon}
+                </NavLink>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="font-normal">
+                {link.title}
+              </TooltipContent>
+            </Tooltip>
+          ))}
+        </nav>
+      </TooltipProvider>
+    );
+  }
+
   return (
     <nav className="space-y-1">
       {navLinks.map((link) => (

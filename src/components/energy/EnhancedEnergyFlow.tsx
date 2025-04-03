@@ -1,332 +1,444 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { 
-  Battery, Sun, Wind, Home, Zap, ArrowRight, Info, 
-  RefreshCcw, Download, BarChart2, Maximize2, Calendar, Clock
-} from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
-import { useSiteContext } from '@/contexts/SiteContext';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Battery, Zap, Wind, Home, Sun, Maximize2, RefreshCw, Info } from 'lucide-react';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { handleApiError } from '@/services/apiErrorHandler';
+import axios from 'axios';
 import { toast } from 'sonner';
 
-interface EnhancedEnergyFlowProps {
-  siteId?: string;
-}
-
-// Energy flow node with power values
 interface EnergyNode {
   id: string;
-  name: string;
-  type: 'solar' | 'battery' | 'grid' | 'home' | 'wind' | 'ev';
+  label: string;
+  type: 'source' | 'storage' | 'consumption';
   power: number;
-  status: 'active' | 'inactive' | 'charging' | 'discharging' | 'exporting' | 'importing';
-  details?: Record<string, any>;
+  status: 'active' | 'inactive' | 'warning' | 'error';
+  deviceType: string;
+  batteryLevel?: number;
 }
 
-// Connection between nodes
-interface EnergyFlow {
-  source: string;
-  target: string;
-  power: number;
-  color: string;
+interface EnergyConnection {
+  from: string;
+  to: string;
+  value: number;
   active: boolean;
 }
 
+interface EnhancedEnergyFlowProps {
+  siteId: string;
+}
+
 const EnhancedEnergyFlow: React.FC<EnhancedEnergyFlowProps> = ({ siteId }) => {
-  const { activeSite } = useSiteContext();
-  const [view, setView] = useState<'live' | 'historical'>('live');
-  const [timeframe, setTimeframe] = useState<'day' | 'week' | 'month'>('day');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const [nodes, setNodes] = useState<EnergyNode[]>([]);
+  const [connections, setConnections] = useState<EnergyConnection[]>([]);
+  const [selectedNode, setSelectedNode] = useState<EnergyNode | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [view, setView] = useState<'live' | 'historic'>('live');
+  const [timeframe, setTimeframe] = useState('day');
+
+  // Calculate metrics
+  const totalGeneration = useMemo(() => {
+    return nodes
+      .filter(node => node.type === 'source')
+      .reduce((sum, node) => sum + node.power, 0);
+  }, [nodes]);
+    
+  const totalConsumption = useMemo(() => {
+    return nodes
+      .filter(node => node.type === 'consumption')
+      .reduce((sum, node) => sum + node.power, 0);
+  }, [nodes]);
+    
+  const batteryNode = useMemo(() => {
+    return nodes.find(n => n.deviceType === 'battery');
+  }, [nodes]);
   
-  // Sample data - in a real app, this would come from your backend/API
-  const [energyNodes, setEnergyNodes] = useState<EnergyNode[]>([
-    { id: 'solar', name: 'Solar', type: 'solar', power: 4.2, status: 'active' },
-    { id: 'battery', name: 'Battery', type: 'battery', power: 2.4, status: 'charging' },
-    { id: 'grid', name: 'Grid', type: 'grid', power: 0, status: 'inactive' },
-    { id: 'home', name: 'Home', type: 'home', power: 1.8, status: 'active' },
-  ]);
+  const batteryPercentage = batteryNode?.batteryLevel || 0;
   
-  const [energyFlows, setEnergyFlows] = useState<EnergyFlow[]>([
-    { source: 'solar', target: 'home', power: 1.8, color: 'text-green-500', active: true },
-    { source: 'solar', target: 'battery', power: 2.4, color: 'text-amber-500', active: true },
-    { source: 'battery', target: 'grid', power: 0, color: 'text-blue-500', active: false },
-    { source: 'grid', target: 'home', power: 0, color: 'text-blue-500', active: false },
-  ]);
+  // Self-consumption rate: how much of generated energy is used directly
+  const selfConsumptionRate = useMemo(() => {
+    return totalGeneration > 0 
+      ? Math.min(100, (Math.min(totalGeneration, totalConsumption) / totalGeneration) * 100)
+      : 0;
+  }, [totalGeneration, totalConsumption]);
+    
+  // Grid dependency rate: how much energy comes from the grid
+  const gridNode = useMemo(() => {
+    return nodes.find(n => n.deviceType === 'grid');
+  }, [nodes]);
   
-  const [totalGeneration, setTotalGeneration] = useState(4.2);
-  const [totalConsumption, setTotalConsumption] = useState(1.8);
-  const [batteryPercentage, setbatteryPercentage] = useState(62);
-  
-  const fetchLiveData = () => {
+  const gridPower = gridNode?.power || 0;
+  const gridDependencyRate = useMemo(() => {
+    return totalConsumption > 0 
+      ? Math.min(100, (gridPower / totalConsumption) * 100)
+      : 0;
+  }, [totalConsumption, gridPower]);
+
+  // Load energy flow data
+  const fetchEnergyFlowData = async () => {
+    if (!siteId) return;
+    
     setIsLoading(true);
+    setError(null);
     
-    // Simulate API call
-    setTimeout(() => {
-      // In a real app, this would be a call to your Supabase backend or API
-      const updatedSolar = 4.2 + (Math.random() * 0.6 - 0.3);
-      const updatedHome = 1.8 + (Math.random() * 0.4 - 0.2);
-      const updatedBattery = Math.max(0, updatedSolar - updatedHome);
+    try {
+      // In a real implementation, fetch from the actual API
+      // For now, simulate with mock data
+      // const response = await axios.get(`/api/sites/${siteId}/energy-flow`);
+      // const data = response.data;
       
-      // Update nodes
-      setEnergyNodes(prev => prev.map(node => {
-        if (node.id === 'solar') return { ...node, power: parseFloat(updatedSolar.toFixed(1)) };
-        if (node.id === 'home') return { ...node, power: parseFloat(updatedHome.toFixed(1)) };
-        if (node.id === 'battery') return { ...node, power: parseFloat(updatedBattery.toFixed(1)) };
-        return node;
-      }));
-      
-      // Update flows
-      setEnergyFlows(prev => prev.map(flow => {
-        if (flow.source === 'solar' && flow.target === 'home') {
-          return { ...flow, power: parseFloat(updatedHome.toFixed(1)) };
+      // Mock data
+      const mockNodes: EnergyNode[] = [
+        {
+          id: 'solar',
+          label: 'Solar Panels',
+          type: 'source',
+          power: 5.5 + Math.random() * 1,
+          status: 'active',
+          deviceType: 'solar'
+        },
+        {
+          id: 'wind',
+          label: 'Wind Turbine',
+          type: 'source',
+          power: 2.1 + Math.random() * 0.5,
+          status: 'active',
+          deviceType: 'wind'
+        },
+        {
+          id: 'battery',
+          label: 'Battery Storage',
+          type: 'storage',
+          power: 3.2 + Math.random() * 0.7,
+          status: 'active',
+          deviceType: 'battery',
+          batteryLevel: Math.floor(60 + Math.random() * 20)
+        },
+        {
+          id: 'grid',
+          label: 'Power Grid',
+          type: 'source',
+          power: 1.5 + Math.random() * 0.3,
+          status: 'active',
+          deviceType: 'grid'
+        },
+        {
+          id: 'home',
+          label: 'Household',
+          type: 'consumption',
+          power: 4.2 + Math.random() * 0.8,
+          status: 'active',
+          deviceType: 'load'
+        },
+        {
+          id: 'ev',
+          label: 'EV Charger',
+          type: 'consumption',
+          power: 3.8 + Math.random() * 0.6,
+          status: 'active',
+          deviceType: 'ev'
         }
-        if (flow.source === 'solar' && flow.target === 'battery') {
-          return { ...flow, power: parseFloat(updatedBattery.toFixed(1)) };
-        }
-        return flow;
-      }));
+      ];
+
+      const mockConnections: EnergyConnection[] = [
+        { from: 'solar', to: 'battery', value: 3.2, active: true },
+        { from: 'solar', to: 'home', value: 2.3, active: true },
+        { from: 'wind', to: 'battery', value: 0.8, active: true },
+        { from: 'wind', to: 'home', value: 1.3, active: true },
+        { from: 'battery', to: 'ev', value: 3.8, active: true },
+        { from: 'grid', to: 'home', value: 0.6, active: true }
+      ];
       
-      setTotalGeneration(parseFloat(updatedSolar.toFixed(1)));
-      setTotalConsumption(parseFloat(updatedHome.toFixed(1)));
-      setbatteryPercentage(prev => {
-        const newValue = prev + (updatedBattery > 0 ? 1 : -0.5);
-        return Math.min(100, Math.max(0, newValue));
+      setNodes(mockNodes);
+      setConnections(mockConnections);
+      
+      if (mockNodes.length > 0 && !selectedNode) {
+        setSelectedNode(mockNodes[0]);
+      }
+      
+    } catch (error) {
+      console.error('Failed to fetch energy flow data:', error);
+      setError(error instanceof Error ? error : new Error('Failed to fetch energy flow data'));
+      handleApiError(error, {
+        context: 'Energy Flow Data',
+        showToast: true
       });
-      
+    } finally {
       setIsLoading(false);
-      toast.success("Energy flow data updated");
-    }, 1000);
-  };
-  
-  useEffect(() => {
-    fetchLiveData();
-    
-    // Set up polling for live data
-    if (view === 'live') {
-      const interval = setInterval(fetchLiveData, 30000); // Update every 30 seconds
-      return () => clearInterval(interval);
     }
-  }, [view]);
-  
-  const toggleFullscreen = () => {
-    const element = document.getElementById('energy-flow-container');
+  };
+
+  // Load data on component mount
+  useEffect(() => {
+    fetchEnergyFlowData();
+    // Set up refresh interval
+    const intervalId = setInterval(fetchEnergyFlowData, 30000);
     
+    return () => clearInterval(intervalId);
+  }, [siteId]);
+
+  // Handle fullscreen mode
+  const toggleFullscreen = () => {
     if (!isFullscreen) {
-      if (element?.requestFullscreen) {
-        element.requestFullscreen().catch(err => {
-          toast.error("Could not enable fullscreen mode");
-        });
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen();
+        setIsFullscreen(true);
       }
     } else {
       if (document.exitFullscreen) {
-        document.exitFullscreen().catch(err => {
-          toast.error("Could not exit fullscreen mode");
-        });
+        document.exitFullscreen();
+        setIsFullscreen(false);
       }
     }
-    
-    setIsFullscreen(!isFullscreen);
   };
-  
-  // Listen for fullscreen change events
+
+  // Effect to handle fullscreen change
   useEffect(() => {
     const handleFullscreenChange = () => {
       setIsFullscreen(!!document.fullscreenElement);
     };
     
     document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
   }, []);
-  
-  const renderNodeIcon = (type: EnergyNode['type']) => {
+
+  const handleNodeClick = (node: EnergyNode) => {
+    setSelectedNode(node);
+    toast.info(`Selected ${node.label}`);
+  };
+
+  const handleViewChange = (newView: 'live' | 'historic') => {
+    setView(newView);
+    if (newView === 'historic') {
+      toast.info('Historical view selected. Data may be delayed.');
+    }
+  };
+
+  const getNodeIcon = (type: string) => {
     switch (type) {
       case 'solar':
         return <Sun className="h-6 w-6 text-yellow-500" />;
+      case 'wind':
+        return <Wind className="h-6 w-6 text-blue-500" />;
       case 'battery':
         return <Battery className="h-6 w-6 text-green-500" />;
       case 'grid':
-        return <Zap className="h-6 w-6 text-blue-500" />;
-      case 'home':
-        return <Home className="h-6 w-6 text-indigo-500" />;
-      case 'wind':
-        return <Wind className="h-6 w-6 text-cyan-500" />;
-      case 'ev':
         return <Zap className="h-6 w-6 text-purple-500" />;
+      case 'load':
+      case 'home':
+        return <Home className="h-6 w-6 text-orange-500" />;
       default:
-        return <Info className="h-6 w-6" />;
+        return <Zap className="h-6 w-6 text-gray-500" />;
     }
   };
-  
-  const renderNodeStatus = (node: EnergyNode) => {
-    switch (node.status) {
-      case 'active':
-        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800">Active</Badge>;
-      case 'inactive':
-        return <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-900/20 dark:text-gray-400 dark:border-gray-800">Inactive</Badge>;
-      case 'charging':
-        return <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800">Charging</Badge>;
-      case 'discharging':
-        return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800">Discharging</Badge>;
-      case 'exporting':
-        return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800">Exporting</Badge>;
-      case 'importing':
-        return <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/20 dark:text-purple-400 dark:border-purple-800">Importing</Badge>;
-      default:
-        return null;
-    }
-  };
-  
+
+  // Return visualization
   return (
-    <Card className="shadow-md h-full" id="energy-flow-container">
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-lg">Energy Flow</CardTitle>
-        <div className="flex items-center gap-2">
-          <Tabs value={view} onValueChange={(v) => setView(v as 'live' | 'historical')}>
-            <TabsList className="h-8">
-              <TabsTrigger value="live" className="text-xs px-3 h-7">Live</TabsTrigger>
-              <TabsTrigger value="historical" className="text-xs px-3 h-7">Historical</TabsTrigger>
-            </TabsList>
-          </Tabs>
-          
-          <Button variant="outline" size="sm" onClick={toggleFullscreen} className="ml-auto">
-            <Maximize2 className="h-4 w-4 mr-1" />
-            {isFullscreen ? "Exit" : "Fullscreen"}
+    <div className={`space-y-4 ${isFullscreen ? 'p-4 bg-background' : ''}`}>
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-xl font-semibold">Energy Flow Visualization</h2>
+          <p className="text-muted-foreground text-sm">Real-time view of energy flow across all components</p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={fetchEnergyFlowData}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
+          <Button variant="outline" size="sm" onClick={toggleFullscreen}>
+            <Maximize2 className="h-4 w-4 mr-2" />
+            {isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
           </Button>
         </div>
-      </CardHeader>
-      <CardContent className="p-4">
-        {view === 'live' ? (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div className="bg-slate-50 dark:bg-slate-900/50 p-3 rounded-lg text-center">
-                <h3 className="text-sm text-muted-foreground mb-1">Total Generation</h3>
-                <p className="text-2xl font-bold text-green-600 dark:text-green-400">{totalGeneration} kW</p>
-              </div>
-              
-              <div className="bg-slate-50 dark:bg-slate-900/50 p-3 rounded-lg text-center">
-                <h3 className="text-sm text-muted-foreground mb-1">Total Consumption</h3>
-                <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{totalConsumption} kW</p>
-              </div>
-              
-              <div className="bg-slate-50 dark:bg-slate-900/50 p-3 rounded-lg text-center">
-                <h3 className="text-sm text-muted-foreground mb-1">Battery</h3>
-                <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{batteryPercentage}%</p>
-                <Progress 
-                  value={batteryPercentage} 
-                  className="h-2 mt-2" 
-                  indicatorClassName={batteryPercentage > 80 ? "bg-green-500" : batteryPercentage > 20 ? "bg-amber-500" : "bg-red-500"}
-                />
-              </div>
-            </div>
-            
-            <div className="relative py-6 mb-4">
-              <div className="grid grid-cols-2 gap-8 md:gap-16">
-                {/* Generation side */}
-                <div className="flex flex-col space-y-6 items-center">
-                  {energyNodes.filter(node => ['solar', 'wind', 'grid'].includes(node.id)).map(node => (
-                    <div key={node.id} className="relative p-4 bg-white dark:bg-slate-800 rounded-lg shadow-md w-full max-w-xs text-center flex flex-col items-center gap-2">
-                      {renderNodeIcon(node.type)}
-                      <h3 className="font-medium">{node.name}</h3>
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg font-bold">{node.power} kW</span>
-                        {renderNodeStatus(node)}
-                      </div>
-                    </div>
-                  ))}
+      </div>
+      
+      <Tabs value={view} onValueChange={(v) => handleViewChange(v as 'live' | 'historic')} className="w-full">
+        <TabsList className="grid w-full grid-cols-2 mb-4">
+          <TabsTrigger value="live">Live View</TabsTrigger>
+          <TabsTrigger value="historic">Historical</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="live" className="space-y-4">
+          {isLoading ? (
+            <Card>
+              <CardContent className="py-10">
+                <LoadingSpinner text="Loading energy flow data..." />
+              </CardContent>
+            </Card>
+          ) : error ? (
+            <Card className="border-red-200">
+              <CardContent className="py-6">
+                <div className="flex flex-col items-center text-center">
+                  <Info className="h-8 w-8 text-red-500 mb-2" />
+                  <p className="mb-2 font-medium">Failed to load energy flow data</p>
+                  <p className="text-muted-foreground text-sm mb-4">{error.message}</p>
+                  <Button onClick={fetchEnergyFlowData}>Try Again</Button>
                 </div>
-                
-                {/* Consumption side */}
-                <div className="flex flex-col space-y-6 items-center">
-                  {energyNodes.filter(node => ['battery', 'home', 'ev'].includes(node.id)).map(node => (
-                    <div key={node.id} className="relative p-4 bg-white dark:bg-slate-800 rounded-lg shadow-md w-full max-w-xs text-center flex flex-col items-center gap-2">
-                      {renderNodeIcon(node.type)}
-                      <h3 className="font-medium">{node.name}</h3>
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg font-bold">{node.power} kW</span>
-                        {renderNodeStatus(node)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              
-              {/* Flow arrows - simplified representation */}
-              <div className="absolute top-1/2 left-0 w-full -translate-y-1/2 pointer-events-none">
-                {energyFlows.filter(flow => flow.active).map((flow, index) => (
-                  <div 
-                    key={`${flow.source}-${flow.target}`} 
-                    className={`absolute h-0.5 ${flow.color} animate-pulse`}
-                    style={{
-                      top: `${index * 20}%`,
-                      left: '45%',
-                      width: '10%',
-                      height: '2px'
-                    }}
-                  >
-                    <ArrowRight 
-                      className={`absolute right-0 top-1/2 -translate-y-1/2 ${flow.color}`} 
-                      size={16}
-                    />
-                    <span className="absolute left-1/2 -translate-x-1/2 -top-5 text-xs font-medium">
-                      {flow.power} kW
-                    </span>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              {/* Main visualization */}
+              <Card className="lg:col-span-2 min-h-[400px]">
+                <CardContent className="p-6">
+                  <div className="flex justify-center items-center h-full text-center">
+                    <p className="text-muted-foreground">
+                      Energy flow visualization will be rendered here
+                    </p>
                   </div>
-                ))}
-              </div>
-            </div>
-            
-            <div className="flex justify-between items-center mt-6 pt-2 border-t">
-              <div className="text-xs text-muted-foreground flex items-center">
-                <Clock className="h-3 w-3 mr-1" />
-                <span>Last updated: {new Date().toLocaleTimeString()}</span>
-              </div>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={fetchLiveData} 
-                disabled={isLoading}
-              >
-                <RefreshCcw className={`h-3.5 w-3.5 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
-                Refresh
-              </Button>
-            </div>
-          </>
-        ) : (
-          <div className="space-y-4">
-            <div className="flex justify-between items-center mb-6">
-              <Select value={timeframe} onValueChange={(value) => setTimeframe(value as 'day' | 'week' | 'month')}>
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="Select timeframe" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="day">Past 24 Hours</SelectItem>
-                  <SelectItem value="week">Past Week</SelectItem>
-                  <SelectItem value="month">Past Month</SelectItem>
-                </SelectContent>
-              </Select>
+                </CardContent>
+              </Card>
               
-              <Button variant="outline" size="sm">
-                <Download className="h-4 w-4 mr-1" />
-                Export
-              </Button>
+              {/* Selected component details */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    {selectedNode && getNodeIcon(selectedNode.deviceType)}
+                    {selectedNode?.label || 'Component Details'}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {selectedNode ? (
+                    <div className="space-y-4">
+                      <div>
+                        <p className="text-sm font-medium mb-1">Status</p>
+                        <div className={`px-2 py-1 rounded-full text-xs inline-flex items-center ${
+                          selectedNode.status === 'active' ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400' :
+                          selectedNode.status === 'warning' ? 'bg-yellow-50 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400' :
+                          selectedNode.status === 'error' ? 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400' :
+                          'bg-gray-50 text-gray-700 dark:bg-gray-900/20 dark:text-gray-400'
+                        }`}>
+                          <span className={`w-2 h-2 rounded-full mr-1.5 ${
+                            selectedNode.status === 'active' ? 'bg-green-500' :
+                            selectedNode.status === 'warning' ? 'bg-yellow-500' :
+                            selectedNode.status === 'error' ? 'bg-red-500' :
+                            'bg-gray-500'
+                          }`}></span>
+                          {selectedNode.status.charAt(0).toUpperCase() + selectedNode.status.slice(1)}
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <p className="text-sm font-medium mb-1">Current Power</p>
+                        <p className="text-2xl font-semibold">{selectedNode.power.toFixed(1)} kW</p>
+                      </div>
+                      
+                      {selectedNode.deviceType === 'battery' && (
+                        <div>
+                          <div className="flex justify-between text-sm mb-1">
+                            <p className="font-medium">Battery Level</p>
+                            <p>{selectedNode.batteryLevel}%</p>
+                          </div>
+                          <Progress 
+                            value={selectedNode.batteryLevel} 
+                            className="h-3"
+                            variant={
+                              selectedNode.batteryLevel <= 20 ? 'danger' :
+                              selectedNode.batteryLevel <= 40 ? 'warning' :
+                              'success'
+                            }
+                          />
+                        </div>
+                      )}
+                      
+                      <div className="grid grid-cols-2 gap-3 pt-2">
+                        <div className="rounded-lg bg-muted/50 p-3">
+                          <p className="text-xs text-muted-foreground mb-1">Type</p>
+                          <p className="font-medium">{selectedNode.type.charAt(0).toUpperCase() + selectedNode.type.slice(1)}</p>
+                        </div>
+                        <div className="rounded-lg bg-muted/50 p-3">
+                          <p className="text-xs text-muted-foreground mb-1">ID</p>
+                          <p className="font-medium">{selectedNode.id}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground text-sm">Select a component to view details</p>
+                  )}
+                </CardContent>
+              </Card>
+              
+              {/* System metrics */}
+              <Card className="lg:col-span-3">
+                <CardContent className="p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium">Total Generation</p>
+                      <p className="text-2xl font-semibold">{totalGeneration.toFixed(1)} kW</p>
+                      <div className="flex items-center text-sm text-green-600 dark:text-green-400">
+                        <Zap className="h-4 w-4 mr-1" />
+                        From all sources
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium">Total Consumption</p>
+                      <p className="text-2xl font-semibold">{totalConsumption.toFixed(1)} kW</p>
+                      <div className="flex items-center text-sm text-orange-600 dark:text-orange-400">
+                        <Home className="h-4 w-4 mr-1" />
+                        All devices
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium">Battery Status</p>
+                      <p className="text-2xl font-semibold">{batteryPercentage}%</p>
+                      <Progress 
+                        value={batteryPercentage} 
+                        className="h-2"
+                        variant={
+                          batteryPercentage <= 20 ? 'danger' :
+                          batteryPercentage <= 40 ? 'warning' :
+                          'success'
+                        }
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium">Self-Consumption Rate</p>
+                      <p className="text-2xl font-semibold">{selfConsumptionRate.toFixed(0)}%</p>
+                      <Progress value={selfConsumptionRate} className="h-2" variant="success" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-            
-            <div className="h-[300px] flex items-center justify-center bg-slate-50 dark:bg-slate-900/50 rounded-lg">
-              <div className="text-center">
-                <BarChart2 className="h-10 w-10 text-muted-foreground mx-auto mb-2" />
-                <p className="text-muted-foreground">Energy flow history will be displayed here</p>
-                <p className="text-xs text-muted-foreground mt-1">Data visualization will include flow patterns over time</p>
+          )}
+        </TabsContent>
+        
+        <TabsContent value="historic">
+          <Card>
+            <CardContent className="p-6">
+              <div className="text-center py-12">
+                <p className="text-lg font-medium mb-2">Historical Energy Flow</p>
+                <p className="text-muted-foreground mb-6">
+                  View energy flow patterns over time to identify trends and optimize your system
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
+                  <Button variant="outline" className={timeframe === 'day' ? 'bg-primary/10' : ''} onClick={() => setTimeframe('day')}>
+                    Day
+                  </Button>
+                  <Button variant="outline" className={timeframe === 'week' ? 'bg-primary/10' : ''} onClick={() => setTimeframe('week')}>
+                    Week
+                  </Button>
+                  <Button variant="outline" className={timeframe === 'month' ? 'bg-primary/10' : ''} onClick={() => setTimeframe('month')}>
+                    Month
+                  </Button>
+                </div>
               </div>
-            </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 };
 
