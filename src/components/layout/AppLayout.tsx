@@ -1,9 +1,10 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import Header from './Header';
 import Sidebar from './Sidebar';
 import { cn } from '@/lib/utils';
 import { useMediaQuery } from '@/hooks/use-mobile';
+import { useAppStore } from '@/store/appStore';
+import { motion } from 'framer-motion';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -12,38 +13,33 @@ interface AppLayoutProps {
 
 const AppLayout: React.FC<AppLayoutProps> = ({ children, className }) => {
   const isMobile = useMediaQuery('(max-width: 768px)');
-  const [sidebarExpanded, setSidebarExpanded] = useState(!isMobile);
+  const { sidebarExpanded, setSidebarExpanded } = useAppStore();
   
   // Adjust sidebar state when screen size changes
   useEffect(() => {
-    setSidebarExpanded(!isMobile);
-  }, [isMobile]);
-  
-  const toggleSidebar = () => {
-    setSidebarExpanded(prev => !prev);
-  };
+    if (isMobile) {
+      setSidebarExpanded(false);
+    }
+  }, [isMobile, setSidebarExpanded]);
   
   return (
-    <div className="flex h-screen bg-[#F8FAFD] dark:bg-[#121826] overflow-hidden">
-      <Sidebar 
-        isExpanded={sidebarExpanded} 
-        toggleSidebar={toggleSidebar} 
-        className={cn(
-          "fixed h-full z-30 transition-all duration-300 ease-in-out bg-white dark:bg-gridx-dark-gray border-r border-gray-100 dark:border-gray-700/30",
-          sidebarExpanded ? "w-56" : "w-16"
-        )} 
-      />
+    <div className="flex h-screen bg-background overflow-hidden">
+      <Sidebar className="border-r border-border/50" />
       
-      <div className={cn(
-        "flex-1 flex flex-col overflow-hidden transition-all duration-300 ease-in-out",
-        sidebarExpanded ? "md:ml-56" : "md:ml-16",
-        "ml-0" // Mobile view doesn't shift content
-      )}>
+      <motion.div 
+        className={cn(
+          "flex-1 flex flex-col overflow-hidden",
+          "ml-16"
+        )}
+        initial={{ marginLeft: sidebarExpanded ? '16rem' : '4rem' }}
+        animate={{ marginLeft: sidebarExpanded ? '16rem' : '4rem' }}
+        transition={{ duration: 0.3, ease: 'easeInOut' }}
+      >
         <Header />
         <main className={cn("flex-1 overflow-y-auto p-6", className)}>
           {children}
         </main>
-      </div>
+      </motion.div>
     </div>
   );
 };
