@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import NavItem from './NavItem';
 import SidebarNavSection from './SidebarNavSection';
 import ThemeToggle from './ThemeToggle';
@@ -9,18 +8,32 @@ import Logo from './Logo';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { mainNavItems, systemControlItems, adminItems, integrationItems, deviceManagementItems } from './sidebarNavData';
+import { motion } from 'framer-motion';
+import { useAppStore } from '@/store/appStore';
 
 export interface SidebarProps {
   className?: string;
-  isExpanded: boolean;
-  toggleSidebar: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ className = '', isExpanded, toggleSidebar }) => {
+const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
+  const { sidebarExpanded, toggleSidebar } = useAppStore();
+  
+  // Sidebar animation variants
+  const sidebarVariants = {
+    expanded: { width: '16rem' },
+    collapsed: { width: '4rem' }
+  };
+  
   return (
-    <div className={`${className} bg-background border-r h-screen flex flex-col transition-all duration-300 ${isExpanded ? 'w-64' : 'w-16'}`}>
+    <motion.div 
+      className={`${className} bg-background border-r h-screen flex flex-col z-30 fixed transition-shadow ${sidebarExpanded ? 'shadow-lg' : ''}`}
+      initial={sidebarExpanded ? 'expanded' : 'collapsed'}
+      animate={sidebarExpanded ? 'expanded' : 'collapsed'}
+      variants={sidebarVariants}
+      transition={{ duration: 0.3, ease: 'easeInOut' }}
+    >
       <div className="flex items-center justify-between p-4">
-        {isExpanded ? (
+        {sidebarExpanded ? (
           <Logo />
         ) : (
           <div className="h-8 w-8 rounded-md bg-primary/10 flex items-center justify-center">
@@ -33,8 +46,9 @@ const Sidebar: React.FC<SidebarProps> = ({ className = '', isExpanded, toggleSid
           size="icon" 
           onClick={toggleSidebar} 
           className="h-6 w-6"
+          aria-label={sidebarExpanded ? "Collapse sidebar" : "Expand sidebar"}
         >
-          {isExpanded ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+          {sidebarExpanded ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
         </Button>
       </div>
       
@@ -46,7 +60,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className = '', isExpanded, toggleSid
         <SidebarNavSection 
           key="main" 
           heading="Main"
-          collapsed={!isExpanded}
+          collapsed={!sidebarExpanded}
         >
           {mainNavItems.map((item) => (
             <NavItem 
@@ -54,7 +68,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className = '', isExpanded, toggleSid
               href={item.href} 
               icon={item.icon} 
               label={item.label}
-              collapsed={!isExpanded}
+              collapsed={!sidebarExpanded}
             />
           ))}
         </SidebarNavSection>
@@ -62,7 +76,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className = '', isExpanded, toggleSid
         <SidebarNavSection 
           key="device-management" 
           heading="Device Management"
-          collapsed={!isExpanded}
+          collapsed={!sidebarExpanded}
         >
           {deviceManagementItems.map((item) => (
             <NavItem 
@@ -70,7 +84,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className = '', isExpanded, toggleSid
               href={item.href} 
               icon={item.icon} 
               label={item.label}
-              collapsed={!isExpanded}
+              collapsed={!sidebarExpanded}
             />
           ))}
         </SidebarNavSection>
@@ -78,7 +92,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className = '', isExpanded, toggleSid
         <SidebarNavSection 
           key="control" 
           heading="System Control"
-          collapsed={!isExpanded}
+          collapsed={!sidebarExpanded}
         >
           {systemControlItems.map((item) => (
             <NavItem 
@@ -86,7 +100,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className = '', isExpanded, toggleSid
               href={item.href} 
               icon={item.icon} 
               label={item.label}
-              collapsed={!isExpanded}
+              collapsed={!sidebarExpanded}
             />
           ))}
         </SidebarNavSection>
@@ -94,7 +108,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className = '', isExpanded, toggleSid
         <SidebarNavSection 
           key="admin" 
           heading="Administration"
-          collapsed={!isExpanded}
+          collapsed={!sidebarExpanded}
         >
           {adminItems.map((item) => (
             <NavItem 
@@ -102,7 +116,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className = '', isExpanded, toggleSid
               href={item.href} 
               icon={item.icon} 
               label={item.label}
-              collapsed={!isExpanded}
+              collapsed={!sidebarExpanded}
             />
           ))}
         </SidebarNavSection>
@@ -111,7 +125,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className = '', isExpanded, toggleSid
       <div className="p-4 border-t">
         <ThemeToggle />
       </div>
-    </div>
+    </motion.div>
   );
 };
 
