@@ -23,7 +23,17 @@ jobs:
         cache: 'npm'
 
     - name: Install dependencies
-      run: npm install
+      run: |
+        if [ -f yarn.lock ]; then
+          yarn install
+        else
+          npm install
+        fi
 
     - name: Run Modbus Agent
-      run: npm start
+      run: |
+        if [ -f yarn.lock ]; then
+          yarn start
+        else
+          npm start
+        fi
