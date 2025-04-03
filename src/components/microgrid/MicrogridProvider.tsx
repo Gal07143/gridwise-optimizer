@@ -1,293 +1,129 @@
-
-import React, { createContext, useContext, useReducer, useEffect, useState, ReactNode } from 'react';
+import React, { ReactNode, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { MicrogridState, MicrogridAction, MicrogridContextType, CommandHistoryItem, AlertItem } from './types';
+import { useEMSStore } from '@/store/emsStore';
+import { useToast } from '@/components/ui/use-toast';
+import { AlertItem, CommandHistoryItem, MicrogridState } from './types';
 
 interface Props {
   children: ReactNode;
 }
 
-const initialCommandHistory: CommandHistoryItem[] = [
-  {
-    id: 'cmd-1',
-    timestamp: new Date().toISOString(),
-    command: 'System started',
-    success: true,
-    user: 'System',
-    details: 'Initial system boot'
-  }
-];
-
-const initialAlerts: AlertItem[] = [
-  {
-    id: 'alert-1',
-    timestamp: new Date().toISOString(),
-    title: 'System Alert',
-    message: 'Microgrid system initialized',
-    severity: 'low',
-    acknowledged: false
-  }
-];
-
-const initialState: MicrogridState = {
-  batteryCharge: 80,
-  batteryCharging: true,
-  batteryCurrent: 12.5,
-  batteryCapacity: 13.5,
-  solarOutput: 6.2,
-  solarConnected: true,
-  solarEfficiency: 0.87,
-  windOutput: 2.1,
-  windConnected: true,
-  windSpeed: 8.2,
-  gridPower: 2.0,
-  gridConnection: true,
-  loadDemand: 4.8,
-  loadConnected: true,
-  buildingEfficiency: 0.92,
-  timestamp: new Date(),
-  systemMode: 'auto',
+const MicrogridProvider: React.FC<Props> = ({ children }) => {
+  const { 
+    batteryLevel, 
+    solarProduction, 
+    windProduction,
+    operatingMode,
+    alerts,
+    setBatteryLevel,
+    setSolarProduction,
+    setWindProduction,
+    setOperatingMode,
+    acknowledgeAlert,
+    addAlert,
+    updateMicrogridState
+  } = useEMSStore();
   
-  // Add missing properties required by components
-  solarProduction: 6.2,
-  windProduction: 2.1,
-  batteryLevel: 80,
-  batteryDischargeEnabled: true,
-  batteryChargeEnabled: true,
-  loadConsumption: 4.8,
-  gridImport: 1.5,
-  gridExport: 0.5,
-  frequency: 60.0,
-  voltage: 240.5,
-  lastUpdated: new Date().toISOString(),
-  operatingMode: 'auto',
-  batteryChargeRate: 3.5,
-  gridImportEnabled: true,
-  gridExportEnabled: true,
-  batterySelfConsumptionMode: true,
-  economicMode: false,
-  peakShavingEnabled: true,
-  demandResponseEnabled: false
-};
+  const { toast } = useToast();
 
-const microgridReducer = (state: MicrogridState, action: MicrogridAction): MicrogridState => {
-  switch (action.type) {
-    case 'UPDATE_TIME':
-      return { ...state, timestamp: new Date() };
-    case 'UPDATE_PRODUCTION':
-      return { ...state, ...action.payload };
-    case 'SET_SYSTEM_MODE':
-      return { ...state, systemMode: action.payload, operatingMode: action.payload };
-    case 'SET_BATTERY_CHARGE_ENABLED':
-      return { ...state, batteryChargeEnabled: action.payload };
-    case 'SET_BATTERY_DISCHARGE_ENABLED':
-      return { ...state, batteryDischargeEnabled: action.payload };
-    case 'SET_BATTERY_CHARGE_RATE':
-      return { ...state, batteryChargeRate: action.payload };
-    case 'SET_GRID_IMPORT_ENABLED':
-      return { ...state, gridImportEnabled: action.payload };
-    case 'SET_GRID_EXPORT_ENABLED':
-      return { ...state, gridExportEnabled: action.payload };
-    case 'SET_BATTERY_SELF_CONSUMPTION':
-      return { ...state, batterySelfConsumptionMode: action.payload };
-    case 'SET_ECONOMIC_MODE':
-      return { ...state, economicMode: action.payload };
-    case 'SET_PEAK_SHAVING':
-      return { ...state, peakShavingEnabled: action.payload };
-    case 'SET_DEMAND_RESPONSE':
-      return { ...state, demandResponseEnabled: action.payload };
-    default:
-      return state;
-  }
-};
+  // Simulated periodic updates (will be replaced with real data fetching)
+  useEffect(() => {
+    const timer = setInterval(() => {
+      // Simulate random fluctuations in values
+      setBatteryLevel(prev => Math.max(10, Math.min(100, prev + (Math.random() * 2 - 1))));
+      setSolarProduction(prev => Math.max(0, prev + (Math.random() * 0.5 - 0.25)));
+      setWindProduction(prev => Math.max(0, prev + (Math.random() * 0.3 - 0.15)));
+    }, 10000);
 
-interface MicrogridContextValues extends MicrogridContextType {
-  state: MicrogridState;
-  alerts: AlertItem[];
-  commandHistory: CommandHistoryItem[];
-  settings: {
-    minBatteryReserve: number;
-    prioritizeSelfConsumption: boolean;
-    gridExportLimit: number;
-    peakShavingEnabled: boolean;
-    peakShavingThreshold: number;
-    demandResponseEnabled: boolean;
-    economicOptimizationEnabled: boolean;
-    weatherPredictiveControlEnabled: boolean;
-  };
-  handleAcknowledgeAlert: (alertId: string) => void;
-  handleModeChange: (mode: 'auto' | 'manual' | 'eco' | 'backup') => void;
-  handleGridConnectionToggle: () => void;
-  handleBatteryDischargeToggle: () => void;
-  handleSettingsChange: (setting: string, value: any) => void;
-  handleSaveSettings: () => void;
-}
+    return () => clearInterval(timer);
+  }, [setBatteryLevel, setSolarProduction, setWindProduction]);
 
-export const MicrogridContext = createContext<MicrogridContextValues>({
-  state: initialState,
-  dispatch: () => null,
-  alerts: [],
-  commandHistory: [],
-  settings: {
-    minBatteryReserve: 20,
-    prioritizeSelfConsumption: true,
-    gridExportLimit: 50,
-    peakShavingEnabled: false,
-    peakShavingThreshold: 80,
-    demandResponseEnabled: false,
-    economicOptimizationEnabled: true,
-    weatherPredictiveControlEnabled: false
-  },
-  handleAcknowledgeAlert: () => {},
-  handleModeChange: () => {},
-  handleGridConnectionToggle: () => {},
-  handleBatteryDischargeToggle: () => {},
-  handleSettingsChange: () => {},
-  handleSaveSettings: () => {}
-});
+  // Real-time updates from Supabase (if available)
+  useEffect(() => {
+    let subscription: any;
+    
+    try {
+      // Subscribe to microgrid_state table changes
+      subscription = supabase
+        .channel('microgrid-updates')
+        .on('postgres_changes', { 
+          event: 'UPDATE', 
+          schema: 'public', 
+          table: 'microgrid_state' 
+        }, (payload) => {
+          const newState = payload.new as MicrogridState;
+          updateMicrogridState(newState);
+          
+          // Notify user of significant changes
+          if (Math.abs((newState.batteryLevel || 0) - batteryLevel) > 10) {
+            toast({
+              title: "Battery Level Update",
+              description: `Battery level changed significantly to ${newState.batteryLevel}%`,
+            });
+          }
+        })
+        .subscribe();
+    } catch (error) {
+      console.error("Failed to subscribe to microgrid updates:", error);
+    }
+    
+    return () => {
+      subscription?.unsubscribe();
+    };
+  }, [batteryLevel, updateMicrogridState, toast]);
 
-export const MicrogridProvider: React.FC<Props> = ({ children }) => {
-  const [state, dispatch] = useReducer(microgridReducer, initialState);
-  const [alerts, setAlerts] = useState<AlertItem[]>(initialAlerts);
-  const [commandHistory, setCommandHistory] = useState<CommandHistoryItem[]>(initialCommandHistory);
-  const [settings, setSettings] = useState({
-    minBatteryReserve: 20,
-    prioritizeSelfConsumption: true,
-    gridExportLimit: 50,
-    peakShavingEnabled: false,
-    peakShavingThreshold: 80,
-    demandResponseEnabled: false,
-    economicOptimizationEnabled: true,
-    weatherPredictiveControlEnabled: false
-  });
-
+  // Function to handle alert acknowledgement
   const handleAcknowledgeAlert = (alertId: string) => {
-    setAlerts(prevAlerts => 
-      prevAlerts.map(alert => 
-        alert.id === alertId ? { ...alert, acknowledged: true } : alert
-      )
-    );
+    acknowledgeAlert(alertId);
     
-    // Add to command history
-    const newCommand: CommandHistoryItem = {
-      id: `cmd-${Date.now()}`,
-      timestamp: new Date().toISOString(),
-      command: `Acknowledged alert #${alertId}`,
-      success: true,
-      user: 'Admin'
-    };
+    toast({
+      title: "Alert Acknowledged",
+      description: "The alert has been marked as acknowledged.",
+    });
     
-    setCommandHistory(prev => [...prev, newCommand]);
+    // You could also send this to the backend
+    try {
+      supabase
+        .from('alerts')
+        .update({ acknowledged: true })
+        .eq('id', alertId)
+        .then(() => {
+          console.log('Alert acknowledgement synced to database');
+        });
+    } catch (error) {
+      console.error("Failed to sync alert acknowledgement:", error);
+    }
   };
 
+  // Function to handle mode changes
   const handleModeChange = (mode: 'auto' | 'manual' | 'eco' | 'backup') => {
-    dispatch({ type: 'SET_SYSTEM_MODE', payload: mode });
+    setOperatingMode(mode);
     
-    // Add to command history
-    const newCommand: CommandHistoryItem = {
-      id: `cmd-${Date.now()}`,
-      timestamp: new Date().toISOString(),
-      command: `Changed system mode to ${mode}`,
-      success: true,
-      user: 'Admin'
-    };
-    
-    setCommandHistory(prev => [...prev, newCommand]);
-  };
-
-  const handleGridConnectionToggle = () => {
-    dispatch({ 
-      type: 'UPDATE_PRODUCTION', 
-      payload: { 
-        gridConnection: !state.gridConnection,
-        gridImportEnabled: !state.gridConnection
-      } 
+    toast({
+      title: "Mode Changed",
+      description: `System mode changed to ${mode}`,
     });
     
-    // Add to command history
-    const newCommand: CommandHistoryItem = {
-      id: `cmd-${Date.now()}`,
-      timestamp: new Date().toISOString(),
-      command: `${state.gridConnection ? 'Disconnected' : 'Connected'} grid`,
-      success: true,
-      user: 'Admin'
-    };
-    
-    setCommandHistory(prev => [...prev, newCommand]);
-  };
-
-  const handleBatteryDischargeToggle = () => {
-    dispatch({ 
-      type: 'SET_BATTERY_DISCHARGE_ENABLED', 
-      payload: !state.batteryDischargeEnabled 
-    });
-    
-    // Add to command history
-    const newCommand: CommandHistoryItem = {
-      id: `cmd-${Date.now()}`,
-      timestamp: new Date().toISOString(),
-      command: `${state.batteryDischargeEnabled ? 'Disabled' : 'Enabled'} battery discharge`,
-      success: true,
-      user: 'Admin'
-    };
-    
-    setCommandHistory(prev => [...prev, newCommand]);
-  };
-
-  const handleSettingsChange = (setting: string, value: any) => {
-    setSettings(prev => ({
-      ...prev,
-      [setting]: value
-    }));
-  };
-
-  const handleSaveSettings = () => {
-    // In a real implementation, this would save to a database
-    // For now we just add to command history
-    
-    const newCommand: CommandHistoryItem = {
-      id: `cmd-${Date.now()}`,
-      timestamp: new Date().toISOString(),
-      command: `Saved system settings`,
-      success: true,
-      user: 'Admin',
-      details: JSON.stringify(settings)
-    };
-    
-    setCommandHistory(prev => [...prev, newCommand]);
-    
-    // Apply some settings directly to state
-    if (state.systemMode === 'manual') {
-      dispatch({ 
-        type: 'UPDATE_PRODUCTION', 
-        payload: { 
-          batterySelfConsumptionMode: settings.prioritizeSelfConsumption,
-          economicMode: settings.economicOptimizationEnabled,
-          peakShavingEnabled: settings.peakShavingEnabled,
-          demandResponseEnabled: settings.demandResponseEnabled,
-        }
-      });
+    // Add to command history in the database
+    try {
+      supabase
+        .from('command_history')
+        .insert({
+          command: `Changed system mode to ${mode}`,
+          success: true,
+          user: 'Admin'
+        })
+        .then(() => {
+          console.log('Command history updated');
+        });
+    } catch (error) {
+      console.error("Failed to update command history:", error);
     }
   };
 
   return (
-    <MicrogridContext.Provider value={{ 
-      state, 
-      dispatch,
-      alerts,
-      commandHistory,
-      settings,
-      handleAcknowledgeAlert,
-      handleModeChange,
-      handleGridConnectionToggle,
-      handleBatteryDischargeToggle,
-      handleSettingsChange,
-      handleSaveSettings
-    }}>
-      {children}
-    </MicrogridContext.Provider>
+    <>{children}</>
   );
 };
 
-// Create a hook to use the microgrid context
-export const useMicrogrid = () => useContext(MicrogridContext);
+export default MicrogridProvider;
