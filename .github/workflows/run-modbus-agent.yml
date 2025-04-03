@@ -14,21 +14,13 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Set up Node.js
-      uses: actions/setup-node@v2
+      uses: actions/setup-node@v3
       with:
         node-version: '16'
-
-    - name: Remove node_modules
-      run: rm -rf node_modules
-
-    - name: Clear npm cache
-      run: npm cache clean --force
-
-    - name: Delete package-lock.json
-      run: rm package-lock.json
+        cache: 'npm'
 
     - name: Install dependencies
       run: npm install
