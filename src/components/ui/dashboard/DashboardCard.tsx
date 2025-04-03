@@ -1,67 +1,131 @@
-
-import React, { ReactNode } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React from 'react';
 import { cn } from '@/lib/utils';
-import { Skeleton } from '@/components/ui/skeleton';
+import { motion } from 'framer-motion';
 
-export interface DashboardCardProps {
-  title: string;
-  children: ReactNode;
-  icon?: ReactNode;
-  className?: string;
+interface DashboardCardProps extends React.HTMLAttributes<HTMLDivElement> {
+  title?: string | React.ReactNode;
+  icon?: React.ReactNode;
+  variant?: 'default' | 'outline' | 'glass' | 'filled';
+  size?: 'sm' | 'md' | 'lg';
+  accent?: 'primary' | 'secondary' | 'info' | 'success' | 'warning' | 'error' | 'none';
   isLoading?: boolean;
-  actions?: ReactNode;
-  badge?: ReactNode;
-  style?: React.CSSProperties;
-  loading?: boolean; // For backward compatibility
-  gradient?: boolean;
-  interactive?: boolean;
+  animate?: boolean;
+  className?: string;
+  contentClassName?: string;
+  headerClassName?: string;
+  footerClassName?: string;
+  footer?: React.ReactNode;
+  children: React.ReactNode;
 }
 
-const DashboardCard = ({
+const DashboardCard: React.FC<DashboardCardProps> = ({
   title,
-  children,
   icon,
+  variant = 'default',
+  size = 'md',
+  accent = 'none',
+  isLoading = false,
+  animate = true,
   className,
-  isLoading,
-  actions,
-  badge,
-  style,
-  loading,
-  gradient = false,
-  interactive = true,
-}: DashboardCardProps) => {
-  // Use loading for backward compatibility
-  const isContentLoading = isLoading || loading;
+  contentClassName,
+  headerClassName,
+  footerClassName,
+  footer,
+  children,
+  ...props
+}) => {
+  // Card variant styles
+  const variantClasses = {
+    default: 'bg-card shadow-sm dark:shadow-md',
+    outline: 'bg-background border border-border',
+    glass: 'bg-white/10 dark:bg-black/10 backdrop-blur-md border border-white/10 dark:border-white/5',
+    filled: 'dark:bg-muted/30 bg-muted/30',
+  };
+  
+  // Card size styles
+  const sizeClasses = {
+    sm: 'p-3',
+    md: 'p-4',
+    lg: 'p-6',
+  };
+  
+  // Accent colors
+  const accentClasses = {
+    none: '',
+    primary: 'border-l-4 border-l-primary',
+    secondary: 'border-l-4 border-l-secondary',
+    info: 'border-l-4 border-l-blue-500',
+    success: 'border-l-4 border-l-green-500',
+    warning: 'border-l-4 border-l-yellow-500',
+    error: 'border-l-4 border-l-red-500',
+  };
+  
+  // Animation properties
+  const cardVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: { opacity: 1, y: 0 }
+  };
+  
+  const Card = animate ? motion.div : 'div';
   
   return (
-    <Card 
+    <Card
       className={cn(
-        "h-full border border-gray-100 dark:border-gray-700/30 overflow-hidden bg-white dark:bg-gridx-dark-gray/90",
-        gradient && "bg-gradient-to-b from-white to-gray-50 dark:from-gridx-dark-gray/95 dark:to-gridx-navy/95",
-        interactive && "transition-all duration-300 hover:shadow-md hover:translate-y-[-2px]",
-        "animate-in fade-in slide-in-from-bottom-4 duration-700",
+        'rounded-xl overflow-hidden transition-all duration-200',
+        'hover:shadow-md',
+        variantClasses[variant],
+        accentClasses[accent],
         className
-      )} 
-      style={style}
+      )}
+      {...(animate ? {
+        initial: "hidden",
+        animate: "visible",
+        variants: cardVariants,
+        transition: { duration: 0.3 }
+      } : {})}
+      {...props}
     >
-      <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-        <CardTitle className="text-md font-medium flex items-center gap-2 text-gridx-navy dark:text-white/90">
-          {icon && <span className="text-gridx-blue">{icon}</span>}
-          {title}
-        </CardTitle>
-        {badge && <div>{badge}</div>}
-        {actions && <div>{actions}</div>}
-      </CardHeader>
-      <CardContent>
-        {isContentLoading ? (
-          <div className="space-y-2">
-            <Skeleton className="h-[125px] w-full" />
+      {(title || icon) && (
+        <div className={cn('flex items-center justify-between', 
+          sizeClasses[size],
+          'border-b border-border/30',
+          headerClassName
+        )}>
+          <div className="flex items-center space-x-3">
+            {icon && (
+              <div className="text-muted-foreground">
+                {icon}
+              </div>
+            )}
+            {typeof title === 'string' ? (
+              <h3 className="font-medium text-card-foreground">{title}</h3>
+            ) : (
+              title
+            )}
+          </div>
+        </div>
+      )}
+      
+      <div className={cn(sizeClasses[size], contentClassName)}>
+        {isLoading ? (
+          <div className="flex items-center justify-center h-full min-h-[100px]">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
           </div>
         ) : (
           children
         )}
-      </CardContent>
+      </div>
+      
+      {footer && (
+        <div className={cn(
+          'border-t border-border/30',
+          sizeClasses[size === 'sm' ? 'sm' : 'sm'],
+          'text-xs text-muted-foreground',
+          footerClassName
+        )}>
+          {footer}
+        </div>
+      )}
     </Card>
   );
 };
