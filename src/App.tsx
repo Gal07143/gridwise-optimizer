@@ -12,6 +12,12 @@ import ReviewDevices from '@/pages/devices/ReviewDevices';
 import ManageDevices from '@/pages/devices/ManageDevices';
 import SmartDevices from '@/pages/devices/SmartDevices';
 import DeviceDetails from '@/pages/devices/DeviceDetails';
+import EnergyFlow from '@/pages/EnergyFlow';
+import EnergyFlowAdvanced from '@/pages/EnergyFlowAdvanced';
+import AIOverview from '@/pages/AIOverview';
+import OptimizationAlgorithms from '@/pages/settings/OptimizationAlgorithms';
+import BatteryManagement from '@/pages/BatteryManagement';
+import Analytics from '@/pages/Analytics';
 
 // Create a client with error handling and retry logic
 const queryClient = new QueryClient({
@@ -41,6 +47,12 @@ function App() {
             <Route path="/devices/review" element={<ReviewDevices />} />
             <Route path="/devices/manage" element={<ManageDevices />} />
             <Route path="/devices/smart-devices" element={<SmartDevices />} />
+            <Route path="/energy-flow" element={<EnergyFlow />} />
+            <Route path="/energy-flow-advanced" element={<EnergyFlowAdvanced />} />
+            <Route path="/ai-overview" element={<AIOverview />} />
+            <Route path="/optimization" element={<OptimizationAlgorithms />} />
+            <Route path="/battery-management" element={<BatteryManagement />} />
+            <Route path="/analytics" element={<Analytics />} />
           </Routes>
         </Router>
       </ThemeProvider>

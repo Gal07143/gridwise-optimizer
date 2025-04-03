@@ -2173,6 +2173,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      update_ai_model_feedback: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       ai_recommendation_priority: "low" | "medium" | "high"
