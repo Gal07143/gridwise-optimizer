@@ -1,39 +1,41 @@
-
-import { cn } from "@/lib/utils";
-import React from "react";
+import React from 'react';
+import { cn } from '@/lib/utils';
 
 interface GlassPanelProps extends React.HTMLAttributes<HTMLDivElement> {
-  children: React.ReactNode;
-  interactive?: boolean;
+  intensity?: 'low' | 'medium' | 'high';
+  blur?: 'light' | 'medium' | 'heavy';
+  border?: boolean;
   className?: string;
-  intensity?: "low" | "medium" | "high";
-  gradient?: boolean;
-  bordered?: boolean;
+  children: React.ReactNode;
 }
 
-const GlassPanel = ({ 
-  children, 
-  interactive = false, 
-  className, 
-  intensity = "medium",
-  gradient = false,
-  bordered = true,
-  ...props 
-}: GlassPanelProps) => {
+const GlassPanel: React.FC<GlassPanelProps> = ({
+  intensity = 'medium',
+  blur = 'medium',
+  border = true,
+  className,
+  children,
+  ...props
+}) => {
   const intensityClasses = {
-    low: "bg-white dark:bg-gridx-dark-gray/80",
-    medium: "bg-white dark:bg-gridx-dark-gray/90",
-    high: "bg-white dark:bg-gridx-dark-gray/95"
+    low: 'bg-white/5 dark:bg-black/5',
+    medium: 'bg-white/10 dark:bg-black/10',
+    high: 'bg-white/20 dark:bg-black/20',
   };
-
+  
+  const blurClasses = {
+    light: 'backdrop-blur-sm',
+    medium: 'backdrop-blur-md',
+    heavy: 'backdrop-blur-lg',
+  };
+  
   return (
     <div
       className={cn(
-        "rounded-xl shadow-sm",
-        bordered && "border border-gray-100 dark:border-gray-700/30",
         intensityClasses[intensity],
-        gradient && "bg-gradient-to-b from-white to-gray-50 dark:from-gridx-dark-gray/95 dark:to-gridx-navy/95",
-        interactive && "transition-all duration-300 hover:shadow-md hover:translate-y-[-2px]",
+        blurClasses[blur],
+        border ? 'border border-white/10 dark:border-white/5' : '',
+        'rounded-xl shadow-sm',
         className
       )}
       {...props}
