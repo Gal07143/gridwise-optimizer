@@ -1,4 +1,3 @@
-
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -17,6 +16,13 @@ const mqttOptions = {
   password: process.env.MQTT_PASSWORD,
   reconnectPeriod: 1000,
 };
+
+// Check if MQTT_BROKER_URL is defined
+if (!process.env.MQTT_BROKER_URL) {
+  console.log('MQTT_BROKER_URL is not defined. Skipping MQTT connection.');
+  // Implement logic to proceed without MQTT connection if necessary
+  process.exit(0); // Exit the process if MQTT connection is essential
+}
 
 // Connect to your MQTT broker
 console.log(`Connecting to MQTT broker at ${process.env.MQTT_BROKER_URL}`);
