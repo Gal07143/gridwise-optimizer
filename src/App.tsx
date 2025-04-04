@@ -6,6 +6,7 @@ import { ThemeProvider } from './theme/ThemeConfig';
 import { Toaster } from '@/components/ui/sonner';
 import SmartDependencyErrorBoundary from './components/ui/SmartDependencyErrorBoundary';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import DeviceDatabaseInitializer from './components/DeviceDatabaseInitializer';
 import './App.css';
 
 // Create a client
@@ -21,9 +22,10 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <SmartDependencyErrorBoundary>
-      <ThemeProvider defaultTheme="system" storageKey="ems-theme">
+      <ThemeProvider>
         <QueryClientProvider client={queryClient}>
           <Suspense fallback={<LoadingScreen />}>
+            <DeviceDatabaseInitializer />
             <AppRoutes />
             <Toaster position="top-right" closeButton richColors />
           </Suspense>

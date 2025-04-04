@@ -1,152 +1,235 @@
 
+import { DeviceModel } from '@/types/device-model';
 import { supabase } from '@/integrations/supabase/client';
-import { DeviceModelReference, DeviceManufacturer, deviceCategories } from '@/types/device-catalog';
-import { DeviceType } from '@/types/energy';
-import { toast } from 'sonner';
+import { shouldPopulateDeviceDatabase, importDeviceData } from '@/utils/deviceDataImporter';
 
-// Fetch all device models
-export const getAllDeviceModels = async (): Promise<DeviceModelReference[]> => {
+export interface DeviceManufacturer {
+  id: string;
+  name: string;
+  device_count: number;
+}
+
+export interface DeviceModelReference {
+  id: string;
+  manufacturer: string;
+  model_name: string;
+  model_number: string;
+  device_type: string;
+  description?: string;
+}
+
+/**
+ * Get all device models from the database
+ */
+export async function getAllDeviceModels(): Promise<DeviceModel[]> {
   try {
+    // Check if we need to populate the database first
+    const needsPopulation = await shouldPopulateDeviceDatabase();
+    if (needsPopulation) {
+      await importDeviceData();
+    }
+
     const { data, error } = await supabase
       .from('device_models')
       .select('*')
       .order('manufacturer', { ascending: true });
 
     if (error) {
-      throw new Error(`Error fetching device models: ${error.message}`);
+      console.error('Error fetching device models:', error);
+      throw new Error(error.message);
     }
 
-    return data as DeviceModelReference[];
+    return data || [];
   } catch (error) {
-    console.error("Error in getAllDeviceModels:", error);
-    toast.error("Failed to load device models");
-    return [];
+    console.error('Error in getAllDeviceModels:', error);
+    throw error;
   }
-};
+}
 
-// Fetch device models by category
-export const getDeviceModelsByCategory = async (categoryId: string): Promise<DeviceModelReference[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('device_models')
-      .select('*')
-      .eq('category', categoryId)
-      .order('manufacturer', { ascending: true });
-
-    if (error) {
-      throw new Error(`Error fetching device models by category: ${error.message}`);
-    }
-
-    return data as DeviceModelReference[];
-  } catch (error) {
-    console.error(`Error in getDeviceModelsByCategory(${categoryId}):`, error);
-    toast.error(`Failed to load ${getCategoryName(categoryId)} models`);
-    return [];
-  }
-};
-
-// Fetch a single device model by ID
-export const getDeviceModelById = async (modelId: string): Promise<DeviceModelReference | null> => {
+/**
+ * Get a device model by its ID
+ */
+export async function getDeviceModelById(modelId: string): Promise<DeviceModel> {
   try {
     const { data, error } = await supabase
       .from('device_models')
       .select('*')
       .eq('id', modelId)
-      .maybeSingle();
+      .single();
 
     if (error) {
-      throw new Error(`Error fetching device model: ${error.message}`);
+      console.error('Error fetching device model:', error);
+      throw new Error(error.message);
     }
 
-    return data as DeviceModelReference;
-  } catch (error) {
-    console.error(`Error in getDeviceModelById(${modelId}):`, error);
-    toast.error("Failed to load device model details");
-    return null;
-  }
-};
+    if (!data) {
+      throw new Error(`Device model with ID ${modelId} not found`);
+    }
 
-// Fetch all manufacturers
-export const getAllManufacturers = async (): Promise<DeviceManufacturer[]> => {
+    return data;
+  } catch (error) {
+    console.error(`Error in getDeviceModelById for ID ${modelId}:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Get device models by type
+ */
+export async function getDeviceModelsByType(deviceType: string): Promise<DeviceModel[]> {
   try {
-    // For now, extract unique manufacturers from device_models table
     const { data, error } = await supabase
       .from('device_models')
-      .select('manufacturer')
-      .order('manufacturer');
+      .select('*')
+      .eq('device_type', deviceType)
+      .order('manufacturer', { ascending: true });
 
     if (error) {
-      throw new Error(`Error fetching manufacturers: ${error.message}`);
+      console.error('Error fetching device models by type:', error);
+      throw new Error(error.message);
     }
 
-    // Convert to array of unique manufacturer names
-    const uniqueManufacturers = Array.from(new Set(data.map(item => item.manufacturer)));
-    
-    // Create DeviceManufacturer objects
-    return uniqueManufacturers.map(name => ({
+    return data || [];
+  } catch (error) {
+    console.error(`Error in getDeviceModelsByType for type ${deviceType}:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Get device models by manufacturer
+ */
+export async function getDeviceModelsByManufacturer(manufacturer: string): Promise<DeviceModel[]> {
+  try {
+    const { data, error } = await supabase
+      .from('device_models')
+      .select('*')
+      .ilike('manufacturer', `%${manufacturer}%`)
+      .order('model_name', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching device models by manufacturer:', error);
+      throw new Error(error.message);
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error(`Error in getDeviceModelsByManufacturer for manufacturer ${manufacturer}:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Get all manufacturers
+ */
+export async function getAllManufacturers(): Promise<DeviceManufacturer[]> {
+  try {
+    const { data, error } = await supabase
+      .from('device_models')
+      .select('manufacturer');
+
+    if (error) {
+      console.error('Error fetching manufacturers:', error);
+      throw new Error(error.message);
+    }
+
+    // Count unique manufacturers
+    const manufacturerCounts: Record<string, number> = {};
+    data?.forEach(item => {
+      const manufacturer = item.manufacturer;
+      if (manufacturer) {
+        manufacturerCounts[manufacturer] = (manufacturerCounts[manufacturer] || 0) + 1;
+      }
+    });
+
+    // Create manufacturer objects with counts
+    const manufacturers: DeviceManufacturer[] = Object.entries(manufacturerCounts).map(([name, count]) => ({
       id: name.toLowerCase().replace(/\s+/g, '-'),
-      name
+      name: name,
+      device_count: count
     }));
+
+    return manufacturers.sort((a, b) => a.name.localeCompare(b.name));
   } catch (error) {
-    console.error("Error in getAllManufacturers:", error);
-    toast.error("Failed to load manufacturers");
-    return [];
+    console.error('Error in getAllManufacturers:', error);
+    throw error;
   }
-};
+}
 
-// Helper to get category name by ID
-export const getCategoryName = (categoryId: string): string => {
-  const category = deviceCategories.find(c => c.id === categoryId);
-  return category ? category.name : categoryId.charAt(0).toUpperCase() + categoryId.slice(1).replace('_', ' ');
-};
-
-// Create a new device model (admin function)
-export const createDeviceModel = async (modelData: Omit<DeviceModelReference, 'id'>): Promise<DeviceModelReference | null> => {
+/**
+ * Search device models by query string
+ */
+export async function searchDeviceModels(query: string): Promise<DeviceModel[]> {
   try {
     const { data, error } = await supabase
       .from('device_models')
-      .insert(modelData)
+      .select('*')
+      .or(`manufacturer.ilike.%${query}%,model_name.ilike.%${query}%,model_number.ilike.%${query}%,description.ilike.%${query}%`)
+      .order('manufacturer', { ascending: true });
+
+    if (error) {
+      console.error('Error searching device models:', error);
+      throw new Error(error.message);
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error(`Error in searchDeviceModels for query ${query}:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Create a new device model
+ */
+export async function createDeviceModel(deviceModel: Partial<DeviceModel>): Promise<DeviceModel> {
+  try {
+    const { data, error } = await supabase
+      .from('device_models')
+      .insert([deviceModel])
       .select()
       .single();
 
     if (error) {
-      throw new Error(`Error creating device model: ${error.message}`);
+      console.error('Error creating device model:', error);
+      throw new Error(error.message);
     }
 
-    toast.success("Device model added to catalog");
-    return data as DeviceModelReference;
+    return data;
   } catch (error) {
-    console.error("Error in createDeviceModel:", error);
-    toast.error("Failed to create device model");
-    return null;
+    console.error('Error in createDeviceModel:', error);
+    throw error;
   }
-};
+}
 
-// Update existing device model
-export const updateDeviceModel = async (modelId: string, updates: Partial<DeviceModelReference>): Promise<DeviceModelReference | null> => {
+/**
+ * Update an existing device model
+ */
+export async function updateDeviceModel(modelId: string, deviceModel: Partial<DeviceModel>): Promise<DeviceModel> {
   try {
     const { data, error } = await supabase
       .from('device_models')
-      .update(updates)
+      .update(deviceModel)
       .eq('id', modelId)
       .select()
       .single();
 
     if (error) {
-      throw new Error(`Error updating device model: ${error.message}`);
+      console.error('Error updating device model:', error);
+      throw new Error(error.message);
     }
 
-    toast.success("Device model updated successfully");
-    return data as DeviceModelReference;
+    return data;
   } catch (error) {
-    console.error(`Error in updateDeviceModel(${modelId}):`, error);
-    toast.error("Failed to update device model");
-    return null;
+    console.error(`Error in updateDeviceModel for ID ${modelId}:`, error);
+    throw error;
   }
-};
+}
 
-// Delete a device model
-export const deleteDeviceModel = async (modelId: string): Promise<boolean> => {
+/**
+ * Delete a device model
+ */
+export async function deleteDeviceModel(modelId: string): Promise<void> {
   try {
     const { error } = await supabase
       .from('device_models')
@@ -154,14 +237,11 @@ export const deleteDeviceModel = async (modelId: string): Promise<boolean> => {
       .eq('id', modelId);
 
     if (error) {
-      throw new Error(`Error deleting device model: ${error.message}`);
+      console.error('Error deleting device model:', error);
+      throw new Error(error.message);
     }
-
-    toast.success("Device model deleted from catalog");
-    return true;
   } catch (error) {
-    console.error(`Error in deleteDeviceModel(${modelId}):`, error);
-    toast.error("Failed to delete device model");
-    return false;
+    console.error(`Error in deleteDeviceModel for ID ${modelId}:`, error);
+    throw error;
   }
-};
+}
