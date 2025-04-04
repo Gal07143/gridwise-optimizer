@@ -1,14 +1,13 @@
 
-import React, { Component, ErrorInfo, ReactNode, useEffect } from 'react';
-import { Button } from './button';
-import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
-import { useIsMobile } from '@/hooks/use-mobile';
+import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { AlertTriangle } from 'lucide-react';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import SmartDependencyErrorBoundary from './SmartDependencyErrorBoundary';
 
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
-  onReset?: () => void;
-  resetLabel?: string;
 }
 
 interface State {
@@ -17,85 +16,101 @@ interface State {
   errorInfo: ErrorInfo | null;
 }
 
-// MobileAwareErrorUI component to handle responsive error display
-const MobileAwareErrorUI = ({ 
-  error, 
-  onReset, 
-  resetLabel = "Try Again"
-}: { 
-  error: Error | null; 
-  onReset: () => void;
-  resetLabel?: string;
-}) => {
-  const isMobile = useIsMobile();
-  
-  return (
-    <div className="flex flex-col items-center justify-center h-full p-6 text-center">
-      <div className="bg-destructive/10 p-4 rounded-full mb-4">
-        <AlertTriangle className="h-10 w-10 text-destructive" />
-      </div>
-      <h2 className="text-xl font-semibold mb-2">Something went wrong</h2>
-      <p className="text-muted-foreground mb-4 max-w-md">
-        {error?.message || 'An unexpected error occurred. Please try again.'}
-      </p>
-      <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} gap-4`}>
-        <Button 
-          variant="outline" 
-          onClick={onReset}
-          className="flex items-center gap-2"
-        >
-          <RefreshCw size={16} />
-          <span>{resetLabel}</span>
-        </Button>
-        <Button 
-          onClick={() => {
-            window.location.href = '/dashboard';
-          }}
-          className="flex items-center gap-2"
-        >
-          <Home size={16} />
-          <span>Go to Dashboard</span>
-        </Button>
-      </div>
-    </div>
-  );
-};
-
 class ErrorBoundary extends Component<Props, State> {
-  public state: State = {
-    hasError: false,
-    error: null,
-    errorInfo: null
+  constructor(props: Props) {
+    super(props);
+    this.state = { 
+      hasError: false,
+      error: null,
+      errorInfo: null
+    };
+  }
+
+  static getDerivedStateFromError(error: Error): State {
+    return { 
+      hasError: true,
+      error,
+      errorInfo: null
+    };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+    console.error('Error Boundary caught an error:', error, errorInfo);
+    
+    // Update state with error details
+    this.setState({
+      error,
+      errorInfo
+    });
+    
+    // Log to an error reporting service if needed
+    // reportError(error, errorInfo);
+  }
+  
+  handleRefresh = (): void => {
+    window.location.reload();
   };
 
-  public static getDerivedStateFromError(error: Error): State {
-    // Update state so the next render will show the fallback UI.
-    return { hasError: true, error, errorInfo: null };
-  }
-
-  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // You can also log the error to an error reporting service
-    console.error('Uncaught error:', error, errorInfo);
-    this.setState({ errorInfo });
-  }
-
-  private handleReset = () => {
-    // Call the optional onReset prop if provided
-    if (this.props.onReset) {
-      this.props.onReset();
+  render(): ReactNode {
+    // First check if it might be a dependency error
+    const errorMessage = this.state.error?.message?.toLowerCase() || '';
+    const isDependencyError = 
+      errorMessage.includes('dependency') || 
+      errorMessage.includes('module') || 
+      errorMessage.includes('package') || 
+      errorMessage.includes('import') ||
+      errorMessage.includes('install');
+    
+    // If it seems like a dependency error, use the specialized boundary
+    if (this.state.hasError && isDependencyError) {
+      return (
+        <SmartDependencyErrorBoundary fallback={this.props.fallback}>
+          {this.props.children}
+        </SmartDependencyErrorBoundary>
+      );
     }
-    this.setState({ hasError: false, error: null, errorInfo: null });
-  }
-
-  public render() {
+    
     if (this.state.hasError) {
-      // You can render any custom fallback UI
-      return this.props.fallback || (
-        <MobileAwareErrorUI 
-          error={this.state.error} 
-          onReset={this.handleReset}
-          resetLabel={this.props.resetLabel}
-        />
+      // Render fallback UI if provided
+      if (this.props.fallback) {
+        return this.props.fallback;
+      }
+      
+      // Default error UI
+      return (
+        <Card className="border-red-300 bg-red-50 dark:bg-red-900/20 dark:border-red-800/50">
+          <CardHeader>
+            <CardTitle className="flex items-center text-red-800 dark:text-red-200">
+              <AlertTriangle className="mr-2 h-5 w-5" />
+              Something went wrong
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-sm text-red-800 dark:text-red-200">
+              <p>An error occurred while rendering this component.</p>
+              
+              {this.state.error && (
+                <div className="mt-2 p-2 bg-red-100 dark:bg-red-900/40 rounded text-xs font-mono overflow-auto max-h-[200px]">
+                  {this.state.error.toString()}
+                </div>
+              )}
+              
+              {this.state.errorInfo && (
+                <div className="mt-2 p-2 bg-red-100 dark:bg-red-900/40 rounded text-xs font-mono overflow-auto max-h-[200px]">
+                  <details>
+                    <summary>Component Stack</summary>
+                    {this.state.errorInfo.componentStack}
+                  </details>
+                </div>
+              )}
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button variant="destructive" onClick={this.handleRefresh}>
+              Refresh Page
+            </Button>
+          </CardFooter>
+        </Card>
       );
     }
 
