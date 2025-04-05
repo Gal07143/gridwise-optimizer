@@ -1,8 +1,7 @@
-
 // components/ai/SmartOptimizerPanel.tsx
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import axios from 'axios';
 import { Zap, Battery, TrendingUp, AlertTriangle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
