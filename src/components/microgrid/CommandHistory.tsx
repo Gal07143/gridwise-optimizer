@@ -1,76 +1,74 @@
-
 import React from 'react';
-import { 
-  Card, 
-  CardHeader, 
-  CardTitle, 
-  CardContent 
-} from '@/components/ui/card';
-import { 
-  Table, 
-  TableHeader, 
-  TableRow, 
-  TableHead, 
-  TableBody, 
-  TableCell 
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge-extended';
-import { Terminal } from 'lucide-react';
-import { CommandHistoryItem } from '@/components/microgrid/types';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { CheckCircle, XCircle } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CommandHistoryItem } from './types';
 
 export interface CommandHistoryProps {
   commandHistory: CommandHistoryItem[];
 }
 
-const CommandHistory: React.FC<CommandHistoryProps> = ({ commandHistory }) => {
+const CommandHistory: React.FC<CommandHistoryProps> = ({ commandHistory = [] }) => {
+  if (commandHistory.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Command History</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8 text-muted-foreground">
+            No commands have been executed yet
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg font-medium flex items-center gap-2">
-          <Terminal className="h-5 w-5" />
-          Command History
-        </CardTitle>
+        <CardTitle>Command History</CardTitle>
       </CardHeader>
       <CardContent>
-        {commandHistory.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            No commands have been executed
-          </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Time</TableHead>
-                <TableHead>Command</TableHead>
-                <TableHead>User</TableHead>
-                <TableHead>Status</TableHead>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Time</TableHead>
+              <TableHead>Command</TableHead>
+              <TableHead>User</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Details</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {commandHistory.map((command) => (
+              <TableRow key={command.id || command.timestamp}>
+                <TableCell>
+                  {new Date(command.timestamp).toLocaleString()}
+                </TableCell>
+                <TableCell className="font-medium">{command.command}</TableCell>
+                <TableCell>{command.user}</TableCell>
+                <TableCell>
+                  {command.success ? (
+                    <Badge className="bg-green-100 text-green-800 border-green-300">
+                      <CheckCircle className="h-3.5 w-3.5 mr-1" />
+                      Success
+                    </Badge>
+                  ) : (
+                    <Badge variant="secondary" className="bg-red-100 text-red-800 border-red-300">
+                      <XCircle className="h-3.5 w-3.5 mr-1" />
+                      Failed
+                    </Badge>
+                  )}
+                </TableCell>
+                <TableCell className="max-w-[200px] truncate">
+                  {command.details || '-'}
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {commandHistory.slice(0, 10).map((command, index) => (
-                <TableRow key={command.id || index}>
-                  <TableCell className="text-xs">
-                    {new Date(command.timestamp).toLocaleTimeString()}
-                  </TableCell>
-                  <TableCell>
-                    <div className="font-medium">{command.command}</div>
-                    {command.details && (
-                      <div className="text-xs text-muted-foreground">{command.details}</div>
-                    )}
-                  </TableCell>
-                  <TableCell>{command.user}</TableCell>
-                  <TableCell>
-                    {command.success ? (
-                      <Badge variant="success">Success</Badge>
-                    ) : (
-                      <Badge variant="destructive">Failed</Badge>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
+            ))}
+          </TableBody>
+        </Table>
       </CardContent>
     </Card>
   );
