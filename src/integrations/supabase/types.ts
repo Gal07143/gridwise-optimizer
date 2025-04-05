@@ -1383,6 +1383,38 @@ export type Database = {
         }
         Relationships: []
       }
+      modbus_register_maps: {
+        Row: {
+          created_at: string
+          device_id: string | null
+          id: string
+          register_map: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          device_id?: string | null
+          id?: string
+          register_map?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          device_id?: string | null
+          id?: string
+          register_map?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "modbus_register_maps_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "modbus_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       modbus_registers: {
         Row: {
           created_at: string | null

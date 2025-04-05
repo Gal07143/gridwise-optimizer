@@ -1,3 +1,4 @@
+
 /// <reference types="vite/client" />
 /// <reference types="vite/client" />
 
@@ -15,4 +16,4 @@ interface ImportMeta {
     readonly DEV: boolean;
     readonly [key: string]: any;
   };
-
+}
