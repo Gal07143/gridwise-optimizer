@@ -1,5 +1,4 @@
-
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, BrainCircuit, TrendingUp, ArrowRight } from 'lucide-react';
@@ -14,23 +13,35 @@ interface InsightsTabProps {
 }
 
 const InsightsTab: React.FC<InsightsTabProps> = ({ timeframe }) => {
-  // Convert timeframe string to the expected type
-  const timeframeConverted = timeframe === 'day' || timeframe === 'week' || 
-                        timeframe === 'month' || timeframe === 'year' 
-                        ? timeframe : 'week';
-  
+  const timeframeConverted = ['day', 'week', 'month', 'year'].includes(timeframe)
+    ? timeframe
+    : 'week';
+
   const navigate = useNavigate();
-  
-  const { 
-    recommendations, 
-    isLoading, 
-    error, 
-    refetch
+
+  const {
+    recommendations,
+    isLoading,
+    error,
+    refetch,
   } = usePredictions(timeframeConverted);
+
+  useEffect(() => {
+    const fetchInsights = async () => {
+      try {
+        const insights = await refetch();
+        // You can process insights here if needed
+      } catch (error) {
+        console.error('Failed to load insights:', error);
+      }
+    };
+
+    fetchInsights();
+  }, []);
 
   const handleRefetch = () => {
     const refetchPromise = refetch();
-    
+
     if (refetchPromise && typeof refetchPromise.then === 'function') {
       toast.promise(refetchPromise, {
         loading: 'Refreshing energy insights...',
@@ -38,7 +49,6 @@ const InsightsTab: React.FC<InsightsTabProps> = ({ timeframe }) => {
         error: 'Failed to refresh energy insights',
       });
     } else {
-      // Handle non-promise refetch
       toast.success('Refreshing energy insights...');
       refetch();
     }
@@ -47,9 +57,9 @@ const InsightsTab: React.FC<InsightsTabProps> = ({ timeframe }) => {
   return (
     <div className="space-y-6">
       <div className="flex justify-end">
-        <Button 
-          variant="outline" 
-          size="sm" 
+        <Button
+          variant="outline"
+          size="sm"
           onClick={handleRefetch}
           className="flex items-center gap-2"
         >
@@ -57,15 +67,15 @@ const InsightsTab: React.FC<InsightsTabProps> = ({ timeframe }) => {
           Refresh Insights
         </Button>
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <PredictionsCard timeframe={timeframeConverted} />
-        <SystemRecommendationsCard 
+        <SystemRecommendationsCard
           recommendations={recommendations}
           isLoading={isLoading}
         />
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="md:col-span-1">
           <CardHeader>
@@ -78,8 +88,8 @@ const InsightsTab: React.FC<InsightsTabProps> = ({ timeframe }) => {
             <p className="text-muted-foreground mb-4">
               Our advanced AI algorithms can help optimize your energy usage patterns and save on costs while reducing your carbon footprint.
             </p>
-            <Button 
-              className="w-full" 
+            <Button
+              className="w-full"
               onClick={() => navigate('/energy-optimization')}
             >
               Go to Optimization
@@ -87,15 +97,15 @@ const InsightsTab: React.FC<InsightsTabProps> = ({ timeframe }) => {
             </Button>
           </CardContent>
         </Card>
-        
+
         <Card className="md:col-span-2">
           <CardContent className="p-6">
             <h3 className="text-lg font-medium mb-2">
               Understanding Your Energy Insights
             </h3>
             <p className="text-muted-foreground mb-4">
-              Our AI-powered prediction engine analyzes your historical data to provide 
-              accurate forecasts and actionable recommendations. These insights can help 
+              Our AI-powered prediction engine analyzes your historical data to provide
+              accurate forecasts and actionable recommendations. These insights can help
               you optimize energy consumption, reduce costs, and increase efficiency.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
