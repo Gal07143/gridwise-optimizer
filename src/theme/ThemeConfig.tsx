@@ -1,62 +1,72 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-
-type ThemeType = 'light' | 'dark' | 'system';
+import { ThemeProvider as NextThemesProvider } from 'next-themes';
+import React, { useState, useEffect, createContext, useContext } from 'react';
 
 interface ThemeContextType {
-  theme: ThemeType;
-  setTheme: (theme: ThemeType) => void;
+  theme: string;
+  setTheme: (theme: string) => void;
+  isDarkMode: boolean;
 }
 
 const ThemeContext = createContext<ThemeContextType>({
   theme: 'system',
-  setTheme: () => null,
+  setTheme: () => {},
+  isDarkMode: false,
 });
 
 export const useTheme = () => useContext(ThemeContext);
 
-export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [theme, setTheme] = useState<ThemeType>(() => {
-    // Check for saved theme preference
-    const savedTheme = localStorage.getItem('ems-theme') as ThemeType;
-    if (savedTheme) return savedTheme;
-    
-    // Check system preference
-    const systemPreference = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    return systemPreference;
-  });
+interface ThemeProviderProps {
+  children: React.ReactNode;
+  defaultTheme?: string;
+  storageKey?: string;
+}
 
+export function ThemeProvider({
+  children,
+  defaultTheme = 'system',
+  storageKey = 'theme',
+  ...props
+}: ThemeProviderProps) {
+  const [theme, setThemeState] = useState<string>(
+    () => localStorage.getItem(storageKey) || defaultTheme
+  );
+  
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
+
+  // Initialize theme
   useEffect(() => {
     const root = window.document.documentElement;
+    
+    // Remove the old theme class
     root.classList.remove('light', 'dark');
     
+    // Add the new theme class
+    let newTheme = theme;
     if (theme === 'system') {
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-      root.classList.add(systemTheme);
-    } else {
-      root.classList.add(theme);
+      newTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     }
     
-    localStorage.setItem('ems-theme', theme);
-  }, [theme]);
+    root.classList.add(newTheme);
+    setIsDarkMode(newTheme === 'dark');
+    
+    // Save to localStorage
+    localStorage.setItem(storageKey, theme);
+  }, [theme, storageKey]);
 
-  // Listen for system theme changes if theme is set to 'system'
-  useEffect(() => {
-    if (theme !== 'system') return;
-    
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = () => {
-      const root = window.document.documentElement;
-      root.classList.remove('light', 'dark');
-      root.classList.add(mediaQuery.matches ? 'dark' : 'light');
-    };
-    
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
-  }, [theme]);
+  const setTheme = (newTheme: string) => {
+    setThemeState(newTheme);
+  };
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
-      {children}
+    <ThemeContext.Provider value={{ theme, setTheme, isDarkMode }}>
+      <NextThemesProvider
+        attribute="class"
+        defaultTheme={defaultTheme}
+        enableSystem
+        {...props}
+      >
+        {children}
+      </NextThemesProvider>
     </ThemeContext.Provider>
   );
-};
+}
