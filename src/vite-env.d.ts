@@ -7,7 +7,12 @@ interface ImportMetaEnv {
   readonly VITE_SUPABASE_ANON_KEY: string;
   // add other env variables here
 }
-
 interface ImportMeta {
-  readonly env: ImportMetaEnv;
-}
+  readonly env: {
+    readonly MODE: string;
+    readonly BASE_URL: string;
+    readonly PROD: boolean;
+    readonly DEV: boolean;
+    readonly [key: string]: any;
+  };
+
