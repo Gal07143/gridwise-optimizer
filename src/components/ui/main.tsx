@@ -1,66 +1,29 @@
+import React from 'react';
 
-import React, { ReactNode } from 'react';
-import { cn } from '@/lib/utils';
-import ErrorBoundary from './ErrorBoundary';
-import { useIsMobile } from '@/hooks/use-mobile';
-
-interface MainProps {
-  children: ReactNode;
-  className?: string;
+export interface MainProps {
+  children: React.ReactNode;
   title?: string;
-  containerSize?: 'sm' | 'default' | 'lg' | 'xl' | 'full';
-  noPadding?: boolean;
-  isLoading?: boolean;
-  loadingText?: string;
-  error?: Error | null;
-  retry?: () => void;
-  fluid?: boolean;
+  description?: string;
+  className?: string;
 }
 
-export const Main: React.FC<MainProps> = ({
-  children,
-  className,
-  title,
-  containerSize = 'default',
-  noPadding = false,
-  isLoading = false,
-  loadingText = 'Loading...',
-  error = null,
-  retry,
-  fluid = false,
-}) => {
-  const isMobile = useIsMobile();
-  
-  const containerSizeClass = {
-    sm: 'max-w-screen-sm',
-    default: 'max-w-7xl',
-    lg: 'max-w-screen-lg',
-    xl: 'max-w-screen-xl',
-    full: 'max-w-full',
-  }[containerSize];
-
+const Main = ({ 
+  children, 
+  title, 
+  description, 
+  className = '' 
+}: MainProps) => {
   return (
-    <main
-      className={cn(
-        'flex-1 overflow-auto py-6 px-4',
-        noPadding && 'p-0',
-        'bg-background dark:bg-background',
-        className
-      )}
-    >
-      <ErrorBoundary>
-        <div className={cn(
-          'mx-auto',
-          !fluid && containerSizeClass
-        )}>
-          {title && (
-            <div className="mb-6">
-              <h1 className="text-2xl font-bold">{title}</h1>
-            </div>
-          )}
-          {children}
+    <main className={`flex-1 p-4 md:p-6 ${className}`}>
+      {(title || description) && (
+        <div className="mb-6">
+          {title && <h1 className="text-2xl font-bold tracking-tight">{title}</h1>}
+          {description && <p className="text-muted-foreground mt-1">{description}</p>}
         </div>
-      </ErrorBoundary>
+      )}
+      {children}
     </main>
   );
 };
+
+export default Main;
