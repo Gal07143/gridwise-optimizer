@@ -1,42 +1,33 @@
-import * as React from "react";
 
-const MOBILE_BREAKPOINT = 768;
+import { useState, useEffect } from 'react';
 
-export function useIsMobile() {
-  const [isMobile, setIsMobile] = React.useState<boolean | undefined>(undefined);
-
-  React.useEffect(() => {
-    const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);
-    const onChange = () => {
-      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
-    };
-    mql.addEventListener("change", onChange);
-    setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
-    return () => mql.removeEventListener("change", onChange);
-  }, []);
-
-  return !!isMobile;
-}
-
+/**
+ * Hook for responsive design that detects if the current viewport matches a media query
+ * 
+ * @param query CSS media query string to match against
+ * @returns boolean indicating if the query matches
+ */
 export function useMediaQuery(query: string): boolean {
-  const [matches, setMatches] = React.useState(false);
+  const [matches, setMatches] = useState<boolean>(false);
 
-  React.useEffect(() => {
-    const media = window.matchMedia(query);
+  useEffect(() => {
+    const mediaQuery = window.matchMedia(query);
     
     // Set the initial value
-    setMatches(media.matches);
+    setMatches(mediaQuery.matches);
     
-    // Define listener function
-    const listener = () => {
-      setMatches(media.matches);
+    // Define the change handler function
+    const handleChange = (event: MediaQueryListEvent) => {
+      setMatches(event.matches);
     };
     
-    // Add the listener
-    media.addEventListener("change", listener);
+    // Add the event listener
+    mediaQuery.addEventListener('change', handleChange);
     
-    // Clean up
-    return () => media.removeEventListener("change", listener);
+    // Clean up the event listener on unmount
+    return () => {
+      mediaQuery.removeEventListener('change', handleChange);
+    };
   }, [query]);
 
   return matches;
