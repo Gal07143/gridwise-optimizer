@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { Main } from '@/components/ui/main';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
@@ -111,7 +110,12 @@ const Dashboard: React.FC = () => {
                   variants={contentVariants}
                 >
                   <DashboardSummary />
-                  <DashboardCharts />
+                  <DashboardCharts 
+  timeRange="24h" 
+  date={new Date()} 
+  onTimeRangeChange={(range) => console.log('Time range changed:', range)} 
+  onDateChange={(date) => console.log('Date changed:', date)}
+/>
                 </motion.div>
               </TabsContent>
               
