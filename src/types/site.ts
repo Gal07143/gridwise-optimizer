@@ -60,3 +60,8 @@ export interface SiteFormData {
   contact_phone?: string;
   contact_email?: string;
 }
+
+export interface SiteSelectorProps {
+  sites: Site[];
+  setActiveSite: (site: Site) => void;
+}

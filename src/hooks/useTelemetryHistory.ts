@@ -1,134 +1,119 @@
 
-import { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client'; // Use the shared client
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { TelemetryMetric } from '@/components/dashboard/LiveTelemetryChart';
+import { subscribeToTable } from '@/services/supabaseRealtimeService';
 
-export interface TelemetryHistoryItem {
-  id: string;
-  device_id: string;
-  timestamp: string;
-  created_at: string;
-  message: any;
-  voltage?: number;
-  current?: number;
-  power?: number;
-  temperature?: number;
-  state_of_charge?: number;
-  source?: string;
-  [key: string]: any; // Allow for dynamic properties from message
+export interface TelemetryReading {
+  time: string;
+  value: number;
 }
 
-export const useTelemetryHistory = (deviceId: string, limitMinutes = 60) => {
-  const [data, setData] = useState<TelemetryHistoryItem[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+export interface Telemetry {
+  deviceId: string;
+  metric: TelemetryMetric;
+  readings: TelemetryReading[];
+  latestValue?: number;
+  latestTimestamp?: string;
+}
+
+export function useTelemetryHistory(
+  deviceId: string,
+  metric: TelemetryMetric = 'power',
+  limit: number = 60
+) {
+  const [telemetry, setTelemetry] = useState<Telemetry | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  
+  const fetchTelemetryData = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Fetch the data
+      const { data, error } = await supabase
+        .from('energy_readings')
+        .select('*')
+        .eq('device_id', deviceId)
+        .order('timestamp', { ascending: false })
+        .limit(limit);
+      
+      if (error) throw error;
+      
+      if (!data || data.length === 0) {
+        setTelemetry({
+          deviceId,
+          metric,
+          readings: [],
+        });
+        return;
+      }
+      
+      // Process the data for the chart
+      const readings = data.map(reading => ({
+        time: reading.timestamp,
+        value: reading[metric] || 0,
+      })).reverse();
+      
+      // Get the latest value
+      const latestReading = data[0];
+      
+      setTelemetry({
+        deviceId,
+        metric,
+        readings,
+        latestValue: latestReading[metric],
+        latestTimestamp: latestReading.timestamp
+      });
+      
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching telemetry data:', err);
+      setError(err instanceof Error ? err : new Error('Failed to fetch telemetry data'));
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const since = new Date(Date.now() - limitMinutes * 60 * 1000).toISOString();
+    fetchTelemetryData();
+
+    // Subscribe to updates
+    const unsubscribe = subscribeToTable(
+      'energy_readings',
+      'INSERT',
+      (payload) => {
+        const reading = payload.new;
         
-        // Fetch telemetry from both tables using the telemetry_log table
-        const { data: historyData, error: supabaseError } = await supabase
-          .from('telemetry_log')
-          .select('*')
-          .eq('device_id', deviceId)
-          .gte('created_at', since)
-          .order('created_at', { ascending: true });
-
-        if (supabaseError) {
-          throw new Error(supabaseError.message);
-        }
-
-        // Process each record to extract telemetry values from message and ensure timestamp field
-        const processedData = historyData?.map(record => {
-          // Create a base record with timestamp field (ensure it exists)
-          let enhancedRecord: TelemetryHistoryItem = { 
-            ...record,
-            // Ensure timestamp exists, falling back to other available time fields
-            timestamp: record.received_at || record.timestamp || record.created_at
-          };
-          
-          // Process message field if it exists
-          if (record.message) {
-            if (typeof record.message === 'string') {
-              try {
-                const parsedMessage = JSON.parse(record.message);
-                enhancedRecord = { ...enhancedRecord, ...parsedMessage };
-              } catch (e) {
-                console.warn('Could not parse message as JSON:', e);
-              }
-            } else if (typeof record.message === 'object') {
-              enhancedRecord = { ...enhancedRecord, ...record.message };
-            }
-          }
-          
-          return enhancedRecord;
-        }) || [];
-
-        setData(processedData);
-        setError(null);
-      } catch (err) {
-        console.error('Error fetching telemetry history:', err);
-        setError(err instanceof Error ? err : new Error('Unknown error fetching telemetry history'));
-        setData([]); // Ensure data is empty when there's an error
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-    
-    // Set up real-time subscription for live updates
-    const subscription = supabase
-      .channel('telemetry-changes')
-      .on('postgres_changes', 
-        { 
-          event: 'INSERT', 
-          schema: 'public', 
-          table: 'telemetry_log',
-          filter: `device_id=eq.${deviceId}`
-        }, 
-        payload => {
-          // When new telemetry arrives, process it and add to our data
-          const record = payload.new;
-          
-          if (record) {
-            let enhancedRecord: TelemetryHistoryItem = { 
-              ...record,
-              timestamp: record.received_at || record.timestamp || record.created_at
+        // Only process if it's for the current device
+        if (reading.device_id === deviceId) {
+          setTelemetry(prevTelemetry => {
+            if (!prevTelemetry) return null;
+            
+            // Add the new reading and limit the number of readings
+            const newReadings = [...prevTelemetry.readings, {
+              time: reading.timestamp,
+              value: reading[metric] || 0
+            }].slice(-limit);
+            
+            return {
+              ...prevTelemetry,
+              readings: newReadings,
+              latestValue: reading[metric],
+              latestTimestamp: reading.timestamp
             };
-            
-            // Process message field
-            if (record.message) {
-              if (typeof record.message === 'string') {
-                try {
-                  const parsedMessage = JSON.parse(record.message);
-                  enhancedRecord = { ...enhancedRecord, ...parsedMessage };
-                } catch (e) {
-                  console.warn('Could not parse real-time message as JSON:', e);
-                }
-              } else if (typeof record.message === 'object') {
-                enhancedRecord = { ...enhancedRecord, ...record.message };
-              }
-            }
-            
-            // Add to our existing data
-            setData(prevData => [...prevData, enhancedRecord]);
-          }
+          });
         }
-      )
-      .subscribe();
-    
-    // Set up polling for updates as a fallback
-    const interval = setInterval(fetchData, 10000); // Refresh every 10s
+      },
+      `device_id=eq.${deviceId}`
+    );
 
-    return () => {
-      // Clean up on unmount
-      clearInterval(interval);
-      subscription.unsubscribe();
-    };
-  }, [deviceId, limitMinutes]);
+    return () => unsubscribe();
+  }, [deviceId, metric, limit]);
 
-  return { data, loading, error };
-};
+  const refetch = () => {
+    fetchTelemetryData();
+  };
+
+  return { telemetry, isLoading, error, refetch };
+}

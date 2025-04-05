@@ -1,97 +1,168 @@
 
-export type UserRole = 'admin' | 'viewer' | 'operator' | 'installer' | 'user';
+// File: src/types/energy.d.ts
+export type DeviceCategory = 'inverter' | 'meter' | 'battery' | 'solar' | 'load' | 'sensor' | 'evCharger' | 'wind';
 
-export interface User {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: UserRole;
-  createdAt: string;
-  lastLogin: string;
-  preferences: UserPreferences;
-  sites?: Site[];
-}
+// Convert string literals to proper union type
+export type DeviceType = 
+  'solar' |
+  'wind' |
+  'battery' |
+  'grid' |
+  'load' |
+  'ev_charger' |
+  'inverter' |
+  'meter' |
+  'light' | 
+  'hydro' |
+  'generator' |
+  'solar_inverter' | 
+  'battery_inverter' | 
+  'hybrid_inverter' | 
+  'smart_meter' | 
+  'battery_system' | 
+  'solar_panel' |
+  'energy_meter' |
+  'smart_plug' |
+  'weather_station' |
+  'wind_turbine';
 
-export interface UserPreferences {
-  theme: string;
-  notifications: {
-    email: boolean;
-    push: boolean;
-    sms: boolean;
-  };
-  dashboardLayout: any;
-}
-
-export interface Site {
-  id: string;
-  name: string;
-  location: string;
-  timezone: string;
-  lat?: number | null;
-  lng?: number | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export const createEmptySite = (): Omit<Site, 'id' | 'created_at' | 'updated_at'> => ({
-  name: "New Site",
-  location: "Unknown",
-  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-});
+export type DeviceStatus = 
+  'online' |
+  'offline' |
+  'maintenance' |
+  'error' |
+  'warning' |
+  'standby' |
+  'idle' |
+  'active' |
+  'charging' |
+  'discharging';
 
 export interface EnergyDevice {
   id: string;
   name: string;
   type: DeviceType;
   status: DeviceStatus;
-  site_id?: string;
-  metrics: Record<string, number> | null;
   location?: string;
-  description?: string;
-  manufacturer?: string;
-  model?: string;
-  serialNumber?: string;
-  firmware?: string;
-  installation_date?: string;
-  lastMaintenanceDate?: string;
-  latitude?: number;
-  longitude?: number;
   capacity: number;
-  energyCapacity?: number;
-  efficiency?: number;
-  maxVoltage?: number;
-  minVoltage?: number;
-  maxCurrent?: number;
-  minCurrent?: number;
-  nominalVoltage?: number;
-  nominalCurrent?: number;
-  communicationProtocol?: string;
-  dataUpdateFrequency?: number;
+  firmware?: string;
+  description?: string;
+  installation_date?: string;
+  site_id?: string | null;
+  metrics?: Record<string, number> | null;
   created_at?: string;
   last_updated?: string;
+  created_by?: string;
+  
+  // Add missing properties
+  protocol?: string;
+  ip_address?: string;
+  last_seen?: string;
+  model?: string;
+  manufacturer?: string;
+  serialNumber?: string;
+  lat?: number;
+  lng?: number;
+  tags?: string[] | Record<string, any>;
+  
+  // Add value property for readings
+  value?: number;
+  reading_type?: string;
+  unit?: string;
+  quality?: number;
 }
 
-export type DeviceType =
-  | 'solar'
-  | 'wind'
-  | 'battery'
-  | 'grid'
-  | 'load'
-  | 'ev_charger'
-  | 'generator'
-  | 'hydro'
-  | 'inverter'
-  | 'meter'
-  | 'light';
+export type Device = EnergyDevice;
 
-export type DeviceStatus =
-  | 'online'
-  | 'offline'
-  | 'idle'
-  | 'active'
-  | 'charging'
-  | 'discharging'
-  | 'maintenance'
-  | 'error'
-  | 'warning';
+export interface User {
+  id: string;
+  email: string;
+  first_name?: string;
+  last_name?: string;
+  role?: UserRole;
+  created_at?: string;
+  updated_at?: string;
+  preferences?: Record<string, any>;
+  
+  // Additional properties needed for consistency
+  firstName?: string;
+  lastName?: string;
+  lastLogin?: string;
+  createdAt?: string;
+}
+
+export type UserRole = 'admin' | 'user' | 'viewer' | 'manager' | 'operator' | 'installer';
+
+export interface Site {
+  id: string;
+  name: string;
+  location: string;
+  lat?: number;
+  lng?: number;
+  timezone?: string;
+  created_at?: string;
+  updated_at?: string;
+  type?: string;
+  status?: string;
+  
+  // Additional site properties
+  address?: string;
+  description?: string;
+  energy_category?: string;
+  building_type?: string;
+  area?: number;
+  contact_person?: string;
+  contact_phone?: string;
+  contact_email?: string;
+}
+
+export interface EnergyReading {
+  id: string;
+  device_id: string;
+  timestamp: string;
+  power: number;
+  energy: number;
+  voltage?: number;
+  current?: number;
+  frequency?: number;
+  temperature?: number;
+  state_of_charge?: number;
+  value?: number;
+  reading_type?: string;
+  unit?: string;
+  quality?: number;
+  created_at?: string;
+}
+
+export interface DateRange {
+  from: Date;
+  to: Date;
+}
+
+export interface EnergyAggregation {
+  timestamp: string;
+  interval: 'hour' | 'day' | 'week' | 'month';
+  device_id?: string;
+  site_id?: string;
+  energy_produced?: number;
+  energy_consumed?: number;
+  peak_power?: number;
+  average_power?: number;
+}
+
+// Add EnergyForecast for forecast functionality
+export interface EnergyForecast {
+  id: string;
+  site_id: string;
+  forecast_time: string;
+  timestamp: string;
+  created_at: string;
+  generation_forecast: number;
+  consumption_forecast: number;
+  confidence?: number;
+  weather_condition?: string;
+  temperature?: number;
+  cloud_cover?: number;
+  wind_speed?: number;
+  source?: string;
+}

@@ -1,33 +1,17 @@
 
+// File: src/types/modbus.ts
 export interface ModbusDevice {
   id: string;
   name: string;
   ip: string;
   port: number;
-  unit_id: number; // Renamed from unitId to match DB schema
-  is_active: boolean;
-  inserted_at?: string;
-  updated_at?: string;
-  // Additional properties needed
-  description?: string;
-  protocol?: ModbusProtocol;
-  host?: string;
-  baudRate?: number;
-  serialPort?: string;
-  status?: string;
-  lastConnected?: string;
-}
-
-export interface ModbusDeviceConfig {
-  id?: string;
-  name: string;
-  ip: string;
-  port: number;
-  protocol: ModbusProtocol;
   unit_id: number;
-  is_active?: boolean;
-  // Additional properties needed
+  is_active: boolean;
+  inserted_at: string;
+  updated_at: string;
+  // Additional properties needed by components
   description?: string;
+  protocol?: string;
   host?: string;
   serialPort?: string;
   baudRate?: number;
@@ -35,62 +19,72 @@ export interface ModbusDeviceConfig {
   stopBits?: number;
   parity?: string;
   timeout?: number;
-  autoReconnect?: boolean;
   status?: string;
-}
-
-export interface ModbusRegisterMap {
-  id: string;
-  device_id: string;
-  register_map: ModbusRegisterDefinition[];
-  created_at?: string;
-  updated_at?: string;
-}
-
-export interface ModbusRegisterDefinition {
-  name: string;
-  address: number;
-  length: number;
-  type: ModbusRegisterType;
-  scaling?: number;
-  unit?: string;
+  lastConnected?: string;
 }
 
 export type ModbusProtocol = 'TCP' | 'RTU' | 'ASCII';
+export type ModbusParity = 'none' | 'even' | 'odd';
+export type ModbusRegisterType = 'holding_register' | 'input_register' | 'coil' | 'discrete_input';
 
-export type ModbusRegisterType = 
-  | 'coil'
-  | 'discrete_input'
-  | 'holding_register'
-  | 'input_register'
-  | 'uint16'
-  | 'int16'
-  | 'uint32'
-  | 'int32'
-  | 'float32';
+export interface ModbusDeviceConfig {
+  name: string;
+  ip: string;
+  port: number;
+  unit_id: number;
+  protocol: ModbusProtocol;
+  description?: string;
+  host?: string;
+  serialPort?: string;
+  baudRate?: number;
+  dataBits?: number;
+  stopBits?: number;
+  parity?: ModbusParity;
+  timeout?: number;
+  autoReconnect?: boolean;
+  status?: string;
+  lastConnected?: string;
+}
 
-// Define ModbusDataType alias for backward compatibility
-export type ModbusDataType = ModbusRegisterType;
+export interface ModbusRegisterDefinition {
+  address: number;
+  length: number;
+  name: string;
+  type: ModbusRegisterType;
+  dataType: ModbusDataType;
+  scaleFactor?: number;
+  unit?: string;
+  description?: string;
+}
 
-export interface ModbusReadResult {
-  value: number | boolean | string;
-  timestamp: string;
-  register: ModbusRegisterDefinition;
+export type ModbusDataType = 
+  'int16' | 
+  'uint16' | 
+  'int32' | 
+  'uint32' | 
+  'float32' | 
+  'float64' | 
+  'boolean' | 
+  'string';
+
+export interface ModbusRegisterMap {
+  registers: ModbusRegisterDefinition[];
+  lastUpdated?: string;
 }
 
 export interface ModbusDataOptions {
-  deviceId: string;
-  register: ModbusRegisterDefinition;
-  pollingInterval?: number;
+  address: number;
+  length?: number;
+  registerType: ModbusRegisterType;
+  dataType?: ModbusDataType;
 }
 
 export interface ConnectionStatusResult {
   isConnected: boolean;
-  isLoading: boolean;
   error: Error | null;
-  // Additional properties for modbus device monitoring
   device?: ModbusDevice;
+  loading?: boolean;
   connect?: () => Promise<boolean>;
-  disconnect?: () => Promise<void>;
+  disconnect?: () => Promise<boolean>;
   refreshDevice?: () => Promise<void>;
 }

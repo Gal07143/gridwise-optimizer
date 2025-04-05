@@ -1,42 +1,65 @@
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
-export type RealtimeEvent = 'INSERT' | 'UPDATE' | 'DELETE';
+export type RealtimeEvent = 'INSERT' | 'UPDATE' | 'DELETE' | '*';
 
-export const useRealtimeUpdates = <T,>(
-  table: string,
-  event: RealtimeEvent | RealtimeEvent[] = ['INSERT', 'UPDATE', 'DELETE'],
-  callback?: (payload: { new: T; old: T }) => void
-) => {
-  const [data, setData] = useState<T | null>(null);
+export function useRealtimeUpdates<T = any>(
+  tableName: string,
+  event: RealtimeEvent = '*',
+  callback?: (item: T, eventType: RealtimeEvent) => void
+) {
+  const [items, setItems] = useState<T[]>([]);
+  const [error, setError] = useState<Error | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const events = Array.isArray(event) ? event : [event];
+    setIsLoading(true);
     
-    const channels = events.map((e) => {
-      const channel = supabase
-        .channel(`${table}_${e}`)
-        .on(
-          'postgres_changes',
-          { event: e, schema: 'public', table },
-          (payload) => {
-            setData(payload.new as unknown as T);
-            if (callback) callback(payload as unknown as { new: T; old: T });
+    // Set up subscription
+    const channel = supabase
+      .channel('realtime-updates-' + tableName)
+      .on(
+        'postgres_changes',
+        {
+          event,
+          schema: 'public',
+          table: tableName,
+        },
+        (payload) => {
+          const eventType = payload.eventType as RealtimeEvent;
+          const item = (payload.new || payload.old) as T;
+          
+          // Call the callback if provided
+          if (callback && item) {
+            callback(item, eventType);
           }
-        )
-        .subscribe();
+          
+          // Update state based on event type
+          if (eventType === 'INSERT') {
+            setItems((prev) => [...prev, payload.new as T]);
+          } else if (eventType === 'UPDATE') {
+            setItems((prev) => 
+              prev.map((prevItem: any) => 
+                prevItem.id === (payload.new as any).id ? payload.new as T : prevItem
+              )
+            );
+          } else if (eventType === 'DELETE') {
+            setItems((prev) => 
+              prev.filter((prevItem: any) => prevItem.id !== (payload.old as any).id)
+            );
+          }
+        }
+      )
+      .subscribe();
 
-      return channel;
-    });
-
+    setIsLoading(false);
+    
+    // Cleanup
     return () => {
-      channels.forEach((channel) => {
-        supabase.removeChannel(channel);
-      });
+      supabase.removeChannel(channel);
     };
-  }, [table, event, callback]);
+  }, [tableName, event, callback]);
 
-  return { data, isLoading };
-};
+  return { items, error, isLoading };
+}

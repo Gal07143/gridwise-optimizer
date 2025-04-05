@@ -1,25 +1,41 @@
-import { useEffect } from 'react';
+
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { AlertItem } from '@/components/microgrid/types';
 
-type AlertCallback = (alert: AlertItem) => void;
+export function useAlertSubscription() {
+  const [hasNewAlerts, setHasNewAlerts] = useState(false);
+  const [criticalCount, setCriticalCount] = useState(0);
 
-export const useAlertSubscription = (onNewAlert: AlertCallback) => {
   useEffect(() => {
+    // Set up subscription for alerts
     const channel = supabase
-      .channel('realtime:alerts')
+      .channel('alerts-subscription')
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'alerts' },
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'alerts',
+        },
         (payload) => {
-          const newAlert = payload.new as AlertItem;
-          onNewAlert(newAlert);
+          setHasNewAlerts(true);
+          if (payload.new.severity === 'critical') {
+            setCriticalCount(prev => prev + 1);
+          }
         }
       )
       .subscribe();
 
+    // Cleanup
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [onNewAlert]);
-};
+  }, []);
+
+  const clearNotifications = () => {
+    setHasNewAlerts(false);
+    setCriticalCount(0);
+  };
+
+  return { hasNewAlerts, criticalCount, clearNotifications };
+}

@@ -1,137 +1,190 @@
 
 import React, { useEffect, useState } from 'react';
-import { AlertTriangle, Bell, CheckCircle2 } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/lib/utils';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
+import { AlertCircle, CheckCircle, XCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { subscribeToTable } from '@/services/supabaseRealtimeService';
 
-interface AlertSummary {
-  total: number;
-  critical: number;
-  unacknowledged: number;
+interface Alert {
+  id: string;
+  message: string;
+  severity: 'critical' | 'warning' | 'info';
+  type?: string;
+  acknowledged: boolean;
+  timestamp: string;
+  device_id?: string;
 }
 
-export default function AlertSummaryCard() {
-  const [summary, setSummary] = useState<AlertSummary | null>(null);
+const AlertSummaryCard: React.FC = () => {
+  const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  useEffect(() => {
-    async function fetchAlertSummary() {
-      try {
-        setLoading(true);
-        
-        // Get total active alerts
-        let { data: totalData, error: totalError } = await supabase
-          .from('alerts')
-          .select('*')
-          .eq('resolved', false);
-          
-        if (totalError) throw totalError;
-        
-        // Get critical alerts
-        let { data: criticalData, error: criticalError } = await supabase
-          .from('alerts')
-          .select('*')
-          .eq('severity', 'critical')
-          .eq('resolved', false);
-          
-        if (criticalError) throw criticalError;
-        
-        // Get unacknowledged alerts
-        let { data: unacknowledgedData, error: unacknowledgedError } = await supabase
-          .from('alerts')
-          .select('*')
-          .eq('acknowledged', false)
-          .eq('resolved', false);
-          
-        if (unacknowledgedError) throw unacknowledgedError;
-        
-        setSummary({
-          total: totalData?.length || 0,
-          critical: criticalData?.length || 0,
-          unacknowledged: unacknowledgedData?.length || 0
-        });
-        
-        setError(null);
-      } catch (err) {
-        console.error('Failed to fetch alert summary:', err);
-        setError(err instanceof Error ? err : new Error('Failed to fetch alert summary'));
-        // Set default values so UI can still render
-        setSummary({
-          total: 0,
-          critical: 0,
-          unacknowledged: 0
-        });
-      } finally {
-        setLoading(false);
-      }
+  const fetchAlerts = async () => {
+    try {
+      setLoading(true);
+      
+      // Fix the Promise handling here
+      const { data, error } = await supabase
+        .from('alerts')
+        .select('*')
+        .order('timestamp', { ascending: false })
+        .limit(5);
+      
+      if (error) throw error;
+      
+      setAlerts(data || []);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching alerts:', err);
+      setError(err instanceof Error ? err : new Error('Failed to fetch alerts'));
+      setAlerts([]);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    fetchAlertSummary();
-    const interval = setInterval(fetchAlertSummary, 15000); // refresh every 15s
+  const acknowledgeAlert = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('alerts')
+        .update({ acknowledged: true, acknowledged_at: new Date().toISOString() })
+        .match({ id });
+      
+      if (error) throw error;
+      
+      setAlerts(prev => prev.map(alert => 
+        alert.id === id ? { ...alert, acknowledged: true } : alert
+      ));
+    } catch (err) {
+      console.error('Error acknowledging alert:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchAlerts();
     
-    // Setup realtime subscription for alerts table
+    // Subscribe to real-time alerts using the updated subscribeToTable function
     const unsubscribe = subscribeToTable(
-      'alerts', 
-      '*', 
-      () => {
-        fetchAlertSummary();
+      'alerts',
+      '*',
+      (payload) => {
+        console.log('Alert real-time update:', payload);
+        
+        if (payload.eventType === 'INSERT') {
+          setAlerts(prev => [payload.new, ...prev].slice(0, 5));
+        } else if (payload.eventType === 'UPDATE') {
+          setAlerts(prev => prev.map(alert => 
+            alert.id === payload.new.id ? payload.new : alert
+          ));
+        } else if (payload.eventType === 'DELETE') {
+          setAlerts(prev => prev.filter(alert => alert.id !== payload.old.id));
+        }
       }
     );
-      
-    return () => {
-      clearInterval(interval);
-      unsubscribe();
-    };
+    
+    return unsubscribe;
   }, []);
 
+  const getSeverityColor = (severity: string) => {
+    switch (severity) {
+      case 'critical': return 'text-destructive';
+      case 'warning': return 'text-warning';
+      case 'info': return 'text-primary';
+      default: return 'text-muted-foreground';
+    }
+  };
+
+  const getSeverityIcon = (severity: string) => {
+    switch (severity) {
+      case 'critical': return <XCircle className="h-4 w-4 mr-1" />;
+      case 'warning': return <AlertCircle className="h-4 w-4 mr-1" />;
+      case 'info': return <CheckCircle className="h-4 w-4 mr-1" />;
+      default: return <AlertCircle className="h-4 w-4 mr-1" />;
+    }
+  };
+
   if (loading) {
-    return <Skeleton className="h-40 rounded-xl w-full" />;
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Alerts</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="flex items-center justify-between">
+                <div className="w-full h-8 bg-secondary animate-pulse rounded"></div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Alerts</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-destructive">Error loading alerts: {error.message}</div>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
-    <Card className="shadow-md">
+    <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Bell className="h-5 w-5 text-yellow-500" />
-          Alert Summary
-          {error && (
-            <Badge variant="outline" className="bg-red-50 text-red-700 ml-2 text-xs">
-              Error loading data
-            </Badge>
+        <CardTitle className="flex justify-between items-center">
+          <span>Recent Alerts</span>
+          {alerts.length > 0 && (
+            <Badge variant="outline">{alerts.length}</Badge>
           )}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {summary ? (
-          <>
-            <div className="flex items-center justify-between">
-              <span>Total Active</span>
-              <Badge variant="secondary" className="text-md font-semibold">{summary.total}</Badge>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-destructive flex items-center gap-1">
-                <AlertTriangle size={14} /> Critical
-              </span>
-              <Badge variant="destructive">{summary.critical}</Badge>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground flex items-center gap-1">
-                <CheckCircle2 size={14} /> Unacknowledged
-              </span>
-              <Badge variant="outline">{summary.unacknowledged}</Badge>
-            </div>
-          </>
+      <CardContent>
+        {alerts.length === 0 ? (
+          <div className="text-center text-muted-foreground py-6">
+            No alerts to display
+          </div>
         ) : (
-          <div className="text-center text-muted-foreground py-4">
-            No alert data available
+          <div className="space-y-4">
+            {alerts.map(alert => (
+              <div key={alert.id} className="flex items-center justify-between group">
+                <div className="flex items-center space-x-2">
+                  <span className={getSeverityColor(alert.severity)}>
+                    {getSeverityIcon(alert.severity)}
+                  </span>
+                  <div>
+                    <p className="text-sm font-medium">{alert.message}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(alert.timestamp).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+                {!alert.acknowledged && (
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => acknowledgeAlert(alert.id)}
+                  >
+                    Acknowledge
+                  </Button>
+                )}
+              </div>
+            ))}
           </div>
         )}
       </CardContent>
     </Card>
   );
-}
+};
+
+export default AlertSummaryCard;

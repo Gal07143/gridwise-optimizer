@@ -2,54 +2,56 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
-interface ConnectionOptions {
+interface ConnectionStatusOptions {
   showToasts?: boolean;
+  checkInterval?: number;
 }
 
-export default function useConnectionStatus(options: ConnectionOptions = {}) {
-  const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
-  const { showToasts = true } = options;
+export default function useConnectionStatus(options: ConnectionStatusOptions = {}) {
+  const { showToasts = true, checkInterval = 30000 } = options;
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [wasOffline, setWasOffline] = useState(false);
 
   useEffect(() => {
     const handleOnline = () => {
       setIsOnline(true);
-      if (showToasts) {
+      if (wasOffline && showToasts) {
         toast.success('Connection restored');
       }
+      setWasOffline(false);
     };
 
     const handleOffline = () => {
       setIsOnline(false);
       if (showToasts) {
-        toast.error('Connection lost. Some features may be unavailable');
+        toast.error('Connection lost');
       }
+      setWasOffline(true);
     };
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
+    // Periodic check for connection status
+    const intervalId = setInterval(() => {
+      const online = navigator.onLine;
+      
+      // If our state doesn't match the actual state
+      if (online !== isOnline) {
+        if (online) {
+          handleOnline();
+        } else {
+          handleOffline();
+        }
+      }
+    }, checkInterval);
+
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+      clearInterval(intervalId);
     };
-  }, [showToasts]);
+  }, [isOnline, wasOffline, showToasts, checkInterval]);
 
-  const retryConnection = () => {
-    // Implement a fetch to check if we can connect to the server
-    fetch('/api/health-check', { cache: 'no-store' })
-      .then(() => {
-        setIsOnline(true);
-        if (showToasts) {
-          toast.success('Connection restored');
-        }
-      })
-      .catch(() => {
-        setIsOnline(false);
-        if (showToasts) {
-          toast.error('Still offline. Please check your connection');
-        }
-      });
-  };
-
-  return { isOnline, retryConnection };
+  return { isOnline };
 }

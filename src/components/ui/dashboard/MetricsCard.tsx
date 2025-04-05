@@ -1,72 +1,74 @@
 
-import React, { ReactNode } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { LucideIcon } from 'lucide-react';
 
 export interface MetricsCardProps {
   title: string;
   value: string | number;
-  unit?: string;
-  icon?: ReactNode;
   description?: string;
-  trend?: number;
-  trendDescription?: string;
-  isPositiveTrend?: boolean;
-  className?: string;
+  icon?: React.ReactNode;
+  trend?: {
+    value: number;
+    label: string;
+    positive?: boolean;
+  };
   onClick?: () => void;
-  footer?: ReactNode;
+  className?: string;
+  isLoading?: boolean;
 }
 
 const MetricsCard: React.FC<MetricsCardProps> = ({
   title,
   value,
-  unit,
-  icon,
   description,
+  icon,
   trend,
-  trendDescription,
-  isPositiveTrend = true,
-  className,
   onClick,
-  footer
+  className = '',
+  isLoading = false
 }) => {
+  if (isLoading) {
+    return (
+      <Card className={`overflow-hidden ${className} ${onClick ? 'cursor-pointer hover:bg-accent/50 transition-colors' : ''}`} onClick={onClick}>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium flex items-center">
+            {icon && <span className="mr-2">{icon}</span>}
+            <div className="h-4 w-24 bg-secondary rounded animate-pulse"></div>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-8 w-20 bg-secondary rounded animate-pulse mb-1"></div>
+          <div className="h-3 w-32 bg-secondary rounded animate-pulse opacity-50"></div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card 
-      className={cn(
-        "overflow-hidden transition-all hover:border-primary/50", 
-        onClick && "cursor-pointer",
-        className
-      )}
+      className={`overflow-hidden ${className} ${onClick ? 'cursor-pointer hover:bg-accent/50 transition-colors' : ''}`} 
       onClick={onClick}
     >
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        {icon && <div className="text-muted-foreground">{icon}</div>}
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-medium flex items-center">
+          {icon && <span className="mr-2">{icon}</span>}
+          {title}
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">
-          {value}
-          {unit && <span className="text-base ml-1 font-normal text-muted-foreground">{unit}</span>}
-        </div>
+        <div className="text-2xl font-bold">{value}</div>
         {description && (
           <p className="text-xs text-muted-foreground mt-1">{description}</p>
         )}
-        {trend !== undefined && (
-          <div className="flex items-center mt-2">
-            <span className={cn(
-              "text-xs font-medium",
-              isPositiveTrend ? "text-green-600" : "text-red-600"
-            )}>
-              {trend > 0 ? "+" : ""}{trend}%
+        {trend && (
+          <div className="flex items-center mt-2 text-xs">
+            <span className={trend.positive ? 'text-green-500' : 'text-red-500'}>
+              {trend.positive ? '↑' : '↓'} {Math.abs(trend.value)}%
             </span>
-            {trendDescription && (
-              <span className="text-xs text-muted-foreground ml-2">
-                {trendDescription}
-              </span>
-            )}
+            <span className="ml-1 text-muted-foreground">{trend.label}</span>
           </div>
         )}
-        {footer && <div className="mt-3">{footer}</div>}
       </CardContent>
     </Card>
   );

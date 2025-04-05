@@ -16,8 +16,7 @@ const CriticalAlertWidget: React.FC = () => {
         const { data, error } = await supabase
           .from('alerts')
           .select('*')
-          .eq('severity', 'critical')
-          .eq('acknowledged', false);
+          .match({ severity: 'critical', acknowledged: false });
           
         if (error) throw error;
         

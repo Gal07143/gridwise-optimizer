@@ -14,7 +14,7 @@ export function subscribeToTable(
   const channelName = `${table}-${eventType}-${Math.random().toString(36).slice(2, 9)}`;
 
   // Create the postgres_changes config object
-  const pgConfig = {
+  const pgConfig: any = {
     event: eventType,
     schema: 'public',
     table: table
@@ -22,7 +22,7 @@ export function subscribeToTable(
   
   // Add filter if provided
   if (filter) {
-    Object.assign(pgConfig, { filter });
+    pgConfig.filter = filter;
   }
 
   // Subscribe to the channel with the proper config
