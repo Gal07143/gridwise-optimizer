@@ -1,4 +1,3 @@
-
 export interface User {
   id: string;
   email: string;
@@ -11,6 +10,7 @@ export interface User {
 export interface AuthContextType {
   user: User | null;
   loading: boolean;
+  isAuthenticated: boolean; // Added this property
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, userData: Partial<User>) => Promise<void>;
   signOut: () => Promise<void>;
