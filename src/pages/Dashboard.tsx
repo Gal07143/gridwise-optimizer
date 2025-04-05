@@ -10,7 +10,7 @@ import DashboardSummary from '@/components/dashboard/DashboardSummary';
 import DashboardCharts from '@/components/dashboard/DashboardCharts';
 import EnergyManagementDashboard from '@/components/ems/EnergyManagementDashboard';
 import AppLayout from '@/components/layout/AppLayout';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '@/store/appStore';
 
 // Dashboard tabs
@@ -42,6 +42,26 @@ const tabs = [
   },
 ];
 
+// Animation variants
+const contentVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { 
+    opacity: 1, 
+    y: 0, 
+    transition: { 
+      duration: 0.4,
+      ease: "easeOut"
+    } 
+  },
+  exit: { 
+    opacity: 0,
+    y: -10,
+    transition: { 
+      duration: 0.2 
+    }
+  }
+};
+
 const Dashboard: React.FC = () => {
   const { activeSite, loading } = useSiteContext();
   const { activeTab, setActiveTab } = useAppStore();
@@ -54,12 +74,6 @@ const Dashboard: React.FC = () => {
   if (loading) {
     return <LoadingScreen />;
   }
-
-  // Animation variants for the content
-  const contentVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
-  };
 
   return (
     <AppLayout>
@@ -83,95 +97,107 @@ const Dashboard: React.FC = () => {
               </TabsList>
             </div>
 
-            <TabsContent value="overview" className="space-y-6">
-              <motion.div 
-                initial="hidden"
-                animate="visible"
-                variants={contentVariants}
-              >
-                <DashboardSummary />
-                <DashboardCharts />
-              </motion.div>
-            </TabsContent>
+            <AnimatePresence mode="wait">
+              <TabsContent value="overview" className="space-y-6">
+                <motion.div 
+                  key="overview"
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  variants={contentVariants}
+                >
+                  <DashboardSummary />
+                  <DashboardCharts />
+                </motion.div>
+              </TabsContent>
 
-            <TabsContent value="energy">
-              <motion.div
-                initial="hidden"
-                animate="visible"
-                variants={contentVariants}
-              >
-                <EnergyManagementDashboard />
-              </motion.div>
-            </TabsContent>
+              <TabsContent value="energy">
+                <motion.div
+                  key="energy"
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  variants={contentVariants}
+                >
+                  <EnergyManagementDashboard />
+                </motion.div>
+              </TabsContent>
 
-            <TabsContent value="consumption">
-              <motion.div
-                initial="hidden"
-                animate="visible"
-                variants={contentVariants}
-              >
-                <div className="p-6 text-center">
-                  <h2 className="text-2xl font-bold mb-4">Energy Consumption Dashboard</h2>
-                  <p className="text-muted-foreground mb-6">
-                    This tab will display detailed consumption metrics and analysis.
-                    Please use the Analytics page for the full consumption overview.
-                  </p>
-                  <div className="flex justify-center">
-                    <img 
-                      src="/placeholder.svg" 
-                      alt="Consumption Dashboard" 
-                      className="max-w-md rounded-lg border shadow-md" 
-                    />
+              <TabsContent value="consumption">
+                <motion.div
+                  key="consumption"
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  variants={contentVariants}
+                >
+                  <div className="p-6 text-center">
+                    <h2 className="text-2xl font-bold mb-4">Energy Consumption Dashboard</h2>
+                    <p className="text-muted-foreground mb-6">
+                      This tab will display detailed consumption metrics and analysis.
+                      Please use the Analytics page for the full consumption overview.
+                    </p>
+                    <div className="flex justify-center">
+                      <img 
+                        src="/placeholder.svg" 
+                        alt="Consumption Dashboard" 
+                        className="max-w-md rounded-lg border shadow-md" 
+                      />
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            </TabsContent>
+                </motion.div>
+              </TabsContent>
 
-            <TabsContent value="production">
-              <motion.div
-                initial="hidden"
-                animate="visible"
-                variants={contentVariants}
-              >
-                <div className="p-6 text-center">
-                  <h2 className="text-2xl font-bold mb-4">Energy Production Dashboard</h2>
-                  <p className="text-muted-foreground mb-6">
-                    This tab will display detailed production metrics and analysis.
-                    Please use the Analytics page for the full production overview.
-                  </p>
-                  <div className="flex justify-center">
-                    <img 
-                      src="/placeholder.svg" 
-                      alt="Production Dashboard" 
-                      className="max-w-md rounded-lg border shadow-md" 
-                    />
+              <TabsContent value="production">
+                <motion.div
+                  key="production"
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  variants={contentVariants}
+                >
+                  <div className="p-6 text-center">
+                    <h2 className="text-2xl font-bold mb-4">Energy Production Dashboard</h2>
+                    <p className="text-muted-foreground mb-6">
+                      This tab will display detailed production metrics and analysis.
+                      Please use the Analytics page for the full production overview.
+                    </p>
+                    <div className="flex justify-center">
+                      <img 
+                        src="/placeholder.svg" 
+                        alt="Production Dashboard" 
+                        className="max-w-md rounded-lg border shadow-md" 
+                      />
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            </TabsContent>
+                </motion.div>
+              </TabsContent>
 
-            <TabsContent value="analytics">
-              <motion.div
-                initial="hidden"
-                animate="visible"
-                variants={contentVariants}
-              >
-                <div className="p-6 text-center">
-                  <h2 className="text-2xl font-bold mb-4">Energy Analytics Dashboard</h2>
-                  <p className="text-muted-foreground mb-6">
-                    This tab provides a summary of analytics. For detailed analysis,
-                    please visit the dedicated Analytics page.
-                  </p>
-                  <div className="flex justify-center">
-                    <img 
-                      src="/placeholder.svg" 
-                      alt="Analytics Dashboard" 
-                      className="max-w-md rounded-lg border shadow-md" 
-                    />
+              <TabsContent value="analytics">
+                <motion.div
+                  key="analytics"
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  variants={contentVariants}
+                >
+                  <div className="p-6 text-center">
+                    <h2 className="text-2xl font-bold mb-4">Energy Analytics Dashboard</h2>
+                    <p className="text-muted-foreground mb-6">
+                      This tab provides a summary of analytics. For detailed analysis,
+                      please visit the dedicated Analytics page.
+                    </p>
+                    <div className="flex justify-center">
+                      <img 
+                        src="/placeholder.svg" 
+                        alt="Analytics Dashboard" 
+                        className="max-w-md rounded-lg border shadow-md" 
+                      />
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            </TabsContent>
+                </motion.div>
+              </TabsContent>
+            </AnimatePresence>
           </Tabs>
         </Main>
       </TooltipProvider>
