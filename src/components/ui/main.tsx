@@ -2,41 +2,28 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 
-type ContainerSize = 'default' | 'small' | 'large' | 'full';
-
-interface MainProps extends React.HTMLAttributes<HTMLDivElement> {
-  containerSize?: ContainerSize;
+export interface MainProps extends React.HTMLAttributes<HTMLDivElement> {
+  title?: string;
+  description?: string;
 }
 
-export const Main: React.FC<MainProps> = ({ 
-  className, 
-  containerSize = 'default', 
-  children,
-  ...props 
-}) => {
-  const containerClasses = {
-    default: 'max-w-7xl',
-    small: 'max-w-4xl',
-    large: 'max-w-screen-2xl',
-    full: 'max-w-full',
-  };
-
-  return (
-    <main 
-      className={cn(
-        'flex-grow p-6', 
-        className
-      )}
-      {...props}
-    >
-      <div className={cn(
-        'mx-auto w-full', 
-        containerClasses[containerSize]
-      )}>
+export const Main = React.forwardRef<HTMLDivElement, MainProps>(
+  ({ className, children, title, description, ...props }, ref) => {
+    return (
+      <main
+        ref={ref}
+        className={cn("flex-1 overflow-auto p-6", className)}
+        {...props}
+      >
+        {title && (
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold mb-2">{title}</h1>
+            {description && <p className="text-muted-foreground">{description}</p>}
+          </div>
+        )}
         {children}
-      </div>
-    </main>
-  );
-};
-
-export default Main;
+      </main>
+    );
+  }
+);
+Main.displayName = 'Main';

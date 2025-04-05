@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -138,7 +137,7 @@ const DeviceModelDetail = () => {
               <span>{deviceModel.model_number}</span>
               <Button 
                 variant="ghost" 
-                size="xs" 
+                size="sm" 
                 className="h-6 w-6 p-0 ml-1" 
                 onClick={handleCopySerialNumber}
               >

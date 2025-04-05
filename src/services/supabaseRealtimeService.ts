@@ -1,186 +1,86 @@
 
-// src/services/supabaseRealtimeService.ts
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { supabase } from '@/integrations/supabase/client';
+import { RealtimeChannel, RealtimePostgresInsertPayload } from '@supabase/supabase-js';
 
-interface SubscribeOptions<T = any> {
+export type RealtimeCallback<T> = (payload: RealtimePostgresInsertPayload<T>) => void;
+
+export interface SubscribeOptions<T> {
   table: string;
   schema?: string;
-  events?: Array<'INSERT' | 'UPDATE' | 'DELETE' | '*'>;
+  event?: 'INSERT' | 'UPDATE' | 'DELETE' | '*';
   filter?: string;
-  onData: (payload: { new: T; old: T | null; eventType: string }) => void;
-  onError?: (error: any) => void;
-  onReconnect?: () => void;
+  callback: RealtimeCallback<T>;
+}
+
+const channels: Map<string, RealtimeChannel> = new Map();
+
+/**
+ * Subscribe to realtime updates from a table
+ */
+export function subscribeToTable<T>({ table, schema = 'public', event = '*', filter, callback }: SubscribeOptions<T>) {
+  const channelKey = `${schema}:${table}:${event}:${filter || 'all'}`;
+  
+  // Check if we already have this channel
+  if (channels.has(channelKey)) {
+    console.log(`Already subscribed to ${channelKey}`);
+    return () => unsubscribeFromTable(channelKey);
+  }
+
+  try {
+    console.log(`Subscribing to ${channelKey}`);
+    
+    let channel = supabase.channel(channelKey);
+    let subscription = channel
+      .on('postgres_changes', {
+        event,
+        schema,
+        table,
+        filter,
+      }, (payload) => {
+        callback(payload as RealtimePostgresInsertPayload<T>);
+      })
+      .subscribe((status) => {
+        console.log(`Supabase realtime subscription status (${channelKey}):`, status);
+      });
+
+    channels.set(channelKey, subscription);
+    
+    // Return unsubscribe function
+    return () => unsubscribeFromTable(channelKey);
+    
+  } catch (error) {
+    console.error(`Error subscribing to ${channelKey}:`, error);
+    return () => {}; // Return no-op function
+  }
 }
 
 /**
- * Subscribe to real-time updates for a table
- * @returns An unsubscribe function
+ * Unsubscribe from a specific channel
  */
-export const subscribeToTable = <T = any>(options: SubscribeOptions<T>) => {
-  const { 
-    table, 
-    schema = 'public',
-    events = ['*'], 
-    filter, 
-    onData, 
-    onError,
-    onReconnect
-  } = options;
+export function unsubscribeFromTable(channelKey: string): void {
+  const channel = channels.get(channelKey);
   
-  // Generate a unique channel name
-  const channelName = `${table}_${events.join('_')}_${Math.random().toString(36).substring(2, 9)}`;
-  
-  try {
-    // Create subscription configs for each event
-    const subscriptionConfigs = events.map(event => ({
-      event: event,
-      schema: schema,
-      table: table,
-      ...(filter && { filter: filter })
-    }));
-    
-    // Create channel with all subscription configs
-    const channel = supabase
-      .channel(channelName)
-      .on('presence', { event: 'sync' }, () => {
-        console.log(`Synced presence state for ${channelName}`);
-      })
-      .on('system', { event: 'reconnect' }, () => {
-        console.log(`Reconnected to ${channelName}`);
-        if (onReconnect) onReconnect();
-      });
-    
-    // Add postgres_changes listeners for each subscription config
-    subscriptionConfigs.forEach(config => {
-      channel.on(
-        'postgres_changes',
-        config,
-        (payload: any) => {
-          try {
-            const eventType = payload.eventType;
-            onData({
-              new: payload.new as T,
-              old: payload.old as T | null,
-              eventType
-            });
-          } catch (err) {
-            console.error(`Error processing ${table} update:`, err);
-            if (onError) onError(err);
-          }
-        }
-      );
-    });
-    
-    // Subscribe to the channel
-    const subscription = channel.subscribe((status) => {
-      if (status === 'SUBSCRIBED') {
-        console.log(`Subscribed to ${table} updates`);
-      } else if (status === 'CHANNEL_ERROR') {
-        console.error(`Error subscribing to ${table} updates`);
-        toast.error(`Error connecting to real-time updates for ${table}`);
-        if (onError) onError(new Error(`Subscription error: ${status}`));
-      }
-    });
-    
-    // Return unsubscribe function
-    return () => {
-      console.log(`Unsubscribing from ${table} updates`);
-      if (supabase.removeChannel) {
-        supabase.removeChannel(channel);
-      }
-    };
-  } catch (error) {
-    console.error(`Error creating subscription to ${table}:`, error);
-    if (onError) onError(error);
-    toast.error(`Failed to subscribe to updates for ${table}`);
-    // Return no-op function as fallback
-    return () => {};
+  if (channel) {
+    console.log(`Unsubscribing from ${channelKey}`);
+    supabase.removeChannel(channel);
+    channels.delete(channelKey);
   }
-};
+}
 
 /**
- * Subscribe to multiple tables at once
- * @returns An array of unsubscribe functions
+ * Unsubscribe from all channels
  */
-export const subscribeToMultipleTables = <T = any>(optionsArray: SubscribeOptions<T>[]) => {
-  const unsubscribeFunctions = optionsArray.map(options => subscribeToTable<T>(options));
+export function unsubscribeAll(): void {
+  channels.forEach((channel, key) => {
+    console.log(`Unsubscribing from ${key}`);
+    supabase.removeChannel(channel);
+  });
   
-  // Return a function that unsubscribes from all channels
-  return () => {
-    unsubscribeFunctions.forEach(unsubscribe => unsubscribe());
-  };
-};
+  channels.clear();
+}
 
-/**
- * Track presence of users in a channel
- * @returns An object with the track and untrack functions
- */
-export const usePresenceTracking = (
-  roomId: string,
-  userData: Record<string, any>
-) => {
-  const channelName = `presence_${roomId}`;
-  let channel: any = null;
-  
-  const initialize = () => {
-    channel = supabase.channel(channelName);
-    
-    channel
-      .on('presence', { event: 'sync' }, () => {
-        const state = channel.presenceState();
-        console.log('Presence state synced:', state);
-        return state;
-      })
-      .on('presence', { event: 'join' }, ({ key, newPresences }: any) => {
-        console.log('User joined:', key, newPresences);
-        return { key, newPresences };
-      })
-      .on('presence', { event: 'leave' }, ({ key, leftPresences }: any) => {
-        console.log('User left:', key, leftPresences);
-        return { key, leftPresences };
-      })
-      .subscribe();
-    
-    return channel;
-  };
-  
-  const track = async () => {
-    if (!channel) {
-      channel = initialize();
-    }
-    
-    try {
-      const status = await channel.track(userData);
-      return status;
-    } catch (error) {
-      console.error('Error tracking presence:', error);
-      return null;
-    }
-  };
-  
-  const untrack = async () => {
-    if (channel) {
-      try {
-        await channel.untrack();
-        supabase.removeChannel(channel);
-        channel = null;
-      } catch (error) {
-        console.error('Error untracking presence:', error);
-      }
-    }
-  };
-  
-  return {
-    track,
-    untrack,
-    getState: () => channel?.presenceState() || {},
-  };
-};
-
-// Export the utils
-export const realtimeService = {
+export default {
   subscribeToTable,
-  subscribeToMultipleTables,
-  usePresenceTracking
+  unsubscribeFromTable,
+  unsubscribeAll
 };

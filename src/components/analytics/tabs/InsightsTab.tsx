@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, BrainCircuit, TrendingUp, ArrowRight } from 'lucide-react';
@@ -125,4 +125,5 @@ const InsightsTab: React.FC<InsightsTabProps> = ({ timeframe }) => {
   );
 };
 
+export { InsightsTab };
 export default InsightsTab;

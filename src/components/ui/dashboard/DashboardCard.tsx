@@ -1,8 +1,9 @@
+
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 
-interface DashboardCardProps extends React.HTMLAttributes<HTMLDivElement> {
+interface DashboardCardProps {
   title?: string | React.ReactNode;
   icon?: React.ReactNode;
   variant?: 'default' | 'outline' | 'glass' | 'filled';
@@ -73,10 +74,10 @@ const DashboardCard: React.FC<DashboardCardProps> = ({
     }
   };
   
-  const Card = animate ? motion.div : 'div';
+  const CardComponent = animate ? motion.div : 'div';
   
   return (
-    <Card
+    <CardComponent
       className={cn(
         'rounded-xl overflow-hidden transition-all duration-200',
         'hover:shadow-md',
@@ -87,10 +88,7 @@ const DashboardCard: React.FC<DashboardCardProps> = ({
       {...(animate ? {
         initial: "hidden",
         animate: "visible",
-        variants: cardVariants,
-        // Lower priority rendering for better performance
-        layoutId: undefined,
-        layout: false
+        variants: cardVariants
       } : {})}
       {...props}
     >
@@ -135,7 +133,7 @@ const DashboardCard: React.FC<DashboardCardProps> = ({
           {footer}
         </div>
       )}
-    </Card>
+    </CardComponent>
   );
 };
 

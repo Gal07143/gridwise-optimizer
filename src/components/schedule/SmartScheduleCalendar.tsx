@@ -1,4 +1,3 @@
-
 // components/schedule/SmartScheduleCalendar.tsx
 import React, { useEffect, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
@@ -184,7 +183,7 @@ const SmartScheduleCalendar = () => {
       <CardContent>
         <Calendar
           events={events}
-          mode="month"
+          mode="single"
           onDateSelect={setSelectedDate}
           onEventClick={handleEventClick}
           eventRenderer={(event) => (

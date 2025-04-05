@@ -1,165 +1,99 @@
 
-/**
- * Utility functions for handling errors
- */
-
 import { toast } from 'sonner';
+import { AxiosError } from 'axios';
+
+interface ApiErrorOptions {
+  context?: string;
+  showToast?: boolean;
+  defaultMessage?: string;
+}
 
 /**
- * Check if an error is a network error
+ * Handle API errors in a consistent way
  */
-export const isNetworkError = (error: unknown): boolean => {
-  if (!error) return false;
-  
-  // Check for standard network error messages
-  const errorMessage = error instanceof Error ? error.message : String(error);
-  return (
-    errorMessage.includes('Network Error') ||
-    errorMessage.includes('Failed to fetch') ||
-    errorMessage.includes('Network request failed') ||
-    errorMessage.includes('network timeout') ||
-    errorMessage.includes('ERR_CONNECTION_REFUSED') ||
-    errorMessage.includes('ERR_NETWORK')
-  );
-};
-
-/**
- * Retry a function with exponential backoff
- */
-export const retryWithBackoff = async <T>(
-  fn: () => Promise<T>,
-  maxRetries = 3,
-  initialDelay = 300
-): Promise<T> => {
-  let retries = 0;
-  
-  const execute = async (): Promise<T> => {
-    try {
-      return await fn();
-    } catch (error) {
-      retries++;
-      
-      if (retries > maxRetries) {
-        throw error;
-      }
-      
-      const delay = initialDelay * Math.pow(2, retries - 1);
-      console.log(`Retry ${retries}/${maxRetries} after ${delay}ms`);
-      
-      await new Promise(resolve => setTimeout(resolve, delay));
-      return execute();
-    }
-  };
-  
-  return execute();
-};
-
-/**
- * Handle dependency errors
- */
-export const handleDependencyError = (error: Error): void => {
-  console.error('Dependency error detected:', error);
-  
-  // Extract package name from error if possible
-  let packageName = 'unknown';
-  const match = error.message.match(/(?:Cannot find module|Failed to resolve import) ['"]([^'"]+)['"]/i);
-  if (match && match[1]) {
-    packageName = match[1];
-  }
-  
-  toast.error(`Dependency error: ${packageName}`, {
-    description: "Please check that all required packages are installed.",
-    duration: 5000,
-  });
-};
-
-/**
- * Handle API errors and provide appropriate feedback
- */
-export const handleApiError = (
+export function handleApiError(
   error: unknown, 
-  options: { 
-    context?: string; 
-    showToast?: boolean;
-    retry?: () => Promise<any>;
-  } = {}
-): ApiErrorType => {
-  const { context = '', showToast = true, retry } = options;
-  let errorType: ApiErrorType = 'unknown';
-  let message = 'An unknown error occurred';
-  
-  if (error instanceof Error) {
-    message = error.message;
-    
-    if (isNetworkError(error)) {
-      errorType = 'network';
-    } else if (message.includes('401') || message.includes('unauthorized')) {
-      errorType = 'authentication';
-    } else if (message.includes('403') || message.includes('forbidden')) {
-      errorType = 'permission';
-    } else if (message.includes('404') || message.includes('not found')) {
-      errorType = 'not-found';
-    } else if (message.includes('timeout')) {
-      errorType = 'timeout';
-    }
+  options: ApiErrorOptions = { showToast: true }
+) {
+  const {
+    context = '',
+    showToast = true,
+    defaultMessage = 'An error occurred while fetching data'
+  } = options;
+
+  let errorMessage = defaultMessage;
+  let statusCode: number | null = null;
+
+  // Extract message from different error types
+  if (error instanceof AxiosError) {
+    statusCode = error.response?.status || null;
+    errorMessage = error.response?.data?.message || error.message;
+  } else if (error instanceof Error) {
+    errorMessage = error.message;
+  } else if (typeof error === 'string') {
+    errorMessage = error;
   }
-  
+
+  // Log the error
+  console.error(
+    `${context ? `[${context}] ` : ''}Error${statusCode ? ` (${statusCode})` : ''}: `, 
+    errorMessage, 
+    error
+  );
+
+  // Show toast notification if requested
   if (showToast) {
-    const contextPrefix = context ? `[${context}] ` : '';
-    
-    const toastMessage = {
-      title: `${contextPrefix}${getErrorTitle(errorType)}`,
-      description: message,
-    };
-    
-    if (errorType === 'network' || errorType === 'timeout') {
-      toast.error(toastMessage.title, {
-        description: toastMessage.description,
-        action: retry ? {
-          label: 'Retry',
-          onClick: () => retry(),
-        } : undefined,
-      });
-    } else {
-      toast.error(toastMessage.title, {
-        description: toastMessage.description,
-      });
-    }
+    toast.error(errorMessage);
   }
-  
-  return errorType;
-};
+
+  return { message: errorMessage, statusCode };
+}
 
 /**
- * Get a user-friendly error title based on error type
+ * Handle dependency errors for specific packages
  */
-const getErrorTitle = (errorType: ApiErrorType): string => {
-  switch (errorType) {
-    case 'network':
-      return 'Network Error';
-    case 'authentication':
-      return 'Authentication Error';
-    case 'permission':
-      return 'Permission Denied';
-    case 'not-found':
-      return 'Resource Not Found';
-    case 'timeout':
-      return 'Request Timeout';
-    case 'validation':
-      return 'Validation Error';
-    case 'server':
-      return 'Server Error';
-    default:
-      return 'Something went wrong';
+export function handleDependencyError(error: Error, packageName: string): string {
+  console.error(`Dependency error for ${packageName}:`, error);
+  
+  // Specific package error handling
+  if (packageName === 'framer-motion') {
+    return `Animation library failed to load. Some UI animations might not work correctly.`;
   }
-};
+  
+  if (packageName === 'recharts') {
+    return `Chart library failed to load. Data visualizations might not display correctly.`;
+  }
+  
+  if (packageName === 'mqtt') {
+    return `Real-time messaging service could not initialize. Live updates might be delayed.`;
+  }
+  
+  if (packageName === '@supabase/supabase-js') {
+    return `Database connection service failed. Some data might not be available.`;
+  }
+  
+  // Generic error message for other packages
+  return `A required component failed to load: ${packageName}. Some features may be unavailable.`;
+}
 
-export type ApiErrorType = 
-  | 'network'
-  | 'authentication'
-  | 'permission'
-  | 'not-found'
-  | 'timeout'
-  | 'validation'
-  | 'server'
-  | 'unknown';
+/**
+ * Format error message from various sources
+ */
+export function formatErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === 'string') {
+    return error;
+  }
+  if (typeof error === 'object' && error !== null) {
+    return JSON.stringify(error);
+  }
+  return 'An unknown error occurred';
+}
+
+export default {
+  handleApiError,
+  handleDependencyError,
+  formatErrorMessage
+};

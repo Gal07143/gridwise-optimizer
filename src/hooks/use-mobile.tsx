@@ -33,5 +33,29 @@ export function useMediaQuery(query: string): boolean {
   return matches;
 }
 
-// Export correctly for importing with destructuring
-export { useMediaQuery };
+// Mobile hook for general mobile detection
+export function useIsMobile(breakpoint: number = 768): boolean {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsMobile(window.innerWidth < breakpoint);
+    };
+
+    // Set the initial value
+    checkScreenSize();
+
+    // Add event listener
+    window.addEventListener('resize', checkScreenSize);
+
+    // Clean up
+    return () => {
+      window.removeEventListener('resize', checkScreenSize);
+    };
+  }, [breakpoint]);
+
+  return isMobile;
+}
+
+// Make both functions available for import
+export { useMediaQuery as default };

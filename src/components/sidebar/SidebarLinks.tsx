@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { Home, Battery, Zap, LineChart, BarChart3, Settings, CircuitBoard, Cloud, Cpu, Brain, CloudLightning } from 'lucide-react';
@@ -76,7 +75,7 @@ const SidebarLinks: React.FC<SidebarLinksProps> = ({ collapsed = false }) => {
       <TooltipProvider delayDuration={0}>
         <nav className="space-y-1">
           {navLinks.map((link) => (
-            <Tooltip key={link.href} side="right">
+            <Tooltip key={link.href} delayDuration={300}>
               <TooltipTrigger asChild>
                 <NavLink
                   to={link.href}
