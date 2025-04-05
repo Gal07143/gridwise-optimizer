@@ -8,7 +8,7 @@ interface ConnectionStatusOptions {
   showToasts?: boolean;
 }
 
-interface ConnectionStatusResult {
+export interface ConnectionStatusResult {
   status: ConnectionStatus;
   isOnline: boolean;
   isOffline: boolean;
@@ -67,8 +67,8 @@ const useConnectionStatus = (options: ConnectionStatusOptions = {}): ConnectionS
       const response = await fetch(`/api/health?t=${timestamp}`, { 
         method: 'HEAD',
         cache: 'no-cache',
-        mode: 'no-cors',
-        timeout: 5000,
+        mode: 'no-cors'
+        // Removing the timeout property as it's not standard in the RequestInit type
       });
       
       // If we got a response, we're online

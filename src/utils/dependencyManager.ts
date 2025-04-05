@@ -1,3 +1,4 @@
+
 import { toast } from 'sonner';
 
 const DEPENDENCY_VERSION_MAP: Record<string, string> = {
@@ -11,6 +12,7 @@ const DEPENDENCY_VERSION_MAP: Record<string, string> = {
   'lucide-react': '0.462.0',
   'recharts': '2.12.7',
   'framer-motion': '10.16.4', // Specific version that works well
+  'axios': '1.6.8', // Added axios
   
   // Form libraries
   'react-hook-form': '7.53.0',
@@ -73,7 +75,7 @@ export function logDependencyVersions(): void {
  * Check installation status of critical dependencies
  */
 export async function checkCriticalDependencies(): Promise<boolean> {
-  const criticalDependencies = ['react', 'react-dom', 'react-router-dom', '@tanstack/react-query'];
+  const criticalDependencies = ['react', 'react-dom', 'react-router-dom', '@tanstack/react-query', 'axios'];
   let allOk = true;
   
   for (const dep of criticalDependencies) {
