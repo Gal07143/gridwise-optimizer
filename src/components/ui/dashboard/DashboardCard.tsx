@@ -1,16 +1,14 @@
-
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { motion } from 'framer-motion';
 
-interface DashboardCardProps {
-  title?: string | React.ReactNode;
+export interface DashboardCardProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'title'> {
+  title?: React.ReactNode;
   icon?: React.ReactNode;
   variant?: 'default' | 'outline' | 'glass' | 'filled';
   size?: 'sm' | 'md' | 'lg';
   accent?: 'primary' | 'secondary' | 'info' | 'success' | 'warning' | 'error' | 'none';
   isLoading?: boolean;
-  animate?: boolean;
+  animation?: boolean;
   className?: string;
   contentClassName?: string;
   headerClassName?: string;
@@ -26,7 +24,7 @@ const DashboardCard: React.FC<DashboardCardProps> = ({
   size = 'md',
   accent = 'none',
   isLoading = false,
-  animate = true,
+  animation = true,
   className,
   contentClassName,
   headerClassName,
@@ -35,22 +33,19 @@ const DashboardCard: React.FC<DashboardCardProps> = ({
   children,
   ...props
 }) => {
-  // Card variant styles
   const variantClasses = {
     default: 'bg-card shadow-sm dark:shadow-md',
     outline: 'bg-background border border-border',
     glass: 'bg-white/10 dark:bg-black/10 backdrop-blur-md border border-white/10 dark:border-white/5',
     filled: 'dark:bg-muted/30 bg-muted/30',
   };
-  
-  // Card size styles
+
   const sizeClasses = {
     sm: 'p-3',
     md: 'p-4',
     lg: 'p-6',
   };
-  
-  // Accent colors
+
   const accentClasses = {
     none: '',
     primary: 'border-l-4 border-l-primary',
@@ -60,50 +55,26 @@ const DashboardCard: React.FC<DashboardCardProps> = ({
     warning: 'border-l-4 border-l-yellow-500',
     error: 'border-l-4 border-l-red-500',
   };
-  
-  // Animation properties - optimized for performance
-  const cardVariants = {
-    hidden: { opacity: 0, y: 10 },
-    visible: { 
-      opacity: 1, 
-      y: 0,
-      transition: {
-        duration: 0.3,
-        ease: "easeOut"
-      }
-    }
-  };
-  
-  const CardComponent = animate ? motion.div : 'div';
-  
+
   return (
-    <CardComponent
+    <div
       className={cn(
         'rounded-xl overflow-hidden transition-all duration-200',
-        'hover:shadow-md',
+        animation && 'hover:shadow-md hover:-translate-y-0.5',
         variantClasses[variant],
         accentClasses[accent],
         className
       )}
-      {...(animate ? {
-        initial: "hidden",
-        animate: "visible",
-        variants: cardVariants
-      } : {})}
       {...props}
     >
       {(title || icon) && (
-        <div className={cn('flex items-center justify-between', 
+        <div className={cn(
+          'flex items-center justify-between border-b border-border/30',
           sizeClasses[size],
-          'border-b border-border/30',
           headerClassName
         )}>
           <div className="flex items-center space-x-3">
-            {icon && (
-              <div className="text-muted-foreground">
-                {icon}
-              </div>
-            )}
+            {icon && <div className="text-muted-foreground">{icon}</div>}
             {typeof title === 'string' ? (
               <h3 className="font-medium text-card-foreground">{title}</h3>
             ) : (
@@ -112,7 +83,7 @@ const DashboardCard: React.FC<DashboardCardProps> = ({
           </div>
         </div>
       )}
-      
+
       <div className={cn(sizeClasses[size], contentClassName)}>
         {isLoading ? (
           <div className="flex items-center justify-center h-full min-h-[100px]">
@@ -122,18 +93,20 @@ const DashboardCard: React.FC<DashboardCardProps> = ({
           children
         )}
       </div>
-      
+
       {footer && (
-        <div className={cn(
-          'border-t border-border/30',
-          sizeClasses[size === 'sm' ? 'sm' : 'sm'],
-          'text-xs text-muted-foreground',
-          footerClassName
-        )}>
+        <div
+          className={cn(
+            'border-t border-border/30',
+            sizeClasses[size === 'sm' ? 'sm' : 'sm'],
+            'text-xs text-muted-foreground',
+            footerClassName
+          )}
+        >
           {footer}
         </div>
       )}
-    </CardComponent>
+    </div>
   );
 };
 
