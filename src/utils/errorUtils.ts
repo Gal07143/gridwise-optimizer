@@ -1,4 +1,3 @@
-
 import { toast } from 'sonner';
 import { AxiosError } from 'axios';
 
@@ -50,6 +49,50 @@ export function handleApiError(
 }
 
 /**
+ * Check if an error is related to network issues
+ */
+export function isNetworkError(error: unknown): boolean {
+  if (error instanceof AxiosError) {
+    return !error.response || error.code === 'ECONNABORTED' || error.message.includes('Network Error');
+  }
+  if (error instanceof Error) {
+    return error.message.includes('NetworkError') || 
+           error.message.includes('Network Error') || 
+           error.message.includes('Failed to fetch');
+  }
+  return false;
+}
+
+/**
+ * Retry an async function with exponential backoff
+ */
+export async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  maxRetries = 3,
+  baseDelay = 1000
+): Promise<T> {
+  let lastError: Error;
+  
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      
+      if (i === maxRetries - 1) {
+        throw lastError;
+      }
+      
+      const delay = baseDelay * Math.pow(2, i);
+      console.log(`Retry attempt ${i + 1}/${maxRetries} after ${delay}ms`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+  
+  throw lastError!; // This should never be reached, but TypeScript needs it
+}
+
+/**
  * Handle dependency errors for specific packages
  */
 export function handleDependencyError(error: Error, packageName: string): string {
@@ -95,5 +138,7 @@ export function formatErrorMessage(error: unknown): string {
 export default {
   handleApiError,
   handleDependencyError,
-  formatErrorMessage
+  formatErrorMessage,
+  isNetworkError,
+  retryWithBackoff
 };
