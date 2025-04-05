@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { toast } from 'sonner';
-import { subscribeToTable } from '@/services/supabaseRealtimeService';
+import { subscribeToTable, unsubscribeFromTable } from '@/services/supabaseRealtimeService';
 import { AlertItem } from '@/components/microgrid/types';
 import { useAuth } from '@/contexts/auth/AuthContext';
 
@@ -15,7 +15,7 @@ const Notifications: React.FC<NotificationsProps> = ({ onNewAlert }) => {
     const newAlert = {
       id: payload.record.id,
       timestamp: payload.record.timestamp,
-      title: payload.record.title,
+      title: payload.record.title || payload.record.message.substring(0, 30), // Fallback for title
       message: payload.record.message,
       severity: payload.record.severity,
       deviceId: payload.record.device_id,
