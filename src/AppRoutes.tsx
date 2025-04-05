@@ -1,78 +1,26 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { Routes, Route } from 'react-router-dom';
+import Dashboard from './pages/Dashboard';
+import Devices from './pages/Devices';
+import NotFound from './pages/NotFound';
+import Settings from './pages/Settings';
+import ModbusDevicesPage from './pages/modbus/ModbusDevices';
+import ModbusDeviceDetails from './pages/modbus/ModbusDeviceDetails';
+import ModbusDeviceForm from './pages/modbus/ModbusDeviceForm';
 
-// Pages
-import Dashboard from '@/pages/Dashboard';
-import Analytics from '@/pages/Analytics';
-import Consumption from '@/pages/Consumption';
-import Production from '@/pages/Production';
-import BatteryManagement from '@/pages/BatteryManagement';
-import EnergyOptimization from '@/pages/EnergyOptimization';
-import WeatherForecast from '@/pages/WeatherForecast';
-import NotFound from '@/pages/NotFound';
-
-// Auth pages
-import Auth from '@/pages/Auth';
-
-// Components
-import ProtectedRoute from '@/components/auth/ProtectedRoute';
-
-const AppRoutes = () => {
-  const { user } = useAuth();
-  
+const AppRoutes: React.FC = () => {
   return (
     <Routes>
-      {/* Public routes */}
-      <Route path="/auth" element={
-        user ? <Navigate to="/" replace /> : <Auth />
-      } />
+      <Route path="/" element={<Dashboard />} />
+      <Route path="/devices" element={<Devices />} />
+      <Route path="/settings/*" element={<Settings />} />
       
-      {/* Redirect root to dashboard if logged in */}
-      <Route path="/" element={
-        user ? <Navigate to="/dashboard" replace /> : <Navigate to="/auth" replace />
-      } />
-
-      {/* Protected routes - require authentication */}
-      <Route path="/dashboard" element={
-        <ProtectedRoute>
-          <Dashboard />
-        </ProtectedRoute>
-      } />
-
-      {/* Energy management routes */}
-      <Route path="/analytics" element={
-        <ProtectedRoute>
-          <Analytics />
-        </ProtectedRoute>
-      } />
-      <Route path="/consumption" element={
-        <ProtectedRoute>
-          <Consumption />
-        </ProtectedRoute>
-      } />
-      <Route path="/production" element={
-        <ProtectedRoute>
-          <Production />
-        </ProtectedRoute>
-      } />
-      <Route path="/battery-management" element={
-        <ProtectedRoute>
-          <BatteryManagement />
-        </ProtectedRoute>
-      } />
-      <Route path="/energy-optimization" element={
-        <ProtectedRoute>
-          <EnergyOptimization />
-        </ProtectedRoute>
-      } />
-      <Route path="/weather-forecast" element={
-        <ProtectedRoute>
-          <WeatherForecast />
-        </ProtectedRoute>
-      } />
+      {/* Modbus Routes */}
+      <Route path="/modbus/devices" element={<ModbusDevicesPage />} />
+      <Route path="/modbus/devices/:deviceId" element={<ModbusDeviceDetails />} />
+      <Route path="/modbus/devices/:deviceId/edit" element={<ModbusDeviceForm />} />
+      <Route path="/modbus/devices/new" element={<ModbusDeviceForm />} />
       
-      {/* 404 route - must be last */}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
