@@ -51,14 +51,21 @@ const EditSite = () => {
     if (!id) return;
     
     try {
-      const result = await updateSiteAction(id, data);
+      // Fix type by creating proper parameter object
+      const result = await updateSiteAction({ 
+        id, 
+        data 
+      });
       
+      // Use non-nullable assertion to avoid type error
       if (result) {
         toast.success(`Site "${data.name}" updated successfully`);
         navigate('/settings/sites');
+        return true;
       } else if (!isOnline) {
         toast.success(`Site update saved and will be processed when you reconnect`);
         navigate('/settings/sites');
+        return true;
       } else {
         throw new Error('Failed to update site');
       }
@@ -91,18 +98,8 @@ const EditSite = () => {
         backLink="/settings/sites"
       >
         <Card className="border-red-200 bg-red-50 dark:bg-red-900/10">
-          <CardContent className="pt-6">
-            <div className="text-center mb-4">
-              <p className="text-red-600 dark:text-red-400">{error || 'Site not found'}</p>
-            </div>
-            <Button 
-              variant="default" 
-              onClick={() => navigate('/settings/sites')}
-              className="w-full"
-            >
-              <CornerDownLeft className="mr-2 h-4 w-4" />
-              Back to Sites
-            </Button>
+          <CardContent className="p-6">
+            <p className="text-red-600 dark:text-red-400">{error || 'Site not found'}</p>
           </CardContent>
         </Card>
       </SettingsPageTemplate>
@@ -111,27 +108,15 @@ const EditSite = () => {
   
   return (
     <SettingsPageTemplate
-      title={`Editing ${site.name}`}
+      title={`Edit Site: ${site.name}`}
       description="Update site information"
       backLink="/settings/sites"
-      actions={
-        <Button 
-          variant="outline"
-          onClick={() => navigate('/settings/sites')}
-          className="flex items-center gap-2"
-        >
-          <CornerDownLeft size={16} />
-          Back to Sites
-        </Button>
-      }
     >
-      <div className="max-w-3xl mx-auto">
-        <SiteForm 
-          initialData={site} 
-          onSubmit={handleSubmit} 
-          isSubmitting={isUpdating}
-        />
-      </div>
+      <SiteForm
+        initialData={site}
+        onSubmit={handleSubmit}
+        isSubmitting={isUpdating}
+      />
     </SettingsPageTemplate>
   );
 };

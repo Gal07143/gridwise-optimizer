@@ -4,7 +4,7 @@ import { useTelemetryHistory } from '@/hooks/useTelemetryHistory';
 import TelemetryChart from './TelemetryChart';
 import { formatTelemetryData } from './telemetryUtils';
 
-export type TelemetryMetric = 'power' | 'voltage' | 'current' | 'temperature' | 'state_of_charge';
+export type TelemetryMetric = 'power' | 'voltage' | 'current' | 'temperature' | 'state_of_charge' | string;
 
 export interface LiveTelemetryChartProps {
   deviceId: string;
@@ -14,7 +14,7 @@ export interface LiveTelemetryChartProps {
   showSource?: boolean;
 }
 
-interface Telemetry {
+interface TelemetryData {
   data: any[];
   timestamps: string[];
   readings?: any[];

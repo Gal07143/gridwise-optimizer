@@ -73,7 +73,7 @@ const SiteDetails: React.FC<SiteDetailsProps> = ({ site }) => {
             {site.contact_email && <p className="text-sm">{site.contact_email}</p>}
           </div>
         )}
-
+        
         {site.status && (
           <div className="mt-4">
             <h4 className="text-sm font-medium mb-1">Status</h4>
