@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Activity, Zap, Thermometer, Battery, AlertTriangle } from 'lucide-react';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
@@ -20,10 +19,10 @@ const mockTelemetryHistory = Array.from({ length: 24 }, (_, i) => {
 
 const TelemetryPanel = () => {
   const { activeSite } = useSiteContext();
-  
-  // Use a default deviceId directly instead of trying to access site.devices
   const deviceId = activeSite?.id || 'device-1';
-  const { telemetry, loading, error } = useLiveTelemetry(deviceId);
+
+  // Fixed the incorrect usage of useLiveTelemetry with a string argument
+  const { telemetry, isLoading, error } = useLiveTelemetry({ deviceId });
 
   const currentValues = {
     voltage: telemetry?.voltage || 240.2,
@@ -32,20 +31,22 @@ const TelemetryPanel = () => {
     temperature: telemetry?.temperature || 42.5
   };
 
-  if (error) {
-    // Only show this toast once when an error occurs
-    React.useEffect(() => {
+  useEffect(() => {
+    if (error) {
       toast.error("Couldn't fetch telemetry data. Using sample data instead.");
-    }, [error]);
-  }
+    }
+  }, [error]);
 
   const handleRefresh = () => {
     toast.loading("Refreshing telemetry data...");
-    // In a real app, you'd call a refresh function here
     setTimeout(() => {
       toast.success("Telemetry data refreshed");
     }, 1000);
   };
+
+  if (isLoading) {
+    return <div className="text-center p-4">Loading telemetry data...</div>;
+  }
 
   return (
     <Card className="shadow-md h-full">
@@ -114,7 +115,7 @@ const TelemetryPanel = () => {
         </div>
 
         <div className="mt-2 text-xs text-center text-muted-foreground">
-          {loading ? 'Loading telemetry data...' : '24-hour telemetry history'}
+          24-hour telemetry history
         </div>
 
         {error && (
