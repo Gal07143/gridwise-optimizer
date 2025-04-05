@@ -76,44 +76,55 @@ export function createModbusClient(config: ModbusConfig, registerMap: RegisterMa
     try {
       for (const mapping of registerMap) {
         let response;
-        
+
+        const length = mapping.dataType === 'string' ? mapping.stringLength || 16 : 1;
+
         if (mapping.type === 'holding') {
-          response = await client.readHoldingRegisters(mapping.register, mapping.dataType === 'string' ? mapping.stringLength || 16 : 1);
+          response = await client.readHoldingRegisters(mapping.register, length);
         } else {
-          response = await client.readInputRegisters(mapping.register, mapping.dataType === 'string' ? mapping.stringLength || 16 : 1);
+          response = await client.readInputRegisters(mapping.register, length);
         }
 
         if (response && response.data) {
-          let data = response.data;
+          const data = response.data;
 
-          if (mapping.dataType === 'float32') {
-            // Assuming ModbusRTU returns an array of two 16-bit words that need to be combined into a 32-bit float
-            if (data.length >= 2) {
-              const buffer = Buffer.alloc(4);
-              buffer.writeUInt16BE(data[0], 0);
-              buffer.writeUInt16BE(data[1], 2);
-              const floatValue = buffer.readFloatBE(0);
-              metrics[mapping.name] = mapping.scaleFactor ? floatValue * mapping.scaleFactor : floatValue;
-            } else {
-              console.warn(`Not enough data to form a float32 for ${mapping.name}`);
-            }
-          } else if (mapping.dataType === 'uint16' || mapping.dataType === 'int16') {
-            const rawValue = data[0];
-            metrics[mapping.name] = mapping.scaleFactor ? rawValue * mapping.scaleFactor : rawValue;
-          } else if (mapping.dataType === 'string') {
-            // Handle string data
-            if (Array.isArray(data)) {
-              const stringValue = data.map(charCode => String.fromCharCode(charCode)).join('');
-              metrics[mapping.name] = stringValue.trim();
-            } else {
-              console.warn(`Unexpected data format for string at register ${mapping.register}`);
-              metrics[mapping.name] = String(data);
-            }
-          } else if (mapping.dataType === 'boolean') {
-            // The specific line with the error (483)
-            // Change the boolean[] to number[] by converting boolean values to numbers
-            const numericData = data.map(value => value ? 1 : 0);
-            metrics[mapping.name] = numericData;
+          switch (mapping.dataType) {
+            case 'float32':
+              if (data.length >= 2) {
+                const buffer = Buffer.alloc(4);
+                buffer.writeUInt16BE(data[0], 0);
+                buffer.writeUInt16BE(data[1], 2);
+                const floatValue = buffer.readFloatBE(0);
+                metrics[mapping.name] = mapping.scaleFactor ? floatValue * mapping.scaleFactor : floatValue;
+              } else {
+                console.warn(`Not enough data to form a float32 for ${mapping.name}`);
+              }
+              break;
+
+            case 'uint16':
+            case 'int16':
+              const rawValue = data[0];
+              metrics[mapping.name] = mapping.scaleFactor ? rawValue * mapping.scaleFactor : rawValue;
+              break;
+
+            case 'string':
+              if (Array.isArray(data)) {
+                const stringValue = data.map(charCode => String.fromCharCode(charCode)).join('');
+                metrics[mapping.name] = stringValue.trim();
+              } else {
+                console.warn(`Unexpected data format for string at register ${mapping.register}`);
+                metrics[mapping.name] = String(data);
+              }
+              break;
+
+            case 'boolean':
+              const numericData = data.map(value => value ? 1 : 0); // 👈 fixed here
+              metrics[mapping.name] = numericData;
+              break;
+
+            default:
+              console.warn(`Unsupported dataType: ${mapping.dataType}`);
+              break;
           }
         } else {
           console.warn(`No data received for register ${mapping.register}`);
@@ -146,9 +157,7 @@ export function createModbusClient(config: ModbusConfig, registerMap: RegisterMa
   };
 
   // Function to check if the client is connected
-  const isConnected = (): boolean => {
-    return connected;
-  };
+  const isConnected = (): boolean => connected;
 
   return { connect, readData, close, isConnected };
 }
