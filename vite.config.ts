@@ -9,9 +9,13 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    hmr: true, // Make sure HMR (Hot Module Replacement) is enabled
   },
   plugins: [
-    react(),
+    react({
+      // Properly configure the React refresh
+      fastRefresh: true,
+    }),
     mode === 'development' &&
     componentTagger(),
   ].filter(Boolean),
@@ -23,6 +27,9 @@ export default defineConfig(({ mode }) => ({
   define: {
     // This enables compatibility with packages that use process.env
     'process.env': {}
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react-router-dom', 'framer-motion'],
   },
   // Increase build performance and manage memory usage
   build: {
@@ -38,7 +45,8 @@ export default defineConfig(({ mode }) => ({
             '@radix-ui/react-tabs',
             '@radix-ui/react-tooltip',
           ],
-          charts: ['recharts']
+          charts: ['recharts'],
+          motion: ['framer-motion']
         }
       }
     }

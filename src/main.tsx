@@ -6,7 +6,7 @@ import './index.css'
 import { BrowserRouter } from 'react-router-dom'
 import { setupGlobalErrorHandler } from './utils/globalErrorHandler.ts'
 
-// Setup global error handler for dependency issues
+// Setup global error handler for React refresh and dependency issues
 setupGlobalErrorHandler();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

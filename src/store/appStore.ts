@@ -3,18 +3,13 @@ import { create } from 'zustand';
 interface AppState {
   sidebarExpanded: boolean;
   setSidebarExpanded: (expanded: boolean) => void;
-  toggleSidebar: () => void;
-  
-  // Add more state properties as needed
-  currentTheme: 'light' | 'dark' | 'system';
-  setTheme: (theme: 'light' | 'dark' | 'system') => void;
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
   sidebarExpanded: true,
   setSidebarExpanded: (expanded) => set({ sidebarExpanded: expanded }),
-  toggleSidebar: () => set((state) => ({ sidebarExpanded: !state.sidebarExpanded })),
-  
-  currentTheme: 'system',
-  setTheme: (theme) => set({ currentTheme: theme }),
+  activeTab: 'overview',
+  setActiveTab: (tab) => set({ activeTab: tab }),
 }));
