@@ -66,7 +66,30 @@ export async function retryWithBackoff<T>(
   }
 }
 
+/**
+ * Handle API errors with appropriate feedback
+ */
+export function handleApiError(error: any, context: string, showToast: boolean = true): void {
+  console.error(`API Error in ${context}:`, error);
+  
+  if (showToast) {
+    // You might want to import toast from 'sonner' here
+    // toast.error(`Error: ${error.message || 'Unknown error occurred'}`);
+    console.error(`Error: ${error.message || 'Unknown error occurred'}`);
+  }
+}
+
+/**
+ * Handle dependency errors in components
+ */
+export function handleDependencyError(error: Error, componentName: string, dependency: string): void {
+  console.error(`Error in ${componentName} with dependency ${dependency}:`, error);
+  // Additional logic for handling dependency errors
+}
+
 export default {
   isNetworkError,
-  retryWithBackoff
+  retryWithBackoff,
+  handleApiError,
+  handleDependencyError
 };

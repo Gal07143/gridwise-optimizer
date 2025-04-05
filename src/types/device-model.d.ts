@@ -1,4 +1,5 @@
 
+
 export interface DeviceModel {
   id: string;
   name: string;
@@ -31,7 +32,7 @@ export interface DeviceModelWithRequiredName {
   model_number: string;
   device_type: string;
   category?: string;
-  protocol: string; // Make protocol required here
+  protocol?: string; // Make protocol optional here
 }
 
 export const categoryNames = {

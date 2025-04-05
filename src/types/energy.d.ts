@@ -2,7 +2,7 @@
 // File: src/types/energy.d.ts
 export type DeviceCategory = 'inverter' | 'meter' | 'battery' | 'solar' | 'load' | 'sensor' | 'evCharger' | 'wind';
 
-// Changed to string type to allow string literals to be assignable to DeviceType
+// Change DeviceType to be a string type to allow string literals
 export type DeviceType = string;
 
 // Unified device statuses
@@ -97,7 +97,7 @@ export interface EnergyReading {
   frequency?: number;
   temperature?: number;
   state_of_charge?: number;
-  value?: number;
+  value?: number; // Add value property
   reading_type?: string;
   unit?: string;
   quality?: number;
@@ -153,4 +153,10 @@ export interface Alert {
   source?: string;
   type?: string;
   acknowledged_by?: string;
+  resolved?: boolean;
+  deviceId?: string;
+  deviceName?: string;
+  assignedTo?: string;
+  category?: string;
+  metadata?: Record<string, any>;
 }

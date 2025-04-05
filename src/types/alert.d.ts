@@ -14,4 +14,10 @@ export interface Alert {
   category?: string;
   site_id?: string;
   metadata?: Record<string, any>;
+  // Compatibility with other Alert interface
+  device_id?: string;
+  acknowledged_at?: string;
+  resolved_at?: string;
+  type?: string;
+  acknowledged_by?: string;
 }

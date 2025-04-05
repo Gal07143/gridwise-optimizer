@@ -19,7 +19,6 @@ export interface ModbusDevice extends ModbusDeviceConfig {
   serialPort?: string;
   baudRate?: number;
   host?: string;
-  protocol: string;
   description?: string;
 }
 
