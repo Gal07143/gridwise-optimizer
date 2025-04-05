@@ -33,15 +33,17 @@ const SiteSettings = () => {
     }
   }, []);
   
-  const { data: sites = [], isLoading, error, refetch, isFetching } = useQuery({
-    queryKey: ['sites'],
-    queryFn: getSites,
-    retry: isOnline ? 3 : 1,
-    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 10000),
+const { data: sites = [], isLoading, error, refetch, isFetching } = useQuery({
+  queryKey: ['sites'],
+  queryFn: getSites,
+  retry: isOnline ? 3 : 1,
+  retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 10000),
+  meta: {
     onError: (error: Error) => {
       toast.error(`Failed to load sites: ${error.message}`);
     }
-  });
+  }
+});
   
   const onSetActive = (site: Site) => {
     setActiveSite(site);
