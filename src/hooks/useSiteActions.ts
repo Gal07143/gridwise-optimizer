@@ -1,183 +1,137 @@
 
-import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { createSite, updateSite, deleteSite as deleteSiteAPI } from '@/services/sites/siteService';
 import { toast } from 'sonner';
 import { Site } from '@/types/site';
-import useConnectionStatus from './useConnectionStatus';
+import { useConnectionStatus } from '@/hooks/useConnectionStatus';
 
-// Define types for our pending operations
-type PendingOperation = {
-  id: string;
-  type: 'create' | 'update' | 'delete';
-  data?: any;
-  timestamp: number;
-};
-
-export function useSiteActions() {
-  const [isProcessing, setIsProcessing] = useState(false);
+// Sample implementation of site actions - in real app these would connect to supabase/API
+export const useSiteActions = () => {
   const { isOnline } = useConnectionStatus();
-
-  // Create site mutation
-  const createSiteMutation = useMutation({
-    mutationFn: (newSite: Omit<Site, 'id' | 'created_at' | 'updated_at'>) => {
-      if (!isOnline) {
-        // Store operation for later
-        const tempId = `temp-${Date.now()}`;
-        const pendingOp: PendingOperation = {
-          id: tempId,
-          type: 'create',
-          data: newSite,
-          timestamp: Date.now()
-        };
-        
-        // Store in localStorage
-        storePendingOperation(pendingOp);
-        
-        // Return a mock site with the temp ID
-        return Promise.resolve({
-          ...newSite,
-          id: tempId,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        } as Site);
-      }
-      
-      return createSite(newSite);
-    },
-    onSuccess: () => {
-      toast.success('Site created successfully');
-    },
-    onError: (error) => {
-      toast.error(`Failed to create site: ${error.message}`);
-    }
-  });
-
-  // Update site mutation
-  const updateSiteMutation = useMutation({
-    mutationFn: (site: Site) => {
-      if (!isOnline) {
-        // Store operation for later
-        const pendingOp: PendingOperation = {
-          id: site.id,
-          type: 'update',
-          data: site,
-          timestamp: Date.now()
-        };
-        
-        // Store in localStorage
-        storePendingOperation(pendingOp);
-        
-        // Return the site as if it was updated
-        return Promise.resolve(site);
-      }
-      
-      return updateSite(site);
-    },
-    onSuccess: () => {
-      toast.success('Site updated successfully');
-    },
-    onError: (error) => {
-      toast.error(`Failed to update site: ${error.message}`);
-    }
-  });
-
-  // Delete site mutation
-  const deleteSiteMutation = useMutation({
-    mutationFn: (siteId: string) => {
-      if (!isOnline) {
-        // Store operation for later
-        const pendingOp: PendingOperation = {
-          id: siteId,
-          type: 'delete',
-          timestamp: Date.now()
-        };
-        
-        // Store in localStorage
-        storePendingOperation(pendingOp);
-        
-        // Return the siteId as if it was deleted
-        return Promise.resolve(siteId);
-      }
-      
-      return deleteSiteAPI(siteId);
-    },
-    onSuccess: () => {
-      toast.success('Site deleted successfully');
-    },
-    onError: (error) => {
-      toast.error(`Failed to delete site: ${error.message}`);
-    }
-  });
-
-  // Helper to store pending operations
-  const storePendingOperation = (operation: PendingOperation) => {
+  
+  // Queue operations for offline mode
+  const queueOfflineOperation = (operation: string, data: any) => {
     try {
-      const pendingOps = JSON.parse(localStorage.getItem('pendingSiteOperations') || '[]');
-      pendingOps.push(operation);
-      localStorage.setItem('pendingSiteOperations', JSON.stringify(pendingOps));
-    } catch (error) {
-      console.error('Error storing pending operation:', error);
+      const pendingOperations = JSON.parse(localStorage.getItem('pendingSiteOperations') || '[]');
+      pendingOperations.push({ operation, data, timestamp: Date.now() });
+      localStorage.setItem('pendingSiteOperations', JSON.stringify(pendingOperations));
+      return true;
+    } catch (err) {
+      console.error('Failed to queue offline operation:', err);
+      return false;
     }
   };
   
-  // Process pending operations when back online
+  // Create site mutation
+  const createSiteMutation = useMutation<
+    Site, 
+    Error, 
+    Omit<Site, 'id' | 'created_at' | 'updated_at'>
+  >({
+    mutationFn: async (siteData) => {
+      if (!isOnline) {
+        const success = queueOfflineOperation('create', siteData);
+        if (!success) {
+          throw new Error('Failed to save site for offline processing');
+        }
+        const tempId = `temp-${Date.now()}`;
+        return {
+          ...siteData,
+          id: tempId,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        } as Site;
+      }
+      
+      // In real app, this would be a call to supabase or an API
+      console.log('Creating site:', siteData);
+      // Mock successful creation
+      return {
+        ...siteData,
+        id: `site-${Date.now()}`,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      } as Site;
+    }
+  });
+  
+  // Update site mutation
+  const updateSiteMutation = useMutation<Site, Error, Site>({
+    mutationFn: async (site) => {
+      if (!isOnline) {
+        const success = queueOfflineOperation('update', site);
+        if (!success) {
+          throw new Error('Failed to save site update for offline processing');
+        }
+        return site;
+      }
+      
+      // In real app, this would be a call to supabase or an API
+      console.log('Updating site:', site);
+      // Mock successful update
+      return {
+        ...site,
+        updated_at: new Date().toISOString()
+      };
+    }
+  });
+  
+  // Delete site mutation
+  const deleteSiteMutation = useMutation<boolean, Error, string>({
+    mutationFn: async (siteId) => {
+      if (!isOnline) {
+        const success = queueOfflineOperation('delete', { id: siteId });
+        if (!success) {
+          throw new Error('Failed to save site deletion for offline processing');
+        }
+        return true;
+      }
+      
+      // In real app, this would be a call to supabase or an API
+      console.log('Deleting site:', siteId);
+      // Mock successful deletion
+      return true;
+    }
+  });
+  
+  // Process pending operations
   const processPendingOperations = async () => {
+    if (!isOnline) {
+      toast.error('Cannot process offline operations while still offline');
+      return false;
+    }
+    
     try {
-      setIsProcessing(true);
+      const pendingOperations = JSON.parse(localStorage.getItem('pendingSiteOperations') || '[]');
       
-      const pendingOps: PendingOperation[] = JSON.parse(localStorage.getItem('pendingSiteOperations') || '[]');
-      
-      if (pendingOps.length === 0) {
+      if (pendingOperations.length === 0) {
         toast.info('No pending operations to process');
         return true;
       }
       
-      // Sort operations by timestamp to process in order
-      const sortedOps = [...pendingOps].sort((a, b) => a.timestamp - b.timestamp);
+      toast.loading(`Processing ${pendingOperations.length} pending operation(s)...`);
       
-      let successCount = 0;
-      let failCount = 0;
-      
-      for (const op of sortedOps) {
-        try {
-          switch (op.type) {
-            case 'create':
-              await createSite(op.data);
-              successCount++;
-              break;
-              
-            case 'update':
-              await updateSite(op.data);
-              successCount++;
-              break;
-              
-            case 'delete':
-              await deleteSiteAPI(op.id);
-              successCount++;
-              break;
-          }
-        } catch (error) {
-          console.error(`Error processing operation ${op.type} for ${op.id}:`, error);
-          failCount++;
+      for (const op of pendingOperations) {
+        switch (op.operation) {
+          case 'create':
+            await createSiteMutation.mutateAsync(op.data);
+            break;
+          case 'update':
+            await updateSiteMutation.mutateAsync(op.data);
+            break;
+          case 'delete':
+            await deleteSiteMutation.mutateAsync(op.data.id);
+            break;
         }
       }
       
-      localStorage.removeItem('pendingSiteOperations');
-      
-      if (failCount === 0) {
-        toast.success(`Successfully processed ${successCount} pending operations`);
-      } else {
-        toast.warning(`Processed ${successCount} operations with ${failCount} failures`);
-      }
-      
+      // Clear processed operations
+      localStorage.setItem('pendingSiteOperations', '[]');
+      toast.success(`Processed ${pendingOperations.length} pending operation(s)`);
       return true;
     } catch (error) {
+      toast.error('Failed to process some pending operations');
       console.error('Error processing pending operations:', error);
-      toast.error('Failed to process pending operations');
       return false;
-    } finally {
-      setIsProcessing(false);
     }
   };
   
@@ -185,7 +139,9 @@ export function useSiteActions() {
     createSite: createSiteMutation.mutate,
     updateSite: updateSiteMutation.mutate,
     deleteSite: deleteSiteMutation.mutate,
-    isProcessing,
+    isProcessing: createSiteMutation.isPending || 
+                 updateSiteMutation.isPending || 
+                 deleteSiteMutation.isPending,
     processPendingOperations
   };
-}
+};

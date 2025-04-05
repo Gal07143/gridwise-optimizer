@@ -1,86 +1,112 @@
 
-import React, { useState, useEffect } from 'react';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import React, { useEffect } from 'react';
+import { Check, ChevronsUpDown, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
-import { Site } from '@/types/energy';
-import { useSiteContext } from '@/contexts/SiteContext';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from '@/components/ui/command';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
+import { Site } from '@/types/site';
 
 interface SiteSelectorProps {
-  onSiteChange?: (site: Site) => void;
+  sites: Site[];
+  activeSite?: Site | null;
+  setActiveSite: (site: Site) => void;
+  loading?: boolean;
+  error?: string;
 }
 
-const SiteSelector: React.FC<SiteSelectorProps> = ({ onSiteChange }) => {
-  const { sites, activeSite, setActiveSite, loading, error } = useSiteContext();
-  const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
+const SiteSelector: React.FC<SiteSelectorProps> = ({
+  sites,
+  activeSite,
+  setActiveSite,
+  loading = false,
+  error
+}) => {
+  const [open, setOpen] = React.useState(false);
 
+  // If there's only one site, select it automatically
   useEffect(() => {
-    if (activeSite && onSiteChange) {
-      // Ensure activeSite has required fields before passing
-      const normalizedSite: Site = {
-        ...activeSite,
-        timezone: activeSite.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
-        created_at: activeSite.created_at || new Date().toISOString(),
-        updated_at: activeSite.updated_at || new Date().toISOString()
-      };
-      onSiteChange(normalizedSite);
+    if (sites.length === 1 && !activeSite) {
+      setActiveSite(sites[0]);
     }
-  }, [activeSite, onSiteChange]);
-
-  const handleSiteChange = (siteId: string) => {
-    const selectedSite = sites.find((site) => site.id === siteId);
-    if (selectedSite) {
-      // Ensure selectedSite has required fields before setting
-      const normalizedSite: Site = {
-        ...selectedSite,
-        timezone: selectedSite.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
-        created_at: selectedSite.created_at || new Date().toISOString(),
-        updated_at: selectedSite.updated_at || new Date().toISOString()
-      };
-      setActiveSite(normalizedSite);
-      toast.success(`Active site changed to ${selectedSite.name}`);
-    }
-  };
-
-  const handleAddSite = () => {
-    navigate('/settings/sites/add');
-  };
-
-  if (loading) {
-    return <p>Loading sites...</p>;
-  }
-
-  if (error) {
-    return <p>Error: {error.message}</p>;
-  }
+  }, [sites, activeSite, setActiveSite]);
 
   return (
-    <div className="flex items-center space-x-4">
-      <Select open={open} onOpenChange={setOpen} value={activeSite?.id} onValueChange={handleSiteChange}>
-        <SelectTrigger className="w-[280px]">
-          <SelectValue placeholder="Select a site" />
-        </SelectTrigger>
-        <SelectContent>
-          {sites.map((site) => (
-            <SelectItem key={site.id} value={site.id}>
-              {site.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <Button variant="outline" size="icon" onClick={handleAddSite}>
-        <PlusCircle className="h-4 w-4" />
-      </Button>
-    </div>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-full justify-between"
+          disabled={loading || sites.length === 0}
+        >
+          {loading ? (
+            <div className="flex items-center">
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <span>Loading sites...</span>
+            </div>
+          ) : activeSite ? (
+            <div className="flex flex-col items-start">
+              <span className="font-medium">{activeSite.name}</span>
+              <span className="text-xs text-muted-foreground">
+                {activeSite.location || "No location"}
+              </span>
+            </div>
+          ) : (
+            <span className="text-muted-foreground">Select a site...</span>
+          )}
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[300px] p-0">
+        <Command>
+          <CommandInput placeholder="Search sites..." />
+          <CommandEmpty>
+            {error ? (
+              <span className="text-red-500">{error}</span>
+            ) : (
+              <span>No sites found.</span>
+            )}
+          </CommandEmpty>
+          <CommandGroup>
+            {sites.map((site) => (
+              <CommandItem
+                key={site.id}
+                value={site.id}
+                onSelect={() => {
+                  setActiveSite(site as any);
+                  setOpen(false);
+                }}
+              >
+                <Check
+                  className={cn(
+                    "mr-2 h-4 w-4",
+                    activeSite?.id === site.id ? "opacity-100" : "opacity-0"
+                  )}
+                />
+                <div className="flex flex-col">
+                  <span>{site.name}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {site.location || "No location"}
+                  </span>
+                </div>
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 };
 

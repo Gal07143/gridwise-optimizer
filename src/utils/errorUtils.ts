@@ -83,6 +83,7 @@ export const retryWithBackoff = async <T>(
   }
 };
 
+// Export all functions as both named exports and default export
 export default {
   handleDependencyError,
   handleApiError,

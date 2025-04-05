@@ -18,15 +18,20 @@ export interface DeviceModel {
   firmware_version?: string;
   protocol?: string;
   compatible_with?: string[];
-  support_level?: string;
+  support_level?: SupportLevel;
   connectivity?: Record<string, any>;
-  // Compatibility field for some components
+  // Add model_name property that was referenced but missing
   model_name?: string;
+  // Add properties for file attachments
   images?: Record<string, any>;
   has_manual?: boolean;
   manuals?: Record<string, any>;
   datasheets?: Record<string, any>;
   videos?: Record<string, any>;
+  has_datasheet?: boolean;
+  has_video?: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface DeviceModelListItem {
@@ -38,7 +43,7 @@ export interface DeviceModelListItem {
   category: string;
   power_rating?: number;
   capacity?: number;
-  support_level?: string;
+  support_level?: SupportLevel;
 }
 
 export interface DeviceModelReference {
@@ -60,3 +65,17 @@ export interface DeviceModelCategory {
 }
 
 export type SupportLevel = 'full' | 'partial' | 'beta' | 'community' | 'none';
+
+// Add CategoryNames for reference
+export const categoryNames = [
+  'Solar Inverters',
+  'Battery Systems',
+  'EV Chargers',
+  'Meters',
+  'Load Controllers',
+  'Wind Turbines',
+  'Generators',
+  'HVAC Systems',
+  'Building Management',
+  'Smart Appliances'
+];

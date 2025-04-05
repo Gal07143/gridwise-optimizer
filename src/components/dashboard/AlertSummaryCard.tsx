@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
+import { subscribeToTable } from '@/services/supabaseRealtimeService';
 
 interface AlertSummary {
   total: number;
@@ -24,35 +25,35 @@ export default function AlertSummaryCard() {
         setLoading(true);
         
         // Get total active alerts
-        const { data: totalData, error: totalError } = await supabase
+        let { data: totalData, error: totalError } = await supabase
           .from('alerts')
-          .select('id', { count: 'exact' })
+          .select('*')
           .eq('resolved', false);
           
         if (totalError) throw totalError;
         
         // Get critical alerts
-        const { data: criticalData, error: criticalError } = await supabase
+        let { data: criticalData, error: criticalError } = await supabase
           .from('alerts')
-          .select('id', { count: 'exact' })
+          .select('*')
           .eq('severity', 'critical')
           .eq('resolved', false);
           
         if (criticalError) throw criticalError;
         
         // Get unacknowledged alerts
-        const { data: unacknowledgedData, error: unacknowledgedError } = await supabase
+        let { data: unacknowledgedData, error: unacknowledgedError } = await supabase
           .from('alerts')
-          .select('id', { count: 'exact' })
+          .select('*')
           .eq('acknowledged', false)
           .eq('resolved', false);
           
         if (unacknowledgedError) throw unacknowledgedError;
         
         setSummary({
-          total: totalData.length,
-          critical: criticalData.length,
-          unacknowledged: unacknowledgedData.length
+          total: totalData?.length || 0,
+          critical: criticalData?.length || 0,
+          unacknowledged: unacknowledgedData?.length || 0
         });
         
         setError(null);
@@ -74,20 +75,17 @@ export default function AlertSummaryCard() {
     const interval = setInterval(fetchAlertSummary, 15000); // refresh every 15s
     
     // Setup realtime subscription for alerts table
-    const channel = supabase
-      .channel('alert-summary-changes')
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'alerts'
-      }, () => {
+    const unsubscribe = subscribeToTable(
+      'alerts', 
+      '*', 
+      () => {
         fetchAlertSummary();
-      })
-      .subscribe();
+      }
+    );
       
     return () => {
       clearInterval(interval);
-      supabase.removeChannel(channel);
+      unsubscribe();
     };
   }, []);
 

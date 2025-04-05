@@ -1,169 +1,156 @@
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { MetricsCard } from '@/components/ui/dashboard';
-import { FaultSummaryCard } from '@/components/dashboard';
-import { AlertSummaryCard } from '@/components/dashboard';
-import { LiveTelemetryChart } from '@/components/telemetry';
-import { TariffCard, TariffHistoryCard } from '@/components/dashboard';
-import { DeviceManagement } from '@/components/dashboard';
-import { Battery, Sun, Wind } from 'lucide-react';
+import { AlertSummaryCard, LiveTelemetryChart } from '@/components/dashboard';
+import { Battery, Sun, Wind, Home } from 'lucide-react';
 
-// Define a Fault interface if not already defined
-interface Fault {
-  id: string;
-  device_id: string;
-  timestamp: string;
-  description: string;
-  severity: string;
-  status: string;
-  resolved_at?: string;
+interface DashboardSummaryProps {
+  siteId: string;
 }
 
-const DashboardSummary = () => {
-  const [faults, setFaults] = useState<Fault[]>([]);
-  const [activeFault, setActiveFault] = useState<Fault | null>(null);
-  
+interface Metric {
+  total: number;
+  online: number;
+  offline: number;
+}
+
+const DashboardSummary: React.FC<DashboardSummaryProps> = ({ siteId }) => {
+  const [metrics, setMetrics] = useState<Record<string, Metric>>({
+    solar: { total: 0, online: 0, offline: 0 },
+    battery: { total: 0, online: 0, offline: 0 },
+    wind: { total: 0, online: 0, offline: 0 },
+    load: { total: 0, online: 0, offline: 0 },
+  });
+
+  // Mock data that would come from API/database in a real app
   useEffect(() => {
-    // Simulate fetching faults
-    const fetchFaults = async () => {
-      // Mock data
-      const mockFaults = [
-        {
-          id: '1',
-          device_id: 'batt-01',
-          timestamp: new Date().toISOString(),
-          description: 'Battery temperature exceeds normal range',
-          severity: 'medium',
-          status: 'open',
-        },
-        {
-          id: '2',
-          device_id: 'inv-03',
-          timestamp: new Date(Date.now() - 1800000).toISOString(),
-          description: 'Inverter efficiency below expected threshold',
-          severity: 'low',
-          status: 'open',
-        }
-      ];
-      
-      setFaults(mockFaults);
+    // This would be a real API call in a production app
+    const mockFetchData = () => {
+      setMetrics({
+        solar: { total: 8, online: 7, offline: 1 },
+        battery: { total: 4, online: 4, offline: 0 },
+        wind: { total: 2, online: 1, offline: 1 },
+        load: { total: 12, online: 10, offline: 2 },
+      });
     };
-    
-    fetchFaults();
-  }, []);
-  
+
+    mockFetchData();
+    // In a real app, we would set up an interval to refresh data
+  }, [siteId]);
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-      {/* Energy Production Summary */}
-      <MetricsCard
-        title="Total Energy Production"
-        value="126.5 kWh"
-        change={"+12.3%"}
-        changeType="positive"
-        description="vs. previous day"
-        className="md:col-span-1"
-      />
-      
-      {/* Energy Consumption Summary */}
-      <MetricsCard
-        title="Energy Consumption"
-        value="98.2 kWh"
-        change={"-5.7%"}
-        changeType="positive"
-        description="vs. previous day"
-        className="md:col-span-1"
-      />
-      
-      {/* Solar Production */}
-      <MetricsCard
-        title="Solar Production"
-        value="82.4 kWh"
-        icon={<Sun className="h-5 w-5" />}
-        change={"+15.2%"}
-        changeType="positive"
-        className="md:col-span-1"
-      />
-      
-      {/* Wind Production */}
-      <MetricsCard
-        title="Wind Production"
-        value="44.1 kWh"
-        icon={<Wind className="h-5 w-5" />}
-        change={"+8.9%"}
-        changeType="positive"
-        className="md:col-span-1"
-      />
-      
-      {/* Battery Status */}
-      <MetricsCard
-        title="Battery State"
-        value="78%"
-        icon={<Battery className="h-5 w-5" />}
-        description="Charging at 3.2 kW"
-        change={"+2.1%"}
-        changeType="positive"
-        className="md:col-span-1"
-      />
-      
-      {/* Grid Import */}
-      <MetricsCard
-        title="Grid Import"
-        value="12.8 kWh"
-        change={"-22.4%"}
-        changeType="positive"
-        description="vs. previous day"
-        className="md:col-span-1"
-      />
-      
-      {/* Grid Export */}
-      <MetricsCard
-        title="Grid Export"
-        value="41.1 kWh"
-        change={"+31.2%"}
-        changeType="positive"
-        description="vs. previous day"
-        className="md:col-span-1"
-      />
-      
-      {/* Carbon Offset */}
-      <MetricsCard
-        title="CO2 Avoided"
-        value="68.2 kg"
-        change={"+14.8%"}
-        changeType="positive"
-        description="vs. previous day"
-        className="md:col-span-1"
-      />
-      
-      {/* Faults Summary */}
-      <div className="md:col-span-2">
-        <FaultSummaryCard faults={faults} onFaultSelect={setActiveFault} />
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <MetricsCard
+          title="Solar Production"
+          value="12.5"
+          unit="kW"
+          icon={<Sun className="h-4 w-4" />}
+          description={`${metrics.solar.online} of ${metrics.solar.total} inverters online`}
+          trend={5}
+          trendDescription="vs. yesterday"
+          isPositiveTrend={true}
+        />
+        
+        <MetricsCard
+          title="Battery Status"
+          value="78"
+          unit="%"
+          icon={<Battery className="h-4 w-4" />}
+          description={`Discharging at 2.3 kW`}
+          trend={-10}
+          trendDescription="remaining capacity"
+          isPositiveTrend={false}
+        />
+        
+        <MetricsCard
+          title="Wind Generation"
+          value="3.2"
+          unit="kW"
+          icon={<Wind className="h-4 w-4" />}
+          description={`${metrics.wind.online} of ${metrics.wind.total} turbines online`}
+          trend={12}
+          trendDescription="vs. yesterday"
+          isPositiveTrend={true}
+        />
+        
+        <MetricsCard
+          title="Building Demand"
+          value="18.7"
+          unit="kW"
+          icon={<Home className="h-4 w-4" />}
+          description={`Peak today: 22.4 kW`}
+          trend={-8}
+          trendDescription="vs. yesterday"
+          isPositiveTrend={true}
+        />
       </div>
-      
-      {/* Live Power Flow */}
-      <div className="md:col-span-2">
-        <LiveTelemetryChart height={250} deviceId="overview" metric="power" />
-        <LiveTelemetryChart height={250} deviceId="overview" metric="energy" />
-      </div>
-      
-      {/* Recent Alerts */}
-      <div className="md:col-span-2 lg:col-span-2">
-        <AlertSummaryCard limit={5} />
-      </div>
-      
-      {/* Energy Prices */}
-      <div className="md:col-span-3 lg:col-span-2">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <TariffCard />
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="md:col-span-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <MetricsCard
+              title="Energy Generated Today"
+              value="87.5"
+              unit="kWh"
+              description="Solar: 74.2 kWh, Wind: 13.3 kWh"
+              trend={15}
+              trendDescription="vs. yesterday"
+              isPositiveTrend={true}
+            />
+            
+            <MetricsCard
+              title="Energy Consumed Today"
+              value="112.8"
+              unit="kWh"
+              description="Peak hours: 67.5 kWh, Off-peak: 45.3 kWh"
+              trend={-7}
+              trendDescription="vs. yesterday"
+              isPositiveTrend={true}
+            />
+            
+            <MetricsCard
+              title="Grid Energy Imported"
+              value="38.4"
+              unit="kWh"
+              description="Cost today: $7.40"
+              trend={-22}
+              trendDescription="vs. yesterday"
+              isPositiveTrend={true}
+            />
+          </div>
           
-          <TariffHistoryCard />
+          <div className="mt-4 grid grid-cols-1 gap-4">
+            <LiveTelemetryChart 
+              deviceId="solar-1" 
+              metric="power" 
+              height={200} 
+              title="Solar Power Output"
+              unit="kW"
+            />
+            
+            <LiveTelemetryChart 
+              deviceId="battery-1" 
+              metric="state_of_charge" 
+              height={200} 
+              title="Battery State of Charge"
+              unit="%"
+            />
+          </div>
         </div>
-      </div>
-      
-      {/* Devices Overview */}
-      <div className="md:col-span-3 lg:col-span-4">
-        <DeviceManagement />
+        
+        <div className="space-y-4">
+          <AlertSummaryCard />
+
+          {/* Placeholder for other cards */}
+          <div className="h-64 bg-muted/20 border rounded-lg flex items-center justify-center">
+            <span className="text-muted-foreground">Weather Forecast</span>
+          </div>
+          
+          <div className="h-64 bg-muted/20 border rounded-lg flex items-center justify-center">
+            <span className="text-muted-foreground">System Notifications</span>
+          </div>
+        </div>
       </div>
     </div>
   );

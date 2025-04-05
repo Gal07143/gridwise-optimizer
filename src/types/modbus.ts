@@ -10,10 +10,12 @@ export interface ModbusDevice {
   updated_at?: string;
   // Additional properties needed
   description?: string;
-  protocol?: string;
+  protocol?: ModbusProtocol;
   host?: string;
   baudRate?: number;
   serialPort?: string;
+  status?: string;
+  lastConnected?: string;
 }
 
 export interface ModbusDeviceConfig {
@@ -21,9 +23,20 @@ export interface ModbusDeviceConfig {
   name: string;
   ip: string;
   port: number;
-  protocol: string; // TCP or RTU
+  protocol: ModbusProtocol;
   unit_id: number;
   is_active?: boolean;
+  // Additional properties needed
+  description?: string;
+  host?: string;
+  serialPort?: string;
+  baudRate?: number;
+  dataBits?: number;
+  stopBits?: number;
+  parity?: string;
+  timeout?: number;
+  autoReconnect?: boolean;
+  status?: string;
 }
 
 export interface ModbusRegisterMap {
@@ -43,6 +56,8 @@ export interface ModbusRegisterDefinition {
   unit?: string;
 }
 
+export type ModbusProtocol = 'TCP' | 'RTU' | 'ASCII';
+
 export type ModbusRegisterType = 
   | 'coil'
   | 'discrete_input'
@@ -53,6 +68,9 @@ export type ModbusRegisterType =
   | 'uint32'
   | 'int32'
   | 'float32';
+
+// Define ModbusDataType alias for backward compatibility
+export type ModbusDataType = ModbusRegisterType;
 
 export interface ModbusReadResult {
   value: number | boolean | string;
@@ -72,7 +90,7 @@ export interface ConnectionStatusResult {
   error: Error | null;
   // Additional properties for modbus device monitoring
   device?: ModbusDevice;
-  connect?: () => Promise<void>;
+  connect?: () => Promise<boolean>;
   disconnect?: () => Promise<void>;
   refreshDevice?: () => Promise<void>;
 }

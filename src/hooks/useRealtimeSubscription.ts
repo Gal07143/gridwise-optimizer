@@ -34,12 +34,16 @@ export function useRealtimeSubscription<T = any>(
   const subscribe = useCallback(() => {
     try {
       // Build configuration
-      const config = {
+      const pgConfig: any = {
         event: event,
         schema: schema,
-        table: table,
-        filter: filter
+        table: table
       };
+      
+      // Add filter if provided
+      if (filter) {
+        pgConfig.filter = filter;
+      }
       
       // Create a unique channel name
       const channelName = `${table}-${event}-${Math.random().toString(36).substring(2, 9)}`;
@@ -47,7 +51,7 @@ export function useRealtimeSubscription<T = any>(
       // Subscribe to changes
       const channel = supabase
         .channel(channelName)
-        .on('postgres_changes', config, callback)
+        .on('postgres_changes', pgConfig, callback)
         .subscribe((status) => {
           if (status === 'SUBSCRIBED') {
             setIsSubscribed(true);

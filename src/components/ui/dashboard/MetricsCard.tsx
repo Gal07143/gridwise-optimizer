@@ -1,82 +1,72 @@
 
-import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
-import { ArrowDownIcon, ArrowUpIcon } from 'lucide-react';
+import React, { ReactNode } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 export interface MetricsCardProps {
   title: string;
-  value: number | string;
+  value: string | number;
   unit?: string;
-  changeValue?: number;
-  changeType?: 'increase' | 'decrease' | 'neutral';
+  icon?: ReactNode;
   description?: string;
-  icon?: React.ReactNode;
-  animationDelay?: string;
+  trend?: number;
+  trendDescription?: string;
+  isPositiveTrend?: boolean;
   className?: string;
-  gradient?: boolean;
+  onClick?: () => void;
+  footer?: ReactNode;
 }
 
 const MetricsCard: React.FC<MetricsCardProps> = ({
   title,
   value,
-  unit = '',
-  changeValue,
-  changeType = 'neutral',
-  description,
+  unit,
   icon,
-  animationDelay = '0ms',
+  description,
+  trend,
+  trendDescription,
+  isPositiveTrend = true,
   className,
-  gradient = true
+  onClick,
+  footer
 }) => {
   return (
     <Card 
       className={cn(
-        "overflow-hidden border border-white/10 dark:border-white/5 shadow-md",
-        gradient && "bg-gradient-to-br from-white/30 to-white/5 dark:from-gray-800/40 dark:to-gray-900/20 backdrop-blur-md",
-        "hover-scale",
-        "animate-in fade-in slide-in-from-bottom-4 duration-700",
+        "overflow-hidden transition-all hover:border-primary/50", 
+        onClick && "cursor-pointer",
         className
       )}
-      style={{ animationDelay }}
+      onClick={onClick}
     >
-      <CardContent className="p-6">
-        <div className="flex justify-between items-start mb-2">
-          <div className="space-y-1">
-            <p className="text-sm text-muted-foreground">{title}</p>
-            <div className="flex items-baseline gap-1">
-              <span className="text-2xl font-bold">{value}</span>
-              {unit && <span className="text-sm text-muted-foreground">{unit}</span>}
-            </div>
-          </div>
-          {icon && (
-            <div className="p-2 bg-primary/10 rounded-lg backdrop-blur-sm">
-              {icon}
-            </div>
-          )}
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        {icon && <div className="text-muted-foreground">{icon}</div>}
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold">
+          {value}
+          {unit && <span className="text-base ml-1 font-normal text-muted-foreground">{unit}</span>}
         </div>
-        
-        {(changeValue !== undefined || description) && (
-          <div className="mt-2 flex items-center justify-between">
-            {changeValue !== undefined && (
-              <div className={cn(
-                "text-xs font-medium flex items-center",
-                changeType === 'increase' ? "text-green-500" : 
-                changeType === 'decrease' ? "text-red-500" : 
-                "text-muted-foreground"
-              )}>
-                {changeType === 'increase' && <ArrowUpIcon className="h-3 w-3 mr-1" />}
-                {changeType === 'decrease' && <ArrowDownIcon className="h-3 w-3 mr-1" />}
-                {changeType === 'increase' ? '+' : ''}{changeValue}%
-              </div>
-            )}
-            {description && (
-              <div className="text-xs text-muted-foreground">
-                {description}
-              </div>
+        {description && (
+          <p className="text-xs text-muted-foreground mt-1">{description}</p>
+        )}
+        {trend !== undefined && (
+          <div className="flex items-center mt-2">
+            <span className={cn(
+              "text-xs font-medium",
+              isPositiveTrend ? "text-green-600" : "text-red-600"
+            )}>
+              {trend > 0 ? "+" : ""}{trend}%
+            </span>
+            {trendDescription && (
+              <span className="text-xs text-muted-foreground ml-2">
+                {trendDescription}
+              </span>
             )}
           </div>
         )}
+        {footer && <div className="mt-3">{footer}</div>}
       </CardContent>
     </Card>
   );

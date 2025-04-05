@@ -1,162 +1,105 @@
 
-import React, { createContext, useContext, useReducer, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useReducer, useCallback } from 'react';
 import { MicrogridState, MicrogridAction, MicrogridContextType } from './types';
 
-// Initial state for the microgrid
 const initialState: MicrogridState = {
-  batteryCharge: 75,
+  batteryCharge: 78,
   batteryCharging: true,
-  batteryCurrent: 12.5,
-  batteryCapacity: 100,
-  solarOutput: 4.2,
+  batteryCurrent: 12.4,
+  batteryCapacity: 13.5,
+  solarOutput: 3.8,
   solarConnected: true,
-  solarEfficiency: 92,
-  windOutput: 2.1,
-  windConnected: true, 
+  solarEfficiency: 94,
+  windOutput: 1.2,
+  windConnected: true,
   windSpeed: 15,
-  gridPower: 10,
+  gridPower: 2.5,
   gridConnection: true,
-  loadDemand: 8.5,
+  loadDemand: 4.5,
   loadConnected: true,
-  buildingEfficiency: 88,
-  systemMode: 'auto',
+  buildingEfficiency: 87,
   timestamp: new Date(),
+  systemMode: 'auto',
   
-  // Additional properties required by components
-  solarProduction: 4.2,
-  windProduction: 2.1,
-  batteryLevel: 75,
+  // Additional props
+  solarProduction: 3.8,
+  windProduction: 1.2,
+  batteryLevel: 78,
   batteryDischargeEnabled: true,
   batteryChargeEnabled: true,
-  loadConsumption: 8.5,
-  gridImport: 4.0,
-  gridExport: 1.8,
-  frequency: 60,
+  loadConsumption: 4.5,
+  gridImport: 2.5,
+  gridExport: 0,
+  frequency: 50.0,
   voltage: 230,
   lastUpdated: new Date().toISOString(),
   operatingMode: 'auto',
-  batteryChargeRate: 3.5,
+  batteryChargeRate: 2.1,
   gridImportEnabled: true,
-  gridExportEnabled: true,
+  gridExportEnabled: false,
   batterySelfConsumptionMode: true,
   economicMode: false,
   peakShavingEnabled: true,
   demandResponseEnabled: false
 };
 
-// Simple reducer to handle state updates
-function microgridReducer(state: MicrogridState, action: MicrogridAction): MicrogridState {
+function reducer(state: MicrogridState, action: MicrogridAction): MicrogridState {
   switch (action.type) {
-    case 'UPDATE_BATTERY_CHARGE':
-      return { ...state, batteryCharge: action.payload };
-    case 'TOGGLE_BATTERY_CHARGING':
-      return { ...state, batteryCharging: !state.batteryCharging };
-    case 'UPDATE_SOLAR_OUTPUT':
-      return { 
-        ...state, 
-        solarOutput: action.payload,
-        solarProduction: action.payload 
-      };
-    case 'TOGGLE_SOLAR_CONNECTION':
-      return { ...state, solarConnected: !state.solarConnected };
-    case 'UPDATE_WIND_OUTPUT':
-      return { 
-        ...state, 
-        windOutput: action.payload,
-        windProduction: action.payload
-      };
-    case 'TOGGLE_WIND_CONNECTION':
-      return { ...state, windConnected: !state.windConnected };
-    case 'UPDATE_GRID_POWER':
-      return { ...state, gridPower: action.payload };
-    case 'TOGGLE_GRID_CONNECTION':
-      return { 
-        ...state, 
-        gridConnection: !state.gridConnection,
-        gridConnected: !state.gridConnection // Update legacy field too
-      };
-    case 'UPDATE_LOAD_DEMAND':
-      return { 
-        ...state, 
-        loadDemand: action.payload,
-        loadConsumption: action.payload 
-      };
-    case 'TOGGLE_LOAD_CONNECTION':
-      return { ...state, loadConnected: !state.loadConnected };
-    case 'UPDATE_SYSTEM_MODE':
-      return { 
-        ...state, 
-        systemMode: action.payload,
-        operatingMode: action.payload
-      };
+    case 'SET_GRID_CONNECTION':
+      return { ...state, gridConnection: action.payload };
+    case 'SET_SYSTEM_MODE':
+      return { ...state, systemMode: action.payload };
     case 'UPDATE_BATTERY_RESERVE':
       return { ...state, batteryLevel: action.payload };
+    case 'UPDATE_DATA':
+      return { ...state, ...action.payload };
     default:
       return state;
   }
 }
 
-// Create the context
-const MicrogridContext = createContext<MicrogridContextType>({
-  state: initialState,
-  dispatch: () => null,
-  handleGridConnectionToggle: () => {},
-  handleModeChange: () => {},
-  updateBatteryReserve: () => {}
-});
+const MicrogridContext = createContext<MicrogridContextType | undefined>(undefined);
 
-// Hook to use the microgrid context
 export const useMicrogrid = () => {
   const context = useContext(MicrogridContext);
-  
   if (!context) {
     throw new Error('useMicrogrid must be used within a MicrogridProvider');
   }
-  
   return context;
 };
 
-// Provider component
-const MicrogridProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [state, dispatch] = useReducer(microgridReducer, initialState);
-  
-  // Simulate real-time data updates
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const randomChange = Math.random() * 0.2 - 0.1; // Random value between -0.1 and 0.1
-      
-      dispatch({ type: 'UPDATE_BATTERY_CHARGE', payload: Math.min(100, Math.max(0, state.batteryCharge + randomChange * 5)) });
-      dispatch({ type: 'UPDATE_SOLAR_OUTPUT', payload: Math.max(0, state.solarOutput + randomChange * 2) });
-      dispatch({ type: 'UPDATE_WIND_OUTPUT', payload: Math.max(0, state.windOutput + randomChange) });
-      dispatch({ type: 'UPDATE_LOAD_DEMAND', payload: Math.max(0, state.loadDemand + randomChange * 3) });
-    }, 5000);
-    
-    return () => clearInterval(interval);
-  }, [state]);
-  
-  // Utility functions for components
-  const handleGridConnectionToggle = () => {
-    dispatch({ type: 'TOGGLE_GRID_CONNECTION' });
-  };
-  
-  const handleModeChange = (mode: 'auto' | 'manual' | 'eco' | 'backup') => {
-    dispatch({ type: 'UPDATE_SYSTEM_MODE', payload: mode });
-  };
-  
-  const updateBatteryReserve = (level: number) => {
+interface MicrogridProviderProps {
+  children: React.ReactNode;
+}
+
+const MicrogridProvider: React.FC<MicrogridProviderProps> = ({ children }) => {
+  const [state, dispatch] = useReducer(reducer, initialState);
+
+  const handleGridConnectionToggle = useCallback(() => {
+    dispatch({ type: 'SET_GRID_CONNECTION', payload: !state.gridConnection });
+    return true;
+  }, [state.gridConnection]);
+
+  const handleModeChange = useCallback((mode: 'auto' | 'manual' | 'eco' | 'backup') => {
+    dispatch({ type: 'SET_SYSTEM_MODE', payload: mode });
+    return true;
+  }, []);
+
+  const updateBatteryReserve = useCallback((level: number) => {
     dispatch({ type: 'UPDATE_BATTERY_RESERVE', payload: level });
-  };
-  
-  const contextValue = useMemo(() => ({
+    return true;
+  }, []);
+
+  const value: MicrogridContextType = {
     state,
     dispatch,
-    handleGridConnectionToggle,
+    handleGridConnectionToggle, 
     handleModeChange,
     updateBatteryReserve
-  }), [state]);
-  
+  };
+
   return (
-    <MicrogridContext.Provider value={contextValue}>
+    <MicrogridContext.Provider value={value}>
       {children}
     </MicrogridContext.Provider>
   );

@@ -4,6 +4,7 @@ import { AlertTriangle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { subscribeToTable } from '@/services/supabaseRealtimeService';
 
 const CriticalAlertWidget: React.FC = () => {
   const [criticalCount, setCriticalCount] = useState<number | null>(null);
@@ -14,7 +15,7 @@ const CriticalAlertWidget: React.FC = () => {
       try {
         const { data, error } = await supabase
           .from('alerts')
-          .select('id', { count: 'exact' })
+          .select('*')
           .eq('severity', 'critical')
           .eq('acknowledged', false);
           
@@ -32,32 +33,25 @@ const CriticalAlertWidget: React.FC = () => {
     fetchCriticals();
 
     // Set up real-time subscription
-    const channel = supabase
-      .channel('critical-alerts-subscription')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'alerts' },
-        (payload) => {
-          // Handle different event types
-          if (payload.eventType === 'INSERT' && payload.new.severity === 'critical') {
-            setCriticalCount((prev) => (prev ?? 0) + 1);
-            toast.error(`New critical alert: ${payload.new.title || 'System issue detected'}`);
-          } else if (payload.eventType === 'UPDATE') {
-            // Refresh count on any update to ensure accuracy
-            fetchCriticals();
-          } else if (payload.eventType === 'DELETE') {
-            setCriticalCount((prev) => Math.max(0, (prev ?? 1) - 1));
-          }
+    const unsubscribe = subscribeToTable(
+      'alerts',
+      '*',
+      (payload) => {
+        // Handle different event types
+        if (payload.eventType === 'INSERT' && payload.new.severity === 'critical') {
+          setCriticalCount((prev) => (prev ?? 0) + 1);
+          toast.error(`New critical alert: ${payload.new.title || 'System issue detected'}`);
+        } else if (payload.eventType === 'UPDATE') {
+          // Refresh count on any update to ensure accuracy
+          fetchCriticals();
+        } else if (payload.eventType === 'DELETE') {
+          setCriticalCount((prev) => Math.max(0, (prev ?? 1) - 1));
         }
-      )
-      .subscribe((status) => {
-        if (status !== 'SUBSCRIBED') {
-          console.warn('Failed to subscribe to critical alerts:', status);
-        }
-      });
+      }
+    );
 
     return () => {
-      supabase.removeChannel(channel);
+      unsubscribe();
     };
   }, []);
 

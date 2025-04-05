@@ -1,79 +1,65 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
+import { Battery, Clock, Gauge } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useMicrogrid } from './MicrogridProvider';
-import { Wifi, WifiOff, Clock } from 'lucide-react';
 
-interface MicrogridHeaderProps {
-  title?: string;
-}
-
-const MicrogridHeader: React.FC<MicrogridHeaderProps> = ({ title = 'Microgrid Controller' }) => {
-  const { state, handleModeChange, handleGridConnectionToggle } = useMicrogrid();
+const MicrogridHeader: React.FC = () => {
+  const { state, handleGridConnectionToggle, handleModeChange } = useMicrogrid();
   
-  // Format the last updated time
-  const formatLastUpdated = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString();
+  // Function to format the timestamp
+  const formatTimestamp = (date: Date): string => {
+    return new Intl.DateTimeFormat('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    }).format(date);
   };
   
   return (
-    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-      <div>
-        <h2 className="text-3xl font-bold">{title}</h2>
-        <p className="text-muted-foreground flex items-center gap-1">
-          <Clock className="h-4 w-4" />
-          Last updated: {formatLastUpdated(state.lastUpdated)}
-        </p>
-      </div>
-      
-      <div className="flex flex-wrap gap-3">
-        <div>
-          <span className="mr-2 text-sm text-muted-foreground">System Mode:</span>
-          <div className="inline-flex rounded-md shadow-sm" role="group">
-            {['auto', 'manual', 'eco', 'backup'].map((mode) => (
-              <Button
-                key={mode}
-                variant={state.systemMode === mode ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => handleModeChange(mode as 'auto' | 'manual' | 'eco' | 'backup')}
-                className="capitalize"
-              >
-                {mode}
-              </Button>
-            ))}
+    <Card className="mb-4">
+      <CardContent className="pt-6 flex flex-col md:flex-row md:items-center md:justify-between">
+        <div className="space-y-2 mb-4 md:mb-0">
+          <h2 className="text-2xl font-bold">System Status</h2>
+          <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+            <span className="flex items-center">
+              <Clock className="w-4 h-4 mr-1" />
+              Last updated: {formatTimestamp(new Date(state.lastUpdated))}
+            </span>
+            <Badge variant={state.gridConnection ? "default" : "outline"}>
+              {state.gridConnection ? "Grid Connected" : "Island Mode"}
+            </Badge>
+            <Badge variant="outline" className="bg-primary/10">
+              {state.systemMode.charAt(0).toUpperCase() + state.systemMode.slice(1)} Mode
+            </Badge>
           </div>
         </div>
         
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Grid:</span>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={handleGridConnectionToggle}
-            className={state.gridConnection ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-red-100 text-red-700 hover:bg-red-200'}
-          >
-            {state.gridConnection ? 
-              <><Wifi className="h-4 w-4 mr-1" /> Connected</> : 
-              <><WifiOff className="h-4 w-4 mr-1" /> Disconnected</>
-            }
-          </Button>
+        <div className="flex space-x-4 md:space-x-6">
+          <div className="text-center">
+            <div className="flex items-center justify-center mb-1">
+              <Battery className="w-5 h-5 mr-1 text-green-500" />
+              <span className="text-sm font-medium">Battery</span>
+            </div>
+            <div className="text-2xl font-bold">{state.batteryLevel}%</div>
+            <div className="text-xs text-muted-foreground">
+              {state.batteryCharging ? "Charging" : "Discharging"}
+            </div>
+          </div>
+          
+          <div className="text-center">
+            <div className="flex items-center justify-center mb-1">
+              <Gauge className="w-5 h-5 mr-1 text-blue-500" />
+              <span className="text-sm font-medium">Load</span>
+            </div>
+            <div className="text-2xl font-bold">{state.loadDemand} kW</div>
+            <div className="text-xs text-muted-foreground">Current Demand</div>
+          </div>
         </div>
-        
-        <div>
-          <Badge variant="secondary">
-            Frequency: {state.frequency.toFixed(1)} Hz
-          </Badge>
-        </div>
-        
-        <div>
-          <Badge variant="secondary">
-            Voltage: {state.voltage.toFixed(1)} V
-          </Badge>
-        </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 

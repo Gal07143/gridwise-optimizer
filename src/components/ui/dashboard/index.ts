@@ -1,3 +1,3 @@
 
-export { DashboardCard } from './DashboardCard';
-export type { DashboardCardProps } from './DashboardCard';
+export { default as MetricsCard } from './MetricsCard';
+export type { MetricsCardProps } from './MetricsCard';

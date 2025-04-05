@@ -1,10 +1,12 @@
 
 import React from 'react';
 import { useAppStore } from '@/store/appStore';
+import { SiteSelector } from '@/components/sites';
+import { DashboardSummary } from '@/components/dashboard';
+import { WeatherWidget } from '@/components/weather';
 import { DateRange } from '@/types/site';
 
-// Import components once they're properly exported
-// Placeholder content for now
+// Dashboard component with proper imports
 const Dashboard = () => {
   const activeSite = useAppStore((state) => state.activeSite);
   
@@ -26,14 +28,13 @@ const Dashboard = () => {
           </p>
         </div>
         <div className="w-full md:w-1/3 mt-4 md:mt-0">
-          {/* SiteSelector placeholder */}
-          <div className="p-4 border border-gray-200 rounded-md">
-            {activeSite ? (
-              <div className="font-medium">{activeSite.name}</div>
-            ) : (
-              <div className="text-muted-foreground">No site selected</div>
-            )}
-          </div>
+          {/* Placeholder for SiteSelector - it would be provided real sites in a real app */}
+          <SiteSelector 
+            sites={[]}
+            activeSite={activeSite}
+            setActiveSite={() => {}}
+            loading={false}
+          />
         </div>
       </div>
 
@@ -46,11 +47,8 @@ const Dashboard = () => {
           </div>
           
           {/* Dashboard summary placeholder */}
-          <div className="p-4 border border-gray-200 rounded-md md:col-span-3">
-            <div className="font-medium">Dashboard Summary</div>
-            <div className="text-sm text-muted-foreground">
-              Overview metrics and key performance indicators will be displayed here
-            </div>
+          <div className="md:col-span-3">
+            <DashboardSummary siteId={activeSite.id} />
           </div>
         </div>
       ) : (
