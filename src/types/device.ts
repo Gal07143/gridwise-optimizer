@@ -1,4 +1,3 @@
-
 export type DeviceType = 'solar' | 'wind' | 'battery' | 'grid' | 'load' | 'ev_charger' | 'inverter' | 'meter' | string;
 
 export type DeviceStatus = 'online' | 'offline' | 'maintenance' | 'error' | 'warning' | string;
