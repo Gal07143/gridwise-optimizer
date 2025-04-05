@@ -1,86 +1,110 @@
+import { supabaseClient } from '@/integrations/supabase/client';
+import { RealtimeChannel, REALTIME_LISTEN_TYPES, REALTIME_PRESENCE_LISTEN_EVENTS } from '@supabase/supabase-js';
 
-import { supabase } from '@/integrations/supabase/client';
-import { RealtimeChannel, RealtimePostgresInsertPayload } from '@supabase/supabase-js';
-
-export type RealtimeCallback<T> = (payload: RealtimePostgresInsertPayload<T>) => void;
-
-export interface SubscribeOptions<T> {
+interface SubscribeOptions<T> {
   table: string;
-  schema?: string;
   event?: 'INSERT' | 'UPDATE' | 'DELETE' | '*';
+  callback: (payload: any) => void;
   filter?: string;
-  callback: RealtimeCallback<T>;
-}
-
-const channels: Map<string, RealtimeChannel> = new Map();
-
-/**
- * Subscribe to realtime updates from a table
- */
-export function subscribeToTable<T>({ table, schema = 'public', event = '*', filter, callback }: SubscribeOptions<T>) {
-  const channelKey = `${schema}:${table}:${event}:${filter || 'all'}`;
-  
-  // Check if we already have this channel
-  if (channels.has(channelKey)) {
-    console.log(`Already subscribed to ${channelKey}`);
-    return () => unsubscribeFromTable(channelKey);
-  }
-
-  try {
-    console.log(`Subscribing to ${channelKey}`);
-    
-    let channel = supabase.channel(channelKey);
-    let subscription = channel
-      .on('postgres_changes', {
-        event,
-        schema,
-        table,
-        filter,
-      }, (payload) => {
-        callback(payload as RealtimePostgresInsertPayload<T>);
-      })
-      .subscribe((status) => {
-        console.log(`Supabase realtime subscription status (${channelKey}):`, status);
-      });
-
-    channels.set(channelKey, subscription);
-    
-    // Return unsubscribe function
-    return () => unsubscribeFromTable(channelKey);
-    
-  } catch (error) {
-    console.error(`Error subscribing to ${channelKey}:`, error);
-    return () => {}; // Return no-op function
-  }
 }
 
 /**
- * Unsubscribe from a specific channel
+ * Subscribe to changes in a Supabase table
  */
-export function unsubscribeFromTable(channelKey: string): void {
-  const channel = channels.get(channelKey);
-  
-  if (channel) {
-    console.log(`Unsubscribing from ${channelKey}`);
-    supabase.removeChannel(channel);
-    channels.delete(channelKey);
-  }
+export function subscribeToTable<T>({
+  table,
+  event = '*',
+  callback,
+  filter
+}: SubscribeOptions<T>): () => void {
+  // Convert event string to REALTIME_LISTEN_TYPES
+  const eventType = event === '*' 
+    ? undefined 
+    : event === 'INSERT' 
+      ? REALTIME_LISTEN_TYPES.INSERT
+      : event === 'UPDATE'
+        ? REALTIME_LISTEN_TYPES.UPDATE
+        : REALTIME_LISTEN_TYPES.DELETE;
+
+  // Create channel
+  let channel = supabaseClient
+    .channel(`table-changes:${table}`)
+    .on(
+      'postgres_changes',
+      {
+        event: eventType,
+        schema: 'public',
+        table: table,
+        filter: filter
+      },
+      (payload) => {
+        callback(payload);
+      }
+    )
+    .subscribe();
+
+  // Return unsubscribe function
+  return () => {
+    if (channel) {
+      supabaseClient.removeChannel(channel);
+      channel = null as unknown as RealtimeChannel;
+    }
+  };
 }
 
 /**
- * Unsubscribe from all channels
+ * Subscribe to presence changes in a Supabase channel
  */
-export function unsubscribeAll(): void {
-  channels.forEach((channel, key) => {
-    console.log(`Unsubscribing from ${key}`);
-    supabase.removeChannel(channel);
-  });
-  
-  channels.clear();
+export function subscribeToPresence(
+  channelName: string,
+  onJoin?: (payload: any) => void,
+  onLeave?: (payload: any) => void
+): () => void {
+  let channel = supabaseClient.channel(channelName);
+
+  if (onJoin) {
+    channel = channel.on(
+      REALTIME_PRESENCE_LISTEN_EVENTS.SYNC,
+      () => {
+        const state = channel.presenceState();
+        if (onJoin) onJoin(state);
+      }
+    );
+
+    channel = channel.on(
+      REALTIME_PRESENCE_LISTEN_EVENTS.JOIN,
+      ({ newPresences }) => {
+        if (onJoin) onJoin(newPresences);
+      }
+    );
+  }
+
+  if (onLeave) {
+    channel = channel.on(
+      REALTIME_PRESENCE_LISTEN_EVENTS.LEAVE,
+      ({ leftPresences }) => {
+        if (onLeave) onLeave(leftPresences);
+      }
+    );
+  }
+
+  channel.subscribe();
+
+  return () => {
+    if (channel) {
+      supabaseClient.removeChannel(channel);
+    }
+  };
+}
+
+export function unsubscribeFromTable(unsubscribeFunction: () => void) {
+  if (unsubscribeFunction) {
+    unsubscribeFunction();
+  }
 }
 
 export default {
   subscribeToTable,
   unsubscribeFromTable,
-  unsubscribeAll
+  subscribeToPresence
 };
