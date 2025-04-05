@@ -54,7 +54,7 @@ export interface ConnectionStatusResult {
   lastConnection?: Date;
   error?: Error | string | null;
   // Add missing methods
-  connect?: () => Promise<void>;
-  disconnect?: () => Promise<void>;
-  retryConnection?: () => Promise<boolean>;
+  connect: () => Promise<void>;
+  disconnect: () => Promise<void>;
+  retryConnection: () => Promise<boolean>;
 }

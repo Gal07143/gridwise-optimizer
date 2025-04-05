@@ -1,97 +1,101 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { ModbusRegisterMap } from '@/types/modbus';
 import { toast } from 'sonner';
-import { ModbusRegister, ModbusRegisterMap } from '@/types/modbus';
 
-/**
- * Get registers for a specific Modbus device
- */
-export const getModbusRegistersByDeviceId = async (deviceId: string): Promise<ModbusRegister[]> => {
+// Renamed from ModbusRegister to ModbusRegisterData to avoid conflict
+interface ModbusRegisterData {
+  id: string;
+  device_id: string;
+  register_address: number;
+  register_name: string;
+  register_length: number;
+  scaling_factor: number;
+  created_at?: string;
+}
+
+export const getModbusRegistersByDeviceId = async (deviceId: string): Promise<ModbusRegisterData[]> => {
   try {
     const { data, error } = await supabase
       .from('modbus_registers')
       .select('*')
-      .eq('device_id', deviceId)
-      .order('register_address');
-      
+      .eq('device_id', deviceId);
+
     if (error) {
       throw error;
     }
-    
-    return data || [];
-    
-  } catch (error: any) {
-    console.error('Error fetching modbus registers:', error);
-    toast.error(`Failed to fetch modbus registers: ${error.message || 'Unknown error'}`);
+
+    return data as ModbusRegisterData[] || [];
+  } catch (error) {
+    console.error("Error fetching Modbus registers:", error);
+    toast.error("Failed to fetch registers");
     return [];
   }
 };
 
-/**
- * Create a new Modbus register
- */
-export const createModbusRegister = async (registerData: Omit<ModbusRegister, 'id' | 'created_at'>): Promise<ModbusRegister | null> => {
+export const getModbusRegisterMap = async (deviceId: string): Promise<ModbusRegisterMap> => {
+  try {
+    const registers = await getModbusRegistersByDeviceId(deviceId);
+    
+    // Convert to register map format
+    const registerMap: ModbusRegisterMap = {};
+    
+    registers.forEach(register => {
+      registerMap[register.register_address.toString()] = {
+        name: register.register_name,
+        length: register.register_length,
+        scale: register.scaling_factor,
+        type: 'holding_register' // Default to holding register
+      };
+    });
+    
+    return registerMap;
+  } catch (error) {
+    console.error("Error creating register map:", error);
+    toast.error("Failed to create register map");
+    return {};
+  }
+};
+
+export const createModbusRegister = async (registerData: Omit<ModbusRegisterData, 'id' | 'created_at'>): Promise<ModbusRegisterData | null> => {
   try {
     const { data, error } = await supabase
       .from('modbus_registers')
-      .insert({
-        device_id: registerData.device_id,
-        register_address: registerData.register_address,
-        register_name: registerData.register_name,
-        register_length: registerData.register_length,
-        scaling_factor: registerData.scaling_factor
-      })
-      .select()
-      .single();
+      .insert(registerData)
+      .select();
       
     if (error) {
       throw error;
     }
     
-    toast.success('Modbus register created successfully');
-    return data as ModbusRegister;
-    
-  } catch (error: any) {
-    console.error('Error creating modbus register:', error);
-    toast.error(`Failed to create modbus register: ${error.message || 'Unknown error'}`);
+    return data?.[0] as ModbusRegisterData || null;
+  } catch (error) {
+    console.error("Error creating Modbus register:", error);
+    toast.error("Failed to create register");
     return null;
   }
 };
 
-/**
- * Update a Modbus register
- */
-export const updateModbusRegister = async (registerId: string, registerData: Partial<ModbusRegister>): Promise<ModbusRegister | null> => {
+export const updateModbusRegister = async (registerId: string, registerData: Partial<ModbusRegisterData>): Promise<ModbusRegisterData | null> => {
   try {
     const { data, error } = await supabase
       .from('modbus_registers')
-      .update({
-        register_address: registerData.register_address,
-        register_name: registerData.register_name,
-        register_length: registerData.register_length,
-        scaling_factor: registerData.scaling_factor
-      })
+      .update(registerData)
       .eq('id', registerId)
-      .select()
-      .single();
+      .select();
       
     if (error) {
       throw error;
     }
     
-    toast.success('Modbus register updated successfully');
-    return data as ModbusRegister;
-    
-  } catch (error: any) {
-    console.error('Error updating modbus register:', error);
-    toast.error(`Failed to update modbus register: ${error.message || 'Unknown error'}`);
+    return data?.[0] as ModbusRegisterData || null;
+  } catch (error) {
+    console.error("Error updating Modbus register:", error);
+    toast.error("Failed to update register");
     return null;
   }
 };
 
-/**
- * Delete a Modbus register
- */
 export const deleteModbusRegister = async (registerId: string): Promise<boolean> => {
   try {
     const { error } = await supabase
@@ -103,56 +107,34 @@ export const deleteModbusRegister = async (registerId: string): Promise<boolean>
       throw error;
     }
     
-    toast.success('Modbus register deleted successfully');
     return true;
-    
-  } catch (error: any) {
-    console.error('Error deleting modbus register:', error);
-    toast.error(`Failed to delete modbus register: ${error.message || 'Unknown error'}`);
+  } catch (error) {
+    console.error("Error deleting Modbus register:", error);
+    toast.error("Failed to delete register");
     return false;
   }
 };
 
-/**
- * Save a complete register map for a device
- */
-export const saveModbusRegisterMap = async (deviceId: string, registers: Omit<ModbusRegister, 'id' | 'device_id' | 'created_at'>[]): Promise<boolean> => {
+export const bulkCreateModbusRegisters = async (deviceId: string, registers: Array<Omit<ModbusRegisterData, 'id' | 'device_id' | 'created_at'>>): Promise<boolean> => {
   try {
-    // First, delete existing registers
-    const { error: deleteError } = await supabase
+    // Add device_id to each register
+    const registersWithDeviceId = registers.map(register => ({
+      ...register,
+      device_id: deviceId
+    }));
+    
+    const { error } = await supabase
       .from('modbus_registers')
-      .delete()
-      .eq('device_id', deviceId);
+      .insert(registersWithDeviceId);
       
-    if (deleteError) {
-      throw deleteError;
+    if (error) {
+      throw error;
     }
     
-    // Now insert the new registers
-    if (registers.length > 0) {
-      const registersToInsert = registers.map(reg => ({
-        device_id: deviceId,
-        register_address: reg.register_address,
-        register_name: reg.register_name,
-        register_length: reg.register_length,
-        scaling_factor: reg.scaling_factor
-      }));
-      
-      const { error: insertError } = await supabase
-        .from('modbus_registers')
-        .insert(registersToInsert);
-        
-      if (insertError) {
-        throw insertError;
-      }
-    }
-    
-    toast.success('Modbus register map saved successfully');
     return true;
-    
-  } catch (error: any) {
-    console.error('Error saving modbus register map:', error);
-    toast.error(`Failed to save modbus register map: ${error.message || 'Unknown error'}`);
+  } catch (error) {
+    console.error("Error creating Modbus registers in bulk:", error);
+    toast.error("Failed to create registers");
     return false;
   }
 };

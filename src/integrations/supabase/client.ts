@@ -92,4 +92,34 @@ export const supabase = {
   },
 };
 
+// Create a helper to handle async supabase calls
+export const asyncSupabase = {
+  from: (table: string) => ({
+    select: async (columns: string = '*') => {
+      const result = await supabase.from(table).select(columns);
+      return result;
+    },
+    insert: async (data: any) => {
+      const result = await supabase.from(table).insert(data);
+      return result;
+    },
+    update: async (data: any) => {
+      return {
+        eq: async (column: string, value: any) => {
+          const result = await supabase.from(table).update(data).eq(column, value);
+          return result;
+        }
+      };
+    },
+    delete: async () => {
+      return {
+        eq: async (column: string, value: any) => {
+          const result = await supabase.from(table).delete().eq(column, value);
+          return result;
+        }
+      };
+    }
+  })
+};
+
 export default supabase;

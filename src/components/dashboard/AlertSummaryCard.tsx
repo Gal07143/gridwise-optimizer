@@ -31,27 +31,27 @@ const AlertSummaryCard: React.FC<AlertSummaryCardProps> = ({
     const fetchAlerts = async () => {
       setLoading(true);
       try {
-        // Get critical alerts count
-        const { data: criticalData, error: criticalError } = await supabase
+        // Get critical alerts count - use proper supabase pattern
+        const criticalResult = await supabase
           .from('alerts')
           .select('*')
           .eq('severity', 'critical')
           .eq('acknowledged', false);
           
-        if (criticalError) throw criticalError;
-        setCriticalCount(criticalData?.length || 0);
+        if (criticalResult.error) throw criticalResult.error;
+        setCriticalCount(criticalResult.data?.length || 0);
         
-        // Get recent alerts
-        const { data: alertsData, error: alertsError } = await supabase
+        // Get recent alerts - use proper supabase pattern
+        const alertsResult = await supabase
           .from('alerts')
           .select('*')
           .order('timestamp', { ascending: false })
           .limit(limit);
           
-        if (alertsError) throw alertsError;
+        if (alertsResult.error) throw alertsResult.error;
         
-        if (alertsData) {
-          setAlerts(alertsData as Alert[]);
+        if (alertsResult.data) {
+          setAlerts(alertsResult.data as Alert[]);
         }
       } catch (error) {
         console.error('Error fetching alerts:', error);

@@ -4,10 +4,16 @@ import { useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
-// Fix the import for DeviceCategoryGrid
+// Create a correct import for DeviceCategoryGrid
 import DeviceCategoryGrid from '@/components/devices/DeviceCategoryGrid';
-// Fix the import for PageHeader
+// Create a correct import for PageHeader
 import PageHeader from '@/components/pages/PageHeader';
+
+// Define props interface for DeviceCategoryGrid
+interface DeviceCategoryGridProps {
+  devices: any[];
+  categories?: string; // Change from categoryId to categories based on error
+}
 
 const DeviceCategoryDetail = () => {
   const { categoryId } = useParams<{ categoryId: string }>();
@@ -42,7 +48,7 @@ const DeviceCategoryDetail = () => {
 
       <Card>
         <CardContent className="p-6">
-          <DeviceCategoryGrid categoryId={categoryId || ''} devices={devices} />
+          <DeviceCategoryGrid categories={categoryId || ''} devices={devices} />
         </CardContent>
       </Card>
     </div>

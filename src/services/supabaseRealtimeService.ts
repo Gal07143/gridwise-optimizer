@@ -1,62 +1,70 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
-type RealtimeEvent = 'INSERT' | 'UPDATE' | 'DELETE' | '*';
+/**
+ * Subscribe to a Supabase table for real-time updates
+ * 
+ * @param table - The table to subscribe to
+ * @param event - The event to subscribe to ('INSERT', 'UPDATE', 'DELETE', '*')
+ * @param callback - The callback to execute when an event occurs
+ * @returns - A function to unsubscribe from the channel
+ */
+export const subscribeToTable = (
+  table: string,
+  event: 'INSERT' | 'UPDATE' | 'DELETE' | '*',
+  callback: (payload: any) => void
+) => {
+  const channel = supabase
+    .channel(`${table}_${event}_${Date.now()}`)
+    .on('postgres_changes', 
+      { 
+        event, 
+        schema: 'public', 
+        table
+      }, 
+      payload => callback(payload)
+    )
+    .subscribe();
 
-interface RealtimeConfig {
-  event: RealtimeEvent;
-  schema: string;
-  table: string;
-  filter?: string;
-}
+  return () => {
+    supabase.removeChannel(channel);
+  };
+};
 
 /**
- * Subscribe to real-time changes on a Supabase table
+ * Subscribe to a Supabase table for real-time updates with a filter
+ * 
+ * @param table - The table to subscribe to
+ * @param event - The event to subscribe to ('INSERT', 'UPDATE', 'DELETE', '*')
+ * @param filter - Filter for the subscription (e.g. { column: 'id', value: '123' })
+ * @param callback - The callback to execute when an event occurs
+ * @returns - A function to unsubscribe from the channel
  */
-export function subscribeToTable(
+export const subscribeToTableWithFilter = (
   table: string,
-  eventType: 'INSERT' | 'UPDATE' | 'DELETE' | '*',
-  callback: (payload: any) => void,
-  filter?: string
-): () => void {
-  // Create a unique channel name
-  const channelName = `${table}-${eventType}-${Math.random().toString(36).slice(2, 9)}`;
+  event: 'INSERT' | 'UPDATE' | 'DELETE' | '*',
+  filter: { column: string; value: string | number },
+  callback: (payload: any) => void
+) => {
+  const channel = supabase
+    .channel(`${table}_${event}_${filter.column}_${filter.value}_${Date.now()}`)
+    .on('postgres_changes',
+      {
+        event,
+        schema: 'public',
+        table,
+        filter: `${filter.column}=eq.${filter.value}`
+      },
+      payload => callback(payload)
+    )
+    .subscribe();
 
-  // Create the channel
-  const channel = supabase.channel(channelName);
-  
-  // Create the configuration object
-  const config: RealtimeConfig = {
-    event: eventType,
-    schema: 'public',
-    table: table,
-  };
-  
-  // Add filter if provided
-  if (filter) {
-    config.filter = filter;
-  }
-  
-  // Configure the subscription
-  const subscription = channel.on(
-    'postgres_changes',
-    config,
-    callback
-  );
-  
-  // Subscribe to the channel
-  subscription.subscribe();
-
-  // Return an unsubscribe function
   return () => {
-    if (channel) {
-      supabase.removeChannel(channel);
-    }
+    supabase.removeChannel(channel);
   };
-}
+};
 
-export function unsubscribeFromTable(unsubscribeFn: () => void): void {
-  if (typeof unsubscribeFn === 'function') {
-    unsubscribeFn();
-  }
-}
+export default {
+  subscribeToTable,
+  subscribeToTableWithFilter
+};

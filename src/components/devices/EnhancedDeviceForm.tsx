@@ -90,14 +90,14 @@ const EnhancedDeviceForm = () => {
   const handleTypeChange = (value: string) => {
     setFormData({
       ...formData,
-      type: value as DeviceType
+      type: value
     });
   };
 
   const handleStatusChange = (value: string) => {
     setFormData({
       ...formData,
-      status: value as DeviceStatus
+      status: value
     });
   };
   
@@ -110,8 +110,8 @@ const EnhancedDeviceForm = () => {
         // Update existing device - ensure we're passing correct device type
         await updateDevice(deviceId, {
           name: formData.name,
-          type: formData.type as DeviceType,
-          status: formData.status as DeviceStatus,
+          type: formData.type,
+          status: formData.status,
           location: formData.location,
           capacity: formData.capacity,
           firmware: formData.firmware,
@@ -122,8 +122,8 @@ const EnhancedDeviceForm = () => {
         // Create new device - ensure we're passing correct device type
         await createDevice({
           name: formData.name,
-          type: formData.type as DeviceType,
-          status: formData.status as DeviceStatus,
+          type: formData.type,
+          status: formData.status,
           location: formData.location,
           capacity: formData.capacity,
           firmware: formData.firmware,
@@ -146,12 +146,12 @@ const EnhancedDeviceForm = () => {
     return <div>Loading device details...</div>;
   }
 
-  const deviceTypes: DeviceType[] = [
+  const deviceTypes = [
     'battery', 'solar', 'wind', 'grid', 'load', 'ev_charger', 
     'inverter', 'meter', 'light', 'generator', 'hydro'
   ];
 
-  const deviceStatuses: DeviceStatus[] = [
+  const deviceStatuses = [
     'online', 'offline', 'maintenance', 'error',
     'warning', 'idle', 'active', 'charging', 'discharging'
   ];
