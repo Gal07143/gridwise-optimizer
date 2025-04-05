@@ -1,57 +1,36 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
-// Define the REALTIME_LISTEN_TYPES object to match Supabase's constants
-const REALTIME_LISTEN_TYPES = {
-  INSERT: 'INSERT',
-  UPDATE: 'UPDATE',
-  DELETE: 'DELETE',
-  ALL: '*',
-};
-
-interface SubscribeToTableOptions {
-  table: string;
-  event: 'INSERT' | 'UPDATE' | 'DELETE' | '*';
-  callback: (payload: any) => void;
-  filter?: string;
-}
-
 /**
  * Subscribe to real-time changes on a Supabase table
  */
-export function subscribeToTable({
-  table,
-  event,
-  callback,
-  filter,
-}: SubscribeToTableOptions): () => void {
-  let eventType: string;
+export function subscribeToTable(
+  table: string,
+  eventType: 'INSERT' | 'UPDATE' | 'DELETE' | '*',
+  callback: (payload: any) => void,
+  filter?: string
+): () => void {
+  // Create a unique channel name
+  const channelName = `${table}-${eventType}-${Math.random().toString(36).slice(2, 9)}`;
 
-  switch (event) {
-    case 'INSERT':
-      eventType = REALTIME_LISTEN_TYPES.INSERT;
-      break;
-    case 'UPDATE':
-      eventType = REALTIME_LISTEN_TYPES.UPDATE;
-      break;
-    case 'DELETE':
-      eventType = REALTIME_LISTEN_TYPES.DELETE;
-      break;
-    default:
-      eventType = REALTIME_LISTEN_TYPES.ALL;
-  }
+  // Build the postgres_changes config object
+  const config = {
+    event: eventType,
+    schema: 'public',
+    table: table,
+    filter: filter || undefined
+  };
 
+  // Subscribe to the channel with the proper config
   const channel = supabase
-    .channel(`public:${table}`)
-    .on(eventType, filter ? `public:${table}:${filter}` : `public:${table}`, callback)
-    .subscribe((status: any) => {
-      console.log(`Subscription status for ${table}: ${status}`);
-    });
+    .channel(channelName)
+    .on('postgres_changes', config, callback)
+    .subscribe();
 
   // Return an unsubscribe function
   return () => {
-    if (typeof channel === 'object' && channel.unsubscribe) {
-      channel.unsubscribe();
+    if (channel) {
+      supabase.removeChannel(channel);
     }
   };
 }

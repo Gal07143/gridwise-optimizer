@@ -1,39 +1,62 @@
 
-import { DeviceType } from '@/types/energy';
-
 export interface DeviceModel {
   id: string;
+  name: string;
   manufacturer: string;
-  model_name: string;
-  name?: string;
   model_number: string;
-  device_type: DeviceType;
+  device_type: string;
+  category: string;
   description?: string;
   specifications?: Record<string, any>;
-  compatible_with?: string[];
-  firmware_versions?: string[];
-  created_at: string;
-  updated_at?: string;
-  category?: string;
-  protocol: string;
   power_rating?: number;
   capacity?: number;
-  release_date?: string;
-  support_level: 'full' | 'partial' | 'none';
-  has_manual: boolean;
-  has_datasheet?: boolean;
-  has_video?: boolean;
-  warranty?: string;
+  dimensions?: string;
+  weight?: number;
   certifications?: string[];
+  warranty?: string;
+  release_date?: string;
+  firmware_version?: string;
+  protocol?: string;
+  compatible_with?: string[];
+  support_level?: string;
+  connectivity?: Record<string, any>;
+  // Compatibility field for some components
+  model_name?: string;
+  images?: Record<string, any>;
+  has_manual?: boolean;
+  manuals?: Record<string, any>;
+  datasheets?: Record<string, any>;
+  videos?: Record<string, any>;
 }
 
-export const categoryNames: Record<string, string> = {
-  'solar': 'Solar Panels',
-  'battery': 'Battery Storage',
-  'inverter': 'Inverters',
-  'ev_charger': 'EV Chargers',
-  'meter': 'Energy Meters',
-  'controller': 'System Controllers',
-  'wind': 'Wind Turbines',
-  'hydro': 'Hydro Generation'
-};
+export interface DeviceModelListItem {
+  id: string;
+  name: string;
+  manufacturer: string;
+  model_number: string;
+  device_type: string;
+  category: string;
+  power_rating?: number;
+  capacity?: number;
+  support_level?: string;
+}
+
+export interface DeviceModelReference {
+  id: string;
+  name: string;
+  manufacturer: string;
+  model_number: string;
+  model_name?: string;
+  device_type: string;
+  has_manual?: boolean;
+}
+
+export interface DeviceModelCategory {
+  id: string;
+  name: string;
+  description?: string;
+  device_count?: number;
+  image_url?: string;
+}
+
+export type SupportLevel = 'full' | 'partial' | 'beta' | 'community' | 'none';

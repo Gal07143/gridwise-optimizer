@@ -1,3 +1,4 @@
+
 // components/alerts/AnomalyFeed.tsx
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -64,8 +65,7 @@ const fetchAnomalies = async (): Promise<Anomaly[]> => {
 };
 
 const AnomalyFeed = () => {
-  // This is a simplified version of the hook to fix type errors
-  const isOnline = true;
+  const { isOnline } = useConnectionStatus();
   const [useFallbackData, setUseFallbackData] = useState(false);
   
   // Use different settings based on network connectivity

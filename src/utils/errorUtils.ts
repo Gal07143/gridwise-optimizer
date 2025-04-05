@@ -39,7 +39,53 @@ export const handleApiError = (
   };
 };
 
+/**
+ * Check if an error is a network error
+ */
+export const isNetworkError = (error: any): boolean => {
+  return (
+    error?.message?.includes('Network Error') ||
+    error?.message?.includes('Failed to fetch') ||
+    error?.message?.includes('Network request failed') ||
+    error?.code === 'ECONNABORTED' ||
+    error?.code === 'ERR_NETWORK' ||
+    (!navigator.onLine && error)
+  );
+};
+
+/**
+ * Retry a function with exponential backoff
+ */
+export const retryWithBackoff = async <T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 3,
+  initialDelay: number = 1000,
+  factor: number = 2
+): Promise<T> => {
+  let retries = 0;
+  let delay = initialDelay;
+
+  while (true) {
+    try {
+      return await fn();
+    } catch (error) {
+      retries += 1;
+      if (retries >= maxRetries) {
+        throw error; // Max retries reached, rethrow the error
+      }
+      
+      // Wait for the specified delay
+      await new Promise(resolve => setTimeout(resolve, delay));
+      
+      // Increase the delay for the next retry
+      delay *= factor;
+    }
+  }
+};
+
 export default {
   handleDependencyError,
   handleApiError,
+  isNetworkError,
+  retryWithBackoff
 };

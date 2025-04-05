@@ -1,4 +1,3 @@
-
 export interface EnergyDevice {
   id: string;
   name: string;
@@ -29,20 +28,23 @@ export type DeviceType =
   | 'battery' 
   | 'grid' 
   | 'load' 
-  | 'inverter' 
-  | 'meter' 
-  | 'ev_charger' 
+  | 'ev_charger'
+  | 'inverter'
+  | 'meter'
+  | 'light'
   | 'generator'
-  | 'hydroelectric'
-  | 'storage'
-  | 'controller';
+  | 'hydro';
 
 export type DeviceStatus = 
   | 'online' 
   | 'offline' 
   | 'maintenance' 
-  | 'error' 
-  | 'warning';
+  | 'error'
+  | 'warning'
+  | 'idle'
+  | 'active'
+  | 'charging'
+  | 'discharging';
 
 export interface EnergyReading {
   id: string;
@@ -117,4 +119,54 @@ export interface Site {
   contact_person?: string;
   contact_email?: string;
   contact_phone?: string;
+}
+
+export interface EnergyForecast {
+  id: string;
+  timestamp: string;
+  site_id: string;
+  forecast_time: string;
+  generation_forecast: number;
+  consumption_forecast: number;
+  confidence?: number;
+  source?: string;
+  weather_condition?: string;
+  temperature?: number;
+  cloud_cover?: number;
+  wind_speed?: number;
+}
+
+export interface Device {
+  id: string;
+  name: string;
+  type: DeviceType;
+  status: DeviceStatus;
+  capacity: number;
+  site_id?: string;
+  lat?: number;
+  lng?: number;
+  location?: string;
+  description?: string;
+  protocol?: string;
+  ip_address?: string;
+  last_updated?: string;
+  manufacturer?: string;
+  model?: string;
+  serialNumber?: string;
+  tags?: Record<string, any>;
+  firmware?: string;
+  firmware_version?: string;
+}
+
+export type UserRole = 'admin' | 'user' | 'viewer' | 'manager';
+
+export interface User {
+  id: string;
+  email: string;
+  name?: string;
+  role: UserRole;
+  firstName?: string;
+  lastName?: string;
+  avatar?: string;
+  preferences?: Record<string, any>;
 }

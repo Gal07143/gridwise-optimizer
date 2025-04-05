@@ -49,6 +49,9 @@ export interface MicrogridAction {
 export interface MicrogridContextType {
   state: MicrogridState;
   dispatch: React.Dispatch<MicrogridAction>;
+  handleGridConnectionToggle: () => void;
+  handleModeChange: (mode: 'auto' | 'manual' | 'eco' | 'backup') => void;
+  updateBatteryReserve: (level: number) => void;
 }
 
 export interface DeviceStatus {
@@ -148,4 +151,11 @@ export interface AlertItem {
 
 export interface CommandHistoryProps {
   commandHistory: CommandHistoryItem[];
+}
+
+export interface MicrogridControlsProps {
+  microgridState: MicrogridState;
+  onUpdateMode: (command: string) => boolean;
+  onToggleConnection: (command: string) => boolean;
+  disabled?: boolean;
 }

@@ -4,11 +4,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusOverview, EnergyFlowVisualization, MicrogridControls, CommandHistory } from '.';
 import { useMicrogrid } from './MicrogridProvider';
-import { CommandHistoryItem } from './types';
+import { CommandHistoryItem, AlertItem } from './types';
 import AlertsPanel from './AlertsPanel';
 
 const MicrogridTabContent = () => {
-  const { state, dispatch, updateBatteryReserve } = useMicrogrid();
+  const { state, handleModeChange, handleGridConnectionToggle } = useMicrogrid();
   const [activeTab, setActiveTab] = useState('overview');
   
   // Mock command history
@@ -40,7 +40,7 @@ const MicrogridTabContent = () => {
   ]);
   
   // Mock alerts
-  const mockAlerts = [
+  const mockAlerts: AlertItem[] = [
     {
       id: '1',
       timestamp: new Date().toISOString(),
@@ -88,7 +88,7 @@ const MicrogridTabContent = () => {
       const match = command.match(/(\d+)%/);
       if (match && match[1]) {
         const percentage = parseInt(match[1]);
-        updateBatteryReserve(percentage);
+        handleModeChange('manual');
       }
     }
     
@@ -138,7 +138,6 @@ const MicrogridTabContent = () => {
             <CardContent>
               <MicrogridControls 
                 microgridState={state} 
-                dispatch={dispatch}
                 onUpdateMode={handleExecuteCommand}
                 onToggleConnection={handleExecuteCommand}
                 disabled={false} 

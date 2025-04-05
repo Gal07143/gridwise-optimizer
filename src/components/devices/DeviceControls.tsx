@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { DeviceType } from '@/types/energy';
 import SolarControls from './controls/SolarControls';
@@ -43,38 +44,43 @@ const DeviceControls: React.FC<DeviceControlsProps> = ({ deviceId, deviceType, d
     );
   }
 
-  switch (deviceType) {
-    case 'solar':
-      return <SolarControls deviceId={deviceId} />;
-    case 'wind':
-      return <WindControls deviceId={deviceId} />;
-    case 'battery':
-      return <BatteryControls deviceId={deviceId} />;
-    case 'grid':
-      return <GridControls deviceId={deviceId} />;
-    case 'load':
-      return <LoadControls deviceId={deviceId} />;
-    case 'ev_charger':
-      return <EVChargerControls deviceId={deviceId} />;
-    case 'inverter':
-      return <InverterControls deviceId={deviceId} />;
-    case 'meter':
-      return <MeterControls deviceId={deviceId} />;
-    case 'light':
-      return <LightControls deviceId={deviceId} />;
-    case 'generator':
-      return <GeneratorControls deviceId={deviceId} />;
-    case 'hydro':
-      return <HydroControls deviceId={deviceId} />;
-    default:
-      return (
-        <div className="p-8 bg-secondary/20 rounded-md text-center">
-          <p className="text-muted-foreground">
-            No controls available for this device type: <strong>{deviceType}</strong>
-          </p>
-        </div>
-      );
-  }
+  // Use a type guard to ensure deviceType is treated correctly
+  const renderControls = () => {
+    switch (deviceType) {
+      case 'solar':
+        return <SolarControls deviceId={deviceId} />;
+      case 'wind':
+        return <WindControls deviceId={deviceId} />;
+      case 'battery':
+        return <BatteryControls deviceId={deviceId} />;
+      case 'grid':
+        return <GridControls deviceId={deviceId} />;
+      case 'load':
+        return <LoadControls deviceId={deviceId} />;
+      case 'ev_charger':
+        return <EVChargerControls deviceId={deviceId} />;
+      case 'inverter':
+        return <InverterControls deviceId={deviceId} />;
+      case 'meter':
+        return <MeterControls deviceId={deviceId} />;
+      case 'light':
+        return <LightControls deviceId={deviceId} />;
+      case 'generator':
+        return <GeneratorControls deviceId={deviceId} />;
+      case 'hydro':
+        return <HydroControls deviceId={deviceId} />;
+      default:
+        return (
+          <div className="p-8 bg-secondary/20 rounded-md text-center">
+            <p className="text-muted-foreground">
+              No controls available for this device type: <strong>{deviceType}</strong>
+            </p>
+          </div>
+        );
+    }
+  };
+
+  return renderControls();
 };
 
 export default React.memo(DeviceControls);
