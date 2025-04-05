@@ -1,113 +1,114 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Search, Package } from 'lucide-react';
-import { getAllDeviceModels } from '@/services/deviceCatalogService';
-import { DeviceModelReference } from '@/types/device-catalog';
-import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { DeviceModel, DeviceModelReference } from '@/types/device';
+
+// Mock function for getting device models
+const getAllDeviceModels = async (): Promise<DeviceModel[]> => {
+  // Simulating API call
+  return [
+    {
+      id: '1',
+      name: 'SolarEdge SE5000H',
+      manufacturer: 'SolarEdge',
+      model_number: 'SE5000H',
+      device_type: 'inverter',
+      category: 'inverter',
+      power_rating: 5000,
+      has_manual: true
+    },
+    {
+      id: '2',
+      name: 'Tesla Powerwall 2',
+      manufacturer: 'Tesla',
+      model_number: 'PW2',
+      device_type: 'battery',
+      category: 'battery',
+      capacity: 13.5,
+      has_manual: true
+    }
+  ];
+};
 
 interface DeviceModelSelectorProps {
-  onSelectModel: (model: DeviceModelReference) => void;
-  selectedModelId?: string;
-  excludeIds?: string[];
+  deviceType?: string;
+  value?: string;
+  onChange: (model: DeviceModelReference) => void;
+  required?: boolean;
 }
 
-const DeviceModelSelector: React.FC<DeviceModelSelectorProps> = ({ 
-  onSelectModel, 
-  selectedModelId,
-  excludeIds = []
+const DeviceModelSelector: React.FC<DeviceModelSelectorProps> = ({
+  deviceType,
+  value,
+  onChange,
+  required = false,
 }) => {
-  const [searchQuery, setSearchQuery] = useState('');
-  
-  const { data: deviceModels, isLoading } = useQuery({
-    queryKey: ['deviceModels'],
-    queryFn: getAllDeviceModels
+  const { data: deviceModels = [], isLoading } = useQuery({
+    queryKey: ['device-models'],
+    queryFn: getAllDeviceModels,
   });
-  
-  // Filter device models
-  const filteredModels = deviceModels?.filter(model => {
-    // Exclude specific IDs if needed
-    if (excludeIds.includes(model.id)) {
-      return false;
+
+  const filteredModels = deviceType
+    ? deviceModels.filter((model) => model.device_type === deviceType)
+    : deviceModels;
+
+  const selectedModel = filteredModels.find((model) => model.id === value);
+
+  const handleModelChange = (modelId: string) => {
+    const model = filteredModels.find((m) => m.id === modelId);
+    if (model) {
+      // Convert to DeviceModelReference
+      const modelReference: DeviceModelReference = {
+        id: model.id,
+        name: model.name,
+        manufacturer: model.manufacturer,
+        model_number: model.model_number,
+        device_type: model.device_type,
+        category: model.category || 'unknown',
+        has_manual: model.has_manual || false
+      };
+      onChange(modelReference);
     }
-    
-    // Apply search filter
-    if (!searchQuery) {
-      return true;
-    }
-    
-    const query = searchQuery.toLowerCase();
-    return (
-      model.manufacturer.toLowerCase().includes(query) ||
-      model.model_name.toLowerCase().includes(query) ||
-      model.model_number.toLowerCase().includes(query) ||
-      model.description?.toLowerCase().includes(query) ||
-      model.device_type.toLowerCase().includes(query)
-    );
-  }) || [];
-  
-  const handleSelectModel = (model: DeviceModelReference) => {
-    onSelectModel(model);
   };
-  
+
   return (
-    <div className="space-y-4">
-      <div className="relative">
-        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search for device models..."
-          className="pl-8"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {isLoading ? (
-          // Loading skeletons
-          Array.from({ length: 6 }).map((_, index) => (
-            <Card key={`skeleton-${index}`} className="cursor-pointer hover:border-primary/50">
-              <CardHeader className="pb-2">
-                <Skeleton className="h-5 w-32" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-4 w-24 mb-2" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-2/3 mt-2" />
-              </CardContent>
-            </Card>
-          ))
-        ) : filteredModels.length > 0 ? (
-          filteredModels.map(model => (
-            <Card 
-              key={model.id} 
-              className={`cursor-pointer hover:border-primary/50 transition-colors ${
-                selectedModelId === model.id ? 'border-primary bg-primary/5' : ''
-              }`}
-              onClick={() => handleSelectModel(model)}
-            >
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base">{model.manufacturer}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="font-medium">{model.model_name}</p>
-                <p className="text-sm text-muted-foreground">{model.model_number}</p>
-                {model.description && (
-                  <p className="text-sm mt-2 line-clamp-2">{model.description}</p>
-                )}
-              </CardContent>
-            </Card>
-          ))
-        ) : (
-          <div className="col-span-full text-center p-8 border rounded">
-            <Package className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-            <p className="text-muted-foreground">No device models found matching your search</p>
-          </div>
-        )}
-      </div>
+    <div className="space-y-2">
+      <Label htmlFor="device-model">Device Model {required && <span className="text-red-500">*</span>}</Label>
+      <Select
+        value={value}
+        onValueChange={handleModelChange}
+        disabled={isLoading || filteredModels.length === 0}
+      >
+        <SelectTrigger id="device-model" className="w-full">
+          <SelectValue 
+            placeholder="Select a device model" 
+            className="text-muted-foreground"
+          >
+            {selectedModel ? `${selectedModel.manufacturer} - ${selectedModel.model_number}` : 'Select a device model'}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          {filteredModels.length === 0 ? (
+            <SelectItem value="none" disabled>
+              No models available
+            </SelectItem>
+          ) : (
+            filteredModels.map((model) => (
+              <SelectItem key={model.id} value={model.id}>
+                {model.manufacturer} - {model.model_number}
+              </SelectItem>
+            ))
+          )}
+        </SelectContent>
+      </Select>
     </div>
   );
 };

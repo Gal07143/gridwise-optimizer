@@ -1,53 +1,61 @@
 
 import React from 'react';
-import { Button } from "@/components/ui/button";
-import { ChevronLeft, Save, Loader2 } from 'lucide-react';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, Settings } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useMediaQuery } from '@/hooks/use-mobile';
 
 interface DevicePageHeaderProps {
   title: string;
-  subtitle: string;
-  onBack: () => void;
-  onSave: (e?: React.FormEvent) => void;
-  isSaving: boolean;
+  subtitle?: string;
+  onBack?: () => void;
+  onSettings?: () => void;
+  children?: React.ReactNode;
 }
 
 const DevicePageHeader: React.FC<DevicePageHeaderProps> = ({
   title,
   subtitle,
   onBack,
-  onSave,
-  isSaving
+  onSettings,
+  children,
 }) => {
-  const isMobile = useIsMobile();
+  const navigate = useNavigate();
+  const isMobile = useMediaQuery('(max-width: 768px)');
   
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+    } else {
+      navigate('/devices');
+    }
+  };
+
   return (
-    <div className={`mb-6 ${isMobile ? 'flex flex-col gap-3' : 'flex items-center justify-between'}`}>
-      <div>
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="flex items-center gap-1 mb-2"
-          onClick={onBack}
-        >
-          <ChevronLeft size={16} />
-          <span>Back to Devices</span>
+    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+      <div className="flex items-center">
+        <Button variant="ghost" size="icon" onClick={handleBack} className="mr-2">
+          <ArrowLeft className="h-5 w-5" />
+          <span className="sr-only">Back</span>
         </Button>
-        <h1 className="text-2xl font-semibold">{title}</h1>
-        <p className="text-muted-foreground">{subtitle}</p>
+        <div>
+          <h1 className="text-2xl font-bold">{title}</h1>
+          {subtitle && (
+            <p className="text-muted-foreground">{subtitle}</p>
+          )}
+        </div>
       </div>
-      <Button 
-        className={`flex items-center gap-2 ${isMobile ? 'w-full mt-3' : ''}`}
-        onClick={(e) => onSave(e)}
-        disabled={isSaving}
-      >
-        {isSaving ? (
-          <Loader2 size={16} className="animate-spin" />
-        ) : (
-          <Save size={16} />
+      
+      <div className="flex items-center gap-2 w-full sm:w-auto">
+        {children}
+        
+        {onSettings && (
+          <Button variant="outline" size="sm" onClick={onSettings}>
+            <Settings className="h-4 w-4 mr-2" />
+            {!isMobile && "Settings"}
+          </Button>
         )}
-        <span>{isSaving ? 'Saving...' : 'Save Device'}</span>
-      </Button>
+      </div>
     </div>
   );
 };

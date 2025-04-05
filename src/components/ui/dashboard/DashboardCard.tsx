@@ -1,114 +1,55 @@
 
 import React from 'react';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 
-export interface DashboardCardProps {
-  title?: React.ReactNode;
-  icon?: React.ReactNode;
-  variant?: 'default' | 'outline' | 'glass' | 'filled';
-  size?: 'sm' | 'md' | 'lg';
-  accent?: 'primary' | 'secondary' | 'info' | 'success' | 'warning' | 'error' | 'none';
-  isLoading?: boolean;
-  animation?: boolean;
-  className?: string;
-  contentClassName?: string;
-  headerClassName?: string;
-  footerClassName?: string;
+export interface DashboardCardProps extends React.HTMLAttributes<HTMLDivElement> {
+  title?: string;
+  description?: string;
   footer?: React.ReactNode;
-  children: React.ReactNode;
+  isLoading?: boolean;
+  loadingHeight?: number;
 }
 
-export const DashboardCard: React.FC<DashboardCardProps> = ({
-  title,
-  icon,
-  variant = 'default',
-  size = 'md',
-  accent = 'none',
-  isLoading = false,
-  animation = true,
-  className,
-  contentClassName,
-  headerClassName,
-  footerClassName,
-  footer,
-  children,
-  ...props
-}) => {
-  const variantClasses = {
-    default: 'bg-card shadow-sm dark:shadow-md',
-    outline: 'bg-background border border-border',
-    glass: 'bg-white/10 dark:bg-black/10 backdrop-blur-md border border-white/10 dark:border-white/5',
-    filled: 'dark:bg-muted/30 bg-muted/30',
-  };
-
-  const sizeClasses = {
-    sm: 'p-3',
-    md: 'p-4',
-    lg: 'p-6',
-  };
-
-  const accentClasses = {
-    none: '',
-    primary: 'border-l-4 border-l-primary',
-    secondary: 'border-l-4 border-l-secondary',
-    info: 'border-l-4 border-l-blue-500',
-    success: 'border-l-4 border-l-green-500',
-    warning: 'border-l-4 border-l-yellow-500',
-    error: 'border-l-4 border-l-red-500',
-  };
-
-  return (
-    <div
-      className={cn(
-        'rounded-xl overflow-hidden transition-all duration-200',
-        animation && 'hover:shadow-md hover:-translate-y-0.5',
-        variantClasses[variant],
-        accentClasses[accent],
-        className
-      )}
-      {...props}
-    >
-      {(title || icon) && (
-        <div className={cn(
-          'flex items-center justify-between border-b border-border/30',
-          sizeClasses[size],
-          headerClassName
-        )}>
-          <div className="flex items-center space-x-3">
-            {icon && <div className="text-muted-foreground">{icon}</div>}
-            {typeof title === 'string' ? (
-              <h3 className="font-medium text-card-foreground">{title}</h3>
-            ) : (
-              title
-            )}
-          </div>
-        </div>
-      )}
-
-      <div className={cn(sizeClasses[size], contentClassName)}>
-        {isLoading ? (
-          <div className="flex items-center justify-center h-full min-h-[100px]">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-          </div>
-        ) : (
-          children
-        )}
-      </div>
-
-      {footer && (
-        <div
-          className={cn(
-            'border-t border-border/30',
-            sizeClasses[size === 'sm' ? 'sm' : 'sm'],
-            'text-xs text-muted-foreground',
-            footerClassName
+export const DashboardCard = React.forwardRef<HTMLDivElement, DashboardCardProps>(
+  ({ title, description, footer, children, isLoading = false, loadingHeight = 100, className, ...props }, ref) => {
+    if (isLoading) {
+      return (
+        <Card className={cn("overflow-hidden", className)} {...props} ref={ref}>
+          {title && (
+            <CardHeader className="pb-2">
+              <Skeleton className="h-5 w-1/2" />
+              {description && <Skeleton className="h-4 w-3/4 mt-2" />}
+            </CardHeader>
           )}
-        >
-          {footer}
-        </div>
-      )}
-    </div>
-  );
-};
+          <CardContent>
+            <Skeleton className={`w-full rounded-md`} style={{ height: loadingHeight }} />
+          </CardContent>
+          {footer && (
+            <CardFooter>
+              <Skeleton className="h-9 w-full" />
+            </CardFooter>
+          )}
+        </Card>
+      );
+    }
+
+    return (
+      <Card className={cn("overflow-hidden", className)} {...props} ref={ref}>
+        {title && (
+          <CardHeader className="pb-2">
+            <CardTitle>{title}</CardTitle>
+            {description && <CardDescription>{description}</CardDescription>}
+          </CardHeader>
+        )}
+        <CardContent>{children}</CardContent>
+        {footer && <CardFooter>{footer}</CardFooter>}
+      </Card>
+    );
+  }
+);
+
+DashboardCard.displayName = "DashboardCard";
 
 export default DashboardCard;

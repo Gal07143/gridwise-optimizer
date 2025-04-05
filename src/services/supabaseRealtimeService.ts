@@ -1,110 +1,61 @@
-import { supabaseClient } from '@/integrations/supabase/client';
-import { RealtimeChannel, REALTIME_LISTEN_TYPES, REALTIME_PRESENCE_LISTEN_EVENTS } from '@supabase/supabase-js';
 
-interface SubscribeOptions<T> {
+import { supabase } from '@/integrations/supabase/client';
+
+// Define the REALTIME_LISTEN_TYPES object to match Supabase's constants
+const REALTIME_LISTEN_TYPES = {
+  INSERT: 'INSERT',
+  UPDATE: 'UPDATE',
+  DELETE: 'DELETE',
+  ALL: '*',
+};
+
+interface SubscribeToTableOptions {
   table: string;
-  event?: 'INSERT' | 'UPDATE' | 'DELETE' | '*';
+  event: 'INSERT' | 'UPDATE' | 'DELETE' | '*';
   callback: (payload: any) => void;
   filter?: string;
 }
 
 /**
- * Subscribe to changes in a Supabase table
+ * Subscribe to real-time changes on a Supabase table
  */
-export function subscribeToTable<T>({
+export function subscribeToTable({
   table,
-  event = '*',
+  event,
   callback,
-  filter
-}: SubscribeOptions<T>): () => void {
-  // Convert event string to REALTIME_LISTEN_TYPES
-  const eventType = event === '*' 
-    ? undefined 
-    : event === 'INSERT' 
-      ? REALTIME_LISTEN_TYPES.INSERT
-      : event === 'UPDATE'
-        ? REALTIME_LISTEN_TYPES.UPDATE
-        : REALTIME_LISTEN_TYPES.DELETE;
+  filter,
+}: SubscribeToTableOptions): () => void {
+  let eventType: string;
 
-  // Create channel
-  let channel = supabaseClient
-    .channel(`table-changes:${table}`)
-    .on(
-      'postgres_changes',
-      {
-        event: eventType,
-        schema: 'public',
-        table: table,
-        filter: filter
-      },
-      (payload) => {
-        callback(payload);
-      }
-    )
-    .subscribe();
+  switch (event) {
+    case 'INSERT':
+      eventType = REALTIME_LISTEN_TYPES.INSERT;
+      break;
+    case 'UPDATE':
+      eventType = REALTIME_LISTEN_TYPES.UPDATE;
+      break;
+    case 'DELETE':
+      eventType = REALTIME_LISTEN_TYPES.DELETE;
+      break;
+    default:
+      eventType = REALTIME_LISTEN_TYPES.ALL;
+  }
 
-  // Return unsubscribe function
+  const channel = supabase
+    .channel(`public:${table}`)
+    .on(eventType, filter ? `public:${table}:${filter}` : `public:${table}`, callback)
+    .subscribe((status: any) => {
+      console.log(`Subscription status for ${table}: ${status}`);
+    });
+
+  // Return an unsubscribe function
   return () => {
-    if (channel) {
-      supabaseClient.removeChannel(channel);
-      channel = null as unknown as RealtimeChannel;
-    }
+    channel();
   };
 }
 
-/**
- * Subscribe to presence changes in a Supabase channel
- */
-export function subscribeToPresence(
-  channelName: string,
-  onJoin?: (payload: any) => void,
-  onLeave?: (payload: any) => void
-): () => void {
-  let channel = supabaseClient.channel(channelName);
-
-  if (onJoin) {
-    channel = channel.on(
-      REALTIME_PRESENCE_LISTEN_EVENTS.SYNC,
-      () => {
-        const state = channel.presenceState();
-        if (onJoin) onJoin(state);
-      }
-    );
-
-    channel = channel.on(
-      REALTIME_PRESENCE_LISTEN_EVENTS.JOIN,
-      ({ newPresences }) => {
-        if (onJoin) onJoin(newPresences);
-      }
-    );
-  }
-
-  if (onLeave) {
-    channel = channel.on(
-      REALTIME_PRESENCE_LISTEN_EVENTS.LEAVE,
-      ({ leftPresences }) => {
-        if (onLeave) onLeave(leftPresences);
-      }
-    );
-  }
-
-  channel.subscribe();
-
-  return () => {
-    if (channel) {
-      supabaseClient.removeChannel(channel);
-    }
-  };
-}
-
-export function unsubscribeFromTable(unsubscribeFunction: () => void) {
-  if (unsubscribeFunction) {
-    unsubscribeFunction();
+export function unsubscribeFromTable(unsubscribeFn: () => void): void {
+  if (typeof unsubscribeFn === 'function') {
+    unsubscribeFn();
   }
 }
-
-export default {
-  subscribeToTable,
-  unsubscribeFromTable,
-  subscribeToPresence
-};

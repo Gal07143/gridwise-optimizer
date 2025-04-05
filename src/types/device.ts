@@ -1,3 +1,4 @@
+
 export type DeviceType = 'solar' | 'wind' | 'battery' | 'grid' | 'load' | 'ev_charger' | 'inverter' | 'meter' | string;
 
 export type DeviceStatus = 'online' | 'offline' | 'maintenance' | 'error' | 'warning' | string;
@@ -47,6 +48,8 @@ export interface DeviceModel {
   protocol?: string;
   support_level?: string;
   images?: string[];
+  has_manual?: boolean;
+  created_at?: string;
 }
 
 export interface DeviceModelReference {
@@ -56,6 +59,7 @@ export interface DeviceModelReference {
   model_number: string;
   device_type: string;
   category: string; // Required in reference
+  has_manual: boolean;
 }
 
 export interface DeviceFilterOptions {

@@ -1,95 +1,92 @@
-import { useState, useEffect } from 'react';
 
-// Create minimal versions of the missing utilities
-const modbusClient = {
-  isConnected: (deviceId: string) => false
+import { useState, useEffect, useCallback } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
+
+// Mock implementations for Modbus functionality
+const readModbusValue = async (
+  deviceId: string, 
+  register: number, 
+  dataType: string = 'uint16'
+): Promise<number | string | boolean> => {
+  // Mock implementation that returns random values based on register
+  await new Promise(resolve => setTimeout(resolve, 300));
+  
+  if (dataType === 'bool') return Math.random() > 0.5;
+  if (dataType === 'string') return `Value-${register}`;
+  
+  // Return a random number appropriate for the data type
+  return Math.floor(Math.random() * 1000);
 };
 
-const readModbusValue = async (deviceId: string, register: number, length: number = 1) => {
-  console.log('Read modbus not implemented:', deviceId, register, length);
-  return 0;
-};
-
-const writeModbusValue = async (deviceId: string, register: number, value: number | number[]) => {
-  console.log('Write modbus not implemented:', deviceId, register, value);
+const writeModbusValue = async (
+  deviceId: string, 
+  register: number, 
+  value: any, 
+  dataType: string = 'uint16'
+): Promise<boolean> => {
+  // Mock implementation
+  await new Promise(resolve => setTimeout(resolve, 400));
+  console.log(`Writing ${value} to device ${deviceId}, register ${register}, type ${dataType}`);
   return true;
 };
 
-function useModbusData(deviceId: string, register: number, length: number = 1, interval: number = 5000) {
-  const [value, setValue] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+interface ModbusDataOptions {
+  deviceId: string;
+  register: number;
+  dataType?: string;
+  pollInterval?: number;
+  enabled?: boolean;
+}
 
-  const refreshValue = async () => {
-    if (!modbusClient.isConnected(deviceId)) {
-      setError(new Error('Device not connected'));
-      setIsLoading(false);
-      return;
-    }
+export function useModbusData({
+  deviceId,
+  register,
+  dataType = 'uint16',
+  pollInterval = 5000,
+  enabled = true
+}: ModbusDataOptions) {
+  const [lastReadTime, setLastReadTime] = useState<Date | null>(null);
 
-    setError(null);
-    setIsLoading(true);
+  const {
+    data: value,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ['modbus', deviceId, register, dataType],
+    queryFn: async () => {
+      const value = await readModbusValue(deviceId, register, dataType);
+      setLastReadTime(new Date());
+      return value;
+    },
+    refetchInterval: enabled ? pollInterval : false,
+    enabled: enabled,
+  });
 
-    try {
-      const newValue = await readModbusValue(deviceId, register, length);
-      setValue(newValue);
-      setError(null);
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error(String(err));
-      setError(error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const writeValue = useMutation({
+    mutationFn: async (newValue: any) => {
+      return writeModbusValue(deviceId, register, newValue, dataType);
+    },
+    onSuccess: () => {
+      refetch();
+    },
+  });
 
-  const writeValue = async (newValue: number | number[]) => {
-    if (!modbusClient.isConnected(deviceId)) {
-      throw new Error('Device not connected');
-    }
-
-    try {
-      const success = await writeModbusValue(deviceId, register, newValue);
-
-      if (success) {
-        // Update local state if write was successful
-        if (typeof newValue === 'number') {
-          setValue(newValue);
-        } else {
-          // For array values, refresh to get the new value
-          await refreshValue();
-        }
-      }
-
-      return success;
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error(String(err));
-      setError(error);
-      throw error;
-    }
-  };
-
-  useEffect(() => {
-    // Initial fetch
-    refreshValue();
-
-    // Set up interval for polling
-    const timerId = setInterval(() => {
-      if (modbusClient.isConnected(deviceId)) {
-        refreshValue();
-      }
-    }, interval);
-
-    return () => {
-      clearInterval(timerId);
-    };
-  }, [deviceId, register, length, interval]);
+  const handleWrite = useCallback(
+    (newValue: any) => {
+      writeValue.mutate(newValue);
+    },
+    [writeValue]
+  );
 
   return {
     value,
+    setValue: handleWrite,
     isLoading,
-    error,
-    refreshValue,
-    writeValue
+    isWriting: writeValue.isPending,
+    error: error || writeValue.error,
+    lastReadTime,
+    refetch,
   };
 }
 

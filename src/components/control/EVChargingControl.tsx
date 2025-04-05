@@ -1,3 +1,4 @@
+
 // components/control/EVChargingControl.tsx
 import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
@@ -5,7 +6,15 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/componen
 import { useToast } from '@/components/ui/use-toast';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import axios from 'axios';
-import { BatteryCharging, BatteryMedium, AlertOctagon, Gauge } from 'lucide-react';
+import { 
+  BatteryCharging,
+  BatteryMedium,
+  AlertOctagon,
+  Gauge,
+  Loader2,
+  Play,
+  StopCircle
+} from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 type ChargerStatus = 'charging' | 'idle' | 'error' | 'disconnected' | 'scheduled';
@@ -57,24 +66,51 @@ const EVChargingControl = () => {
     retry: 3,
   });
 
-  const mutation = useMutation({
-    mutationFn: sendChargerCommand,
+  const startCharging = useMutation({
+    mutationFn: () => sendChargerCommand('start'),
     onSuccess: (data) => {
       refetch(); // Refresh the status after command
       toast({
-        title: `Charging ${data.status === 'charging' ? 'Started' : 'Stopped'}`,
-        description: `Charger is now ${data.status}`,
+        title: 'Charging Started',
+        description: 'EV charger is now active',
         variant: "default",
       });
     },
     onError: (error) => {
       toast({
         title: "Command Failed",
-        description: error instanceof Error ? error.message : "Failed to control charger",
+        description: error instanceof Error ? error.message : "Failed to start charging",
         variant: "destructive",
       });
     },
   });
+
+  const stopCharging = useMutation({
+    mutationFn: () => sendChargerCommand('stop'),
+    onSuccess: (data) => {
+      refetch(); 
+      toast({
+        title: 'Charging Stopped',
+        description: 'EV charger has been stopped',
+        variant: "default",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Command Failed",
+        description: error instanceof Error ? error.message : "Failed to stop charging",
+        variant: "destructive",
+      });
+    },
+  });
+  
+  const handleStartCharge = () => {
+    startCharging.mutate();
+  };
+
+  const handleStopCharge = () => {
+    stopCharging.mutate();
+  };
 
   // Status indicator styling based on state
   const getStatusBadge = () => {
@@ -199,28 +235,27 @@ const EVChargingControl = () => {
       </CardContent>
       
       <CardFooter className="flex gap-2 justify-between">
-<Button 
-  variant="default"
-  size="sm" 
-  disabled={startCharging.isPending} // changed from isLoading to isPending
-  onClick={handleStartCharge}
-  className="w-full"
->
-  {startCharging.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
-  Start Charging
-</Button>
+        <Button 
+          variant="default"
+          size="sm" 
+          disabled={startCharging.isPending} 
+          onClick={handleStartCharge}
+          className="w-full"
+        >
+          {startCharging.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
+          Start Charging
+        </Button>
 
-// Around line 214
-<Button 
-  variant="secondary"
-  size="sm" 
-  disabled={stopCharging.isPending} // changed from isLoading to isPending
-  onClick={handleStopCharge}
-  className="w-full"
->
-  {stopCharging.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <StopCircle className="mr-2 h-4 w-4" />}
-  Stop Charging
-</Button>
+        <Button 
+          variant="secondary"
+          size="sm" 
+          disabled={stopCharging.isPending}
+          onClick={handleStopCharge}
+          className="w-full"
+        >
+          {stopCharging.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <StopCircle className="mr-2 h-4 w-4" />}
+          Stop Charging
+        </Button>
       </CardFooter>
     </Card>
   );

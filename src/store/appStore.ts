@@ -1,12 +1,14 @@
 
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
+import type { Site } from '@/types/site';
 
 export interface AppState {
   sidebarExpanded: boolean;
   activeTab: string;
   activeDashboardView: string;
   isLoading: boolean;
+  activeSite: Site | null;
   
   // Actions
   setSidebarExpanded: (expanded: boolean) => void;
@@ -14,6 +16,7 @@ export interface AppState {
   setActiveTab: (tab: string) => void;
   setActiveDashboardView: (view: string) => void;
   setIsLoading: (loading: boolean) => void;
+  setActiveSite: (site: Site | null) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -24,6 +27,7 @@ export const useAppStore = create<AppState>()(
         activeTab: 'overview',
         activeDashboardView: 'grid',
         isLoading: false,
+        activeSite: null,
         
         // Actions
         setSidebarExpanded: (expanded) => set({ sidebarExpanded: expanded }),
@@ -31,6 +35,7 @@ export const useAppStore = create<AppState>()(
         setActiveTab: (tab) => set({ activeTab: tab }),
         setActiveDashboardView: (view) => set({ activeDashboardView: view }),
         setIsLoading: (loading) => set({ isLoading: loading }),
+        setActiveSite: (site) => set({ activeSite: site }),
       }),
       {
         name: 'ems-app-storage',

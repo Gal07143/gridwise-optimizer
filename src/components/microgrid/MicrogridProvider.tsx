@@ -1,140 +1,110 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
 
-interface MicrogridState {
-  systemMode: 'auto' | 'manual' | 'economy' | 'backup';
-  gridConnection: boolean;
-  batteryLevel: number;
-  solarProduction: number;
-  gridConsumption: number;
-  lastUpdated: string | null;
-  alerts: Array<{
-    id: string;
-    severity: 'critical' | 'warning' | 'info';
-    message: string;
-    timestamp: string;
-    acknowledged: boolean;
-  }>;
-}
+import React, { createContext, useContext, useReducer, useState } from 'react';
+import { MicrogridContextType, MicrogridState, MicrogridAction } from './types';
 
-interface MicrogridContextType {
-  state: MicrogridState;
-  handleModeChange: (mode: string) => void;
-  handleGridConnectionToggle: () => void;
-  setBatteryReserve: (level: number) => void;
-  acknowledgeAlert: (alertId: string) => void;
-  batteryReserve: number;
-  runSystemCheck: () => Promise<boolean>;
-}
-
-const initialState: MicrogridState = {
-  systemMode: 'auto',
+// Initial state for the microgrid
+const initialMicrogridState: MicrogridState = {
+  batteryCharge: 75,
+  batteryCharging: true,
+  batteryCurrent: 10.5,
+  batteryCapacity: 100,
+  solarOutput: 3.2,
+  solarConnected: true,
+  solarEfficiency: 92,
+  windOutput: 1.5,
+  windConnected: true,
+  windSpeed: 12,
+  gridPower: 5.0,
   gridConnection: true,
-  batteryLevel: 78,
+  gridConnected: true,
+  loadDemand: 8.5,
+  loadConnected: true,
+  buildingEfficiency: 87,
+  timestamp: new Date(),
+  systemMode: 'auto',
   solarProduction: 3.2,
-  gridConsumption: 1.7,
+  windProduction: 1.5,
+  batteryLevel: 75,
+  batteryDischargeEnabled: false,
+  batteryChargeEnabled: true,
+  loadConsumption: 8.5,
+  gridImport: 5.0,
+  gridExport: 0,
+  frequency: 50,
+  voltage: 230,
   lastUpdated: new Date().toISOString(),
-  alerts: [
-    {
-      id: 'alert-1',
-      severity: 'warning',
-      message: 'Battery efficiency below optimal threshold',
-      timestamp: new Date().toISOString(),
-      acknowledged: false,
-    },
-    {
-      id: 'alert-2',
-      severity: 'info',
-      message: 'Solar production increased by 15%',
-      timestamp: new Date(Date.now() - 3600000).toISOString(),
-      acknowledged: true,
-    },
-  ],
+  operatingMode: 'auto',
+  batteryChargeRate: 2.5,
+  gridImportEnabled: true,
+  gridExportEnabled: false,
+  batterySelfConsumptionMode: true,
+  economicMode: false,
+  peakShavingEnabled: true,
+  demandResponseEnabled: false
 };
 
-const MicrogridContext = createContext<MicrogridContextType | undefined>(undefined);
-
-export const useMicrogrid = () => {
-  const context = useContext(MicrogridContext);
-  if (!context) {
-    throw new Error('useMicrogrid must be used within a MicrogridProvider');
+// Reducer function for the microgrid state
+function microgridReducer(state: MicrogridState, action: MicrogridAction): MicrogridState {
+  switch (action.type) {
+    case 'SET_MODE':
+      return {
+        ...state,
+        systemMode: action.payload as 'auto' | 'manual' | 'eco' | 'backup'
+      };
+    case 'TOGGLE_GRID_CONNECTION':
+      return {
+        ...state,
+        gridConnection: !state.gridConnection
+      };
+    case 'UPDATE_BATTERY':
+      return {
+        ...state,
+        ...action.payload
+      };
+    default:
+      return state;
   }
-  return context;
-};
-
-interface MicrogridProviderProps {
-  children: React.ReactNode;
 }
 
-const MicrogridProvider: React.FC<MicrogridProviderProps> = ({ children }) => {
-  const [state, setState] = useState<MicrogridState>(initialState);
+// Create the context
+const MicrogridContext = createContext<MicrogridContextType>({
+  state: initialMicrogridState,
+  dispatch: () => {}
+});
+
+// Provider component
+export const MicrogridProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [state, dispatch] = useReducer(microgridReducer, initialMicrogridState);
   const [batteryReserve, setBatteryReserve] = useState(20);
 
   const handleModeChange = (mode: string) => {
-    setState(prev => ({
-      ...prev,
-      systemMode: mode as MicrogridState['systemMode'],
-      lastUpdated: new Date().toISOString(),
-    }));
+    dispatch({ type: 'SET_MODE', payload: mode });
   };
-
+  
   const handleGridConnectionToggle = () => {
-    setState(prev => ({
-      ...prev,
-      gridConnection: !prev.gridConnection,
-      lastUpdated: new Date().toISOString(),
-    }));
+    dispatch({ type: 'TOGGLE_GRID_CONNECTION' });
   };
-
-  const acknowledgeAlert = (alertId: string) => {
-    setState(prev => ({
-      ...prev,
-      alerts: prev.alerts.map(alert => 
-        alert.id === alertId ? { ...alert, acknowledged: true } : alert
-      ),
-    }));
+  
+  const updateBatteryReserve = (value: number) => {
+    setBatteryReserve(value);
+    // You might also want to update some state in the microgrid based on this
   };
-
-  const runSystemCheck = async (): Promise<boolean> => {
-    // Simulate a network request
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    // Return success
-    return true;
-  };
-
-  // Simulate data updates
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setState(prev => {
-        const batteryDelta = Math.random() * 4 - 2; // Between -2 and 2
-        const solarDelta = Math.random() * 0.8 - 0.3; // Between -0.3 and 0.5
-        const gridDelta = Math.random() * 0.6 - 0.2; // Between -0.2 and 0.4
-        
-        return {
-          ...prev,
-          batteryLevel: Math.min(100, Math.max(0, prev.batteryLevel + batteryDelta)),
-          solarProduction: Math.max(0, prev.solarProduction + solarDelta),
-          gridConsumption: Math.max(0, prev.gridConsumption + gridDelta),
-          lastUpdated: new Date().toISOString(),
-        };
-      });
-    }, 30000); // Update every 30 seconds
-    
-    return () => clearInterval(interval);
-  }, []);
 
   return (
     <MicrogridContext.Provider value={{ 
       state, 
-      handleModeChange, 
-      handleGridConnectionToggle,
-      setBatteryReserve,
+      dispatch, 
       batteryReserve,
-      acknowledgeAlert,
-      runSystemCheck
+      handleModeChange,
+      handleGridConnectionToggle,
+      updateBatteryReserve
     }}>
       {children}
     </MicrogridContext.Provider>
   );
 };
+
+// Custom hook to use the microgrid context
+export const useMicrogrid = () => useContext(MicrogridContext);
 
 export default MicrogridProvider;

@@ -1,18 +1,19 @@
+
 export interface User {
   id: string;
   email: string;
-  role: 'admin' | 'operator' | 'viewer' | 'installer';
-  firstName?: string;
-  lastName?: string;
-  avatarUrl?: string;
+  name?: string;
+  role: string;
+  avatar?: string;
+  preferences?: Record<string, any>;
 }
 
 export interface AuthContextType {
   user: User | null;
   loading: boolean;
-  isAuthenticated: boolean; // Added this property
+  isAuthenticated: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, userData: Partial<User>) => Promise<void>;
+  signUp: (email: string, password: string, name: string) => Promise<void>;
   signOut: () => Promise<void>;
-  updateUserProfile: (updates: Partial<User>) => Promise<void>;
+  updateUserProfile: (userData: Partial<User>) => Promise<void>;
 }

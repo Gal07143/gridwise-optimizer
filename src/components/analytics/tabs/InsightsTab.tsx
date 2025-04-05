@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,10 +13,13 @@ interface InsightsTabProps {
   timeframe: string;
 }
 
+type TimeframeType = 'day' | 'week' | 'month' | 'year';
+
 const InsightsTab: React.FC<InsightsTabProps> = ({ timeframe }) => {
-  const timeframeConverted = ['day', 'week', 'month', 'year'].includes(timeframe)
+  // Convert the string timeframe to a valid TimeframeType
+  const timeframeConverted: TimeframeType = (['day', 'week', 'month', 'year'].includes(timeframe)
     ? timeframe
-    : 'week';
+    : 'week') as TimeframeType;
 
   const navigate = useNavigate();
 
@@ -29,7 +33,7 @@ const InsightsTab: React.FC<InsightsTabProps> = ({ timeframe }) => {
   useEffect(() => {
     const fetchInsights = async () => {
       try {
-        const insights = await refetch();
+        await refetch();
         // You can process insights here if needed
       } catch (error) {
         console.error('Failed to load insights:', error);
@@ -37,21 +41,14 @@ const InsightsTab: React.FC<InsightsTabProps> = ({ timeframe }) => {
     };
 
     fetchInsights();
-  }, []);
+  }, [refetch]);
 
   const handleRefetch = () => {
-    const refetchPromise = refetch();
-
-    if (refetchPromise && typeof refetchPromise.then === 'function') {
-      toast.promise(refetchPromise, {
-        loading: 'Refreshing energy insights...',
-        success: 'Energy insights updated successfully',
-        error: 'Failed to refresh energy insights',
-      });
-    } else {
-      toast.success('Refreshing energy insights...');
-      refetch();
-    }
+    toast.promise(refetch(), {
+      loading: 'Refreshing energy insights...',
+      success: 'Energy insights updated successfully',
+      error: 'Failed to refresh energy insights',
+    });
   };
 
   return (
