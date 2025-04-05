@@ -1,4 +1,3 @@
-
 import axios from 'axios';
 import { Site } from '@/types/site';
 import { toast } from 'sonner';
