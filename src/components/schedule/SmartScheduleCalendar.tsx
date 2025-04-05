@@ -1,209 +1,232 @@
-// components/schedule/SmartScheduleCalendar.tsx
-import React, { useEffect, useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import React, { useState, useEffect, Dispatch, SetStateAction } from 'react';
 import { Calendar } from '@/components/ui/calendar';
-import { useToast } from '@/components/ui/use-toast';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import axios from 'axios';
-import { Calendar as CalendarIcon, Plus, RefreshCw } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
-import { format } from 'date-fns';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { ChevronLeft, ChevronRight, CalendarIcon, AlertCircle } from 'lucide-react';
 
-// Define the event types that match the Calendar component expectations
-interface CalendarEvent {
+export interface CalendarEvent {
   id: string;
   title: string;
-  start: Date;
-  end: Date;
-  meta?: any;
+  date: Date;
+  type: 'maintenance' | 'alert' | 'reminder' | 'scheduled-operation';
+  description?: string;
+  color?: string;
 }
 
-// Define the raw event data from the API
-interface ScheduleEvent {
-  id: string;
-  action: string;
-  start_time: string;
-  end_time: string;
-  device_name?: string;
-  device_id?: string;
-  status?: 'scheduled' | 'completed' | 'cancelled' | 'error';
-  priority?: number;
-  created_by?: string;
-  notes?: string;
+interface SmartScheduleCalendarProps {
+  events: CalendarEvent[];
+  onDateSelect: Dispatch<SetStateAction<Date>>;
+  onEventClick: (event: CalendarEvent) => void;
+  eventRenderer?: (event: CalendarEvent) => React.ReactNode;
+  className?: string;
 }
 
-// Fetch schedule events from the API
-const fetchSchedule = async (): Promise<ScheduleEvent[]> => {
-  try {
-    const res = await axios.get('/api/schedule');
-    return res.data || [];
-  } catch (err) {
-    console.error('Failed to fetch schedule:', err);
-    throw new Error('Failed to fetch schedule');
-  }
-};
-
-// Convert API data to calendar event format
-const formatEvents = (events: ScheduleEvent[]): CalendarEvent[] => {
-  return events.map(event => ({
-    id: event.id,
-    title: event.action,
-    start: new Date(event.start_time),
-    end: new Date(event.end_time),
-    meta: event
-  }));
-};
-
-const SmartScheduleCalendar = () => {
-  const { toast } = useToast();
-  const [showAddDialog, setShowAddDialog] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-
-  // Query for fetching schedule data
-  const { 
-    data: scheduleData, 
-    isLoading, 
-    error, 
-    refetch 
-  } = useQuery({
-    queryKey: ['schedule-events'],
-    queryFn: fetchSchedule,
-    refetchInterval: 60000, // Refresh every minute
-  });
-
-  // Format the schedule data for the calendar
-  const events = scheduleData ? formatEvents(scheduleData) : [];
-
-  // Mutations for adding or removing schedule events could be added here
+const SmartScheduleCalendar: React.FC<SmartScheduleCalendarProps> = ({
+  events,
+  onDateSelect,
+  onEventClick,
+  eventRenderer,
+  className
+}) => {
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
+  const [visibleEvents, setVisibleEvents] = useState<CalendarEvent[]>([]);
+  const [viewMode, setViewMode] = useState<'day' | 'month'>('month');
   
-  // Function to handle the refresh button
-  const handleRefresh = () => {
-    refetch();
-    toast({
-      title: "Refreshing Schedule",
-      description: "The schedule calendar is updating...",
-    });
+  // Handle date selection
+  const handleSelect = (date: Date | undefined) => {
+    if (date) {
+      setSelectedDate(date);
+      onDateSelect(date);
+      
+      // Switch to day view when selecting a date
+      setViewMode('day');
+    }
   };
-
-  // Function to handle event click
-  const handleEventClick = (event: CalendarEvent) => {
-    toast({
-      title: event.title,
-      description: `${format(event.start, 'PPp')} - ${format(event.end, 'PPp')}`,
-    });
+  
+  // Filter events for the selected date in day view
+  useEffect(() => {
+    if (viewMode === 'day' && selectedDate) {
+      const dateEvents = events.filter(event => 
+        event.date.getFullYear() === selectedDate.getFullYear() &&
+        event.date.getMonth() === selectedDate.getMonth() &&
+        event.date.getDate() === selectedDate.getDate()
+      );
+      setVisibleEvents(dateEvents);
+    }
+  }, [events, selectedDate, viewMode]);
+  
+  // Get events for a specific day (used by the calendar component)
+  const getDayEvents = (day: Date): CalendarEvent[] => {
+    return events.filter(event => 
+      event.date.getFullYear() === day.getFullYear() &&
+      event.date.getMonth() === day.getMonth() &&
+      event.date.getDate() === day.getDate()
+    );
   };
-
-  // Render loading state
-  if (isLoading) {
+  
+  // Custom day rendering to show event indicators
+  const renderDay = (day: Date) => {
+    const dayEvents = getDayEvents(day);
+    const hasEvents = dayEvents.length > 0;
+    
+    if (!hasEvents) return undefined;
+    
+    // Group events by type for the indicators
+    const hasMaintenance = dayEvents.some(e => e.type === 'maintenance');
+    const hasAlert = dayEvents.some(e => e.type === 'alert');
+    const hasOperation = dayEvents.some(e => e.type === 'scheduled-operation');
+    const hasReminder = dayEvents.some(e => e.type === 'reminder');
+    
     return (
-      <Card className="shadow-md">
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <CalendarIcon className="h-5 w-5 mr-2" />
-            Smart Schedule
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="h-96 flex items-center justify-center">
-          <RefreshCw className="h-8 w-8 animate-spin text-blue-500" />
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // Render error state
-  if (error) {
-    return (
-      <Card className="shadow-md">
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <CalendarIcon className="h-5 w-5 mr-2" />
-            Smart Schedule
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center text-red-500 py-10">
-            Failed to load schedule. Please try again later.
-          </div>
-          <Button onClick={handleRefresh} variant="outline" className="w-full">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Retry
-          </Button>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <Card className="shadow-md">
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="flex items-center">
-          <CalendarIcon className="h-5 w-5 mr-2" />
-          Smart Schedule
-        </CardTitle>
-        <div className="flex space-x-2">
-          <Button variant="ghost" size="icon" onClick={handleRefresh} className="h-8 w-8">
-            <RefreshCw className="h-4 w-4" />
-          </Button>
-          <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="h-8">
-                <Plus className="h-4 w-4 mr-1" />
-                New Event
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add Schedule Event</DialogTitle>
-              </DialogHeader>
-              <div className="py-4">
-                {/* Add a form here for creating new events */}
-                <p className="text-muted-foreground">
-                  Schedule form would go here - this is a placeholder for demonstration.
-                </p>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setShowAddDialog(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={() => {
-                  toast({
-                    title: "Event Scheduled",
-                    description: "Your event has been added to the schedule."
-                  });
-                  setShowAddDialog(false);
-                }}>
-                  Schedule
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+      <div className="relative h-full w-full p-1">
+        <div className="absolute bottom-1 left-0 right-0 flex justify-center gap-0.5">
+          {hasMaintenance && <div className="h-1 w-1 rounded-full bg-blue-500" />}
+          {hasAlert && <div className="h-1 w-1 rounded-full bg-red-500" />}
+          {hasOperation && <div className="h-1 w-1 rounded-full bg-green-500" />}
+          {hasReminder && <div className="h-1 w-1 rounded-full bg-yellow-500" />}
         </div>
+      </div>
+    );
+  };
+  
+  // Navigate to previous month
+  const prevMonth = () => {
+    const date = new Date(selectedMonth);
+    date.setMonth(date.getMonth() - 1);
+    setSelectedMonth(date);
+  };
+  
+  // Navigate to next month
+  const nextMonth = () => {
+    const date = new Date(selectedMonth);
+    date.setMonth(date.getMonth() + 1);
+    setSelectedMonth(date);
+  };
+  
+  // Navigate to today
+  const goToToday = () => {
+    const today = new Date();
+    setSelectedMonth(today);
+    setSelectedDate(today);
+    onDateSelect(today);
+  };
+  
+  // Custom renderer for event items
+  const defaultEventRenderer = (event: CalendarEvent) => {
+    const getEventColor = () => {
+      if (event.color) return event.color;
+      
+      switch(event.type) {
+        case 'maintenance': return 'bg-blue-100 text-blue-700 border-blue-200';
+        case 'alert': return 'bg-red-100 text-red-700 border-red-200';
+        case 'scheduled-operation': return 'bg-green-100 text-green-700 border-green-200';
+        case 'reminder': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+        default: return 'bg-gray-100 text-gray-700 border-gray-200';
+      }
+    };
+    
+    const getEventIcon = () => {
+      switch(event.type) {
+        case 'alert': return <AlertCircle className="h-4 w-4 mr-1 text-red-600" />;
+        default: return <CalendarIcon className="h-4 w-4 mr-1" />;
+      }
+    };
+    
+    return (
+      <div 
+        key={event.id} 
+        className={`px-3 py-2 mb-2 rounded-md border ${getEventColor()} cursor-pointer hover:opacity-80 transition-opacity`}
+        onClick={() => onEventClick(event)}
+      >
+        <div className="flex items-center">
+          {getEventIcon()}
+          <span className="font-medium">{event.title}</span>
+        </div>
+        {event.description && (
+          <p className="mt-1 text-sm truncate">{event.description}</p>
+        )}
+        <div className="mt-1 text-xs opacity-70">
+          {event.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        </div>
+      </div>
+    );
+  };
+  
+  return (
+    <Card className={className}>
+      <CardHeader>
+        <div className="flex justify-between items-center">
+          <CardTitle>Schedule</CardTitle>
+          <div className="flex space-x-2">
+            <Select 
+              value={viewMode} 
+              onValueChange={(value) => setViewMode(value as 'day' | 'month')}
+            >
+              <SelectTrigger className="w-[120px]">
+                <SelectValue placeholder="View" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="day">Day View</SelectItem>
+                <SelectItem value="month">Month View</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <div className="flex items-center justify-between">
+          <Button variant="outline" size="icon" onClick={prevMonth}>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <h2 className="text-lg font-medium">
+            {selectedMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
+          </h2>
+          <Button variant="outline" size="icon" onClick={nextMonth}>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+          <Button variant="outline" size="sm" onClick={goToToday}>
+            Today
+          </Button>
+        </div>
+        {viewMode === 'day' && (
+          <Badge className="self-start">
+            {selectedDate.toLocaleDateString('default', { weekday: 'long', day: 'numeric', month: 'long' })}
+          </Badge>
+        )}
       </CardHeader>
       <CardContent>
-        <Calendar
-          events={events}
-          mode="single"
-          onDateSelect={setSelectedDate}
-          onEventClick={handleEventClick}
-          eventRenderer={(event) => (
-            <div className="p-1 text-xs bg-blue-100 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800/50 rounded">
-              <div className="font-bold truncate">{event.title}</div>
-              <div className="truncate">{event.meta?.device_name || 'System'}</div>
-            </div>
-          )}
-          className="border rounded-md"
-        />
+        {viewMode === 'month' ? (
+          <Calendar
+            mode="single"
+            selected={selectedDate}
+            onSelect={handleSelect}
+            month={selectedMonth}
+            onMonthChange={setSelectedMonth}
+            className="border rounded-md p-2"
+            components={{
+              Day: ({ date, ...props }) => (
+                <div {...props}>
+                  <div>{date.getDate()}</div>
+                  {renderDay(date)}
+                </div>
+              )
+            }}
+          />
+        ) : (
+          <div className="space-y-1 mt-4 max-h-96 overflow-y-auto">
+            {visibleEvents.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                No events scheduled for this day
+              </div>
+            ) : (
+              visibleEvents.map(event => (
+                eventRenderer ? eventRenderer(event) : defaultEventRenderer(event)
+              ))
+            )}
+          </div>
+        )}
       </CardContent>
-      <CardFooter>
-        <div className="w-full text-xs text-muted-foreground">
-          {scheduleData && scheduleData.length > 0 ? (
-            <span>Showing {scheduleData.length} scheduled events</span>
-          ) : (
-            <span>No scheduled events. Click "New Event" to create one.</span>
-          )}
-        </div>
-      </CardFooter>
     </Card>
   );
 };
