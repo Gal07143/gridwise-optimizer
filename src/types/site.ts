@@ -48,7 +48,7 @@ export interface SiteSelectorProps {
   currentSiteId?: string;
 }
 
-// Add the missing SiteFormData interface
+// Add the SiteFormData interface
 export interface SiteFormData {
   name: string;
   location: string;

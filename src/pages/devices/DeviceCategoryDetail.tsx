@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 // Fix the import for DeviceCategoryGrid
-import { DeviceCategoryGrid } from '@/components/devices/DeviceCategoryGrid';
+import DeviceCategoryGrid from '@/components/devices/DeviceCategoryGrid';
 // Fix the import for PageHeader
 import PageHeader from '@/components/pages/PageHeader';
 

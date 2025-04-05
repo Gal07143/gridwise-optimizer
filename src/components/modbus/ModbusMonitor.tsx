@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -13,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { ReloadIcon, Play, Pause, Link2, Link2Off } from 'lucide-react';
+import { Loader2, Play, Pause, Link2, Link2Off } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -32,12 +33,11 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/alert-dialog";
 import useConnectionStatus from '@/hooks/useConnectionStatus';
 import {
   ModbusDevice,
-  ModbusRegister,
-  ConnectionStatusResult
+  ModbusRegister
 } from '@/types/modbus';
 import { getModbusDeviceById } from '@/services/modbus/modbusDeviceService';
 import { getModbusRegistersByDeviceId } from '@/services/modbus/modbusRegisterService';
@@ -54,6 +54,7 @@ const ModbusMonitor: React.FC<ModbusMonitorProps> = ({ deviceId }) => {
   const [isPolling, setIsPolling] = useState<boolean>(false);
   const [pollingInterval, setPollingInterval] = useState<number>(1000);
   const [error, setError] = useState<string | null>(null);
+  const [isOnline, setIsOnline] = useState<boolean>(false);
   
   // Use our hook to get the connection status
   const connection = useConnectionStatus();
@@ -66,9 +67,7 @@ const ModbusMonitor: React.FC<ModbusMonitorProps> = ({ deviceId }) => {
       setError(null);
       // In a real implementation, this would connect to the Modbus device
       // For now, let's simulate a successful connection
-      if (connection.connect) {
-        await connection.connect();
-      }
+      setIsOnline(true);
       toast.success(`Connected to ${device.name}`);
     } catch (err) {
       console.error('Connection error:', err);
@@ -81,10 +80,8 @@ const ModbusMonitor: React.FC<ModbusMonitorProps> = ({ deviceId }) => {
   const handleDisconnect = async () => {
     try {
       // In a real implementation, this would disconnect from the Modbus device
-      if (connection.disconnect) {
-        await connection.disconnect();
-      }
       setIsPolling(false);
+      setIsOnline(false);
       toast.info(`Disconnected from ${device?.name || 'device'}`);
     } catch (err) {
       console.error('Disconnect error:', err);
@@ -190,10 +187,10 @@ const ModbusMonitor: React.FC<ModbusMonitorProps> = ({ deviceId }) => {
       <CardContent className="space-y-4">
         <div className="flex items-center space-x-4">
           <h3 className="text-lg font-semibold">{device.name}</h3>
-          <Badge variant={connection.isOnline ? "outline" : "destructive"}>
-            {connection.isOnline ? "Connected" : "Disconnected"}
+          <Badge variant={isOnline ? "outline" : "destructive"}>
+            {isOnline ? "Connected" : "Disconnected"}
           </Badge>
-          {connection.isOnline ? (
+          {isOnline ? (
             <Button variant="outline" size="sm" onClick={handleDisconnect}>
               <Link2Off className="h-4 w-4 mr-2" />
               Disconnect
@@ -214,13 +211,13 @@ const ModbusMonitor: React.FC<ModbusMonitorProps> = ({ deviceId }) => {
                 id="pollingInterval"
                 value={pollingInterval}
                 onChange={handleIntervalChange}
-                disabled={!connection.isOnline}
+                disabled={!isOnline}
               />
               <Switch
                 id="isPolling"
                 checked={isPolling}
                 onCheckedChange={handlePollingToggle}
-                disabled={!connection.isOnline}
+                disabled={!isOnline}
               />
               <Label htmlFor="isPolling" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                 {isPolling ? <Pause className="h-4 w-4 mr-2" /> : <Play className="h-4 w-4 mr-2" />}
@@ -275,6 +272,13 @@ const ModbusMonitor: React.FC<ModbusMonitorProps> = ({ deviceId }) => {
                     <TableCell>{register.scaling_factor}</TableCell>
                   </TableRow>
                 ))}
+                {registers.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
+                      No registers found. Add registers to monitor this device.
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </div>

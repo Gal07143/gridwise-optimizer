@@ -12,6 +12,8 @@ export interface ConnectionStatus {
   lastChecked: Date | null;
   checkNow: () => Promise<boolean>;
   retryConnection: () => Promise<boolean>;
+  connect?: () => Promise<boolean>;
+  disconnect?: () => Promise<boolean>;
 }
 
 /**
@@ -68,6 +70,34 @@ const useConnectionStatus = (options: ConnectionStatusOptions = {}): ConnectionS
     
     return await checkConnection();
   }, [checkConnection, showToasts]);
+
+  // Add connect and disconnect methods
+  const connect = useCallback(async (): Promise<boolean> => {
+    if (showToasts) {
+      toast.info('Connecting...');
+    }
+
+    // Simulate successful connection
+    setIsOnline(true);
+    setLastChecked(new Date());
+    
+    if (showToasts) {
+      toast.success('Connected successfully!');
+    }
+    
+    return true;
+  }, [showToasts]);
+
+  const disconnect = useCallback(async (): Promise<boolean> => {
+    setIsOnline(false);
+    setLastChecked(new Date());
+    
+    if (showToasts) {
+      toast.info('Disconnected');
+    }
+    
+    return true;
+  }, [showToasts]);
   
   useEffect(() => {
     // Check connection immediately
@@ -106,7 +136,9 @@ const useConnectionStatus = (options: ConnectionStatusOptions = {}): ConnectionS
     isOnline,
     lastChecked,
     checkNow: checkConnection,
-    retryConnection
+    retryConnection,
+    connect,
+    disconnect
   };
 };
 

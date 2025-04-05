@@ -6,4 +6,4 @@ export { default as StatusOverview } from './StatusOverview';
 export { default as TelemetryLiveCard } from './TelemetryLiveCard';
 export { default as TelemetryCard } from './TelemetryCard';
 export { default as AlertSummaryCard } from './AlertSummaryCard';
-export { TelemetryMetric, LiveTelemetryChartProps } from './LiveTelemetryChart';
+export type { TelemetryMetric, LiveTelemetryChartProps } from './LiveTelemetryChart';
