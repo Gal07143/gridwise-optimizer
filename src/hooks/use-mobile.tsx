@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 
 /**
@@ -58,4 +57,4 @@ export function useIsMobile(breakpoint: number = 768): boolean {
 }
 
 // Make both functions available for import
-export { useMediaQuery as default };
+export default useMediaQuery;
