@@ -13,23 +13,20 @@ export function subscribeToTable(
   // Create a unique channel name
   const channelName = `${table}-${eventType}-${Math.random().toString(36).slice(2, 9)}`;
 
-  // Create the postgres_changes config object
-  const pgConfig: any = {
+  // Create the channel
+  const channel = supabase
+    .channel(channelName);
+  
+  // Configure the subscription
+  const subscription = channel.on('postgres_changes', {
     event: eventType,
     schema: 'public',
-    table: table
-  };
+    table: table,
+    filter: filter
+  }, callback);
   
-  // Add filter if provided
-  if (filter) {
-    pgConfig.filter = filter;
-  }
-
-  // Subscribe to the channel with the proper config
-  const channel = supabase
-    .channel(channelName)
-    .on('postgres_changes', pgConfig, callback)
-    .subscribe();
+  // Subscribe to the channel
+  subscription.subscribe();
 
   // Return an unsubscribe function
   return () => {

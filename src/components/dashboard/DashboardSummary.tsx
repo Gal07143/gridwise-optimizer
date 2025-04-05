@@ -1,155 +1,155 @@
 
-import React, { useState, useEffect } from 'react';
-import { MetricsCard } from '@/components/ui/dashboard';
-import { AlertSummaryCard, LiveTelemetryChart } from '@/components/dashboard';
-import { Battery, Sun, Wind, Home } from 'lucide-react';
+import React from 'react';
+import { ArrowUpRight, Battery, Cloud, Loader2, Plug, Sun, Waves, Wind } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { MetricsCard } from '@/components/ui/dashboard/MetricsCard';
+import AlertSummaryCard from '@/components/dashboard/AlertSummaryCard';
+import CriticalAlertWidget from '@/components/dashboard/CriticalAlertWidget';
+import { useRouter } from 'react-router-dom';
+import LiveTelemetryChart from '@/components/telemetry/LiveTelemetryChart';
+import { Device } from '@/types/energy';
 
 interface DashboardSummaryProps {
-  siteId: string;
+  loading?: boolean;
+  activeDeviceId?: string;
+  solarProduction?: number;
+  gridConsumption?: number;
+  batteryLevel?: number;
+  energySavings?: number;
+  devices?: Device[];
 }
 
-interface Metric {
-  total: number;
-  online: number;
-  offline: number;
-}
+const DashboardSummary: React.FC<DashboardSummaryProps> = ({
+  loading = false,
+  activeDeviceId,
+  solarProduction = 0,
+  gridConsumption = 0,
+  batteryLevel = 0,
+  energySavings = 0,
+  devices = [],
+}) => {
+  const router = useRouter();
+  
+  const navigateToAlerts = () => {
+    router.navigate('/alerts');
+  };
 
-const DashboardSummary: React.FC<DashboardSummaryProps> = ({ siteId }) => {
-  const [metrics, setMetrics] = useState<Record<string, Metric>>({
-    solar: { total: 0, online: 0, offline: 0 },
-    battery: { total: 0, online: 0, offline: 0 },
-    wind: { total: 0, online: 0, offline: 0 },
-    load: { total: 0, online: 0, offline: 0 },
-  });
-
-  // Mock data that would come from API/database in a real app
-  useEffect(() => {
-    // This would be a real API call in a production app
-    const mockFetchData = () => {
-      setMetrics({
-        solar: { total: 8, online: 7, offline: 1 },
-        battery: { total: 4, online: 4, offline: 0 },
-        wind: { total: 2, online: 1, offline: 1 },
-        load: { total: 12, online: 10, offline: 2 },
-      });
-    };
-
-    mockFetchData();
-    // In a real app, we would set up an interval to refresh data
-  }, [siteId]);
-
+  // Find devices by type
+  const solarDevice = devices.find(d => d.type === 'solar');
+  const batteryDevice = devices.find(d => d.type === 'battery');
+  const gridDevice = devices.find(d => d.type === 'grid');
+  
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="space-y-4">
+      {/* Critical Alerts Widget */}
+      <CriticalAlertWidget onViewAll={navigateToAlerts} />
+      
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+        {/* Solar Production */}
         <MetricsCard
           title="Solar Production"
-          value="12.5"
-          unit="kW"
-          icon={<Sun className="h-4 w-4" />}
-          description={`${metrics.solar.online} of ${metrics.solar.total} inverters online`}
-          trend={5}
-          trendDescription="vs. yesterday"
-          isPositiveTrend={true}
+          metrics={[
+            { value: solarProduction, label: "Current Output (kW)", positive: true }
+          ]}
+          icon={<Sun className="h-5 w-5" />}
+          loading={loading}
         />
         
+        {/* Grid Consumption */}
+        <MetricsCard
+          title="Grid Consumption"
+          metrics={[
+            { value: gridConsumption, label: "Current Import (kW)" }
+          ]}
+          icon={<Plug className="h-5 w-5" />}
+          loading={loading}
+        />
+        
+        {/* Battery Status */}
         <MetricsCard
           title="Battery Status"
-          value="78"
-          unit="%"
-          icon={<Battery className="h-4 w-4" />}
-          description={`Discharging at 2.3 kW`}
-          trend={-10}
-          trendDescription="remaining capacity"
-          isPositiveTrend={false}
+          metrics={[
+            { value: batteryLevel, label: "State of Charge (%)" }
+          ]}
+          icon={<Battery className="h-5 w-5" />}
+          loading={loading}
         />
         
+        {/* Energy Savings */}
         <MetricsCard
-          title="Wind Generation"
-          value="3.2"
-          unit="kW"
-          icon={<Wind className="h-4 w-4" />}
-          description={`${metrics.wind.online} of ${metrics.wind.total} turbines online`}
-          trend={12}
-          trendDescription="vs. yesterday"
-          isPositiveTrend={true}
-        />
-        
-        <MetricsCard
-          title="Building Demand"
-          value="18.7"
-          unit="kW"
-          icon={<Home className="h-4 w-4" />}
-          description={`Peak today: 22.4 kW`}
-          trend={-8}
-          trendDescription="vs. yesterday"
-          isPositiveTrend={true}
+          title="Energy Savings"
+          metrics={[
+            { value: energySavings, label: "Today's Savings ($)" }
+          ]}
+          icon={<ArrowUpRight className="h-5 w-5" />}
+          loading={loading}
         />
       </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="md:col-span-2">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <MetricsCard
-              title="Energy Generated Today"
-              value="87.5"
-              unit="kWh"
-              description="Solar: 74.2 kWh, Wind: 13.3 kWh"
-              trend={15}
-              trendDescription="vs. yesterday"
-              isPositiveTrend={true}
-            />
-            
-            <MetricsCard
-              title="Energy Consumed Today"
-              value="112.8"
-              unit="kWh"
-              description="Peak hours: 67.5 kWh, Off-peak: 45.3 kWh"
-              trend={-7}
-              trendDescription="vs. yesterday"
-              isPositiveTrend={true}
-            />
-            
-            <MetricsCard
-              title="Grid Energy Imported"
-              value="38.4"
-              unit="kWh"
-              description="Cost today: $7.40"
-              trend={-22}
-              trendDescription="vs. yesterday"
-              isPositiveTrend={true}
-            />
-          </div>
-          
-          <div className="mt-4 grid grid-cols-1 gap-4">
-            <LiveTelemetryChart 
-              deviceId="solar-1" 
-              metric="power" 
-              height={200} 
-              title="Solar Power Output"
-              unit="kW"
-            />
-            
-            <LiveTelemetryChart 
-              deviceId="battery-1" 
-              metric="state_of_charge" 
-              height={200} 
-              title="Battery State of Charge"
-              unit="%"
-            />
-          </div>
-        </div>
+      
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-3">
+        {/* Alert Summary */}
+        <Card className="lg:col-span-1 h-full">
+          <AlertSummaryCard onViewAll={navigateToAlerts} />
+        </Card>
         
-        <div className="space-y-4">
-          <AlertSummaryCard />
-
-          {/* Placeholder for other cards */}
-          <div className="h-64 bg-muted/20 border rounded-lg flex items-center justify-center">
-            <span className="text-muted-foreground">Weather Forecast</span>
-          </div>
+        <div className="lg:col-span-2 grid gap-4 grid-cols-1 md:grid-cols-2">
+          {/* Solar Panel Telemetry */}
+          <Card className="h-96">
+            <CardHeader>
+              <CardTitle className="text-base flex items-center">
+                <Sun className="w-4 h-4 mr-2" />
+                Solar Production
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-0">
+              {loading ? (
+                <div className="flex items-center justify-center h-64">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : solarDevice ? (
+                <LiveTelemetryChart 
+                  deviceId={solarDevice.id} 
+                  metric="power"
+                  unit="kW"
+                  height={250} 
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center h-64 px-4 text-center">
+                  <Sun className="h-8 w-8 text-muted-foreground mb-2" />
+                  <p className="text-muted-foreground">No solar device configured</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
           
-          <div className="h-64 bg-muted/20 border rounded-lg flex items-center justify-center">
-            <span className="text-muted-foreground">System Notifications</span>
-          </div>
+          {/* Battery Level Telemetry */}
+          <Card className="h-96">
+            <CardHeader>
+              <CardTitle className="text-base flex items-center">
+                <Battery className="w-4 h-4 mr-2" />
+                Battery Level
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-0">
+              {loading ? (
+                <div className="flex items-center justify-center h-64">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : batteryDevice ? (
+                <LiveTelemetryChart 
+                  deviceId={batteryDevice.id} 
+                  metric="state_of_charge"
+                  unit="%"
+                  height={250} 
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center h-64 px-4 text-center">
+                  <Battery className="h-8 w-8 text-muted-foreground mb-2" />
+                  <p className="text-muted-foreground">No battery device configured</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

@@ -28,6 +28,7 @@ export type ModbusParity = 'none' | 'even' | 'odd';
 export type ModbusRegisterType = 'holding_register' | 'input_register' | 'coil' | 'discrete_input';
 
 export interface ModbusDeviceConfig {
+  id?: string;
   name: string;
   ip: string;
   port: number;
@@ -65,7 +66,11 @@ export type ModbusDataType =
   'float32' | 
   'float64' | 
   'boolean' | 
-  'string';
+  'string' |
+  'holding_register' |
+  'coil' |
+  'input_register' |
+  'discrete_input';
 
 export interface ModbusRegisterMap {
   registers: ModbusRegisterDefinition[];

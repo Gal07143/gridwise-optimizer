@@ -1,152 +1,81 @@
 
 import React from 'react';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Building2, MapPin, Edit, Trash2, Calendar, User, Phone, Mail, Ruler } from 'lucide-react';
 import { Site } from '@/types/site';
-import { Badge } from '@/components/ui/badge';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Building, Edit, Trash } from 'lucide-react';
 
-interface SiteCardProps {
+export interface SiteCardProps {
   site: Site;
-  onEdit: (id: string) => void;
-  onDelete: (id: string) => void;
+  onSelect?: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }
 
-const SiteCard = ({ site, onEdit, onDelete }: SiteCardProps) => {
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString();
-  };
-  
-  // Determine site type for the badge
-  const getSiteType = () => {
-    if (!site.energy_category || site.energy_category.length === 0) {
-      return site.building_type || 'General';
-    }
-    
-    // Show the first energy category
-    return site.energy_category[0].charAt(0).toUpperCase() + site.energy_category[0].slice(1);
-  };
-  
+const SiteCard: React.FC<SiteCardProps> = ({
+  site,
+  onSelect,
+  onEdit,
+  onDelete,
+}) => {
   return (
-    <Card className="h-full flex flex-col overflow-hidden transition-all hover:shadow-md">
-      <CardHeader className="pb-2">
-        <div className="flex justify-between items-start">
-          <CardTitle className="text-xl font-semibold truncate" title={site.name}>
-            {site.name}
+    <Card className="overflow-hidden transition-all hover:shadow-md">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg flex items-center space-x-2">
+            <Building className="h-5 w-5" />
+            <span>{site.name}</span>
           </CardTitle>
-          <Badge variant="outline">{getSiteType()}</Badge>
+          {site.status && (
+            <div className={`
+              px-2 py-1 rounded-full text-xs font-medium
+              ${site.status === 'active' ? 'bg-green-100 text-green-800' : ''}
+              ${site.status === 'inactive' ? 'bg-gray-100 text-gray-800' : ''}
+              ${site.status === 'maintenance' ? 'bg-amber-100 text-amber-800' : ''}
+            `}>
+              {site.status}
+            </div>
+          )}
         </div>
-        {site.address && (
-          <div className="flex items-center text-sm text-muted-foreground mt-1">
-            <MapPin className="h-4 w-4 mr-1 flex-shrink-0" />
-            <span className="truncate" title={site.address}>
-              {site.address}
-            </span>
+        <CardDescription>{site.location}</CardDescription>
+      </CardHeader>
+
+      <CardContent>
+        <div className="grid grid-cols-2 gap-2 text-sm">
+          <div>
+            <span className="text-muted-foreground">Type:</span>
+            <p>{site.type || 'N/A'}</p>
+          </div>
+          <div>
+            <span className="text-muted-foreground">Timezone:</span>
+            <p>{site.timezone || 'N/A'}</p>
+          </div>
+        </div>
+        {site.description && (
+          <div className="mt-4">
+            <span className="text-muted-foreground text-sm">Description:</span>
+            <p className="text-sm mt-1">{site.description}</p>
           </div>
         )}
-      </CardHeader>
-      
-      <CardContent className="flex-grow pb-2">
-        <div className="grid grid-cols-1 gap-2 text-sm">
-          {site.description && (
-            <p className="text-muted-foreground line-clamp-2" title={site.description}>
-              {site.description}
-            </p>
-          )}
-          
-          <div className="space-y-2 mt-2">
-            {site.building_type && (
-              <div className="flex items-center gap-2">
-                <Building2 className="h-4 w-4 text-muted-foreground" />
-                <span>{site.building_type}</span>
-              </div>
-            )}
-            
-            {site.area && (
-              <div className="flex items-center gap-2">
-                <Ruler className="h-4 w-4 text-muted-foreground" />
-                <span>{site.area.toLocaleString()} m²</span>
-              </div>
-            )}
-            
-            {site.contact_person && (
-              <div className="flex items-center gap-2">
-                <User className="h-4 w-4 text-muted-foreground" />
-                <span className="truncate" title={site.contact_person}>
-                  {site.contact_person}
-                </span>
-              </div>
-            )}
-            
-            {site.contact_phone && (
-              <div className="flex items-center gap-2">
-                <Phone className="h-4 w-4 text-muted-foreground" />
-                <span className="truncate" title={site.contact_phone}>
-                  {site.contact_phone}
-                </span>
-              </div>
-            )}
-            
-            {site.contact_email && (
-              <div className="flex items-center gap-2">
-                <Mail className="h-4 w-4 text-muted-foreground" />
-                <span className="truncate" title={site.contact_email}>
-                  {site.contact_email}
-                </span>
-              </div>
-            )}
-            
-            {site.created_at && (
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <span>Added: {formatDate(site.created_at)}</span>
-              </div>
-            )}
-          </div>
-        </div>
       </CardContent>
-      
-      <CardFooter className="pt-2">
-        <div className="flex justify-between w-full">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => onEdit(site.id)}
-                  className="flex items-center gap-1"
-                >
-                  <Edit className="h-4 w-4" />
-                  Edit
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Edit site details</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  onClick={() => onDelete(site.id)}
-                  className="text-destructive hover:text-destructive flex items-center gap-1"
-                >
-                  <Trash2 className="h-4 w-4" />
-                  Delete
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Delete this site</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+
+      <CardFooter className="flex justify-between border-t pt-3">
+        {onSelect && (
+          <Button variant="default" onClick={onSelect} className="flex-1 mr-2">
+            View Details
+          </Button>
+        )}
+        <div className="flex gap-2">
+          {onEdit && (
+            <Button variant="outline" size="icon" onClick={onEdit}>
+              <Edit className="h-4 w-4" />
+            </Button>
+          )}
+          {onDelete && (
+            <Button variant="outline" size="icon" onClick={onDelete} className="text-destructive hover:text-destructive">
+              <Trash className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </CardFooter>
     </Card>

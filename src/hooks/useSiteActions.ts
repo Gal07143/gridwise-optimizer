@@ -1,147 +1,140 @@
 
 import { useMutation } from '@tanstack/react-query';
+import { useState } from 'react';
 import { toast } from 'sonner';
-import { Site } from '@/types/site';
-import { useConnectionStatus } from '@/hooks/useConnectionStatus';
+import { createSite, deleteSite, updateSite } from '@/services/sites/siteService';
+import { Site, SiteFormData } from '@/types/site';
+import useConnectionStatus from '@/hooks/useConnectionStatus';
 
-// Sample implementation of site actions - in real app these would connect to supabase/API
+interface PendingAction {
+  type: 'create' | 'update' | 'delete';
+  data?: SiteFormData;
+  id?: string;
+}
+
 export const useSiteActions = () => {
-  const { isOnline } = useConnectionStatus();
-  
-  // Queue operations for offline mode
-  const queueOfflineOperation = (operation: string, data: any) => {
-    try {
-      const pendingOperations = JSON.parse(localStorage.getItem('pendingSiteOperations') || '[]');
-      pendingOperations.push({ operation, data, timestamp: Date.now() });
-      localStorage.setItem('pendingSiteOperations', JSON.stringify(pendingOperations));
-      return true;
-    } catch (err) {
-      console.error('Failed to queue offline operation:', err);
-      return false;
-    }
-  };
-  
+  const [pendingActions, setPendingActions] = useState<PendingAction[]>([]);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const { isOnline } = useConnectionStatus({ showToasts: false });
+
   // Create site mutation
-  const createSiteMutation = useMutation<
-    Site, 
-    Error, 
-    Omit<Site, 'id' | 'created_at' | 'updated_at'>
-  >({
-    mutationFn: async (siteData) => {
+  const createSiteMutation = useMutation({
+    mutationFn: async (siteData: SiteFormData) => {
       if (!isOnline) {
-        const success = queueOfflineOperation('create', siteData);
-        if (!success) {
-          throw new Error('Failed to save site for offline processing');
-        }
-        const tempId = `temp-${Date.now()}`;
-        return {
-          ...siteData,
-          id: tempId,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        } as Site;
+        // Store for later when online
+        setPendingActions(prev => [...prev, { type: 'create', data: siteData }]);
+        return null;
       }
       
-      // In real app, this would be a call to supabase or an API
-      console.log('Creating site:', siteData);
-      // Mock successful creation
-      return {
-        ...siteData,
-        id: `site-${Date.now()}`,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      } as Site;
-    }
+      return createSite(siteData);
+    },
   });
-  
+
   // Update site mutation
-  const updateSiteMutation = useMutation<Site, Error, Site>({
-    mutationFn: async (site) => {
+  const updateSiteMutation = useMutation({
+    mutationFn: async (params: { id: string; data: Partial<Site> }) => {
       if (!isOnline) {
-        const success = queueOfflineOperation('update', site);
-        if (!success) {
-          throw new Error('Failed to save site update for offline processing');
-        }
-        return site;
+        // Store for later when online
+        setPendingActions(prev => [...prev, { 
+          type: 'update', 
+          id: params.id, 
+          data: params.data as SiteFormData 
+        }]);
+        return null;
       }
       
-      // In real app, this would be a call to supabase or an API
-      console.log('Updating site:', site);
-      // Mock successful update
-      return {
-        ...site,
-        updated_at: new Date().toISOString()
-      };
-    }
+      return updateSite(params.id, params.data);
+    },
   });
-  
+
   // Delete site mutation
-  const deleteSiteMutation = useMutation<boolean, Error, string>({
-    mutationFn: async (siteId) => {
+  const deleteSiteMutation = useMutation({
+    mutationFn: async (siteId: string) => {
       if (!isOnline) {
-        const success = queueOfflineOperation('delete', { id: siteId });
-        if (!success) {
-          throw new Error('Failed to save site deletion for offline processing');
-        }
+        // Store for later when online
+        setPendingActions(prev => [...prev, { type: 'delete', id: siteId }]);
         return true;
       }
       
-      // In real app, this would be a call to supabase or an API
-      console.log('Deleting site:', siteId);
-      // Mock successful deletion
-      return true;
-    }
+      const result = await deleteSite(siteId);
+      return result;
+    },
   });
-  
-  // Process pending operations
+
+  // Process pending operations when back online
   const processPendingOperations = async () => {
-    if (!isOnline) {
-      toast.error('Cannot process offline operations while still offline');
-      return false;
+    if (!isOnline || pendingActions.length === 0 || isProcessing) {
+      return { processed: 0, failed: 0 };
     }
     
+    setIsProcessing(true);
+    let processed = 0;
+    let failed = 0;
+    
+    const actionsToProcess = [...pendingActions];
+    setPendingActions([]);
+    
     try {
-      const pendingOperations = JSON.parse(localStorage.getItem('pendingSiteOperations') || '[]');
-      
-      if (pendingOperations.length === 0) {
-        toast.info('No pending operations to process');
-        return true;
-      }
-      
-      toast.loading(`Processing ${pendingOperations.length} pending operation(s)...`);
-      
-      for (const op of pendingOperations) {
-        switch (op.operation) {
-          case 'create':
-            await createSiteMutation.mutateAsync(op.data);
-            break;
-          case 'update':
-            await updateSiteMutation.mutateAsync(op.data);
-            break;
-          case 'delete':
-            await deleteSiteMutation.mutateAsync(op.data.id);
-            break;
+      for (const action of actionsToProcess) {
+        try {
+          switch (action.type) {
+            case 'create':
+              if (action.data) {
+                await createSite(action.data);
+                processed++;
+              }
+              break;
+            case 'update':
+              if (action.id && action.data) {
+                await updateSite(action.id, action.data);
+                processed++;
+              }
+              break;
+            case 'delete':
+              if (action.id) {
+                await deleteSite(action.id);
+                processed++;
+              }
+              break;
+          }
+        } catch (error) {
+          console.error(`Failed to process ${action.type} action:`, error);
+          failed++;
+          // Re-add failed action back to the queue
+          setPendingActions(prev => [...prev, action]);
         }
       }
       
-      // Clear processed operations
-      localStorage.setItem('pendingSiteOperations', '[]');
-      toast.success(`Processed ${pendingOperations.length} pending operation(s)`);
-      return true;
-    } catch (error) {
-      toast.error('Failed to process some pending operations');
-      console.error('Error processing pending operations:', error);
-      return false;
+      if (processed > 0) {
+        toast.success(`Processed ${processed} pending site operation(s)`);
+      }
+      if (failed > 0) {
+        toast.error(`Failed to process ${failed} operation(s)`);
+      }
+      
+      return { processed, failed };
+    } finally {
+      setIsProcessing(false);
     }
   };
-  
+
   return {
+    // Mutations
     createSite: createSiteMutation.mutate,
     updateSite: updateSiteMutation.mutate,
     deleteSite: deleteSiteMutation.mutate,
-    isProcessing: createSiteMutation.isPending || 
-                 updateSiteMutation.isPending || 
-                 deleteSiteMutation.isPending,
-    processPendingOperations
+    
+    // Pending actions
+    isProcessing,
+    processPendingOperations,
+    pendingActionsCount: pendingActions.length,
+    
+    // Loading states for display
+    isLoading: createSiteMutation.isPending || updateSiteMutation.isPending || deleteSiteMutation.isPending,
+    
+    // Error states
+    createError: createSiteMutation.error,
+    updateError: updateSiteMutation.error,
+    deleteError: deleteSiteMutation.error
   };
 };

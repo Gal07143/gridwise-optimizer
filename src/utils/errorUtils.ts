@@ -1,88 +1,103 @@
 
-import { toast } from 'sonner';
-
 /**
- * Handles API errors in a standardized way
+ * Check if the error is a network-related error
+ * @param error Error to check
+ * @returns boolean indicating if this is a network error
  */
-export const handleApiError = (error: any, message: string = "An error occurred"): Error => {
-  console.error("API Error:", error);
+export const isNetworkError = (error: any): boolean => {
+  if (!error) return false;
   
-  let errorMessage = message;
-  
-  if (error?.message) {
-    errorMessage = error.message;
+  // Check for fetch errors
+  if (error instanceof TypeError && error.message.includes('fetch')) {
+    return true;
   }
   
-  // For Supabase errors
-  if (error?.error_description) {
-    errorMessage = error.error_description;
+  // Check for network-related error messages
+  const networkErrorMessages = [
+    'network',
+    'connection',
+    'timeout',
+    'offline',
+    'socket',
+    'unreachable',
+    'dns',
+    'proxy'
+  ];
+  
+  if (error.message && typeof error.message === 'string') {
+    return networkErrorMessages.some(term => 
+      error.message.toLowerCase().includes(term)
+    );
   }
   
-  toast.error(errorMessage);
-  return new Error(errorMessage);
+  return false;
 };
 
 /**
- * Check if an error is a network error
+ * Convert any error to a readable message
+ * @param error Error to convert
+ * @returns Human-readable error message
  */
-export const isNetworkError = (error: any): boolean => {
-  return (
-    error?.message?.includes('network') ||
-    error?.message?.includes('Failed to fetch') ||
-    error?.message?.includes('Network Error') ||
-    error?.message?.includes('NetworkError') ||
-    error?.name === 'TypeError' && navigator.onLine === false
-  );
+export const formatError = (error: any): string => {
+  if (!error) return 'An unknown error occurred';
+  
+  // If it's a string, return it directly
+  if (typeof error === 'string') return error;
+  
+  // If it's an error object with a message
+  if (error.message) return error.message;
+  
+  // If it's a response object with a message or statusText
+  if (error.data && error.data.message) return error.data.message;
+  if (error.statusText) return error.statusText;
+  
+  // If it has nested errors, try to extract them
+  if (error.error && typeof error.error === 'string') return error.error;
+  if (error.error && error.error.message) return error.error.message;
+  
+  // Last resort, convert to string
+  return String(error);
 };
 
 /**
  * Retry a function with exponential backoff
+ * @param fn Function to retry
+ * @param maxRetries Maximum number of retries
+ * @param baseDelay Base delay in ms
+ * @returns Promise that resolves to the function result or rejects after max retries
  */
 export const retryWithBackoff = async <T>(
   fn: () => Promise<T>,
-  maxRetries: number = 3,
-  initialDelay: number = 1000,
-  maxDelay: number = 10000
+  maxRetries = 3,
+  baseDelay = 500
 ): Promise<T> => {
-  let retries = 0;
-  let delay = initialDelay;
+  let lastError: any;
   
-  // eslint-disable-next-line no-constant-condition
-  while (true) {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
       return await fn();
     } catch (error) {
-      retries++;
+      lastError = error;
       
-      if (retries >= maxRetries || !isNetworkError(error)) {
+      // Only retry on network errors
+      if (!isNetworkError(error)) {
         throw error;
       }
       
-      console.log(`Attempt ${retries}/${maxRetries} failed. Retrying in ${delay}ms...`);
+      // Calculate backoff delay
+      const delay = baseDelay * Math.pow(2, attempt);
+      console.info(`Network error, retrying in ${delay}ms...`, error);
       
+      // Wait for the delay
       await new Promise(resolve => setTimeout(resolve, delay));
-      
-      // Exponential backoff with a cap
-      delay = Math.min(delay * 2, maxDelay);
     }
   }
-};
-
-/**
- * Handles dependency loading errors
- */
-export const handleDependencyError = (
-  error: Error,
-  component: string,
-  dependency: string
-): void => {
-  console.error(`Error loading dependency ${dependency} for component ${component}:`, error);
-  toast.error(`Failed to load ${dependency}. Some features may not work correctly.`);
+  
+  throw lastError;
 };
 
 export default {
-  handleApiError,
   isNetworkError,
-  retryWithBackoff,
-  handleDependencyError
+  formatError,
+  retryWithBackoff
 };

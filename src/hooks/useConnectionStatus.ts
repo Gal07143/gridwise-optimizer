@@ -53,5 +53,21 @@ export default function useConnectionStatus(options: ConnectionStatusOptions = {
     };
   }, [isOnline, wasOffline, showToasts, checkInterval]);
 
-  return { isOnline };
+  const retryConnection = () => {
+    if (!isOnline) {
+      toast.info("Checking connection...");
+      // Attempt to fetch a small resource to test connection
+      fetch('/api/ping', { method: 'HEAD' })
+        .then(() => {
+          setIsOnline(true);
+          toast.success('Connection restored');
+          setWasOffline(false);
+        })
+        .catch(() => {
+          toast.error('Still offline');
+        });
+    }
+  };
+
+  return { isOnline, retryConnection };
 }

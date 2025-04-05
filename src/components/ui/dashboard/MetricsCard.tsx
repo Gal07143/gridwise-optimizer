@@ -1,72 +1,65 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { LucideIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-export interface MetricsCardProps {
+interface MetricValue {
+  value: number;
+  label: string;
+  positive?: boolean;
+}
+
+interface MetricsCardProps {
   title: string;
-  value: string | number;
+  metrics: MetricValue[];
+  className?: string;
   description?: string;
   icon?: React.ReactNode;
-  trend?: {
-    value: number;
-    label: string;
-    positive?: boolean;
-  };
-  onClick?: () => void;
-  className?: string;
-  isLoading?: boolean;
+  loading?: boolean;
 }
 
 const MetricsCard: React.FC<MetricsCardProps> = ({
   title,
-  value,
+  metrics,
+  className,
   description,
   icon,
-  trend,
-  onClick,
-  className = '',
-  isLoading = false
+  loading = false,
 }) => {
-  if (isLoading) {
-    return (
-      <Card className={`overflow-hidden ${className} ${onClick ? 'cursor-pointer hover:bg-accent/50 transition-colors' : ''}`} onClick={onClick}>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium flex items-center">
-            {icon && <span className="mr-2">{icon}</span>}
-            <div className="h-4 w-24 bg-secondary rounded animate-pulse"></div>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-8 w-20 bg-secondary rounded animate-pulse mb-1"></div>
-          <div className="h-3 w-32 bg-secondary rounded animate-pulse opacity-50"></div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
-    <Card 
-      className={`overflow-hidden ${className} ${onClick ? 'cursor-pointer hover:bg-accent/50 transition-colors' : ''}`} 
-      onClick={onClick}
-    >
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium flex items-center">
-          {icon && <span className="mr-2">{icon}</span>}
-          {title}
-        </CardTitle>
+    <Card className={cn("overflow-hidden", className)}>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        {icon && <div className="text-muted-foreground">{icon}</div>}
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
-        {description && (
-          <p className="text-xs text-muted-foreground mt-1">{description}</p>
-        )}
-        {trend && (
-          <div className="flex items-center mt-2 text-xs">
-            <span className={trend.positive ? 'text-green-500' : 'text-red-500'}>
-              {trend.positive ? '↑' : '↓'} {Math.abs(trend.value)}%
-            </span>
-            <span className="ml-1 text-muted-foreground">{trend.label}</span>
+        {loading ? (
+          <div className="space-y-2">
+            <div className="h-4 w-3/4 animate-pulse rounded bg-muted"></div>
+            <div className="h-8 w-1/2 animate-pulse rounded bg-muted"></div>
+            <div className="h-4 w-full animate-pulse rounded bg-muted"></div>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {description && <p className="text-xs text-muted-foreground">{description}</p>}
+            {metrics.map((metric, i) => (
+              <div key={i} className="mb-4">
+                <div className="flex items-center">
+                  <span className="text-xs text-muted-foreground">{metric.label}</span>
+                  {metric.positive !== undefined && (
+                    <span 
+                      className={cn(
+                        "ml-1 inline-block rounded px-1 text-xs",
+                        metric.positive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                      )}
+                    >
+                      {metric.positive ? "↑" : "↓"}
+                    </span>
+                  )}
+                </div>
+                <div className="text-2xl font-bold">{metric.value}</div>
+              </div>
+            ))}
           </div>
         )}
       </CardContent>
@@ -74,4 +67,4 @@ const MetricsCard: React.FC<MetricsCardProps> = ({
   );
 };
 
-export default MetricsCard;
+export { MetricsCard };

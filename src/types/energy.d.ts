@@ -2,41 +2,42 @@
 // File: src/types/energy.d.ts
 export type DeviceCategory = 'inverter' | 'meter' | 'battery' | 'solar' | 'load' | 'sensor' | 'evCharger' | 'wind';
 
-// Convert string literals to proper union type
+// Unifying device types to include all used values
 export type DeviceType = 
-  'solar' |
-  'wind' |
-  'battery' |
-  'grid' |
-  'load' |
-  'ev_charger' |
-  'inverter' |
-  'meter' |
-  'light' | 
-  'hydro' |
-  'generator' |
-  'solar_inverter' | 
-  'battery_inverter' | 
-  'hybrid_inverter' | 
-  'smart_meter' | 
-  'battery_system' | 
-  'solar_panel' |
-  'energy_meter' |
-  'smart_plug' |
-  'weather_station' |
-  'wind_turbine';
+  | 'solar' 
+  | 'wind' 
+  | 'battery' 
+  | 'grid' 
+  | 'load' 
+  | 'ev_charger' 
+  | 'inverter' 
+  | 'meter' 
+  | 'light'
+  | 'hydro'
+  | 'generator'
+  | 'solar_inverter' 
+  | 'battery_inverter' 
+  | 'hybrid_inverter' 
+  | 'smart_meter' 
+  | 'battery_system' 
+  | 'solar_panel'
+  | 'energy_meter'
+  | 'smart_plug'
+  | 'weather_station'
+  | 'wind_turbine';
 
+// Unifying device statuses to include all used values
 export type DeviceStatus = 
-  'online' |
-  'offline' |
-  'maintenance' |
-  'error' |
-  'warning' |
-  'standby' |
-  'idle' |
-  'active' |
-  'charging' |
-  'discharging';
+  | 'online' 
+  | 'offline' 
+  | 'maintenance' 
+  | 'error' 
+  | 'warning' 
+  | 'standby'
+  | 'idle'
+  | 'active'
+  | 'charging'
+  | 'discharging';
 
 export interface EnergyDevice {
   id: string;
@@ -54,7 +55,7 @@ export interface EnergyDevice {
   last_updated?: string;
   created_by?: string;
   
-  // Add missing properties
+  // Add additional properties needed by components
   protocol?: string;
   ip_address?: string;
   last_seen?: string;
@@ -99,11 +100,11 @@ export interface Site {
   location: string;
   lat?: number;
   lng?: number;
-  timezone?: string;
-  created_at?: string;
-  updated_at?: string;
-  type?: string;
-  status?: string;
+  timezone: string;
+  created_at: string;
+  updated_at: string;
+  type: string;
+  status: string;
   
   // Additional site properties
   address?: string;

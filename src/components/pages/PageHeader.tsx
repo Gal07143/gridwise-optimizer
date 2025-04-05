@@ -1,71 +1,62 @@
 
 import React from 'react';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ChevronRight } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 
-interface PageHeaderProps {
+export interface PageHeaderProps {
   title: string;
-  subtitle?: string;
+  description?: string;
+  categoryId?: string;
   backLink?: string;
-  backLabel?: string;
+  onBack?: () => void;
+  children?: React.ReactNode;
   actions?: React.ReactNode;
-  breadcrumbs?: Array<{
-    label: string;
-    link?: string;
-  }>;
+  className?: string;
 }
 
 const PageHeader: React.FC<PageHeaderProps> = ({
   title,
-  subtitle,
+  description,
   backLink,
-  backLabel = 'Back',
+  onBack,
+  children,
   actions,
-  breadcrumbs,
+  className,
 }) => {
+  const handleBackClick = () => {
+    if (onBack) {
+      onBack();
+    } else if (backLink) {
+      window.history.back();
+    }
+  };
+
   return (
-    <div className="flex flex-col space-y-2 pb-4 mb-4 border-b">
-      {(backLink || breadcrumbs) && (
-        <div className="flex items-center text-sm text-muted-foreground">
-          {backLink && (
-            <Button variant="ghost" size="sm" className="mr-2 -ml-2 h-8" asChild>
-              <Link to={backLink}>
-                <ArrowLeft className="mr-1 h-4 w-4" />
-                {backLabel}
-              </Link>
-            </Button>
+    <div className={cn("pb-6", className)}>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-0">
+          <div className="flex items-center gap-2">
+            {(backLink || onBack) && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="mr-2 h-8 w-8 p-0"
+                onClick={handleBackClick}
+              >
+                <ArrowLeft className="h-4 w-4" />
+                <span className="sr-only">Back</span>
+              </Button>
+            )}
+            <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+          </div>
+          {description && (
+            <p className="text-muted-foreground">{description}</p>
           )}
-          
-          {breadcrumbs && (
-            <div className="flex items-center">
-              {breadcrumbs.map((crumb, index) => (
-                <React.Fragment key={index}>
-                  {index > 0 && <ChevronRight className="mx-1 h-4 w-4" />}
-                  {crumb.link ? (
-                    <Link to={crumb.link} className="hover:underline">
-                      {crumb.label}
-                    </Link>
-                  ) : (
-                    <span>{crumb.label}</span>
-                  )}
-                </React.Fragment>
-              ))}
-            </div>
-          )}
+          {children}
         </div>
-      )}
-      
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
-          {subtitle && (
-            <p className="text-muted-foreground">{subtitle}</p>
-          )}
-        </div>
-        
         {actions && (
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-2 self-start md:self-center">
             {actions}
           </div>
         )}
