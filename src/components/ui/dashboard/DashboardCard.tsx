@@ -60,10 +60,17 @@ const DashboardCard: React.FC<DashboardCardProps> = ({
     error: 'border-l-4 border-l-red-500',
   };
   
-  // Animation properties
+  // Animation properties - optimized for performance
   const cardVariants = {
     hidden: { opacity: 0, y: 10 },
-    visible: { opacity: 1, y: 0 }
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: {
+        duration: 0.3,
+        ease: "easeOut"
+      }
+    }
   };
   
   const Card = animate ? motion.div : 'div';
@@ -81,7 +88,9 @@ const DashboardCard: React.FC<DashboardCardProps> = ({
         initial: "hidden",
         animate: "visible",
         variants: cardVariants,
-        transition: { duration: 0.3 }
+        // Lower priority rendering for better performance
+        layoutId: undefined,
+        layout: false
       } : {})}
       {...props}
     >
