@@ -1,122 +1,112 @@
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
-// Mock implementations since we don't have the actual modbusClient
-const modbusClient = {
-  connect: async (ip: string, port: number) => {
-    console.log(`Connecting to ${ip}:${port}`);
-    return true;
-  },
-  disconnect: async () => {
-    console.log('Disconnecting');
-    return true;
-  },
-  isConnected: () => {
-    return Math.random() > 0.2; // 80% chance of being connected in this mock
-  }
-};
-
-export type ConnectionStatus = 'connected' | 'disconnected' | 'connecting' | 'error';
-
-export interface ConnectionStatusResult {
-  status: ConnectionStatus;
-  error?: Error;
-  isConnected: boolean;
-  connect: (ip: string, port: number) => Promise<boolean>;
-  disconnect: () => Promise<boolean>;
-  lastConnected?: Date;
-  retryConnection: () => Promise<boolean>;
+export interface ModbusDevice {
+  id: string;
+  ip: string;
+  port: number;
+  unit_id: number;
+  name: string;
+  is_active: boolean;
 }
 
-export function useModbusConnection(
-  initialIp?: string,
-  initialPort?: number
-): ConnectionStatusResult {
-  const [status, setStatus] = useState<ConnectionStatus>('disconnected');
-  const [error, setError] = useState<Error | undefined>();
-  const [lastConnected, setLastConnected] = useState<Date | undefined>();
+export interface ConnectionStatusResult {
+  isConnected: boolean;
+  error: Error | null;
+  device: ModbusDevice | null;
+  loading: boolean;
+  refreshDevice: () => Promise<void>;
+}
 
-  const connect = useCallback(
-    async (ip: string, port: number): Promise<boolean> => {
-      setStatus('connecting');
-      try {
-        const result = await modbusClient.connect(ip, port);
-        if (result) {
-          setStatus('connected');
-          setLastConnected(new Date());
-          setError(undefined);
-        } else {
-          setStatus('error');
-          setError(new Error('Failed to connect'));
-        }
-        return result;
-      } catch (err) {
-        setStatus('error');
-        setError(err instanceof Error ? err : new Error('Unknown error'));
-        return false;
-      }
-    },
-    []
-  );
+export function useModbusConnection(deviceId: string): ConnectionStatusResult {
+  const [device, setDevice] = useState<ModbusDevice | null>(null);
+  const [isConnected, setIsConnected] = useState<boolean>(false);
+  const [error, setError] = useState<Error | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  const disconnect = useCallback(async (): Promise<boolean> => {
+  const fetchDevice = async () => {
+    setLoading(true);
     try {
-      const result = await modbusClient.disconnect();
-      if (result) {
-        setStatus('disconnected');
-      }
-      return result;
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Unknown error'));
-      return false;
-    }
-  }, []);
-
-  const retryConnection = useCallback(async (): Promise<boolean> => {
-    if (!initialIp || !initialPort) {
-      return false;
-    }
-    return connect(initialIp, initialPort);
-  }, [connect, initialIp, initialPort]);
-
-  // Check connection status periodically
-  useEffect(() => {
-    if (status === 'connected') {
-      const interval = setInterval(() => {
-        if (!modbusClient.isConnected()) {
-          setStatus('disconnected');
-        }
-      }, 5000);
+      // Mocked device data
+      const mockDevice: ModbusDevice = {
+        id: deviceId || 'mock-device-1',
+        ip: '192.168.1.100',
+        port: 502,
+        unit_id: 1,
+        name: 'Simulated Modbus Device',
+        is_active: true,
+      };
       
-      return () => clearInterval(interval);
+      setDevice(mockDevice);
+      setIsConnected(mockDevice.is_active);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to fetch device'));
+      setIsConnected(false);
+    } finally {
+      setLoading(false);
     }
-  }, [status]);
+  };
 
-  // Initial connection if IP and port are provided
   useEffect(() => {
-    if (initialIp && initialPort && status === 'disconnected') {
-      connect(initialIp, initialPort);
-    }
-  }, []);
+    fetchDevice();
+  }, [deviceId]);
 
   return {
-    status,
+    isConnected,
     error,
-    isConnected: status === 'connected',
-    connect,
-    disconnect,
-    lastConnected,
-    retryConnection
+    device,
+    loading,
+    refreshDevice: fetchDevice
   };
 }
 
-// Mock implementation of useModbusDevices
 export function useModbusDevices() {
+  const [devices, setDevices] = useState<ModbusDevice[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  const fetchDevices = async () => {
+    setIsLoading(true);
+    try {
+      // Mock data
+      const mockDevices: ModbusDevice[] = [
+        {
+          id: 'mock-device-1',
+          ip: '192.168.1.100',
+          port: 502,
+          unit_id: 1,
+          name: 'Inverter',
+          is_active: true,
+        },
+        {
+          id: 'mock-device-2',
+          ip: '192.168.1.101',
+          port: 502,
+          unit_id: 1,
+          name: 'Battery',
+          is_active: false,
+        }
+      ];
+      
+      setDevices(mockDevices);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to fetch devices'));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDevices();
+  }, []);
+
   return {
-    devices: [],
-    isLoading: false,
-    error: null,
-    refetch: async () => {}
+    devices,
+    isLoading,
+    error,
+    refetch: fetchDevices
   };
 }
 

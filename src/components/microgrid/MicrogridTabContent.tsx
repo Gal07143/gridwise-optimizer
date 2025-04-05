@@ -1,205 +1,177 @@
 
 import React, { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent } from '@/components/ui/card';
-import { AlertsPanel } from './index';
-import StatusOverview from './StatusOverview';
-import EnergyFlowVisualization from './EnergyFlowVisualization';
-import MicrogridControls from './MicrogridControls';
-import CommandHistory from './CommandHistory';
-import { AnimatePresence, motion } from 'framer-motion';
-
-// Mock microgrid context
-const useMicrogrid = () => {
-  const [batteryReserve, setBatteryReserve] = useState(20);
-  
-  return {
-    state: {
-      batteryCharge: 75,
-      batteryCharging: true,
-      batteryCurrent: 10.5,
-      batteryCapacity: 100,
-      solarOutput: 3.2,
-      solarConnected: true,
-      solarEfficiency: 92,
-      windOutput: 1.5,
-      windConnected: true,
-      windSpeed: 12,
-      gridPower: 5.0,
-      gridConnection: true,
-      gridConnected: true,
-      loadDemand: 8.5,
-      loadConnected: true,
-      buildingEfficiency: 87,
-      timestamp: new Date(),
-      systemMode: 'auto' as const,
-      solarProduction: 3.2,
-      windProduction: 1.5,
-      batteryLevel: 75,
-      batteryDischargeEnabled: false,
-      batteryChargeEnabled: true,
-      loadConsumption: 8.5,
-      gridImport: 5.0,
-      gridExport: 0,
-      frequency: 50,
-      voltage: 230,
-      lastUpdated: new Date().toISOString(),
-      operatingMode: 'auto' as const,
-      batteryChargeRate: 2.5,
-      gridImportEnabled: true,
-      gridExportEnabled: false,
-      batterySelfConsumptionMode: true,
-      economicMode: false,
-      peakShavingEnabled: true,
-      demandResponseEnabled: false
-    },
-    batteryReserve,
-    handleModeChange: (mode: string) => console.log('Mode changed to', mode),
-    handleGridConnectionToggle: () => console.log('Grid connection toggled'),
-    updateBatteryReserve: (value: number) => setBatteryReserve(value),
-    dispatch: (action: any) => console.log('Dispatch called with', action)
-  };
-};
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { StatusOverview, EnergyFlowVisualization, MicrogridControls, CommandHistory } from '.';
+import { useMicrogrid } from './MicrogridProvider';
+import { CommandHistoryItem } from './types';
+import AlertsPanel from './AlertsPanel';
 
 const MicrogridTabContent = () => {
+  const { state, dispatch, updateBatteryReserve } = useMicrogrid();
   const [activeTab, setActiveTab] = useState('overview');
-  const { state: microgridState, batteryReserve, handleModeChange, handleGridConnectionToggle, updateBatteryReserve } = useMicrogrid();
   
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-  };
-  
-  // Sample command history data
-  const commandHistoryData = [
+  // Mock command history
+  const [commands, setCommands] = useState<CommandHistoryItem[]>([
     {
       id: '1',
       timestamp: new Date().toISOString(),
-      command: 'SET_MODE_ECO',
+      command: 'Set system mode to Auto',
       success: true,
-      user: 'System',
-      details: 'Auto-switched to eco mode based on time settings'
+      user: 'System Admin',
+      details: 'System automatically switched to optimize energy flow'
     },
     {
       id: '2',
-      timestamp: new Date(Date.now() - 1800000).toISOString(),
-      command: 'CHARGE_BATTERY',
+      timestamp: new Date(Date.now() - 3600000).toISOString(),
+      command: 'Connect to grid',
       success: true,
-      user: 'Operator',
-      details: 'Manual override to charge battery'
+      user: 'System Admin',
+      details: 'Manual grid connection established'
+    },
+    {
+      id: '3',
+      timestamp: new Date(Date.now() - 7200000).toISOString(),
+      command: 'Battery charge limit to 90%',
+      success: true,
+      user: 'System',
+      details: 'Automated adjustment based on forecast'
     }
-  ];
+  ]);
   
-  // Sample alerts data with correctly typed severity
-  const alerts = [
+  // Mock alerts
+  const mockAlerts = [
     {
       id: '1',
       timestamp: new Date().toISOString(),
-      title: 'Battery Alert',
-      message: 'Battery SoC below threshold',
-      severity: 'high' as 'high',
+      title: 'Battery charge low',
+      message: 'Battery charge is below 20%. Consider connecting to grid.',
+      severity: 'medium',
       deviceId: 'battery-01',
       acknowledged: false
     },
     {
       id: '2',
-      timestamp: new Date(Date.now() - 3600000).toISOString(),
-      title: 'Grid Alert',
-      message: 'Grid connection unstable',
-      severity: 'medium' as 'medium',
+      timestamp: new Date(Date.now() - 25 * 60000).toISOString(),
+      title: 'Solar production drop',
+      message: 'Solar production dropped by more than 50% in the last hour.',
+      severity: 'low',
+      deviceId: 'solar-array-01',
+      acknowledged: true
+    },
+    {
+      id: '3',
+      timestamp: new Date(Date.now() - 2 * 3600000).toISOString(),
+      title: 'Grid connection unstable',
+      message: 'Grid connection has been unstable in the last 30 minutes.',
+      severity: 'high',
       deviceId: 'grid-connection',
       acknowledged: false
     }
   ];
   
-  const handleAcknowledge = (id: string) => {
-    console.log(`Alert ${id} acknowledged`);
+  // Handle command execution
+  const handleExecuteCommand = (command: string) => {
+    const newCommand: CommandHistoryItem = {
+      id: Date.now().toString(),
+      timestamp: new Date().toISOString(),
+      command,
+      success: Math.random() > 0.1, // 90% chance of success
+      user: 'Current User',
+      details: `Manual command execution: ${command}`
+    };
+    
+    setCommands([newCommand, ...commands]);
+    
+    // Handle specific commands
+    if (command.includes('battery') && command.includes('reserve')) {
+      const match = command.match(/(\d+)%/);
+      if (match && match[1]) {
+        const percentage = parseInt(match[1]);
+        updateBatteryReserve(percentage);
+      }
+    }
+    
+    return newCommand.success;
   };
 
   return (
-    <AnimatePresence mode="wait">
-      <Tabs
-        value={activeTab}
-        onValueChange={handleTabChange}
-        className="w-full"
-      >
-        <TabsList className="mb-4">
+    <div className="space-y-4">
+      <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList className="grid grid-cols-4 md:w-2/3 lg:w-1/2">
           <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="energy-flow">Energy Flow</TabsTrigger>
           <TabsTrigger value="controls">Controls</TabsTrigger>
-          <TabsTrigger value="history">Command History</TabsTrigger>
+          <TabsTrigger value="commands">Commands</TabsTrigger>
           <TabsTrigger value="alerts">Alerts</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="overview" className="mt-0">
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            transition={{ duration: 0.2 }}
-          >
-            <StatusOverview microgridState={microgridState} />
-          </motion.div>
-        </TabsContent>
-        
-        <TabsContent value="energy-flow" className="mt-0">
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            transition={{ duration: 0.2 }}
-          >
-            <EnergyFlowVisualization microgridState={microgridState} />
-          </motion.div>
-        </TabsContent>
-        
-        <TabsContent value="controls" className="mt-0">
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            transition={{ duration: 0.2 }}
-          >
-            <MicrogridControls 
-              microgridState={microgridState} 
-              minBatteryReserve={batteryReserve}
-              onModeChange={handleModeChange}
-              onGridConnectionToggle={handleGridConnectionToggle}
-              onBatteryReserveChange={updateBatteryReserve}
-              disabled={false}
-            />
-          </motion.div>
-        </TabsContent>
-        
-        <TabsContent value="history" className="mt-0">
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            transition={{ duration: 0.2 }}
-          >
+        <TabsContent value="overview" className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card>
-              <CardContent className="p-6">
-                <CommandHistory commandHistory={commandHistoryData} />
+              <CardHeader className="pb-2">
+                <CardTitle>System Status</CardTitle>
+                <CardDescription>Current status of all microgrid components</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <StatusOverview microgridState={state} />
               </CardContent>
             </Card>
-          </motion.div>
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle>Energy Flow</CardTitle>
+                <CardDescription>Visualize energy flow between components</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <EnergyFlowVisualization microgridState={state} />
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
         
-        <TabsContent value="alerts" className="mt-0">
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            transition={{ duration: 0.2 }}
-          >
-            <AlertsPanel 
-              alerts={alerts} 
-              onAcknowledge={handleAcknowledge} 
-            />
-          </motion.div>
+        <TabsContent value="controls" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>System Controls</CardTitle>
+              <CardDescription>Configure and control microgrid operations</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <MicrogridControls 
+                microgridState={state} 
+                dispatch={dispatch}
+                onUpdateMode={handleExecuteCommand}
+                onToggleConnection={handleExecuteCommand}
+                disabled={false} 
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="commands" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Command History</CardTitle>
+              <CardDescription>Recent commands and their results</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <CommandHistory commandHistory={commands} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="alerts" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>System Alerts</CardTitle>
+              <CardDescription>Warnings and notifications</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <AlertsPanel alerts={mockAlerts} />
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
-    </AnimatePresence>
+    </div>
   );
 };
 

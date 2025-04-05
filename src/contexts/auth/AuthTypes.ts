@@ -6,6 +6,8 @@ export interface User {
   role: string;
   avatar?: string;
   preferences?: Record<string, any>;
+  firstName?: string;
+  lastName?: string;
 }
 
 export interface AuthContextType {

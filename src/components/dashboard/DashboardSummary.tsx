@@ -1,182 +1,168 @@
-import React from 'react';
-import { Grid, Zap, Home, Activity, Cloud, BarChart2, TrendingUp, TrendingDown } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import ModbusCard from './ModbusCard';
 
-// Mock telemetry data
-const mockTelemetry = {
-  power: 6.2,
-  voltage: 240.3,
-  current: 25.8,
-  temperature: 43.2,
-  timestamp: new Date().toISOString()
-};
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { MetricsCard } from '@/components/ui/dashboard';
+import { FaultSummaryCard } from '@/components/dashboard';
+import { AlertSummaryCard } from '@/components/dashboard';
+import { LiveTelemetryChart } from '@/components/telemetry';
+import { TariffCard, TariffHistoryCard } from '@/components/dashboard';
+import { DeviceManagement } from '@/components/dashboard';
+import { Battery, Sun, Wind } from 'lucide-react';
 
-// Mock faults data with correct typing
-const mockFaults: Fault[] = [
-  {
-    id: 'fault-1',
-    title: 'Inverter Overheating',
-    description: 'Inverter temperature exceeds normal operating range',
-    severity: 'critical',
-    timestamp: new Date().toISOString(),
-    status: 'active',
-    device: { id: 'dev-1', name: 'Inverter 1' }
-  },
-  {
-    id: 'fault-2',
-    title: 'Low Battery Voltage',
-    description: 'Battery voltage below recommended threshold',
-    severity: 'warning',
-    timestamp: new Date().toISOString(),
-    status: 'acknowledged',
-    device: { id: 'dev-2', name: 'Battery Storage' }
-  },
-  {
-    id: 'fault-3',
-    title: 'Communication Loss',
-    description: 'Lost communication with solar controller',
-    severity: 'warning',
-    timestamp: new Date().toISOString(),
-    status: 'active',
-    device: { id: 'dev-3', name: 'Solar Controller' }
-  }
-];
+// Define a Fault interface if not already defined
+interface Fault {
+  id: string;
+  device_id: string;
+  timestamp: string;
+  description: string;
+  severity: string;
+  status: string;
+  resolved_at?: string;
+}
 
 const DashboardSummary = () => {
-  const [telemetry, setTelemetry] = useState<any | null>(mockTelemetry);
-  const [faults, setFaults] = useState<Fault[]>(mockFaults);
-
+  const [faults, setFaults] = useState<Fault[]>([]);
+  const [activeFault, setActiveFault] = useState<Fault | null>(null);
+  
   useEffect(() => {
-    // In a real implementation, this would subscribe to telemetry events
-    const interval = setInterval(() => {
-      // Update with slightly different values to simulate real-time changes
-      setTelemetry({
-        power: mockTelemetry.power + (Math.random() * 0.4 - 0.2),
-        voltage: mockTelemetry.voltage + (Math.random() * 2 - 1),
-        current: mockTelemetry.current + (Math.random() * 0.6 - 0.3),
-        temperature: mockTelemetry.temperature + (Math.random() * 0.2 - 0.1),
-        timestamp: new Date().toISOString()
-      });
-    }, 5000);
-
-    return () => {
-      clearInterval(interval);
+    // Simulate fetching faults
+    const fetchFaults = async () => {
+      // Mock data
+      const mockFaults = [
+        {
+          id: '1',
+          device_id: 'batt-01',
+          timestamp: new Date().toISOString(),
+          description: 'Battery temperature exceeds normal range',
+          severity: 'medium',
+          status: 'open',
+        },
+        {
+          id: '2',
+          device_id: 'inv-03',
+          timestamp: new Date(Date.now() - 1800000).toISOString(),
+          description: 'Inverter efficiency below expected threshold',
+          severity: 'low',
+          status: 'open',
+        }
+      ];
+      
+      setFaults(mockFaults);
     };
+    
+    fetchFaults();
   }, []);
-
+  
   return (
-    <div className="space-y-6">
-      {/* Metrics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <MetricsCard 
-          title="Current Power Flow"
-          value={telemetry ? telemetry.power : '—'}
-          unit="kW"
-          changeValue={8.2}
-          changeType="increase"
-          description="Current system power flow"
-          icon={<Zap className="h-5 w-5" />}
-          animationDelay="0ms"
-        />
-        <MetricsCard 
-          title="Solar Generation" 
-          value={215.6}
-          unit="kWh"
-          changeValue={24.3}
-          changeType="increase"
-          description="Energy generated today"
-          icon={<Sun className="h-5 w-5" />}
-          animationDelay="100ms"
-        />
-        <MetricsCard 
-          title="Wind Generation" 
-          value={118.3}
-          unit="kWh"
-          changeValue={12.5}
-          changeType="increase"
-          description="Wind power today"
-          icon={<Wind className="h-5 w-5" />}
-          animationDelay="150ms"
-        />
-        <MetricsCard 
-          title="Battery Storage"
-          value={68}
-          unit="%"
-          changeValue={3.5}
-          changeType="decrease"
-          description="Current battery level"
-          icon={<Battery className="h-5 w-5" />}
-          animationDelay="200ms"
-        />
+    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      {/* Energy Production Summary */}
+      <MetricsCard
+        title="Total Energy Production"
+        value="126.5 kWh"
+        change={"+12.3%"}
+        changeType="positive"
+        description="vs. previous day"
+        className="md:col-span-1"
+      />
+      
+      {/* Energy Consumption Summary */}
+      <MetricsCard
+        title="Energy Consumption"
+        value="98.2 kWh"
+        change={"-5.7%"}
+        changeType="positive"
+        description="vs. previous day"
+        className="md:col-span-1"
+      />
+      
+      {/* Solar Production */}
+      <MetricsCard
+        title="Solar Production"
+        value="82.4 kWh"
+        icon={<Sun className="h-5 w-5" />}
+        change={"+15.2%"}
+        changeType="positive"
+        className="md:col-span-1"
+      />
+      
+      {/* Wind Production */}
+      <MetricsCard
+        title="Wind Production"
+        value="44.1 kWh"
+        icon={<Wind className="h-5 w-5" />}
+        change={"+8.9%"}
+        changeType="positive"
+        className="md:col-span-1"
+      />
+      
+      {/* Battery Status */}
+      <MetricsCard
+        title="Battery State"
+        value="78%"
+        icon={<Battery className="h-5 w-5" />}
+        description="Charging at 3.2 kW"
+        change={"+2.1%"}
+        changeType="positive"
+        className="md:col-span-1"
+      />
+      
+      {/* Grid Import */}
+      <MetricsCard
+        title="Grid Import"
+        value="12.8 kWh"
+        change={"-22.4%"}
+        changeType="positive"
+        description="vs. previous day"
+        className="md:col-span-1"
+      />
+      
+      {/* Grid Export */}
+      <MetricsCard
+        title="Grid Export"
+        value="41.1 kWh"
+        change={"+31.2%"}
+        changeType="positive"
+        description="vs. previous day"
+        className="md:col-span-1"
+      />
+      
+      {/* Carbon Offset */}
+      <MetricsCard
+        title="CO2 Avoided"
+        value="68.2 kg"
+        change={"+14.8%"}
+        changeType="positive"
+        description="vs. previous day"
+        className="md:col-span-1"
+      />
+      
+      {/* Faults Summary */}
+      <div className="md:col-span-2">
+        <FaultSummaryCard faults={faults} onFaultSelect={setActiveFault} />
       </div>
-
-      {/* Live Telemetry Metrics */}
-      {telemetry && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          <MetricsCard 
-            title="Live Voltage"
-            value={telemetry.voltage}
-            unit="V"
-            description="Latest voltage reading"
-            icon={<Activity className="h-5 w-5 text-blue-500" />}
-            animationDelay="250ms"
-          />
-          <MetricsCard 
-            title="Live Current"
-            value={telemetry.current}
-            unit="A"
-            description="Latest current reading"
-            icon={<Activity className="h-5 w-5 text-green-500" />}
-            animationDelay="300ms"
-          />
-          <MetricsCard 
-            title="Live Power"
-            value={telemetry.power}
-            unit="kW"
-            description="Real-time power"
-            icon={<Zap className="h-5 w-5 text-yellow-500" />}
-            animationDelay="350ms"
-          />
+      
+      {/* Live Power Flow */}
+      <div className="md:col-span-2">
+        <LiveTelemetryChart height={250} deviceId="overview" metric="power" />
+        <LiveTelemetryChart height={250} deviceId="overview" metric="energy" />
+      </div>
+      
+      {/* Recent Alerts */}
+      <div className="md:col-span-2 lg:col-span-2">
+        <AlertSummaryCard limit={5} />
+      </div>
+      
+      {/* Energy Prices */}
+      <div className="md:col-span-3 lg:col-span-2">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <TariffCard />
+          
+          <TariffHistoryCard />
         </div>
-      )}
-
-      {/* Fault Summary */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <FaultSummaryCard faults={faults} />
       </div>
-
-      {/* Live Telemetry Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <LiveTelemetryChart deviceId="your-device-id" metric="power" unit="kW" />
-        <LiveTelemetryChart deviceId="your-device-id" metric="voltage" unit="V" />
-      </div>
-
-      {/* Alert Summary */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        <AlertSummaryCard />
-      </div>
-
-      {/* Modbus / Quality */}
-      <div className="space-y-4 mb-8">
-        <ModbusCard 
-          title="Real-time Voltage" 
-          value="220" 
-          unit="V" 
-        />
-      </div>
-
-      {/* Tariff Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        <TariffCard />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <TariffHistoryCard />
-      </div>
-
-      {/* Device Management */}
-      <div className="mt-8">
+      
+      {/* Devices Overview */}
+      <div className="md:col-span-3 lg:col-span-4">
         <DeviceManagement />
       </div>
     </div>

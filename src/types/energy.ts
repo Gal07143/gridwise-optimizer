@@ -1,108 +1,49 @@
-// Device-related Types
-export type DeviceType = 
-  | 'battery'
-  | 'solar'
-  | 'wind'
-  | 'grid'
-  | 'load'
-  | 'ev_charger'
-  | 'inverter'
-  | 'meter'
-  | 'light'
-  | 'generator'
-  | 'hydro';
-
-export type DeviceStatus = 
-  | 'online'
-  | 'offline'
-  | 'maintenance'
-  | 'error'
-  | 'warning'
-  | 'idle'
-  | 'active'
-  | 'charging'
-  | 'discharging';
 
 export interface EnergyDevice {
   id: string;
   name: string;
   type: DeviceType;
   status: DeviceStatus;
-  location?: string;
   capacity: number;
+  location?: string;
   site_id?: string;
+  description?: string;
   firmware?: string;
-  installation_date?: string;
-  last_updated: string;
+  firmware_version?: string;
+  last_updated?: string;
+  metrics?: Record<string, number> | null;
   lat?: number;
   lng?: number;
-  metrics?: Record<string, number> | null;
-  description?: string;
-  created_by?: string;
+  protocol?: string;
+  ip_address?: string;
+  model?: string;
+  manufacturer?: string;
+  serialNumber?: string;
+  tags?: Record<string, string>;
+  installation_date?: string;
 }
 
-// Site
-export interface Site {
-  id: string;
-  name: string;
-  location: string;
-  timezone: string;
-  lat?: number | null;
-  lng?: number | null;
-  created_at: string;
-  updated_at: string;
-}
+export type DeviceType = 
+  | 'solar' 
+  | 'wind' 
+  | 'battery' 
+  | 'grid' 
+  | 'load' 
+  | 'inverter' 
+  | 'meter' 
+  | 'ev_charger' 
+  | 'generator'
+  | 'hydroelectric'
+  | 'storage'
+  | 'controller';
 
-export const createEmptySite = (): Omit<Site, 'id' | 'created_at' | 'updated_at'> => ({
-  name: 'New Site',
-  location: 'Unknown',
-  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-});
+export type DeviceStatus = 
+  | 'online' 
+  | 'offline' 
+  | 'maintenance' 
+  | 'error' 
+  | 'warning';
 
-// User & Roles
-export type UserRole = 'admin' | 'viewer' | 'operator' | 'installer' | 'user';
-export type ThemePreference = 'light' | 'dark' | 'system';
-
-export interface UserPreferences {
-  theme: ThemePreference;
-  notifications: {
-    email: boolean;
-    push: boolean;
-    sms: boolean;
-  };
-  dashboardLayout: any;
-}
-
-export interface User {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: UserRole;
-  createdAt: string;
-  lastLogin: string;
-  preferences: UserPreferences;
-  sites?: Site[];
-}
-
-// Forecasting
-export interface EnergyForecast {
-  id: string;
-  site_id: string;
-  timestamp: string;
-  forecast_time: string;
-  generation_forecast?: number;
-  consumption_forecast?: number;
-  temperature?: number;
-  cloud_cover?: number;
-  wind_speed?: number;
-  weather_condition?: string;
-  confidence?: number;
-  source?: string;
-  created_at?: string;
-}
-
-// Energy Readings
 export interface EnergyReading {
   id: string;
   device_id: string;
@@ -118,56 +59,62 @@ export interface EnergyReading {
   frequency?: number;
   temperature?: number;
   state_of_charge?: number;
-  created_at?: string;
+  created_at: string;
 }
 
-// Device Models
 export interface DeviceModel {
   id: string;
+  name: string;
   manufacturer: string;
-  model_name: string;
-  name?: string;
-  device_type: DeviceType;
+  model_number: string;
+  device_type: string;
+  capacity?: number;
+  power_rating?: number;
+  protocol?: string;
+  firmware_version?: string;
   description?: string;
+  category: string;
+  support_level: 'full' | 'partial' | 'beta';
   specifications?: Record<string, any>;
-  compatible_with?: string[];
-  firmware_versions?: string[];
-  created_at: string;
-  updated_at?: string;
-  category?: string;
+  images?: string[];
+  datasheets?: string[];
+  manuals?: string[];
 }
 
-// Alerts
-export type AlertType = 
-  | 'system'
-  | 'device'
-  | 'security'
-  | 'performance'
-  | 'forecast'
-  | 'warning'
-  | 'critical'
-  | 'info';
-
-export type AlertSeverity = 
-  | 'critical'
-  | 'high'
-  | 'medium'
-  | 'low'
-  | 'info';
-
-export interface Alert {
+export interface DeviceModelReference {
   id: string;
-  type: AlertType;
-  severity: AlertSeverity;
-  title: string;
-  message: string;
-  source: string;
-  source_id?: string;
+  model_name: string;
+  manufacturer: string;
+  device_type: string;
+  capacity?: number;
+  power_rating?: number;
+  has_manual: boolean;
+}
+
+export interface DeviceMetrics {
+  id: string;
+  device_id: string;
   timestamp: string;
-  acknowledged: boolean;
-  resolved: boolean;
-  device_id?: string;
-  acknowledged_at?: string;
-  acknowledged_by?: string;
-  resolved_at?: string;
+  metrics: Record<string, number>;
+}
+
+export interface Site {
+  id: string;
+  name: string;
+  location: string;
+  timezone: string;
+  lat?: number;
+  lng?: number;
+  created_at: string;
+  updated_at: string;
+  type?: string;
+  status?: string;
+  description?: string;
+  address?: string;
+  building_type?: string;
+  energy_category?: string;
+  area?: number;
+  contact_person?: string;
+  contact_email?: string;
+  contact_phone?: string;
 }

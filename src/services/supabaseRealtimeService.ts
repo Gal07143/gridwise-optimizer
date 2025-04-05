@@ -50,7 +50,9 @@ export function subscribeToTable({
 
   // Return an unsubscribe function
   return () => {
-    channel();
+    if (typeof channel === 'object' && channel.unsubscribe) {
+      channel.unsubscribe();
+    }
   };
 }
 

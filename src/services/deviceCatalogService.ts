@@ -1,5 +1,22 @@
+import { DeviceModel } from '@/types/energy';
 
-import { DeviceModel } from '@/types/device';
+// Add this function to fix the error
+export const getCategoryName = (categoryId: string): string => {
+  const categories: Record<string, string> = {
+    'solar': 'Solar Generation',
+    'battery': 'Energy Storage',
+    'inverter': 'Power Conversion',
+    'wind': 'Wind Generation',
+    'hydroelectric': 'Hydroelectric Generation',
+    'grid': 'Grid Connection',
+    'load': 'Load Management',
+    'meter': 'Metering & Monitoring',
+    'controller': 'System Controllers',
+    'ev_charger': 'EV Charging'
+  };
+  
+  return categories[categoryId] || 'Uncategorized';
+};
 
 // Mock function to get all device models
 export async function getAllDeviceModels(): Promise<DeviceModel[]> {

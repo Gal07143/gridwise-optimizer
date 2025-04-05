@@ -1,215 +1,46 @@
-import React, { useEffect } from 'react';
-import { Main } from '@/components/ui/main';
-import DashboardHeader from '@/components/dashboard/DashboardHeader';
-import LoadingScreen from '@/components/LoadingScreen';
-import { TooltipProvider } from '@/components/ui/tooltip';
-import { BarChart2, PieChart, LineChart, Activity, Gauge } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useSiteContext } from '@/contexts/SiteContext';
-import DashboardSummary from '@/components/dashboard/DashboardSummary';
-import DashboardCharts from '@/components/dashboard/DashboardCharts';
-import EnergyManagementDashboard from '@/components/ems/EnergyManagementDashboard';
-import AppLayout from '@/components/layout/AppLayout';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useAppStore } from '@/store/appStore.ts';
+import React from 'react';
+import { SiteSelector } from '@/components/sites';
+import { DashboardSummary } from '@/components/dashboard';
+import { useAppStore } from '@/store/appStore';
+import { WeatherWidget } from '@/components/weather';
+import { DateRange } from '@/types/site';
 
-// Dashboard tabs
-const tabs = [
-  {
-    id: 'overview',
-    label: 'Overview',
-    icon: <BarChart2 className="h-4 w-4 mr-2" />
-  },
-  {
-    id: 'energy',
-    label: 'Energy Management',
-    icon: <Gauge className="h-4 w-4 mr-2" />
-  },
-  {
-    id: 'consumption',
-    label: 'Consumption',
-    icon: <PieChart className="h-4 w-4 mr-2" />
-  },
-  {
-    id: 'production',
-    label: 'Production',
-    icon: <LineChart className="h-4 w-4 mr-2" />
-  },
-  {
-    id: 'analytics',
-    label: 'Analytics',
-    icon: <Activity className="h-4 w-4 mr-2" />
-  }
-];
+const Dashboard = () => {
+  const activeSite = useAppStore((state) => state.activeSite);
 
-// Animation variants
-const contentVariants = {
-  hidden: {
-    opacity: 0,
-    y: 20
-  },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.4,
-      ease: "easeOut"
-    }
-  },
-  exit: {
-    opacity: 0,
-    y: -10,
-    transition: {
-      duration: 0.2
-    }
-  }
-};
+  // Change this code:
+  // const dateRange = new Date();
+  
+  // To this:
+  const dateRange = { from: new Date(), to: new Date() };
 
-const Dashboard: React.FC = () => {
-  const { activeSite, loading } = useSiteContext();
-  const { activeTab, setActiveTab } = useAppStore();
-  
-  useEffect(() => {
-    // Track page view
-    console.log('Dashboard viewed');
-  }, []);
-  
-  if (loading) {
-    return <LoadingScreen />;
-  }
-  
   return (
-    <AppLayout>
-      <TooltipProvider>
-        <Main containerSize="default" className="max-w-[1600px] mx-auto pt-0">
-          <DashboardHeader />
-          
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm mb-6 -mx-4 px-4 pt-4 pb-2">
-              <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 bg-muted/50 backdrop-blur-md p-1 rounded-lg">
-                {tabs.map((tab) => (
-                  <TabsTrigger 
-                    key={tab.id}
-                    value={tab.id} 
-                    className="flex items-center data-[state=active]:bg-background data-[state=active]:shadow-md transition-all duration-200"
-                  >
-                    {tab.icon}
-                    {tab.label}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </div>
-            
-            <AnimatePresence mode="wait">
-              <TabsContent value="overview" className="space-y-6">
-                <motion.div
-                  key="overview"
-                  initial="hidden"
-                  animate="visible"
-                  exit="exit"
-                  variants={contentVariants}
-                >
-                  <DashboardSummary />
-                  <DashboardCharts 
-                    timeRange="24h" 
-                    date={new Date()} 
-                    onTimeRangeChange={(range) => console.log('Time range changed:', range)} 
-                    onDateChange={(date) => console.log('Date changed:', date)}
-                  />
-                </motion.div>
-              </TabsContent>
-              
-              <TabsContent value="energy">
-                <motion.div
-                  key="energy"
-                  initial="hidden"
-                  animate="visible"
-                  exit="exit"
-                  variants={contentVariants}
-                >
-                  <EnergyManagementDashboard />
-                </motion.div>
-              </TabsContent>
-              
-              <TabsContent value="consumption">
-                <motion.div
-                  key="consumption"
-                  initial="hidden"
-                  animate="visible"
-                  exit="exit"
-                  variants={contentVariants}
-                >
-                  <div className="p-6 text-center">
-                    <h2 className="text-2xl font-bold mb-4">Energy Consumption Dashboard</h2>
-                    <p className="text-muted-foreground mb-6">
-                      This tab will display detailed consumption metrics and analysis.
-                      Please use the Analytics page for the full consumption overview.
-                    </p>
-                    <div className="flex justify-center">
-                      <img 
-                        src="/placeholder.svg" 
-                        alt="Consumption Dashboard" 
-                        className="max-w-md rounded-lg border shadow-md"
-                      />
-                    </div>
-                  </div>
-                </motion.div>
-              </TabsContent>
-              
-              <TabsContent value="production">
-                <motion.div
-                  key="production"
-                  initial="hidden"
-                  animate="visible"
-                  exit="exit"
-                  variants={contentVariants}
-                >
-                  <div className="p-6 text-center">
-                    <h2 className="text-2xl font-bold mb-4">Energy Production Dashboard</h2>
-                    <p className="text-muted-foreground mb-6">
-                      This tab will display detailed production metrics and analysis.
-                      Please use the Analytics page for the full production overview.
-                    </p>
-                    <div className="flex justify-center">
-                      <img 
-                        src="/placeholder.svg" 
-                        alt="Production Dashboard" 
-                        className="max-w-md rounded-lg border shadow-md"
-                      />
-                    </div>
-                  </div>
-                </motion.div>
-              </TabsContent>
-              
-              <TabsContent value="analytics">
-                <motion.div
-                  key="analytics"
-                  initial="hidden"
-                  animate="visible"
-                  exit="exit"
-                  variants={contentVariants}
-                >
-                  <div className="p-6 text-center">
-                    <h2 className="text-2xl font-bold mb-4">Energy Analytics Dashboard</h2>
-                    <p className="text-muted-foreground mb-6">
-                      This tab provides a summary of analytics. For detailed analysis,
-                      please visit the dedicated Analytics page.
-                    </p>
-                    <div className="flex justify-center">
-                      <img 
-                        src="/placeholder.svg" 
-                        alt="Analytics Dashboard" 
-                        className="max-w-md rounded-lg border shadow-md"
-                      />
-                    </div>
-                  </div>
-                </motion.div>
-              </TabsContent>
-            </AnimatePresence>
-          </Tabs>
-        </Main>
-      </TooltipProvider>
-    </AppLayout>
+    <div className="container mx-auto py-6">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-4">
+        <div className="w-full md:w-1/2">
+          <h1 className="text-3xl font-semibold mb-2">Dashboard</h1>
+          <p className="text-muted-foreground">
+            {activeSite
+              ? `Welcome to the ${activeSite.name} dashboard. Here's an overview of your site.`
+              : 'Select a site to view its dashboard.'}
+          </p>
+        </div>
+        <div className="w-full md:w-1/3 mt-4 md:mt-0">
+          <SiteSelector />
+        </div>
+      </div>
+
+      {activeSite ? (
+        <>
+          <WeatherWidget siteId={activeSite.id} dateRange={dateRange as DateRange} />
+          <DashboardSummary />
+        </>
+      ) : (
+        <div className="text-center py-12">
+          <p className="text-gray-500">Please select a site to view its dashboard.</p>
+        </div>
+      )}
+    </div>
   );
 };
 

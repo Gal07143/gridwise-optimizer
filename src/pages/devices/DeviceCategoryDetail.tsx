@@ -1,119 +1,52 @@
 
-import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React from 'react';
+import { useParams } from 'react-router-dom';
+import { getDeviceModelsByCategory } from '@/services/deviceCatalogService';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronRight, ArrowLeft, Download, Plus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
-import { 
-  getDeviceModelsByCategory, 
-  getCategoryName 
-} from '@/services/deviceCatalogService';
-import { getDeviceCategoryById } from '@/types/device-catalog';
-import DeviceModelsCard from '@/components/devices/DeviceModelsCard';
-import AppLayout from '@/components/layout/AppLayout';
-import * as LucideIcons from 'lucide-react';
+import { Loader2 } from 'lucide-react';
+import { DeviceModelSelector } from '@/components/devices';
+import { PageHeader } from '@/components/pages/PageHeader';
+import { getCategoryName } from '@/services/deviceCatalogService';
 
 const DeviceCategoryDetail = () => {
   const { categoryId } = useParams<{ categoryId: string }>();
-  const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortField, setSortField] = useState('manufacturer');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   
-  // Get category information
-  const category = categoryId ? getDeviceCategoryById(categoryId) : undefined;
-  
-  // Fetch device models for this category
   const { data: deviceModels, isLoading, error } = useQuery({
     queryKey: ['deviceModels', categoryId],
-    queryFn: () => categoryId ? getDeviceModelsByCategory(categoryId) : Promise.resolve([]),
-    enabled: !!categoryId
+    queryFn: () => getDeviceModelsByCategory(categoryId || ''),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    enabled: !!categoryId,
   });
   
-  // Filter device models based on search
-  const filteredDeviceModels = deviceModels?.filter(device => {
-    if (!searchQuery) return true;
-    
-    const query = searchQuery.toLowerCase();
-    return (
-      device.manufacturer.toLowerCase().includes(query) ||
-      device.model_name.toLowerCase().includes(query) ||
-      device.model_number.toLowerCase().includes(query) ||
-      device.description?.toLowerCase().includes(query) 
-    );
-  }) || [];
-  
-  const handleSort = (field: string) => {
-    if (field === sortField) {
-      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
-    }
-  };
-  
-  // Get the icon component
-  const getIconComponent = (iconName: string) => {
-    const Icon = (LucideIcons as any)[iconName] || LucideIcons.HelpCircle;
-    return Icon;
-  };
-  
-  const CategoryIcon = category ? getIconComponent(category.icon) : LucideIcons.HelpCircle;
-  const categoryName = category ? category.name : getCategoryName(categoryId || '');
+  const categoryName = categoryId ? getCategoryName(categoryId) : '';
   
   return (
-    <AppLayout>
-      <div className="container mx-auto p-4">
-        <div className="mb-6">
-          <Button 
-            variant="ghost" 
-            onClick={() => navigate('/devices/catalog')}
-            className="mb-4 pl-0 hover:pl-2 transition-all"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Catalog
-          </Button>
-          
-          <div className="flex items-center mb-2">
-            <CategoryIcon className="h-6 w-6 mr-2 text-primary" />
-            <h1 className="text-2xl font-bold">{categoryName}</h1>
-          </div>
-          
-          {category?.description && (
-            <p className="text-muted-foreground">{category.description}</p>
-          )}
+    <div className="container mx-auto py-6">
+      <PageHeader 
+        title={categoryName || 'Device Category'} 
+        description={`Browse and select ${categoryName?.toLowerCase() || 'device'} models to add to your system`}
+        backLink="/devices/catalog"
+        backLinkText="Back to Categories"
+      />
+      
+      {isLoading ? (
+        <div className="flex justify-center items-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <span className="ml-2">Loading devices...</span>
         </div>
-        
-        <div className="mb-6 flex flex-col sm:flex-row gap-4">
-          <Input
-            placeholder={`Search ${categoryName.toLowerCase()}...`}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-grow"
-          />
-          
-          <Button
-            variant="default"
-            onClick={() => navigate('/devices/add-model')}
-            className="ml-auto whitespace-nowrap"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Add New {categoryId ? `${categoryName.slice(0, -1)}` : 'Device'}
-          </Button>
+      ) : error ? (
+        <div className="text-center py-12">
+          <p className="text-red-500">Error loading devices</p>
+          <p className="text-sm text-gray-500">{(error as Error).message}</p>
         </div>
-        
-        <DeviceModelsCard
-          deviceModels={filteredDeviceModels}
-          sortField={sortField}
-          sortDirection={sortDirection}
-          onSort={handleSort}
-          isLoading={isLoading}
-        />
-      </div>
-    </AppLayout>
+      ) : deviceModels && deviceModels.length > 0 ? (
+        <DeviceModelSelector models={deviceModels} category={categoryId || ''} />
+      ) : (
+        <div className="text-center py-12">
+          <p className="text-gray-500">No {categoryName?.toLowerCase() || 'device'} models available</p>
+        </div>
+      )}
+    </div>
   );
 };
 

@@ -1,160 +1,164 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { AuthContextType, User } from './AuthTypes';
 import { toast } from 'sonner';
-import { AuthContext } from './AuthContext';
-import { User } from './AuthTypes';
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthContext = createContext<AuthContextType>({
+  user: null,
+  loading: true,
+  isAuthenticated: false,
+  signIn: async () => {},
+  signUp: async () => {},
+  signOut: async () => {},
+  updateUserProfile: async () => {},
+});
+
+export const useAuth = () => useContext(AuthContext);
+
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    // Check for existing authentication
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (error) {
-        console.error('Error parsing stored user data:', error);
-        localStorage.removeItem('user');
-      }
-    }
-    setLoading(false);
+    // Check for active session on initial load
+    checkUser();
   }, []);
 
-  const signIn = async (email: string, password: string): Promise<void> => {
+  const checkUser = async () => {
     try {
-      // Validation
-      if (!email || !password) {
-        throw new Error('Email and password are required');
+      const { data, error } = await supabase.auth.getUser();
+      if (error) {
+        throw error;
       }
-      
-      // Mock authentication with simulated network delay
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      // For demo purposes, we'll accept any email/password but validate format
-      if (!email.includes('@')) {
-        throw new Error('Invalid email format');
+
+      if (data.user) {
+        // In a real scenario we would fetch user profile from a profiles table
+        // with the matching user ID from auth.users
+        const userData: User = {
+          id: data.user.id,
+          email: data.user.email || '',
+          role: 'admin', // Mock role for demo purposes
+          firstName: 'Demo',
+          lastName: 'User',
+        };
+        setUser(userData);
       }
+    } catch (error) {
+      console.error('Error checking user:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const signIn = async (email: string, password: string) => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.signIn({ email, password });
       
-      if (password.length < 6) {
-        throw new Error('Password must be at least 6 characters');
-      }
-      
-      // Create mock user with the provided email
-      const mockUser: User = {
-        id: 'user_' + Math.random().toString(36).substr(2, 9),
-        email,
-        role: 'admin', // Default role for demo
-        firstName: email.split('@')[0], // Use part of email as name for demo
+      if (error) throw error;
+
+      // Simulate successful sign-in for demo
+      const userData: User = {
+        id: 'mock-user-id',
+        email: email,
+        role: 'admin',
+        firstName: email.split('@')[0],
         lastName: 'User',
       };
       
-      setUser(mockUser);
-      localStorage.setItem('user', JSON.stringify(mockUser));
-      console.log('User signed in:', mockUser);
-      
-    } catch (error) {
+      setUser(userData);
+      toast.success('Successfully signed in');
+    } catch (error: any) {
       console.error('Error signing in:', error);
-      throw error; // Re-throw for UI handling
+      toast.error(`Error signing in: ${error.message}`);
+      throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
-  const signUp = async (email: string, password: string, userData: Partial<User>): Promise<void> => {
+  const signUp = async (email: string, password: string, name: string) => {
     try {
-      // Validation
-      if (!email || !password) {
-        throw new Error('Email and password are required');
-      }
+      setLoading(true);
       
-      // Mock registration with simulated network delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Simulate the name split into first and last name
+      const nameParts = name.split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
       
-      // For demo, check if email is already "taken"
-      const existingUsers = localStorage.getItem('registeredEmails');
-      const emails = existingUsers ? JSON.parse(existingUsers) : [];
-      
-      if (emails.includes(email)) {
-        throw new Error('Email already exists. Please use a different email or sign in.');
-      }
-      
-      // Register the email
-      emails.push(email);
-      localStorage.setItem('registeredEmails', JSON.stringify(emails));
-      
-      // Create new user
-      const newUser: User = {
-        id: 'user_' + Math.random().toString(36).substr(2, 9),
+      const { error } = await supabase.auth.signUp({
         email,
-        role: userData.role || 'viewer',
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-      };
+        password,
+        options: {
+          data: {
+            firstName,
+            lastName
+          }
+        }
+      });
       
-      setUser(newUser);
-      localStorage.setItem('user', JSON.stringify(newUser));
-      console.log('User registered and signed in:', newUser);
+      if (error) throw error;
       
-    } catch (error) {
+      // In a real implementation, we'd wait for email verification
+      toast.success('Please check your email to verify your account');
+    } catch (error: any) {
       console.error('Error signing up:', error);
-      throw error; // Re-throw for UI handling
+      toast.error(`Error signing up: ${error.message}`);
+      throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
-  const signOut = async (): Promise<void> => {
+  const signOut = async () => {
     try {
-      // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 500));
+      setLoading(true);
+      const { error } = await supabase.auth.signOut();
       
-      // Clear user data
+      if (error) throw error;
+      
       setUser(null);
-      localStorage.removeItem('user');
-      toast.success('Signed out successfully');
-      console.log('User signed out');
-      
-    } catch (error) {
+      toast.success('Successfully signed out');
+    } catch (error: any) {
       console.error('Error signing out:', error);
+      toast.error(`Error signing out: ${error.message}`);
       throw error;
-    }
-  };
-  
-  const updateUserProfile = async (updates: Partial<User>): Promise<void> => {
-    try {
-      if (!user) {
-        throw new Error('Not authenticated');
-      }
-      
-      // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 600));
-      
-      // Update user with new data
-      const updatedUser = {
-        ...user,
-        ...updates
-      };
-      
-      setUser(updatedUser);
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-      toast.success('Profile updated successfully');
-      console.log('User profile updated:', updatedUser);
-      
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
-  return (
-    <AuthContext.Provider value={{ 
-      user, 
-      loading, 
-      isAuthenticated: !!user,
-      signIn, 
-      signUp, 
-      signOut,
-      updateUserProfile
-    }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  const updateUserProfile = async (userData: Partial<User>) => {
+    try {
+      setLoading(true);
+      
+      if (!user) throw new Error('No user is currently logged in');
+      
+      // Update the user data
+      // In a real app, we would save this to the profiles table
+      const updatedUser = { ...user, ...userData };
+      setUser(updatedUser);
+      
+      toast.success('Profile updated successfully');
+    } catch (error: any) {
+      console.error('Error updating profile:', error);
+      toast.error(`Error updating profile: ${error.message}`);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const value: AuthContextType = {
+    user,
+    loading,
+    isAuthenticated: !!user,
+    signIn,
+    signUp,
+    signOut,
+    updateUserProfile,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

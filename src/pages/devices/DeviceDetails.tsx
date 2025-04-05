@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -59,9 +58,9 @@ const DeviceDetails = () => {
   // Fetch device data
   const { 
     data: device, 
-    isLoading, 
-    error, 
-    status,
+    isLoading: deviceResultLoading,
+    error: deviceResultError, 
+    status: deviceResultStatus,
     refetch 
   } = useQuery({
     queryKey: ['device', deviceId],
@@ -149,7 +148,7 @@ const DeviceDetails = () => {
     }
   };
 
-  if (status === 'loading') {
+  if (deviceResultStatus === 'pending') {
     return (
       <AppLayout>
         <div className="container mx-auto p-4">
@@ -161,7 +160,7 @@ const DeviceDetails = () => {
     );
   }
 
-  if (status === 'error') {
+  if (deviceResultStatus === 'error') {
     return (
       <AppLayout>
         <div className="container mx-auto p-4">
@@ -179,7 +178,7 @@ const DeviceDetails = () => {
 
           <ErrorMessage 
             message="Failed to load device details"
-            description={error instanceof Error ? error.message : 'Unknown error'}
+            description={deviceResultError instanceof Error ? deviceResultError.message : 'Unknown error'}
             retryAction={() => refetch()}
           />
         </div>

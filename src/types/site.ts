@@ -5,10 +5,21 @@ export interface Site {
   location: string;
   type: string;
   status: string;
+  timezone: string;
+  lat?: number;
+  lng?: number;
   devices?: number;
   lastUpdated?: string;
   created_at: string;
   updated_at: string;
+  address?: string;
+  description?: string;
+  building_type?: string;
+  area?: number;
+  energy_category?: string;
+  contact_person?: string;
+  contact_phone?: string;
+  contact_email?: string;
 }
 
 export interface SiteFormData {
@@ -24,6 +35,12 @@ export interface SiteFormData {
   postalCode?: string;
   country?: string;
   description?: string;
+  building_type?: string;
+  area?: number;
+  energy_category?: string;
+  contact_person?: string;
+  contact_phone?: string;
+  contact_email?: string;
 }
 
 export interface SiteStats {
@@ -57,4 +74,9 @@ export interface SiteSummary {
   status: string;
   device_count: number;
   last_updated?: string;
+}
+
+export interface DateRange {
+  from: Date;
+  to: Date;
 }

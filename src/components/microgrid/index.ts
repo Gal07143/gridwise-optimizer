@@ -1,5 +1,5 @@
 
-export { AlertsPanel } from './AlertsPanel';
+export { default as AlertsPanel } from './AlertsPanel';
 export { default as StatusOverview } from './StatusOverview';
 export { default as EnergyFlowVisualization } from './EnergyFlowVisualization';
 export { default as MicrogridControls } from './MicrogridControls';
