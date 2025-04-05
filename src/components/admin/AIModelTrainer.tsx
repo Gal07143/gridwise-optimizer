@@ -87,10 +87,13 @@ const AIModelTrainer = () => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {mutation.isLoading && (
+        {mutation.isPending && (
           <div className="space-y-2">
             <p className="text-sm">Training in progress...</p>
             <Progress value={progress} className="w-full" />
+            <p className="text-xs text-muted-foreground text-center">
+              {progress < 100 ? 'Please wait...' : 'Fix applied!'}
+            </p>
           </div>
         )}
         
@@ -151,12 +154,12 @@ const AIModelTrainer = () => {
       <CardFooter>
         <Button 
           onClick={() => mutation.mutate()} 
-          disabled={mutation.isLoading}
+          disabled={mutation.isPending}
           className="w-full"
         >
-          {mutation.isLoading ? (
+          {mutation.isPending ? (
             <>
-              <RefreshCcw className="h-4 w-4 mr-2 animate-spin" />
+              <RefreshCcw className="mr-2 h-4 w-4 animate-spin" />
               Training...
             </>
           ) : (

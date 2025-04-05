@@ -11,10 +11,11 @@ export const setupGlobalErrorHandler = (): void => {
   // Override the default error handler
   window.onerror = (message, source, line, column, error) => {
     // Check for React refresh errors
-    if (message && typeof message === 'string' && 
-        message.includes('React refresh') || 
-        message.includes('React Refresh')) {
-      
+    if (
+      message && 
+      typeof message === 'string' && 
+      (message.includes('React refresh') || message.includes('React Refresh'))
+    ) {
       console.error('React refresh error detected:', message);
       console.info('Attempting to recover - you may need to manually refresh the page');
       

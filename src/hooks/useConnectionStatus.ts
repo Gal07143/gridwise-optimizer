@@ -1,66 +1,111 @@
-import { useState, useEffect, useCallback } from 'react';
+
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-type ConnectionStatus = 'online' | 'offline' | 'reconnecting';
+export type ConnectionStatus = 'online' | 'offline' | 'reconnecting';
 
-export const useConnectionStatus = () => {
-  const [status, setStatus] = useState<ConnectionStatus>(() => 
-    navigator.onLine ? 'online' : 'offline'
-  );
+interface ConnectionStatusOptions {
+  showToasts?: boolean;
+}
+
+interface ConnectionStatusResult {
+  status: ConnectionStatus;
+  isOnline: boolean;
+  isOffline: boolean;
+  isReconnecting: boolean;
+  reconnectAttempts: number;
+  lastOnline: Date;
+  attemptReconnect: () => Promise<boolean>;
+}
+
+/**
+ * Hook to track and manage online/offline status
+ */
+const useConnectionStatus = (options: ConnectionStatusOptions = {}): ConnectionStatusResult => {
+  const { showToasts = true } = options;
+  const [status, setStatus] = useState<ConnectionStatus>(navigator.onLine ? 'online' : 'offline');
   const [reconnectAttempts, setReconnectAttempts] = useState(0);
-  const [lastOnline, setLastOnline] = useState<Date | null>(
-    navigator.onLine ? new Date() : null
-  );
+  const [lastOnline, setLastOnline] = useState(new Date());
 
-  const handleOnline = useCallback(() => {
+  // Handle online event
+  const handleOnline = () => {
     setStatus('online');
     setLastOnline(new Date());
     setReconnectAttempts(0);
-    toast.success('Connection restored', {
-      description: 'You\'re back online'
-    });
-  }, []);
-
-  const handleOffline = useCallback(() => {
-    setStatus('offline');
-    toast.error('Connection lost', {
-      description: 'Please check your internet connection'
-    });
-  }, []);
-
-  const attemptReconnect = useCallback(async () => {
-    if (navigator.onLine) {
-      setStatus('reconnecting');
-      setReconnectAttempts(prev => prev + 1);
-
-      try {
-        // Try to fetch a small resource to verify actual connectivity
-        const response = await fetch('/api/ping', { 
-          method: 'HEAD',
-          cache: 'no-cache',
-          headers: { 'Cache-Control': 'no-cache' }
-        });
-        
-        if (response.ok) {
-          handleOnline();
-        } else {
-          setTimeout(attemptReconnect, Math.min(1000 * Math.pow(2, reconnectAttempts), 30000));
-        }
-      } catch (error) {
-        setTimeout(attemptReconnect, Math.min(1000 * Math.pow(2, reconnectAttempts), 30000));
-      }
+    
+    if (showToasts) {
+      toast.success('Back online!', {
+        description: 'Your internet connection has been restored.',
+        duration: 3000,
+      });
     }
-  }, [reconnectAttempts, handleOnline]);
+  };
 
+  // Handle offline event
+  const handleOffline = () => {
+    setStatus('offline');
+    
+    if (showToasts) {
+      toast.error('Connection lost', {
+        description: 'Please check your internet connection.',
+        duration: 0, // Don't auto-dismiss
+      });
+    }
+  };
+
+  // Try to reconnect
+  const attemptReconnect = async (): Promise<boolean> => {
+    if (status === 'online') return true;
+    
+    setStatus('reconnecting');
+    setReconnectAttempts((prev) => prev + 1);
+    
+    // Try to fetch a small resource to check connectivity
+    try {
+      // Use a timestamp to prevent caching
+      const timestamp = new Date().getTime();
+      const response = await fetch(`/api/health?t=${timestamp}`, { 
+        method: 'HEAD',
+        cache: 'no-cache',
+        mode: 'no-cors',
+        timeout: 5000,
+      });
+      
+      // If we got a response, we're online
+      setStatus('online');
+      setLastOnline(new Date());
+      
+      if (showToasts) {
+        toast.success('Connected', { 
+          description: 'Connection restored successfully.',
+        });
+      }
+      
+      return true;
+    } catch (error) {
+      // Still offline
+      setStatus('offline');
+      
+      if (showToasts) {
+        toast.error('Still offline', {
+          description: `Reconnect attempt failed (${reconnectAttempts + 1})`,
+        });
+      }
+      
+      return false;
+    }
+  };
+
+  // Listen for online/offline events
   useEffect(() => {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
-
+    
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, [handleOnline, handleOffline]);
+  }, []);
 
   return {
     status,
@@ -69,7 +114,7 @@ export const useConnectionStatus = () => {
     isReconnecting: status === 'reconnecting',
     reconnectAttempts,
     lastOnline,
-    attemptReconnect
+    attemptReconnect,
   };
 };
 

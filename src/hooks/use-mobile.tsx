@@ -32,3 +32,6 @@ export function useMediaQuery(query: string): boolean {
 
   return matches;
 }
+
+// Export named correctly for importing with destructuring
+export { useMediaQuery as useMediaQuery };

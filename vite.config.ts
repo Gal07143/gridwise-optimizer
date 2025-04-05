@@ -13,8 +13,8 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react({
-      // Properly configure the React refresh
-      fastRefresh: true,
+      // For React-SWC, don't use fastRefresh property
+      // It's internally managed by the plugin
     }),
     mode === 'development' &&
     componentTagger(),

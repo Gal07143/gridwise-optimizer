@@ -1,193 +1,165 @@
 
+/**
+ * Utility functions for handling errors
+ */
+
 import { toast } from 'sonner';
 
 /**
- * Global error handler
- * @param error - The error object
- * @param context - Optional context information
- * @returns void
+ * Check if an error is a network error
  */
-export const handleError = (error: unknown, context: string = 'operation'): void => {
-  // Log error to console with context
-  console.error(`Error during ${context}:`, error);
+export const isNetworkError = (error: unknown): boolean => {
+  if (!error) return false;
   
-  // Extract error message
-  let errorMessage: string;
-  
-  if (error instanceof Error) {
-    errorMessage = error.message;
-  } else if (typeof error === 'string') {
-    errorMessage = error;
-  } else if (error && typeof error === 'object' && 'message' in error && typeof error.message === 'string') {
-    errorMessage = error.message;
-  } else {
-    errorMessage = 'An unknown error occurred';
-  }
-  
-  // Check for specific error patterns
-  if (errorMessage.toLowerCase().includes('network') || 
-      errorMessage.toLowerCase().includes('offline') ||
-      errorMessage.toLowerCase().includes('internet')) {
-    errorMessage = `Network error: Please check your connection and try again. (${errorMessage})`;
-  }
-  
-  if (errorMessage.toLowerCase().includes('dependency') || 
-      errorMessage.toLowerCase().includes('install')) {
-    errorMessage = `Dependency error: Failed to install required package. Please try refreshing the page. (${errorMessage})`;
-  }
-  
-  if (errorMessage.toLowerCase().includes('timeout') || 
-      errorMessage.toLowerCase().includes('timed out')) {
-    errorMessage = `Operation timed out: The server took too long to respond. Please try again later. (${errorMessage})`;
-  }
-  
-  // Show toast notification
-  toast.error(`Failed to ${context}: ${errorMessage}`);
+  // Check for standard network error messages
+  const errorMessage = error instanceof Error ? error.message : String(error);
+  return (
+    errorMessage.includes('Network Error') ||
+    errorMessage.includes('Failed to fetch') ||
+    errorMessage.includes('Network request failed') ||
+    errorMessage.includes('network timeout') ||
+    errorMessage.includes('ERR_CONNECTION_REFUSED') ||
+    errorMessage.includes('ERR_NETWORK')
+  );
 };
 
 /**
- * Safely parse JSON with error handling
- * @param jsonString - JSON string to parse
- * @param fallback - Optional fallback value if parsing fails
- * @returns Parsed object or fallback
+ * Retry a function with exponential backoff
  */
-export function safeJsonParse<T>(jsonString: string, fallback: T): T {
-  try {
-    return JSON.parse(jsonString) as T;
-  } catch (error) {
-    console.warn('Failed to parse JSON:', error);
-    return fallback;
-  }
-}
-
-/**
- * Format API error message
- * @param error - Error object from API
- * @returns Formatted error message
- */
-export const formatApiError = (error: unknown): string => {
-  if (!error) return 'Unknown error';
+export const retryWithBackoff = async <T>(
+  fn: () => Promise<T>,
+  maxRetries = 3,
+  initialDelay = 300
+): Promise<T> => {
+  let retries = 0;
   
-  // Handle axios errors
-  if (typeof error === 'object' && error !== null) {
-    // @ts-ignore - dynamic property access
-    if (error.response?.data?.message) {
-      // @ts-ignore - dynamic property access
-      return error.response.data.message;
-    }
-    
-    // @ts-ignore - dynamic property access
-    if (error.response?.data?.error) {
-      // @ts-ignore - dynamic property access
-      return error.response.data.error;
-    }
-    
-    // Check for network errors
-    // @ts-ignore - dynamic property access
-    if (error.message && error.message.includes('Network Error')) {
-      return 'Network error: Please check your connection and try again';
-    }
-    
-    // @ts-ignore - dynamic property access
-    if (error.message) {
-      // @ts-ignore - dynamic property access
-      return error.message;
-    }
-  }
-  
-  return String(error);
-};
-
-/**
- * Creates an async function wrapper that handles errors automatically
- * @param fn - Async function to wrap
- * @param errorContext - Context for error message
- * @returns Wrapped function with error handling
- */
-export function withErrorHandling<T extends (...args: any[]) => Promise<any>>(
-  fn: T,
-  errorContext: string
-): (...args: Parameters<T>) => Promise<ReturnType<T> | null> {
-  return async (...args: Parameters<T>): Promise<ReturnType<T> | null> => {
-    try {
-      return await fn(...args);
-    } catch (error) {
-      handleError(error, errorContext);
-      return null;
-    }
-  };
-}
-
-/**
- * Retry a function multiple times with exponential backoff
- * @param fn - Async function to retry
- * @param maxRetries - Maximum number of retry attempts
- * @param retryDelay - Base delay between retries in ms
- * @returns Result of the function or throws after all retries fail
- */
-export async function retryWithBackoff<T>(
-  fn: () => Promise<T>, 
-  maxRetries: number = 3, 
-  retryDelay: number = 1000
-): Promise<T> {
-  let lastError: unknown;
-  
-  for (let attempt = 0; attempt < maxRetries; attempt++) {
+  const execute = async (): Promise<T> => {
     try {
       return await fn();
     } catch (error) {
-      console.warn(`Attempt ${attempt + 1}/${maxRetries} failed:`, error);
-      lastError = error;
+      retries++;
       
-      // Don't delay on the last attempt
-      if (attempt < maxRetries - 1) {
-        const delay = retryDelay * Math.pow(2, attempt);
-        await new Promise(resolve => setTimeout(resolve, delay));
+      if (retries > maxRetries) {
+        throw error;
       }
+      
+      const delay = initialDelay * Math.pow(2, retries - 1);
+      console.log(`Retry ${retries}/${maxRetries} after ${delay}ms`);
+      
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return execute();
+    }
+  };
+  
+  return execute();
+};
+
+/**
+ * Handle dependency errors
+ */
+export const handleDependencyError = (error: Error): void => {
+  console.error('Dependency error detected:', error);
+  
+  // Extract package name from error if possible
+  let packageName = 'unknown';
+  const match = error.message.match(/(?:Cannot find module|Failed to resolve import) ['"]([^'"]+)['"]/i);
+  if (match && match[1]) {
+    packageName = match[1];
+  }
+  
+  toast.error(`Dependency error: ${packageName}`, {
+    description: "Please check that all required packages are installed.",
+    duration: 5000,
+  });
+};
+
+/**
+ * Handle API errors and provide appropriate feedback
+ */
+export const handleApiError = (
+  error: unknown, 
+  options: { 
+    context?: string; 
+    showToast?: boolean;
+    retry?: () => Promise<any>;
+  } = {}
+): ApiErrorType => {
+  const { context = '', showToast = true, retry } = options;
+  let errorType: ApiErrorType = 'unknown';
+  let message = 'An unknown error occurred';
+  
+  if (error instanceof Error) {
+    message = error.message;
+    
+    if (isNetworkError(error)) {
+      errorType = 'network';
+    } else if (message.includes('401') || message.includes('unauthorized')) {
+      errorType = 'authentication';
+    } else if (message.includes('403') || message.includes('forbidden')) {
+      errorType = 'permission';
+    } else if (message.includes('404') || message.includes('not found')) {
+      errorType = 'not-found';
+    } else if (message.includes('timeout')) {
+      errorType = 'timeout';
     }
   }
   
-  throw lastError;
-}
+  if (showToast) {
+    const contextPrefix = context ? `[${context}] ` : '';
+    
+    const toastMessage = {
+      title: `${contextPrefix}${getErrorTitle(errorType)}`,
+      description: message,
+    };
+    
+    if (errorType === 'network' || errorType === 'timeout') {
+      toast.error(toastMessage.title, {
+        description: toastMessage.description,
+        action: retry ? {
+          label: 'Retry',
+          onClick: () => retry(),
+        } : undefined,
+      });
+    } else {
+      toast.error(toastMessage.title, {
+        description: toastMessage.description,
+      });
+    }
+  }
+  
+  return errorType;
+};
 
 /**
- * Check if error is related to network or connectivity
- * @param error - The error to check
- * @returns Boolean indicating if it's a network error
+ * Get a user-friendly error title based on error type
  */
-export function isNetworkError(error: unknown): boolean {
-  if (!error) return false;
-  
-  const errorMessage = error instanceof Error 
-    ? error.message 
-    : typeof error === 'string' 
-      ? error 
-      : String(error);
-  
-  return /network|offline|internet|connectivity|connection|fetch|timeout/i.test(errorMessage);
-}
+const getErrorTitle = (errorType: ApiErrorType): string => {
+  switch (errorType) {
+    case 'network':
+      return 'Network Error';
+    case 'authentication':
+      return 'Authentication Error';
+    case 'permission':
+      return 'Permission Denied';
+    case 'not-found':
+      return 'Resource Not Found';
+    case 'timeout':
+      return 'Request Timeout';
+    case 'validation':
+      return 'Validation Error';
+    case 'server':
+      return 'Server Error';
+    default:
+      return 'Something went wrong';
+  }
+};
 
-/**
- * Handle dependency installation errors
- * @param error - The error object
- * @returns void
- */
-export function handleDependencyError(error: unknown): void {
-  console.error('Dependency installation error:', error);
-  
-  const errorMessage = error instanceof Error 
-    ? error.message 
-    : typeof error === 'string' 
-      ? error 
-      : 'Failed to install dependency';
-  
-  // Show more detailed error message
-  toast.error(`Dependency error: ${errorMessage}`, {
-    duration: 8000, // Show for longer
-    action: {
-      label: 'Refresh',
-      onClick: () => window.location.reload(),
-    },
-  });
-}
-
+export type ApiErrorType = 
+  | 'network'
+  | 'authentication'
+  | 'permission'
+  | 'not-found'
+  | 'timeout'
+  | 'validation'
+  | 'server'
+  | 'unknown';
