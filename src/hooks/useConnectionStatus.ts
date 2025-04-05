@@ -1,98 +1,113 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 
-interface UseConnectionStatusOptions {
+interface ConnectionStatusOptions {
+  checkInterval?: number;
   showToasts?: boolean;
-  pollingInterval?: number;
-  timeoutDuration?: number;
 }
 
-interface ConnectionStatus {
+export interface ConnectionStatus {
   isOnline: boolean;
+  lastChecked: Date | null;
+  checkNow: () => Promise<boolean>;
+  retryConnection: () => Promise<boolean>;
 }
 
-const useConnectionStatus = (options: UseConnectionStatusOptions = {}): ConnectionStatus => {
-  const {
-    showToasts = true,
-    pollingInterval = 30000,
-    timeoutDuration = 5000
+/**
+ * Hook to check and monitor internet connection status
+ */
+const useConnectionStatus = (options: ConnectionStatusOptions = {}): ConnectionStatus => {
+  const { 
+    checkInterval = 30000, // Check every 30 seconds by default
+    showToasts = false 
   } = options;
-
+  
   const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
-
-  useEffect(() => {
-    const handleOnline = () => {
-      setIsOnline(true);
-      if (showToasts) {
-        toast.success('You are back online');
+  const [lastChecked, setLastChecked] = useState<Date | null>(null);
+  
+  const checkConnection = useCallback(async (): Promise<boolean> => {
+    try {
+      // Try to fetch a tiny resource to check actual connectivity
+      // We use a timestamp to prevent caching
+      const response = await fetch(`/api/health-check?_=${Date.now()}`, {
+        method: 'HEAD',
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
+      });
+      
+      const online = response.ok;
+      setIsOnline(online);
+      setLastChecked(new Date());
+      
+      if (!online && showToasts) {
+        toast.error('Connection lost. You\'re working offline.');
+      } else if (online && !isOnline && showToasts) {
+        toast.success('Connection restored!');
       }
-    };
-
-    const handleOffline = () => {
+      
+      return online;
+    } catch (error) {
       setIsOnline(false);
-      if (showToasts) {
-        toast.error('You appear to be offline. Some features may be limited.');
+      setLastChecked(new Date());
+      
+      if (showToasts && isOnline) {
+        toast.error('Connection lost. You\'re working offline.');
       }
-    };
-
-    // Set up browser online/offline event listeners
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    // Also poll for connectivity in case events don't fire reliably
-    const checkServerConnection = async () => {
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), timeoutDuration);
-        
-        // Use a tiny image or API endpoint that should always be available
-        const res = await fetch('/api/health-check', {
-          method: 'HEAD',
-          signal: controller.signal
-        });
-        
-        clearTimeout(timeoutId);
-        
-        if (!res.ok) {
-          throw new Error('Server responded with error');
-        }
-        
-        if (!isOnline) {
-          setIsOnline(true);
-          if (showToasts) {
-            toast.success('Connection restored');
-          }
-        }
-      } catch (error) {
-        // Only change status if we're currently considered online
-        // This prevents repeated offline notifications
-        if (isOnline && navigator.onLine) {
-          setIsOnline(false);
-          if (showToasts) {
-            toast.error('Server connection lost. Some features may be limited.');
-          }
-        }
-      }
-    };
-    
-    // Run the check immediately and then on interval
-    if (pollingInterval > 0) {
-      const interval = setInterval(checkServerConnection, pollingInterval);
-      return () => {
-        clearInterval(interval);
-        window.removeEventListener('online', handleOnline);
-        window.removeEventListener('offline', handleOffline);
-      };
+      
+      return false;
+    }
+  }, [isOnline, showToasts]);
+  
+  const retryConnection = useCallback(async (): Promise<boolean> => {
+    if (showToasts) {
+      toast.info('Attempting to reconnect...');
     }
     
+    return await checkConnection();
+  }, [checkConnection, showToasts]);
+  
+  useEffect(() => {
+    // Check connection immediately
+    checkConnection();
+    
+    // Set up event listeners for online/offline events
+    const handleOnline = () => {
+      checkConnection(); // Verify we're really online
+    };
+    
+    const handleOffline = () => {
+      setIsOnline(false);
+      setLastChecked(new Date());
+      if (showToasts) {
+        toast.error('Connection lost. You\'re working offline.');
+      }
+    };
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    // Set up interval for regular checks
+    const intervalId = setInterval(() => {
+      checkConnection();
+    }, checkInterval);
+    
+    // Clean up
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+      clearInterval(intervalId);
     };
-  }, [isOnline, showToasts, pollingInterval, timeoutDuration]);
-
-  return { isOnline };
+  }, [checkConnection, checkInterval, showToasts]);
+  
+  return {
+    isOnline,
+    lastChecked,
+    checkNow: checkConnection,
+    retryConnection
+  };
 };
 
 export default useConnectionStatus;

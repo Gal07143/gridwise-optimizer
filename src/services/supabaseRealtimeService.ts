@@ -25,15 +25,22 @@ export function subscribeToTable(
   // Create the channel
   const channel = supabase.channel(channelName);
   
+  // Create the configuration object
+  const config: RealtimeConfig = {
+    event: eventType,
+    schema: 'public',
+    table: table,
+  };
+  
+  // Add filter if provided
+  if (filter) {
+    config.filter = filter;
+  }
+  
   // Configure the subscription
   const subscription = channel.on(
     'postgres_changes',
-    {
-      event: eventType,
-      schema: 'public',
-      table: table,
-      filter: filter
-    } as any, // Use type assertion to bypass the type check
+    config,
     callback
   );
   

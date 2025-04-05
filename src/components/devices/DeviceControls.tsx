@@ -44,43 +44,38 @@ const DeviceControls: React.FC<DeviceControlsProps> = ({ deviceId, deviceType, d
     );
   }
 
-  // Use a type guard to ensure deviceType is treated correctly
-  const renderControls = () => {
-    switch (deviceType) {
-      case 'solar':
-        return <SolarControls deviceId={deviceId} />;
-      case 'wind':
-        return <WindControls deviceId={deviceId} />;
-      case 'battery':
-        return <BatteryControls deviceId={deviceId} />;
-      case 'grid':
-        return <GridControls deviceId={deviceId} />;
-      case 'load':
-        return <LoadControls deviceId={deviceId} />;
-      case 'ev_charger':
-        return <EVChargerControls deviceId={deviceId} />;
-      case 'inverter':
-        return <InverterControls deviceId={deviceId} />;
-      case 'meter':
-        return <MeterControls deviceId={deviceId} />;
-      case 'light':
-        return <LightControls deviceId={deviceId} />;
-      case 'generator':
-        return <GeneratorControls deviceId={deviceId} />;
-      case 'hydro':
-        return <HydroControls deviceId={deviceId} />;
-      default:
-        return (
-          <div className="p-8 bg-secondary/20 rounded-md text-center">
-            <p className="text-muted-foreground">
-              No controls available for this device type: <strong>{deviceType}</strong>
-            </p>
-          </div>
-        );
-    }
-  };
-
-  return renderControls();
+  // Since DeviceType is now a string, use string comparison
+  if (deviceType === 'solar') {
+    return <SolarControls deviceId={deviceId} />;
+  } else if (deviceType === 'wind') {
+    return <WindControls deviceId={deviceId} />;
+  } else if (deviceType === 'battery') {
+    return <BatteryControls deviceId={deviceId} />;
+  } else if (deviceType === 'grid') {
+    return <GridControls deviceId={deviceId} />;
+  } else if (deviceType === 'load') {
+    return <LoadControls deviceId={deviceId} />;
+  } else if (deviceType === 'ev_charger') {
+    return <EVChargerControls deviceId={deviceId} />;
+  } else if (deviceType === 'inverter') {
+    return <InverterControls deviceId={deviceId} />;
+  } else if (deviceType === 'meter') {
+    return <MeterControls deviceId={deviceId} />;
+  } else if (deviceType === 'light') {
+    return <LightControls deviceId={deviceId} />;
+  } else if (deviceType === 'generator') {
+    return <GeneratorControls deviceId={deviceId} />;
+  } else if (deviceType === 'hydro') {
+    return <HydroControls deviceId={deviceId} />;
+  } else {
+    return (
+      <div className="p-8 bg-secondary/20 rounded-md text-center">
+        <p className="text-muted-foreground">
+          No controls available for this device type: <strong>{deviceType}</strong>
+        </p>
+      </div>
+    );
+  }
 };
 
 export default React.memo(DeviceControls);

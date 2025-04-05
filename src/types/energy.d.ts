@@ -2,10 +2,10 @@
 // File: src/types/energy.d.ts
 export type DeviceCategory = 'inverter' | 'meter' | 'battery' | 'solar' | 'load' | 'sensor' | 'evCharger' | 'wind';
 
-// Change DeviceType to be a string type to allow string literals
+// Make DeviceType a string literal union type but also allow string to support dynamic values
 export type DeviceType = string;
 
-// Unified device statuses
+// Make DeviceStatus a string literal union type but also allow string to support dynamic values
 export type DeviceStatus = string;
 
 export interface EnergyDevice {
@@ -138,7 +138,7 @@ export interface EnergyForecast {
   source?: string;
 }
 
-// Add Alert interface that was missing
+// Add Alert interface
 export interface Alert {
   id: string;
   title: string;
@@ -159,4 +159,31 @@ export interface Alert {
   assignedTo?: string;
   category?: string;
   metadata?: Record<string, any>;
+}
+
+// Add DeviceModel interface
+export interface DeviceModel {
+  id: string;
+  name: string;
+  manufacturer: string;
+  model_number: string;
+  device_type: string;
+  category?: string;
+  description?: string;
+  power_rating?: number;
+  capacity?: number;
+  specifications?: Record<string, any>;
+  release_date?: string;
+  firmware_version?: string;
+  firmware_versions?: string[];
+  protocol: string;
+  support_level: 'none' | 'full' | 'partial' | 'beta';
+  images?: string[];
+  has_manual?: boolean;
+  has_datasheet?: boolean;
+  has_video?: boolean;
+  datasheets?: string[];
+  certifications?: string[];
+  connectivity?: any;
+  warranty?: string;
 }

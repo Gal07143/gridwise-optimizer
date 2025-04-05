@@ -47,3 +47,21 @@ export interface SiteSelectorProps {
   setActiveSite: (site: Site) => void;
   currentSiteId?: string;
 }
+
+// Add the missing SiteFormData interface
+export interface SiteFormData {
+  name: string;
+  location: string;
+  timezone: string;
+  type: string;
+  status: string;
+  description?: string;
+  lat?: number;
+  lng?: number;
+}
+
+// Export DateRange from site.ts since it's imported from here
+export interface DateRange {
+  from: Date;
+  to: Date;
+}

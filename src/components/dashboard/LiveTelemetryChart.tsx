@@ -1,185 +1,192 @@
-
-import React, { useEffect, useState } from 'react';
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  ReferenceLine,
-} from 'recharts';
-import { format } from 'date-fns';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import { Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { EnergyReading } from '@/types/energy';
 
-interface LiveTelemetryChartProps {
-  deviceId: string;
-  metric?: string;
-  unit?: string;
-  height?: number;
-  showCard?: boolean;
-  title?: string;
+export interface TelemetryMetric {
+  name: string;
+  unit: string;
+  color: string;
+  valueFormatter?: (value: number) => string;
 }
 
-interface TelemetryData {
+export interface LiveTelemetryChartProps {
+  deviceId: string;
+  title?: string;
+  height?: number;
+  metric?: TelemetryMetric;
+  className?: string;
+  refreshInterval?: number;
+}
+
+export interface TelemetryData {
   timestamp: string;
   value: number;
-  formattedTime?: string;
-  readings?: any[];
+  readings?: EnergyReading[];
   latestValue?: number;
-  [key: string]: any; // Allow for dynamic properties
 }
+
+const formatTimestamp = (timestamp: string): string => {
+  const date = new Date(timestamp);
+  return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+};
 
 const LiveTelemetryChart: React.FC<LiveTelemetryChartProps> = ({
   deviceId,
-  metric = 'power',
-  unit = 'W',
+  title = 'Live Power',
   height = 300,
-  showCard = false,
-  title,
+  metric = {
+    name: 'power',
+    unit: 'W',
+    color: '#10b981',
+    valueFormatter: (value: number) => `${value.toFixed(1)} W`
+  },
+  className,
+  refreshInterval = 5000
 }) => {
   const [data, setData] = useState<TelemetryData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-  const [latestValue, setLatestValue] = useState<number | null>(null);
-
-  useEffect(() => {
-    // Mock function to simulate telemetry data
-    const fetchTelemetryData = async () => {
-      try {
-        setLoading(true);
-        // Simulate API call delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // Generate mock data
-        const now = new Date();
-        const mockData: TelemetryData[] = [];
-        
-        for (let i = 12; i >= 0; i--) {
-          const timestamp = new Date(now.getTime() - i * 5 * 60000); // 5 minutes intervals
-          mockData.push({
-            timestamp: timestamp.toISOString(),
-            formattedTime: format(timestamp, 'HH:mm'),
-            value: Math.floor(Math.random() * 1000) + 500, // Random value between 500-1500
-          });
-        }
-        
-        setData(mockData);
-        setLatestValue(mockData[mockData.length - 1].value);
-        setLoading(false);
-      } catch (err: any) {
-        console.error('Error fetching telemetry data:', err);
-        setError(err instanceof Error ? err : new Error('Failed to fetch telemetry data'));
-        setLoading(false);
-      }
-    };
-    
-    fetchTelemetryData();
-    
-    // Set up polling interval
-    const intervalId = setInterval(fetchTelemetryData, 60000); // Update every minute
-    
-    return () => clearInterval(intervalId);
-  }, [deviceId, metric]);
-
-  const renderChart = () => {
-    if (loading) {
-      return (
-        <div className="flex items-center justify-center h-full">
-          <Skeleton className="h-[200px] w-full" />
-        </div>
-      );
+  const [error, setError] = useState<string | null>(null);
+  
+  const fetchTelemetry = async () => {
+    try {
+      const mockData = Array.from({ length: 10 }).map((_, i) => ({
+        timestamp: new Date(Date.now() - (9 - i) * 30000).toISOString(),
+        value: Math.random() * 1000 + 500
+      }));
+      
+      setData(prev => {
+        const newData = [...prev, ...mockData];
+        return newData.slice(-20);
+      });
+      
+      setLoading(false);
+    } catch (err) {
+      console.error('Error fetching telemetry data:', err);
+      setError('Failed to fetch telemetry data');
+      setLoading(false);
     }
-    
-    if (error) {
-      return (
-        <div className="flex items-center justify-center h-full">
-          <p className="text-red-500">Error loading telemetry data: {error.message}</p>
-        </div>
-      );
-    }
-    
-    if (!data || data.length === 0) {
-      return (
-        <div className="flex items-center justify-center h-full">
-          <p className="text-muted-foreground">No telemetry data available</p>
-        </div>
-      );
-    }
-    
-    // Access readings and latestValue safely using optional chaining
-    const chartData = data.map(item => ({
-      ...item,
-      readings: item.readings || [],
-      latestValue: item.latestValue || item.value
-    }));
-    
-    return (
-      <ResponsiveContainer width="100%" height={height}>
-        <LineChart
-          data={chartData}
-          margin={{
-            top: 10,
-            right: 30,
-            left: 0,
-            bottom: 0,
-          }}
-        >
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis 
-            dataKey="formattedTime" 
-            tick={{ fontSize: 12 }}
-          />
-          <YAxis
-            width={40}
-            tick={{ fontSize: 12 }}
-            tickFormatter={(value) => `${value}`}
-            domain={['auto', 'auto']}
-          />
-          <Tooltip
-            formatter={(value: any) => [`${value} ${unit}`, metric]}
-            labelFormatter={(label) => `Time: ${label}`}
-          />
-          <ReferenceLine y={0} stroke="#666" />
-          <Line
-            type="monotone"
-            dataKey="value"
-            stroke="#2563eb"
-            strokeWidth={2}
-            dot={{ stroke: '#2563eb', strokeWidth: 1, fill: '#2563eb', r: 3 }}
-            activeDot={{ r: 5, stroke: '#2563eb', strokeWidth: 1, fill: '#2563eb' }}
-            isAnimationActive={false}
-          />
-        </LineChart>
-      </ResponsiveContainer>
-    );
   };
 
-  const chartContent = renderChart();
-  
-  if (showCard) {
+  useEffect(() => {
+    fetchTelemetry();
+    
+    const intervalId = setInterval(() => {
+      fetchTelemetry();
+    }, refreshInterval);
+    
+    return () => clearInterval(intervalId);
+  }, [deviceId, refreshInterval]);
+
+  const latestValue = useMemo(() => {
+    if (data.length === 0) return null;
+    
+    if (data[data.length - 1].readings) {
+      return data[data.length - 1].readings?.[0]?.value;
+    }
+    
+    if (data[data.length - 1].latestValue !== undefined) {
+      return data[data.length - 1].latestValue;
+    }
+    
+    return data[data.length - 1].value;
+  }, [data]);
+
+  if (loading && data.length === 0) {
     return (
-      <Card className="w-full h-full">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">{title || `${metric.charAt(0).toUpperCase() + metric.slice(1)} Telemetry`}</CardTitle>
+      <Card className={cn("overflow-hidden", className)}>
+        <CardHeader>
+          <CardTitle>{title}</CardTitle>
         </CardHeader>
-        <CardContent>
-          {latestValue !== null && (
-            <div className="mb-4">
-              <span className="text-2xl font-bold">
-                {latestValue} {unit}
-              </span>
-            </div>
-          )}
-          {chartContent}
+        <CardContent className="flex items-center justify-center" style={{ height }}>
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </CardContent>
       </Card>
     );
   }
-  
-  return chartContent;
+
+  if (error && data.length === 0) {
+    return (
+      <Card className={cn("overflow-hidden", className)}>
+        <CardHeader>
+          <CardTitle>{title}</CardTitle>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center" style={{ height }}>
+          <div className="text-center text-muted-foreground">
+            <p>Failed to load telemetry data</p>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="mt-2"
+              onClick={() => {
+                setLoading(true);
+                setError(null);
+                fetchTelemetry();
+              }}
+            >
+              Retry
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className={cn("overflow-hidden", className)}>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle>{title}</CardTitle>
+        {latestValue !== null && (
+          <div className="flex items-center text-lg font-bold">
+            {typeof metric.valueFormatter === 'function' 
+              ? metric.valueFormatter(latestValue) 
+              : `${latestValue} ${metric.unit}`}
+            {loading && <Loader2 className="h-4 w-4 animate-spin ml-2" />}
+          </div>
+        )}
+      </CardHeader>
+      <CardContent className="p-0">
+        <div style={{ height }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart
+              data={data}
+              margin={{ top: 5, right: 10, left: 10, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(100,100,100,0.1)" />
+              <XAxis 
+                dataKey="timestamp" 
+                tick={{ fontSize: 12 }} 
+                tickFormatter={formatTimestamp}
+              />
+              <YAxis 
+                tick={{ fontSize: 12 }} 
+                domain={['auto', 'auto']}
+                tickFormatter={(value) => `${value} ${metric.unit}`}
+              />
+              <Tooltip 
+                formatter={(value) => [
+                  `${value} ${metric.unit}`, 
+                  metric.name
+                ]} 
+                labelFormatter={(label) => formatTimestamp(label as string)}
+              />
+              <Line
+                type="monotone"
+                dataKey="value"
+                stroke={metric.color}
+                strokeWidth={2}
+                dot={false}
+                activeDot={{ r: 4 }}
+                isAnimationActive={false}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </CardContent>
+    </Card>
+  );
 };
 
 export default LiveTelemetryChart;

@@ -20,6 +20,7 @@ export interface ModbusDevice extends ModbusDeviceConfig {
   baudRate?: number;
   host?: string;
   description?: string;
+  protocol: string;
 }
 
 export interface ModbusRegister {
