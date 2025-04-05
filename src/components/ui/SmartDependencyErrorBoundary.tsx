@@ -1,4 +1,3 @@
-
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw, Download } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -95,7 +94,7 @@ class SmartDependencyErrorBoundary extends Component<Props, State> {
     // If it's a dependency error, show the dialog
     if (this.state.isDependencyError) {
       this.setState({ dialogOpen: true });
-      handleDependencyError(error);
+      handleDependencyError(error, this.props.packageName || 'unknown-package');
     }
   }
   
