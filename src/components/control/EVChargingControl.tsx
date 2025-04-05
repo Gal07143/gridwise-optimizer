@@ -1,4 +1,3 @@
-
 // components/control/EVChargingControl.tsx
 import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
@@ -200,22 +199,28 @@ const EVChargingControl = () => {
       </CardContent>
       
       <CardFooter className="flex gap-2 justify-between">
-        <Button 
-          onClick={() => mutation.mutate('start')} 
-          disabled={isLoading || mutation.isLoading || chargerState?.status === 'charging'}
-          className="flex-1"
-        >
-          Start Charging
-        </Button>
-        
-        <Button 
-          onClick={() => mutation.mutate('stop')} 
-          variant="outline" 
-          disabled={isLoading || mutation.isLoading || chargerState?.status !== 'charging'}
-          className="flex-1"
-        >
-          Stop Charging
-        </Button>
+<Button 
+  variant="default"
+  size="sm" 
+  disabled={startCharging.isPending} // changed from isLoading to isPending
+  onClick={handleStartCharge}
+  className="w-full"
+>
+  {startCharging.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
+  Start Charging
+</Button>
+
+// Around line 214
+<Button 
+  variant="secondary"
+  size="sm" 
+  disabled={stopCharging.isPending} // changed from isLoading to isPending
+  onClick={handleStopCharge}
+  className="w-full"
+>
+  {stopCharging.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <StopCircle className="mr-2 h-4 w-4" />}
+  Stop Charging
+</Button>
       </CardFooter>
     </Card>
   );
