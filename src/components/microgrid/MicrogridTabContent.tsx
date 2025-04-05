@@ -19,23 +19,25 @@ const MicrogridTabContent = () => {
   
   // Sample alerts data
   const alerts = [
-    {
-      id: '1',
-      timestamp: new Date().toISOString(),
-      message: 'Battery SoC below threshold',
-      severity: 'high',
-      source: 'battery-01',
-      acknowledged: false
-    },
-    {
-      id: '2',
-      timestamp: new Date(Date.now() - 3600000).toISOString(),
-      message: 'Grid connection unstable',
-      severity: 'medium',
-      source: 'grid-connection',
-      acknowledged: false
-    }
-  ];
+  {
+    id: '1',
+    timestamp: new Date().toISOString(),
+    title: 'Battery Alert',
+    message: 'Battery SoC below threshold',
+    severity: 'high',
+    source: 'battery-01',
+    acknowledged: false
+  },
+  {
+    id: '2',
+    timestamp: new Date(Date.now() - 3600000).toISOString(),
+    title: 'Grid Alert',
+    message: 'Grid connection unstable',
+    severity: 'medium',
+    source: 'grid-connection',
+    acknowledged: false
+  }
+];
   
   const handleAcknowledge = (id: string) => {
     console.log(`Alert ${id} acknowledged`);
@@ -128,5 +130,22 @@ const MicrogridTabContent = () => {
     </AnimatePresence>
   );
 };
-
+<CommandHistory commandHistory={[
+  {
+    id: '1',
+    timestamp: new Date().toISOString(),
+    command: 'SET_MODE_ECO',
+    success: true,
+    user: 'System',
+    details: 'Auto-switched to eco mode based on time settings'
+  },
+  {
+    id: '2',
+    timestamp: new Date(Date.now() - 1800000).toISOString(),
+    command: 'CHARGE_BATTERY',
+    success: true,
+    user: 'Operator',
+    details: 'Manual override to charge battery'
+  }
+]} />
 export default MicrogridTabContent;
