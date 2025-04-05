@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Site } from '@/types/energy';
+import { Site } from '@/types/site';
 import { MapPin, Calendar, Globe, Building2 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -36,7 +36,7 @@ const SiteDetails: React.FC<SiteDetailsProps> = ({ site }) => {
               <Globe className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm font-medium">Timezone:</span>
             </div>
-            <p className="text-sm pl-6">{site.timezone}</p>
+            <p className="text-sm pl-6">{site.timezone || "Not specified"}</p>
           </div>
           
           <div className="space-y-2">
@@ -71,6 +71,13 @@ const SiteDetails: React.FC<SiteDetailsProps> = ({ site }) => {
             <p className="text-sm">{site.contact_person}</p>
             {site.contact_phone && <p className="text-sm">{site.contact_phone}</p>}
             {site.contact_email && <p className="text-sm">{site.contact_email}</p>}
+          </div>
+        )}
+
+        {site.status && (
+          <div className="mt-4">
+            <h4 className="text-sm font-medium mb-1">Status</h4>
+            <p className="text-sm">{site.status}</p>
           </div>
         )}
       </CardContent>
