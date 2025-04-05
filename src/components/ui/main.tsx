@@ -1,14 +1,14 @@
-
 import React from 'react';
 import { cn } from '@/lib/utils';
 
 export interface MainProps extends React.HTMLAttributes<HTMLDivElement> {
   title?: string;
   description?: string;
+  containerSize?: string;
 }
 
 export const Main = React.forwardRef<HTMLDivElement, MainProps>(
-  ({ className, children, title, description, ...props }, ref) => {
+  ({ className, children, title, description, containerSize = 'default', ...props }, ref) => {
     return (
       <main
         ref={ref}
