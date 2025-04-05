@@ -1,7 +1,8 @@
+
 import React from 'react';
 import { cn } from '@/lib/utils';
 
-export interface DashboardCardProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'title'> {
+export interface DashboardCardProps {
   title?: React.ReactNode;
   icon?: React.ReactNode;
   variant?: 'default' | 'outline' | 'glass' | 'filled';
@@ -17,7 +18,7 @@ export interface DashboardCardProps extends Omit<React.HTMLAttributes<HTMLDivEle
   children: React.ReactNode;
 }
 
-const DashboardCard: React.FC<DashboardCardProps> = ({
+export const DashboardCard: React.FC<DashboardCardProps> = ({
   title,
   icon,
   variant = 'default',

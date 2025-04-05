@@ -1,14 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { Zap, Battery, Sun, Wind, Activity } from 'lucide-react';
-import MetricsCard from '@/components/dashboard/MetricsCard';
-import TariffCard from './TariffCard';
-import TariffHistoryCard from './TariffHistoryCard';
+import React from 'react';
+import { Grid, Zap, Home, Activity, Cloud, BarChart2, TrendingUp, TrendingDown } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import ModbusCard from './ModbusCard';
-import DeviceManagement from './DeviceManagement';
-import FaultSummaryCard from './FaultSummaryCard';
-import LiveTelemetryChart from './LiveTelemetryChart';
-import AlertSummaryCard from './AlertSummaryCard';
-import { Fault } from '@/types/fault';
 
 // Mock telemetry data
 const mockTelemetry = {
@@ -166,7 +159,11 @@ const DashboardSummary = () => {
 
       {/* Modbus / Quality */}
       <div className="space-y-4 mb-8">
-        <ModbusCard />
+        <ModbusCard 
+          title="Real-time Voltage" 
+          value="220" 
+          unit="V" 
+        />
       </div>
 
       {/* Tariff Cards */}

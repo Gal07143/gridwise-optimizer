@@ -4,7 +4,7 @@ import Header from './Header';
 import Sidebar from './Sidebar';
 import { cn } from '@/lib/utils';
 import { useMediaQuery } from '@/hooks/use-mobile';
-import { useAppStore } from '@/store/appStore';
+import { useAppStore } from '@/store/appStore.ts';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface AppLayoutProps {

@@ -6,6 +6,7 @@ import { AuthProvider } from './AuthProvider';
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
+  isAuthenticated: false,
   signIn: async () => {},
   signUp: async () => {},
   signOut: async () => {},

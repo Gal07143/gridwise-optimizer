@@ -11,7 +11,7 @@ import DashboardCharts from '@/components/dashboard/DashboardCharts';
 import EnergyManagementDashboard from '@/components/ems/EnergyManagementDashboard';
 import AppLayout from '@/components/layout/AppLayout';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAppStore } from '@/store/appStore';
+import { useAppStore } from '@/store/appStore.ts';
 
 // Dashboard tabs
 const tabs = [
@@ -111,11 +111,11 @@ const Dashboard: React.FC = () => {
                 >
                   <DashboardSummary />
                   <DashboardCharts 
-  timeRange="24h" 
-  date={new Date()} 
-  onTimeRangeChange={(range) => console.log('Time range changed:', range)} 
-  onDateChange={(date) => console.log('Date changed:', date)}
-/>
+                    timeRange="24h" 
+                    date={new Date()} 
+                    onTimeRangeChange={(range) => console.log('Time range changed:', range)} 
+                    onDateChange={(date) => console.log('Date changed:', date)}
+                  />
                 </motion.div>
               </TabsContent>
               
