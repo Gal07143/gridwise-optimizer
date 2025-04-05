@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -821,15 +822,5 @@ const DeviceDetails = () => {
     </AppLayout>
   );
 };
- return (
-    <AppLayout>
-      <div className="container mx-auto p-4">
-        <h1 className="text-2xl font-bold">Device Details Page</h1>
-        {/* Placeholder or full component implementation can follow */}
-      </div>
-    </AppLayout>
-  );
-};
 
-export default DeviceDetails;
 export default DeviceDetails;
