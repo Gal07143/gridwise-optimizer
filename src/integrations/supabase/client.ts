@@ -5,6 +5,7 @@ export const supabase = {
     insert: (data: any) => ({ 
       select: () => ({
         single: () => Promise.resolve({ data: null, error: null }),
+        maybeSingle: () => Promise.resolve({ data: null, error: null }),
         then: (cb: Function) => cb({ data: null, error: null }),
       }),
       then: (cb: Function) => cb({ data: null, error: null }),
@@ -52,8 +53,14 @@ export const supabase = {
         }),
         then: (cb: Function) => cb({ data: [], error: null }),
       }),
-      range: (start: number, end: number) => Promise.resolve({ data: [], error: null }),
-      distinct: (column: string) => Promise.resolve({ data: [], error: null }),
+      range: (start: number, end: number) => ({
+        eq: (column: string, value: any) => Promise.resolve({ data: [], error: null }),
+        then: (cb: Function) => cb({ data: [], error: null }),
+      }),
+      distinct: (column: string) => ({
+        eq: (column: string, value: any) => Promise.resolve({ data: [], error: null }),
+        then: (cb: Function) => cb({ data: [], error: null }),
+      }),
       then: (cb: Function) => cb({ data: [], error: null }),
     }),
     update: (data: any) => ({ 
@@ -69,6 +76,10 @@ export const supabase = {
       eq: (column: string, value: any) => Promise.resolve({ data: null, error: null }),
     }),
     upsert: (data: any) => Promise.resolve({ data: null, error: null }),
+    count: () => ({
+      eq: (column: string, value: any) => Promise.resolve({ count: 0, error: null }),
+      then: (cb: Function) => cb({ count: 0, error: null }),
+    }),
   }),
   channel: (name: string) => ({
     on: (event: string, filter: any, callback: Function) => ({
@@ -96,26 +107,22 @@ export const supabase = {
 export const asyncSupabase = {
   from: (table: string) => ({
     select: async (columns: string = '*') => {
-      const result = await supabase.from(table).select(columns);
-      return result;
+      return supabase.from(table).select(columns);
     },
     insert: async (data: any) => {
-      const result = await supabase.from(table).insert(data);
-      return result;
+      return supabase.from(table).insert(data);
     },
     update: async (data: any) => {
       return {
         eq: async (column: string, value: any) => {
-          const result = await supabase.from(table).update(data).eq(column, value);
-          return result;
+          return supabase.from(table).update(data).eq(column, value);
         }
       };
     },
     delete: async () => {
       return {
         eq: async (column: string, value: any) => {
-          const result = await supabase.from(table).delete().eq(column, value);
-          return result;
+          return supabase.from(table).delete().eq(column, value);
         }
       };
     }

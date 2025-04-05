@@ -1,6 +1,7 @@
+
 import React, { useEffect } from 'react';
 import { toast } from 'sonner';
-import { subscribeToTable, unsubscribeFromTable } from '@/services/supabaseRealtimeService';
+import { subscribeToTable } from '@/services/supabaseRealtimeService';
 import { AlertItem } from '@/components/microgrid/types';
 import { useAuth } from '@/contexts/auth/AuthContext';
 

@@ -19,7 +19,6 @@ export interface DeviceModel {
   has_datasheet?: boolean;
   has_video?: boolean;
   datasheets?: string[];
-  // Add missing properties
   firmware_versions?: string[];
 }
 

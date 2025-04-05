@@ -1,46 +1,16 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
-import { toast } from 'sonner';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { Loader2, Play, Pause, Link2, Link2Off } from 'lucide-react';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import useModbusData from '@/hooks/useModbusData';
+import { AlertCircle, RefreshCw } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import useConnectionStatus from '@/hooks/useConnectionStatus';
-import {
-  ModbusDevice,
-  ModbusRegister
-} from '@/types/modbus';
 import { getModbusDeviceById } from '@/services/modbus/modbusDeviceService';
 import { getModbusRegistersByDeviceId } from '@/services/modbus/modbusRegisterService';
+import { ModbusDevice, ModbusRegister } from '@/types/modbus';
 
 interface ModbusMonitorProps {
   deviceId: string;
@@ -49,241 +19,223 @@ interface ModbusMonitorProps {
 const ModbusMonitor: React.FC<ModbusMonitorProps> = ({ deviceId }) => {
   const [device, setDevice] = useState<ModbusDevice | null>(null);
   const [registers, setRegisters] = useState<ModbusRegister[]>([]);
-  const [selectedRegister, setSelectedRegister] = useState<number | null>(null);
-  const [registerValue, setRegisterValue] = useState<number | null>(null);
-  const [isPolling, setIsPolling] = useState<boolean>(false);
-  const [pollingInterval, setPollingInterval] = useState<number>(1000);
+  const [selectedRegister, setSelectedRegister] = useState<ModbusRegister | null>(null);
+  const [regValues, setRegValues] = useState<Record<string, any>>({});
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isOnline, setIsOnline] = useState<boolean>(false);
   
-  // Use our hook to get the connection status
-  const connection = useConnectionStatus();
-
-  // Handle connection
-  const handleConnect = async () => {
-    if (!device) return;
-    
-    try {
-      setError(null);
-      // In a real implementation, this would connect to the Modbus device
-      // For now, let's simulate a successful connection
-      setIsOnline(true);
-      toast.success(`Connected to ${device.name}`);
-    } catch (err) {
-      console.error('Connection error:', err);
-      setError(`Failed to connect: ${err instanceof Error ? err.message : String(err)}`);
-      toast.error(`Connection failed: ${err instanceof Error ? err.message : String(err)}`);
-    }
-  };
+  const connectionStatus = useConnectionStatus(deviceId);
+  const modbusData = useModbusData({
+    deviceId,
+    register: selectedRegister?.register_address || 0
+  });
   
-  // Handle disconnect
-  const handleDisconnect = async () => {
-    try {
-      // In a real implementation, this would disconnect from the Modbus device
-      setIsPolling(false);
-      setIsOnline(false);
-      toast.info(`Disconnected from ${device?.name || 'device'}`);
-    } catch (err) {
-      console.error('Disconnect error:', err);
-      toast.error(`Disconnect failed: ${err instanceof Error ? err.message : String(err)}`);
-    }
-  };
-
-  const fetchDevice = useCallback(async () => {
-    try {
-      setError(null);
-      const fetchedDevice = await getModbusDeviceById(deviceId);
-      if (fetchedDevice) {
-        setDevice(fetchedDevice);
-      } else {
-        setError('Device not found');
-        toast.error('Device not found');
-      }
-    } catch (err) {
-      console.error('Error fetching device:', err);
-      setError(`Failed to fetch device: ${err instanceof Error ? err.message : String(err)}`);
-      toast.error(`Failed to fetch device: ${err instanceof Error ? err.message : String(err)}`);
-    }
-  }, [deviceId]);
-
-  const fetchRegisters = useCallback(async () => {
-    if (!deviceId) return;
-    try {
-      setError(null);
-      const fetchedRegisters = await getModbusRegistersByDeviceId(deviceId);
-      setRegisters(fetchedRegisters);
-    } catch (err) {
-      console.error('Error fetching registers:', err);
-      setError(`Failed to fetch registers: ${err instanceof Error ? err.message : String(err)}`);
-      toast.error(`Failed to fetch registers: ${err instanceof Error ? err.message : String(err)}`);
-    }
-  }, [deviceId]);
-
+  // Fetch device and register information
   useEffect(() => {
-    fetchDevice();
-    fetchRegisters();
-  }, [fetchDevice, fetchRegisters]);
-
-  useEffect(() => {
-    let intervalId: NodeJS.Timeout | null = null;
-
-    if (isPolling && device) {
-      intervalId = setInterval(() => {
-        // In a real implementation, this would read the register value from the Modbus device
-        // For now, let's simulate a random value
-        if (selectedRegister !== null) {
-          setRegisterValue(Math.floor(Math.random() * 100));
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const deviceData = await getModbusDeviceById(deviceId);
+        if (!deviceData) {
+          throw new Error('Device not found');
         }
-      }, pollingInterval);
-    }
-
-    return () => {
-      if (intervalId) {
-        clearInterval(intervalId);
+        setDevice(deviceData);
+        
+        const registerData = await getModbusRegistersByDeviceId(deviceId);
+        setRegisters(registerData);
+        
+        if (registerData.length > 0) {
+          setSelectedRegister(registerData[0]);
+        }
+      } catch (err) {
+        console.error('Error loading Modbus monitor data:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load device data');
+      } finally {
+        setLoading(false);
       }
     };
-  }, [isPolling, pollingInterval, selectedRegister, device]);
-
-  const handleRegisterSelect = (registerAddress: number) => {
-    setSelectedRegister(registerAddress);
-    // In a real implementation, this would read the register value from the Modbus device
-    // For now, let's simulate a random value
-    setRegisterValue(Math.floor(Math.random() * 100));
+    
+    fetchData();
+  }, [deviceId]);
+  
+  const handleRefreshData = () => {
+    if (selectedRegister) {
+      modbusData.refetch();
+    }
   };
-
-  const handlePollingToggle = () => {
-    setIsPolling(!isPolling);
+  
+  const handleSelectRegister = (register: ModbusRegister) => {
+    setSelectedRegister(register);
   };
-
-  const handleIntervalChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const newInterval = parseInt(event.target.value, 10);
-    setPollingInterval(newInterval);
-  };
-
-  if (!device) {
+  
+  if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Modbus Device Monitor</CardTitle>
-          <CardDescription>Monitoring and controlling Modbus device registers</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {error ? (
-            <div className="text-red-500">{error}</div>
-          ) : (
-            <div>Loading device...</div>
-          )}
+      <Card className="w-full">
+        <CardContent className="py-10">
+          <div className="flex justify-center items-center">
+            <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
+            <span className="ml-2">Loading Modbus device...</span>
+          </div>
         </CardContent>
       </Card>
     );
   }
-
+  
+  if (error || !device) {
+    return (
+      <Card className="w-full border-destructive/20">
+        <CardContent className="py-10">
+          <div className="flex justify-center items-center text-destructive">
+            <AlertCircle className="h-6 w-6 mr-2" />
+            <span>{error || 'Device not found'}</span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+  
   return (
-    <Card>
+    <Card className="w-full">
       <CardHeader>
-        <CardTitle>Modbus Device Monitor</CardTitle>
-        <CardDescription>Monitoring and controlling Modbus device registers</CardDescription>
+        <div className="flex justify-between items-center">
+          <div>
+            <CardTitle>Modbus Monitor: {device.name}</CardTitle>
+            <CardDescription>IP: {device.ip}:{device.port} - Unit ID: {device.unit_id}</CardDescription>
+          </div>
+          <div>
+            <Badge variant={connectionStatus.isConnected ? "success" : "destructive"}>
+              {connectionStatus.isConnected ? 'Connected' : 'Disconnected'}
+            </Badge>
+          </div>
+        </div>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex items-center space-x-4">
-          <h3 className="text-lg font-semibold">{device.name}</h3>
-          <Badge variant={isOnline ? "outline" : "destructive"}>
-            {isOnline ? "Connected" : "Disconnected"}
-          </Badge>
-          {isOnline ? (
-            <Button variant="outline" size="sm" onClick={handleDisconnect}>
-              <Link2Off className="h-4 w-4 mr-2" />
-              Disconnect
-            </Button>
-          ) : (
-            <Button variant="outline" size="sm" onClick={handleConnect}>
-              <Link2 className="h-4 w-4 mr-2" />
-              Connect
-            </Button>
-          )}
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="pollingInterval">Polling Interval (ms)</Label>
-            <div className="flex items-center space-x-2">
-              <Input
-                type="number"
-                id="pollingInterval"
-                value={pollingInterval}
-                onChange={handleIntervalChange}
-                disabled={!isOnline}
-              />
-              <Switch
-                id="isPolling"
-                checked={isPolling}
-                onCheckedChange={handlePollingToggle}
-                disabled={!isOnline}
-              />
-              <Label htmlFor="isPolling" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                {isPolling ? <Pause className="h-4 w-4 mr-2" /> : <Play className="h-4 w-4 mr-2" />}
-                {isPolling ? "Stop Polling" : "Start Polling"}
-              </Label>
-            </div>
-          </div>
-          <div>
-            <Label htmlFor="selectedRegister">Select Register</Label>
-            <Select onValueChange={(value) => handleRegisterSelect(parseInt(value, 10))}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select a register" />
-              </SelectTrigger>
-              <SelectContent>
-                {registers.map((register) => (
-                  <SelectItem key={register.id} value={register.register_address.toString()}>
-                    {register.register_name} (Address: {register.register_address})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        {selectedRegister !== null && (
-          <div>
-            <h4 className="text-sm font-medium">
-              Value for Register {selectedRegister}:
-            </h4>
-            <p className="text-2xl font-bold">
-              {registerValue !== null ? registerValue : "N/A"}
-            </p>
-          </div>
-        )}
-        <div>
-          <h4 className="text-sm font-medium">Available Registers:</h4>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Address</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Length</TableHead>
-                  <TableHead>Scale</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {registers.map((register) => (
-                  <TableRow key={register.id}>
-                    <TableCell>{register.register_address}</TableCell>
-                    <TableCell>{register.register_name}</TableCell>
-                    <TableCell>{register.register_length}</TableCell>
-                    <TableCell>{register.scaling_factor}</TableCell>
-                  </TableRow>
-                ))}
-                {registers.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
-                      No registers found. Add registers to monitor this device.
-                    </TableCell>
-                  </TableRow>
+      <CardContent>
+        <Tabs defaultValue="registers">
+          <TabsList className="mb-4">
+            <TabsTrigger value="registers">Registers</TabsTrigger>
+            <TabsTrigger value="realtime">Real-time Data</TabsTrigger>
+            <TabsTrigger value="config">Configuration</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="registers">
+            <div className="grid md:grid-cols-5 gap-4">
+              <div className="md:col-span-2 border rounded-md overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Address</TableHead>
+                      <TableHead>Name</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {registers.map(register => (
+                      <TableRow 
+                        key={register.id}
+                        className={selectedRegister?.id === register.id ? 'bg-muted' : ''}
+                        onClick={() => handleSelectRegister(register)}
+                      >
+                        <TableCell>{register.register_address}</TableCell>
+                        <TableCell>{register.register_name}</TableCell>
+                      </TableRow>
+                    ))}
+                    {registers.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={2} className="h-24 text-center">
+                          No registers configured
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+              
+              <div className="md:col-span-3 border rounded-md p-4">
+                {selectedRegister ? (
+                  <div>
+                    <h3 className="font-medium text-lg mb-4">{selectedRegister.register_name}</h3>
+                    <div className="space-y-4">
+                      <div>
+                        <p className="text-muted-foreground text-sm">Register Address</p>
+                        <p className="font-mono">{selectedRegister.register_address}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground text-sm">Length</p>
+                        <p className="font-mono">{selectedRegister.register_length}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground text-sm">Scaling Factor</p>
+                        <p className="font-mono">{selectedRegister.scaling_factor}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground text-sm">Current Value</p>
+                        <div className="flex items-center">
+                          <p className="font-mono text-xl">{modbusData.isLoading ? '...' : modbusData.value}</p>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="ml-2" 
+                            onClick={handleRefreshData}
+                            disabled={modbusData.isLoading}
+                          >
+                            <RefreshCw className={`h-4 w-4 ${modbusData.isLoading ? 'animate-spin' : ''}`} />
+                          </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Last updated: {modbusData.lastReadTime?.toLocaleTimeString()}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="h-full flex items-center justify-center">
+                    <p className="text-muted-foreground">Select a register to view details</p>
+                  </div>
                 )}
-              </TableBody>
-            </Table>
-          </div>
-        </div>
+              </div>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="realtime">
+            <div className="text-center py-10">
+              <p className="text-muted-foreground">Real-time monitoring features coming soon</p>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="config">
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-lg font-medium">Connection Settings</h3>
+                <div className="grid md:grid-cols-2 gap-4 mt-2">
+                  <div className="space-y-1">
+                    <p className="text-muted-foreground text-sm">Protocol</p>
+                    <p>{device.protocol}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-muted-foreground text-sm">IP Address</p>
+                    <p>{device.ip}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-muted-foreground text-sm">Port</p>
+                    <p>{device.port}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-muted-foreground text-sm">Unit ID</p>
+                    <p>{device.unit_id}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </CardContent>
+      <CardFooter>
+        <div className="w-full flex justify-end">
+          <Button variant="outline" onClick={() => connectionStatus.retryConnection?.()}>
+            Reconnect
+          </Button>
+        </div>
+      </CardFooter>
     </Card>
   );
 };

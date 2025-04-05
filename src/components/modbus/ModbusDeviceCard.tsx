@@ -1,165 +1,118 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { 
-  ServerIcon, 
-  PlugZap, 
-  AlertTriangle, 
-  Clock, 
-  CheckCircle2, 
-  XCircle, 
-  ChevronRight,
-  Settings 
-} from 'lucide-react';
-import { ModbusDeviceConfig } from '@/types/modbus';
-import { formatDistanceToNow } from 'date-fns';
+import { Badge } from '@/components/ui/badge';
+import { Settings, Trash2, WifiOff, Cable, ServerIcon } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ModbusDevice } from '@/types/modbus';
+import useConnectionStatus from '@/hooks/useConnectionStatus'; 
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { toast } from 'sonner';
+import { deleteModbusDevice } from '@/services/modbus/modbusDeviceService';
 
 interface ModbusDeviceCardProps {
-  device: ModbusDeviceConfig;
-  onClick?: () => void;
+  device: ModbusDevice;
+  onDeleted?: () => void;
 }
 
-const ModbusDeviceCard: React.FC<ModbusDeviceCardProps> = ({ device, onClick }) => {
-  const navigate = useNavigate();
+const ModbusDeviceCard: React.FC<ModbusDeviceCardProps> = ({ device, onDeleted }) => {
+  const { isConnected, error } = useConnectionStatus(device.id);
+  const [isDeleting, setIsDeleting] = useState(false);
   
-  const getStatusBadge = () => {
-    switch (device.status) {
-      case 'online':
-        return (
-          <Badge variant="success" className="ml-2">
-            <CheckCircle2 className="w-3 h-3 mr-1" />
-            Online
-          </Badge>
-        );
-      case 'offline':
-        return (
-          <Badge variant="secondary" className="ml-2">
-            <XCircle className="w-3 h-3 mr-1" />
-            Offline
-          </Badge>
-        );
-      case 'error':
-        return (
-          <Badge variant="destructive" className="ml-2">
-            <AlertTriangle className="w-3 h-3 mr-1" />
-            Error
-          </Badge>
-        );
-      case 'connecting':
-        return (
-          <Badge variant="outline" className="ml-2">
-            <span className="animate-pulse mr-1">⚡</span>
-            Connecting
-          </Badge>
-        );
-      default:
-        return (
-          <Badge variant="outline" className="ml-2">
-            <Clock className="w-3 h-3 mr-1" />
-            Unknown
-          </Badge>
-        );
+  const handleDelete = async () => {
+    try {
+      setIsDeleting(true);
+      await deleteModbusDevice(device.id);
+      toast.success(`Device "${device.name}" deleted successfully`);
+      if (onDeleted) {
+        onDeleted();
+      }
+    } catch (error) {
+      console.error('Error deleting Modbus device:', error);
+      toast.error('Failed to delete Modbus device');
+    } finally {
+      setIsDeleting(false);
     }
   };
-
-  const getProtocolBadge = () => {
-    switch (device.protocol) {
-      case 'TCP':
-        return <Badge variant="outline">Modbus TCP</Badge>;
-      case 'RTU':
-        return <Badge variant="outline">Modbus RTU</Badge>;
-      case 'ASCII':
-        return <Badge variant="outline">Modbus ASCII</Badge>;
-      default:
-        return <Badge variant="outline">Unknown</Badge>;
-    }
-  };
-
-  const getLastConnectedText = () => {
-    if (!device.lastConnected) {
-      return 'Never connected';
-    }
-    return `Last connected ${formatDistanceToNow(new Date(device.lastConnected))} ago`;
-  };
-
-  const handleViewDetails = () => {
-    navigate(`/modbus/devices/${device.id}`);
-  };
-
-  const handleConfigure = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    navigate(`/modbus/devices/${device.id}/configure`);
-  };
-
+  
   return (
-    <Card 
-      className={`
-        transition-all duration-200 hover:shadow-md
-        ${device.status === 'online' ? 'border-green-200' : ''}
-        ${device.status === 'error' ? 'border-red-200' : ''}
-      `}
-      onClick={onClick || handleViewDetails}
-    >
+    <Card className="w-full">
       <CardHeader className="pb-2">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center">
-            <ServerIcon className="w-5 h-5 mr-2 text-muted-foreground" />
-            <CardTitle className="text-lg">{device.name}</CardTitle>
+        <div className="flex justify-between items-start">
+          <div>
+            <CardTitle className="flex items-center">
+              <ServerIcon className="mr-2 h-5 w-5" />
+              {device.name}
+            </CardTitle>
+            <CardDescription>{device.protocol} Device</CardDescription>
           </div>
-          {getStatusBadge()}
+          <Badge variant={device.is_active ? (isConnected ? 'success' : 'destructive') : 'secondary'}>
+            {device.is_active 
+              ? (isConnected ? 'Connected' : 'Disconnected') 
+              : 'Disabled'}
+          </Badge>
         </div>
-        <CardDescription className="flex items-center justify-between">
-          <div>ID: {device.id.slice(0, 8)}</div>
-          {getProtocolBadge()}
-        </CardDescription>
       </CardHeader>
-      
       <CardContent className="pb-2">
         <div className="space-y-2 text-sm">
-          {device.protocol === 'TCP' && (
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Host:</span>
-              <span className="font-medium">{device.host}:{device.port}</span>
-            </div>
-          )}
-          
-          {(device.protocol === 'RTU' || device.protocol === 'ASCII') && (
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Serial Port:</span>
-              <span className="font-medium">{device.serialPort}</span>
-            </div>
-          )}
-          
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Unit ID:</span>
-            <span className="font-medium">{device.unitId}</span>
+            <span className="text-muted-foreground">Connection:</span> 
+            <span className="font-mono">{device.ip}:{device.port}</span>
           </div>
-          
-          <div>
-            <div className="flex justify-between mb-1">
-              <span className="text-muted-foreground">Connection Status:</span>
-              <span className="font-medium">{getLastConnectedText()}</span>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Unit ID:</span> 
+            <span>{device.unit_id}</span>
+          </div>
+          {error && (
+            <div className="mt-2 p-2 bg-destructive/10 text-destructive rounded-md text-xs">
+              <WifiOff className="inline-block mr-1 h-3 w-3" />
+              Connection error: {error.toString().substring(0, 50)}
+              {error.toString().length > 50 ? '...' : ''}
             </div>
-            <Progress 
-              value={device.status === 'online' ? 100 : 0} 
-              variant={device.status === 'online' ? 'success' : 'default'} 
-            />
-          </div>
+          )}
         </div>
       </CardContent>
-      
-      <CardFooter className="pt-2">
-        <div className="flex w-full justify-between gap-2">
-          <Button variant="outline" size="sm" className="flex-1" onClick={handleConfigure}>
-            <Settings className="w-4 h-4 mr-2" />
-            Configure
+      <CardFooter className="flex justify-between pt-4">
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="ghost" size="sm" className="text-destructive">
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Device</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete this Modbus device? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={handleDelete} 
+                className="bg-destructive hover:bg-destructive/90" 
+                disabled={isDeleting}
+              >
+                {isDeleting ? 'Deleting...' : 'Delete'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+        
+        <div>
+          <Button variant="outline" size="sm" asChild>
+            <Link to={`/modbus/devices/${device.id}`}>
+              <Settings className="h-4 w-4 mr-2" />
+              Configure
+            </Link>
           </Button>
-          <Button size="sm" className="flex-1">
-            Connect
-            <ChevronRight className="w-4 h-4 ml-2" />
+          <Button variant="outline" size="sm" className="ml-2" asChild>
+            <Link to={`/modbus/monitor/${device.id}`}>
+              <Cable className="h-4 w-4 mr-2" />
+              Monitor
+            </Link>
           </Button>
         </div>
       </CardFooter>
