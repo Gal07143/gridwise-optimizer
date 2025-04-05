@@ -1,5 +1,5 @@
-
 import { create } from 'zustand';
+import { Site } from '@/types/site';
 
 interface AppState {
   sidebarExpanded: boolean;
@@ -8,7 +8,9 @@ interface AppState {
   
   // Current active site
   activeSiteId: string | null;
+  activeSite: Site | null;
   setActiveSiteId: (siteId: string | null) => void;
+  setActiveSite: (site: Site | null) => void;
   
   // Theme mode
   darkMode: boolean;
@@ -24,7 +26,12 @@ export const useAppStore = create<AppState>((set) => ({
   
   // Active site state
   activeSiteId: null,
+  activeSite: null,
   setActiveSiteId: (siteId) => set({ activeSiteId: siteId }),
+  setActiveSite: (site) => set({ 
+    activeSite: site,
+    activeSiteId: site?.id || null
+  }),
   
   // Theme state
   darkMode: false,
