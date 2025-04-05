@@ -1,4 +1,3 @@
-
 // components/alerts/AnomalyFeed.tsx
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,7 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { AlertTriangle, RefreshCw, WifiOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { retryWithBackoff, isNetworkError } from '@/utils/errorUtils';
+import { isNetworkError, retryWithBackoff } from '@/utils/errorUtils';
 import useConnectionStatus from '@/hooks/useConnectionStatus';
 
 interface Anomaly {
@@ -73,7 +72,7 @@ const AnomalyFeed = () => {
   const queryOptions = {
     queryKey: ['anomalies'],
     queryFn: fetchAnomalies,
-    refetchInterval: isOnline ? 30000 : false, // Only auto-refresh when online
+    refetchInterval: isOnline ? 30000 : false as const, // Only auto-refresh when online
     retry: isOnline ? 3 : 1, // More retries when online
     staleTime: 60000,
     gcTime: 300000,
@@ -85,7 +84,7 @@ const AnomalyFeed = () => {
     error, 
     refetch, 
     isFetching 
-  } = useQuery(queryOptions);
+  } = useQuery<Anomaly[], Error>(queryOptions);
   
   // Use fallback data when offline or after network errors
   const logs = useFallbackData ? fallbackAnomalyData : fetchedLogs;
