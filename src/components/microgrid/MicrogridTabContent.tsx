@@ -6,7 +6,7 @@ import EnergyFlowVisualization from './EnergyFlowVisualization';
 import CommandHistory from './CommandHistory';
 import AlertsPanel from './AlertsPanel';
 import MicrogridControls from './MicrogridControls';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface MicrogridTabContentProps {
   // Any props needed
@@ -16,10 +16,23 @@ const MicrogridTabContent: React.FC<MicrogridTabContentProps> = () => {
   const [activeTab, setActiveTab] = React.useState('overview');
   const emsState = useEMSStore();
   
-  // Animation variants
+  // Animation variants - optimized for performance
   const contentVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.3 } }
+    hidden: { opacity: 0, y: 10 },
+    visible: { 
+      opacity: 1, 
+      y: 0, 
+      transition: { 
+        duration: 0.2,
+        ease: "easeOut"
+      } 
+    },
+    exit: { 
+      opacity: 0, 
+      transition: { 
+        duration: 0.1 
+      } 
+    }
   };
   
   return (
@@ -33,64 +46,76 @@ const MicrogridTabContent: React.FC<MicrogridTabContentProps> = () => {
           <TabsTrigger value="alerts">Alerts</TabsTrigger>
         </TabsList>
       
-        <TabsContent value="overview" className="mt-6">
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={contentVariants}
-          >
-            <StatusOverview />
-          </motion.div>
-        </TabsContent>
-        
-        <TabsContent value="energy-flow" className="mt-6">
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={contentVariants}
-          >
-            <EnergyFlowVisualization />
-          </motion.div>
-        </TabsContent>
-        
-        <TabsContent value="controls" className="mt-6">
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={contentVariants}
-          >
-            <MicrogridControls />
-          </motion.div>
-        </TabsContent>
-        
-        <TabsContent value="history" className="mt-6">
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={contentVariants}
-          >
-            <CommandHistory commandHistory={[
-              {
-                id: 'cmd-1',
-                timestamp: new Date().toISOString(),
-                command: 'System started',
-                success: true,
-                user: 'System',
-                details: 'Initial system boot'
-              }
-            ]} />
-          </motion.div>
-        </TabsContent>
-        
-        <TabsContent value="alerts" className="mt-6">
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={contentVariants}
-          >
-            <AlertsPanel />
-          </motion.div>
-        </TabsContent>
+        <AnimatePresence mode="wait">
+          <TabsContent value="overview" className="mt-6">
+            <motion.div
+              key="overview"
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              variants={contentVariants}
+            >
+              <StatusOverview />
+            </motion.div>
+          </TabsContent>
+          
+          <TabsContent value="energy-flow" className="mt-6">
+            <motion.div
+              key="energy-flow"
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              variants={contentVariants}
+            >
+              <EnergyFlowVisualization />
+            </motion.div>
+          </TabsContent>
+          
+          <TabsContent value="controls" className="mt-6">
+            <motion.div
+              key="controls"
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              variants={contentVariants}
+            >
+              <MicrogridControls />
+            </motion.div>
+          </TabsContent>
+          
+          <TabsContent value="history" className="mt-6">
+            <motion.div
+              key="history"
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              variants={contentVariants}
+            >
+              <CommandHistory commandHistory={[
+                {
+                  id: 'cmd-1',
+                  timestamp: new Date().toISOString(),
+                  command: 'System started',
+                  success: true,
+                  user: 'System',
+                  details: 'Initial system boot'
+                }
+              ]} />
+            </motion.div>
+          </TabsContent>
+          
+          <TabsContent value="alerts" className="mt-6">
+            <motion.div
+              key="alerts"
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              variants={contentVariants}
+            >
+              <AlertsPanel />
+            </motion.div>
+          </TabsContent>
+        </AnimatePresence>
       </Tabs>
     </div>
   );
