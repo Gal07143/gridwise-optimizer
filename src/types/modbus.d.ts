@@ -1,63 +1,60 @@
 
+export type ModbusDataType = 'holding_register' | 'input_register' | 'coil' | 'discrete_input';
+
 export interface ModbusDeviceConfig {
   id: string;
   name: string;
-  protocol: 'TCP' | 'RTU' | 'ASCII';
-  unit_id: number;
-  // TCP specific
-  host?: string;
-  port?: number;
-  // Serial specific
+  ip: string;  // IP address of the Modbus device
+  port: number;  // Port number (usually 502 for Modbus TCP)
+  unit_id: number;  // Unit ID / Slave ID
+  protocol: string;  // Protocol type (TCP, RTU over TCP, etc)
+  description?: string;
+  is_active: boolean;
+}
+
+export interface ModbusDevice extends ModbusDeviceConfig {
+  inserted_at?: string;
+  updated_at?: string;
+  // Adding missing fields that were referenced
   serialPort?: string;
   baudRate?: number;
-  dataBits?: 7 | 8;
-  stopBits?: 1 | 2;
-  parity?: 'none' | 'even' | 'odd';
-  timeout?: number;
-  autoReconnect?: boolean;
+  host?: string;
+  protocol: string;
   description?: string;
 }
 
-export type ModbusDevice = ModbusDeviceConfig;
-
-export type ModbusDataType = 'coil' | 'input' | 'holding_register' | 'input_register';
-
-export interface ModbusDataOptions {
-  address: number;
-  dataType: ModbusDataType;
-  quantity?: number;
+export interface ModbusRegister {
+  id: string;
+  device_id: string;
+  register_address: number;
+  register_name: string;
+  register_length: number;
+  scaling_factor: number;
+  created_at?: string;
 }
 
 export interface ModbusRegisterMap {
-  id?: string;
-  device_id: string;
-  address: number;
-  name: string;
-  description?: string;
-  register_type: ModbusDataType;
-  data_type?: string;
-  unit?: string;
-  scale_factor?: number;
-  access?: 'read' | 'write' | 'read-write';
-  default_value?: number | string;
-  created_at?: string;
-  updated_at?: string;
+  [address: string]: {
+    name: string;
+    length: number;
+    scale: number;
+    type: ModbusDataType;
+  };
 }
 
-export interface ModbusReading {
-  id?: string;
-  device_id: string;
-  register_id?: string;
-  address: number;
-  value: number | boolean;
-  raw_value?: number | boolean;
-  timestamp: string;
-  quality?: number;
-  register_type: ModbusDataType;
+export interface ModbusDataOptions {
+  deviceId: string;
+  registerAddress: number;
+  length?: number;
+  dataType?: ModbusDataType;
 }
 
 export interface ConnectionStatusResult {
   isConnected: boolean;
-  connect: () => Promise<boolean>;
-  disconnect: () => Promise<void>;
+  lastConnection?: Date;
+  error?: Error | string | null;
+  // Add missing methods
+  connect?: () => Promise<void>;
+  disconnect?: () => Promise<void>;
+  retryConnection?: () => Promise<boolean>;
 }

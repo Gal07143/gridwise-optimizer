@@ -1,104 +1,72 @@
 
-import { toast } from 'sonner';
+/**
+ * Utility functions for error handling
+ */
 
 /**
- * Check if an error is a network-related error
+ * Checks if an error is a network-related error
  */
-export const isNetworkError = (error: Error | unknown): boolean => {
+export function isNetworkError(error: any): boolean {
   if (!error) return false;
   
-  // Network errors usually have one of these messages
-  const networkErrorMessages = [
-    'failed to fetch',
-    'network error',
-    'network request failed',
-    'connection refused',
-    'timeout'
-  ];
+  // Check for common network error conditions
+  if (error.message && (
+    error.message.includes('network') || 
+    error.message.includes('connection') ||
+    error.message.includes('offline') ||
+    error.message.includes('unreachable') ||
+    error.message.includes('timeout')
+  )) {
+    return true;
+  }
   
-  const errorMessage = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
-  return networkErrorMessages.some(msg => errorMessage.includes(msg));
-};
-
-/**
- * Utility function to handle API errors consistently
- */
-export const handleApiError = (error: Error | unknown, context = 'API'): Error => {
-  const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-  console.error(`${context} Error:`, error);
-  toast.error(`${context} Error: ${errorMessage}`);
-  return error instanceof Error ? error : new Error(errorMessage);
-};
-
-/**
- * Utility function to handle dependency errors
- */
-export const handleDependencyError = (
-  error: Error | unknown, 
-  fallback: React.ReactNode, 
-  dependencyName: string
-): { error: Error; fallback: React.ReactNode } => {
-  const errorMessage = error instanceof Error ? error.message : 'An unknown dependency error occurred';
-  console.error(`${dependencyName} Dependency Error:`, error);
-  return {
-    error: error instanceof Error ? error : new Error(errorMessage),
-    fallback
-  };
-};
+  // Check for HTTP status codes that indicate network issues
+  if (error.status === 0 || error.status === 408 || error.status === 502 || 
+      error.status === 503 || error.status === 504) {
+    return true;
+  }
+  
+  return false;
+}
 
 /**
  * Retry a function with exponential backoff
- * 
- * @param fn - The function to retry
- * @param maxRetries - Maximum number of retries
- * @param delay - Initial delay in milliseconds
- * @returns The result of the function
+ * @param fn Function to retry
+ * @param maxRetries Maximum number of retries
+ * @param delay Initial delay in ms
+ * @param backoffRate Rate at which to increase delay (e.g., 2 will double delay each retry)
  */
-export const retryWithBackoff = async <T>(
-  fn: () => Promise<T>, 
-  maxRetries = 3, 
-  delay = 1000
-): Promise<T> => {
+export async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 3,
+  delay: number = 1000,
+  backoffRate: number = 2
+): Promise<T> {
   let retries = 0;
+  let currentDelay = delay;
   
-  const execute = async (): Promise<T> => {
+  while (true) {
     try {
       return await fn();
-    } catch (err) {
+    } catch (error) {
+      retries++;
+      
       if (retries >= maxRetries) {
-        throw err;
+        throw error;
       }
       
-      // Calculate backoff delay
-      const backoffDelay = delay * Math.pow(2, retries);
+      console.log(`Attempt ${retries} failed, retrying in ${currentDelay}ms`);
       
-      // Wait for the backoff period
-      await new Promise(resolve => setTimeout(resolve, backoffDelay));
+      // Wait for the current delay
+      await new Promise(resolve => setTimeout(resolve, currentDelay));
       
-      // Increment retry counter and try again
-      retries++;
-      return execute();
+      // Increase the delay for the next retry
+      currentDelay *= backoffRate;
     }
-  };
-  
-  return execute();
-};
-
-/**
- * Function to safely stringify objects for error messages
- */
-export const safeStringify = (obj: any): string => {
-  try {
-    return JSON.stringify(obj);
-  } catch (error) {
-    return '[Object cannot be stringified]';
   }
-};
+}
 
 export default {
-  handleApiError,
-  handleDependencyError,
   isNetworkError,
-  retryWithBackoff,
-  safeStringify
+  retryWithBackoff
 };

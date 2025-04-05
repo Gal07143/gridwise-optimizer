@@ -1,47 +1,44 @@
 
 import { create } from 'zustand';
-import { devtools, persist } from 'zustand/middleware';
-import type { Site } from '@/types/site';
+import { Site } from '@/types/site';
 
-export interface AppState {
+interface AppState {
   sidebarExpanded: boolean;
-  activeTab: string;
-  activeDashboardView: string;
-  isLoading: boolean;
-  activeSite: Site | null;
-  
-  // Actions
   setSidebarExpanded: (expanded: boolean) => void;
   toggleSidebar: () => void;
-  setActiveTab: (tab: string) => void;
-  setActiveDashboardView: (view: string) => void;
-  setIsLoading: (loading: boolean) => void;
+  
+  // Current active site
+  activeSiteId: string | null;
+  activeSite: Site | null;
+  setActiveSiteId: (siteId: string | null) => void;
   setActiveSite: (site: Site | null) => void;
+  
+  // Theme mode
+  darkMode: boolean;
+  setDarkMode: (enabled: boolean) => void;
+  toggleDarkMode: () => void;
 }
 
-export const useAppStore = create<AppState>()(
-  devtools(
-    persist(
-      (set) => ({
-        sidebarExpanded: true,
-        activeTab: 'overview',
-        activeDashboardView: 'grid',
-        isLoading: false,
-        activeSite: null,
-        
-        // Actions
-        setSidebarExpanded: (expanded) => set({ sidebarExpanded: expanded }),
-        toggleSidebar: () => set((state) => ({ sidebarExpanded: !state.sidebarExpanded })),
-        setActiveTab: (tab) => set({ activeTab: tab }),
-        setActiveDashboardView: (view) => set({ activeDashboardView: view }),
-        setIsLoading: (loading) => set({ isLoading: loading }),
-        setActiveSite: (site) => set({ activeSite: site }),
-      }),
-      {
-        name: 'ems-app-storage',
-      }
-    )
-  )
-);
+const useAppStore = create<AppState>((set) => ({
+  // Sidebar state
+  sidebarExpanded: true,
+  setSidebarExpanded: (expanded) => set({ sidebarExpanded: expanded }),
+  toggleSidebar: () => set((state) => ({ sidebarExpanded: !state.sidebarExpanded })),
+  
+  // Active site state
+  activeSiteId: null,
+  activeSite: null,
+  setActiveSiteId: (siteId) => set({ activeSiteId: siteId }),
+  setActiveSite: (site) => set({ 
+    activeSite: site,
+    activeSiteId: site?.id || null
+  }),
+  
+  // Theme state
+  darkMode: false,
+  setDarkMode: (enabled) => set({ darkMode: enabled }),
+  toggleDarkMode: () => set((state) => ({ darkMode: !state.darkMode })),
+}));
 
+export { useAppStore };
 export default useAppStore;

@@ -2,7 +2,7 @@
 // File: src/types/energy.d.ts
 export type DeviceCategory = 'inverter' | 'meter' | 'battery' | 'solar' | 'load' | 'sensor' | 'evCharger' | 'wind';
 
-// Modified to be a string literal union type to fix comparison issues
+// Changed to string type to allow string literals to be assignable to DeviceType
 export type DeviceType = string;
 
 // Unified device statuses
@@ -138,18 +138,19 @@ export interface EnergyForecast {
   source?: string;
 }
 
-// Define Alert type
+// Add Alert interface that was missing
 export interface Alert {
   id: string;
   title: string;
   message: string;
   severity: 'critical' | 'warning' | 'info';
-  device_id?: string;
-  site_id?: string;
   timestamp: string;
   acknowledged: boolean;
-  created_at: string;
-  updated_at?: string;
-  category?: string;
+  acknowledged_at?: string;
+  device_id?: string;
+  site_id?: string;
+  resolved_at?: string;
   source?: string;
+  type?: string;
+  acknowledged_by?: string;
 }

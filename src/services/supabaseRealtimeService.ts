@@ -33,7 +33,7 @@ export function subscribeToTable(
       schema: 'public',
       table: table,
       filter: filter
-    } as any, // Cast to any to bypass type checking
+    },
     callback
   );
   

@@ -39,7 +39,7 @@ import {
   DialogClose
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { useAppStore } from '@/store/useAppStore';
+import { useAppStore } from '@/store';
 import axios from 'axios';
 
 interface Site {

@@ -13,6 +13,7 @@ export interface DeviceModel {
   release_date?: string;
   firmware_version?: string;
   protocol: string;
+  // Update support_level to include 'beta'
   support_level: 'none' | 'full' | 'partial' | 'beta';
   images?: string[];
   has_manual?: boolean;
