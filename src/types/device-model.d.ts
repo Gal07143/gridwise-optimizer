@@ -28,7 +28,7 @@ export interface DeviceModelWithRequiredName {
   model_number: string;
   device_type: string;
   category?: string;
-  protocol?: string;
+  protocol: string; // Make protocol required here
 }
 
 export const categoryNames = {
@@ -42,4 +42,4 @@ export const categoryNames = {
   wind: 'Wind Turbines'
 };
 
-export type SupportLevel = 'none' | 'partial' | 'full' | 'beta';
+export type SupportLevel = 'none' | 'full' | 'partial' | 'beta';

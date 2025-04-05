@@ -17,6 +17,8 @@ export interface LiveTelemetryChartProps {
 interface Telemetry {
   data: any[];
   timestamps: string[];
+  readings?: any[];
+  latestValue?: number;
 }
 
 const LiveTelemetryChart: React.FC<LiveTelemetryChartProps> = ({ 

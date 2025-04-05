@@ -1,8 +1,8 @@
 
 import React, { useEffect, useState } from 'react';
-import { ExclamationTriangle } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Alert } from '@/types/alert';
+import { Alert } from '@/types/energy';
 import { supabase } from '@/integrations/supabase/client';
 import { subscribeToTable } from '@/services/supabaseRealtimeService';
 import { formatDistanceToNow } from 'date-fns';
@@ -19,7 +19,7 @@ const CriticalAlertWidget: React.FC<CriticalAlertWidgetProps> = ({ onAcknowledge
   useEffect(() => {
     const fetchAlerts = async () => {
       try {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('alerts')
           .select('*')
           .eq('severity', 'critical')
@@ -27,6 +27,8 @@ const CriticalAlertWidget: React.FC<CriticalAlertWidgetProps> = ({ onAcknowledge
           .order('timestamp', { ascending: false })
           .limit(3);
 
+        if (error) throw error;
+        
         setAlerts(data as Alert[] || []);
       } catch (error) {
         console.error('Error fetching critical alerts:', error);
@@ -90,7 +92,7 @@ const CriticalAlertWidget: React.FC<CriticalAlertWidgetProps> = ({ onAcknowledge
     <div className="w-full border border-red-200 bg-red-50 dark:bg-red-950/20 rounded-lg p-4 mb-4">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-red-700 flex items-center font-semibold">
-          <ExclamationTriangle className="mr-2 h-4 w-4" />
+          <AlertTriangle className="mr-2 h-4 w-4" />
           Critical Alerts Requiring Attention
         </h3>
         <span className="px-2 py-1 bg-red-100 text-red-700 text-xs rounded-full font-medium">

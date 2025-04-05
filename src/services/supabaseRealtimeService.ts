@@ -14,16 +14,19 @@ export function subscribeToTable(
   const channelName = `${table}-${eventType}-${Math.random().toString(36).slice(2, 9)}`;
 
   // Create the channel
-  const channel = supabase
-    .channel(channelName);
+  const channel = supabase.channel(channelName);
   
   // Configure the subscription
-  const subscription = channel.on('postgres_changes', {
-    event: eventType,
-    schema: 'public',
-    table: table,
-    filter: filter
-  }, callback);
+  const subscription = channel.on(
+    'postgres_changes', 
+    {
+      event: eventType,
+      schema: 'public',
+      table: table,
+      filter
+    },
+    callback
+  );
   
   // Subscribe to the channel
   subscription.subscribe();

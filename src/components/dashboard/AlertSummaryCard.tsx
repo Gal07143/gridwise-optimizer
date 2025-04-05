@@ -1,13 +1,13 @@
 
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Bell, ExclamationTriangle } from 'lucide-react';
+import { Bell, AlertTriangle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { subscribeToTable } from '@/services/supabaseRealtimeService';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
-import { Alert } from '@/types/alert';
+import { Alert } from '@/types/energy';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface AlertSummaryCardProps {
@@ -32,21 +32,24 @@ const AlertSummaryCard: React.FC<AlertSummaryCardProps> = ({
       setLoading(true);
       try {
         // Get critical alerts count
-        const { data: criticalData } = await supabase
+        const { data: criticalData, error: criticalError } = await supabase
           .from('alerts')
           .select('*')
           .eq('severity', 'critical')
           .eq('acknowledged', false);
           
+        if (criticalError) throw criticalError;
         setCriticalCount(criticalData?.length || 0);
         
         // Get recent alerts
-        const { data: alertsData } = await supabase
+        const { data: alertsData, error: alertsError } = await supabase
           .from('alerts')
           .select('*')
           .order('timestamp', { ascending: false })
           .limit(limit);
           
+        if (alertsError) throw alertsError;
+        
         if (alertsData) {
           setAlerts(alertsData as Alert[]);
         }
@@ -103,7 +106,7 @@ const AlertSummaryCard: React.FC<AlertSummaryCardProps> = ({
           </CardTitle>
           {criticalCount > 0 && (
             <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-              <ExclamationTriangle className="mr-1 h-3 w-3" />
+              <AlertTriangle className="mr-1 h-3 w-3" />
               {criticalCount} critical
             </Badge>
           )}
@@ -129,7 +132,7 @@ const AlertSummaryCard: React.FC<AlertSummaryCardProps> = ({
               <div key={alert.id} className="flex items-start gap-3 pb-3 last:pb-0">
                 <div className="flex-shrink-0">
                   <Badge variant="outline" className={`${getSeverityColor(alert.severity)} h-7 w-7 rounded-full p-1`}>
-                    <ExclamationTriangle className="h-5 w-5" />
+                    <AlertTriangle className="h-5 w-5" />
                   </Badge>
                 </div>
                 <div className="flex-1 space-y-1">

@@ -1,140 +1,114 @@
 
 import React from 'react';
-import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Legend } from 'recharts';
-import { Loader2 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { getMetricColor, getSourceColor } from './telemetryUtils';
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import { format, parseISO } from 'date-fns';
+import { Loader2, AlertCircle } from 'lucide-react';
+import { getMetricColor } from './telemetryUtils';
+import { TelemetryMetric } from './LiveTelemetryChart';
 
-interface TelemetryChartProps {
-  data: any[];
-  metric: string;
-  unit: string;
-  height?: number;
-  showSource?: boolean;
-  loading?: boolean;
-  error?: Error | null;
+interface ChartData {
+  timestamp: string;
+  value: number;
 }
 
-const TelemetryChart: React.FC<TelemetryChartProps> = ({ 
-  data, 
-  metric, 
-  unit, 
+interface TelemetryChartProps {
+  data: ChartData[];
+  metric: TelemetryMetric;
+  unit: string;
+  height?: number;
+  loading?: boolean;
+  error?: Error | null;
+  showSource?: boolean;
+}
+
+const TelemetryChart: React.FC<TelemetryChartProps> = ({
+  data,
+  metric,
+  unit,
   height = 200,
-  showSource = false,
   loading = false,
-  error = null
+  error = null,
+  showSource = false
 }) => {
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-48">
-        <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-        <span>Loading telemetry data...</span>
+      <div className="flex items-center justify-center" style={{ height }}>
+        <div className="flex flex-col items-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <span className="mt-2 text-sm text-muted-foreground">Loading telemetry data...</span>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-48 text-red-500">
-        Error loading telemetry: {error.message}
+      <div className="flex items-center justify-center" style={{ height }}>
+        <div className="flex flex-col items-center text-center">
+          <AlertCircle className="h-8 w-8 text-destructive" />
+          <span className="mt-2 text-sm font-medium text-destructive">Error loading data</span>
+          <span className="text-xs text-muted-foreground mt-1 max-w-xs">
+            {error.message}
+          </span>
+        </div>
       </div>
     );
   }
 
-  if (data.length === 0) {
+  if (!data || data.length === 0) {
     return (
-      <div className="flex items-center justify-center h-48 text-gray-500">
-        No telemetry data available
+      <div className="flex items-center justify-center" style={{ height }}>
+        <div className="flex flex-col items-center text-center">
+          <span className="text-sm text-muted-foreground">No data available</span>
+        </div>
       </div>
     );
   }
-
-  // Group data by source if needed
-  const sources = showSource 
-    ? [...new Set(data.map(item => item.source || 'unknown'))]
-    : ['combined'];
-
-  // Get the latest value for the header
-  const latestValue = data.length > 0 
-    ? data[data.length - 1].value 
-    : null;
 
   return (
-    <div className="bg-background rounded-lg">
-      <div className="flex justify-between items-center mb-2">
-        <h3 className="text-lg font-semibold capitalize">{metric.replace('_', ' ')}</h3>
-        
-        {latestValue !== null && (
-          <div className="flex items-center">
-            <span className="text-lg font-bold mr-1">
-              {typeof latestValue === 'number' ? latestValue.toFixed(2) : latestValue}
-            </span>
-            <span className="text-muted-foreground">{unit}</span>
-          </div>
-        )}
-      </div>
-      
-      {showSource && sources.length > 0 && (
-        <div className="flex gap-2 mb-2">
-          {sources.map((source) => (
-            <Badge 
-              key={source} 
-              variant="outline" 
-              style={{
-                backgroundColor: `${getSourceColor(source)}20`,
-                borderColor: getSourceColor(source),
-                color: getSourceColor(source)
-              }}
-            >
-              {source}
-            </Badge>
-          ))}
-        </div>
-      )}
-      
-      <ResponsiveContainer width="100%" height={height}>
-        <LineChart data={data} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis 
-            dataKey="time" 
-            minTickGap={30}
+    <div style={{ height, width: '100%' }}>
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart
+          data={data}
+          margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
+          <XAxis
+            dataKey="timestamp"
+            tickFormatter={(timestamp) => {
+              const date = parseISO(timestamp);
+              return format(date, 'HH:mm');
+            }}
+            tick={{ fontSize: 12 }}
           />
-          <YAxis 
-            unit={unit} 
-            domain={['auto', 'auto']}
+          <YAxis
+            unit={` ${unit}`}
+            tick={{ fontSize: 12 }}
+            width={45}
           />
           <Tooltip
-            formatter={(value: number) => [value.toFixed(2) + ' ' + unit, metric]}
-            labelFormatter={(time) => `Time: ${time}`}
+            formatter={(value: number) => [`${value} ${unit}`, metric]}
+            labelFormatter={(timestamp) => {
+              const date = parseISO(timestamp);
+              return format(date, 'dd MMM yyyy, HH:mm:ss');
+            }}
+            contentStyle={{
+              backgroundColor: 'var(--background)',
+              borderColor: 'var(--border)',
+              borderRadius: '0.375rem',
+              fontSize: '0.875rem',
+            }}
           />
-          
-          {!showSource && (
-            <Line 
-              type="monotone" 
-              dataKey="value" 
-              stroke={getMetricColor(metric)} 
-              strokeWidth={2} 
-              dot={false} 
-              activeDot={{ r: 6 }}
-              isAnimationActive={true}
-            />
-          )}
-          
-          {showSource && sources.map((source) => (
-            <Line 
-              key={source}
-              type="monotone"
-              dataKey="value"
-              stroke={getSourceColor(source)}
-              strokeWidth={2}
-              dot={false}
-              name={source}
-              isAnimationActive={true}
-              data={data.filter(entry => entry.source === source)}
-            />
-          ))}
-          
           {showSource && <Legend />}
+          <Line
+            type="monotone"
+            dataKey="value"
+            stroke={getMetricColor(metric)}
+            strokeWidth={2}
+            dot={false}
+            activeDot={{ r: 5 }}
+            name={metric.charAt(0).toUpperCase() + metric.slice(1).replace('_', ' ')}
+          />
         </LineChart>
       </ResponsiveContainer>
     </div>

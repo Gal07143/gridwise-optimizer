@@ -3,92 +3,90 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { subscribeToTable } from '@/services/supabaseRealtimeService';
 import { TelemetryMetric } from '@/components/telemetry/LiveTelemetryChart';
+import { handleApiError } from '@/utils/errorUtils';
 
-interface TelemetryHistoryProps {
-  telemetry: {
-    data: any[];
-    timestamps: string[];
-  };
-  isLoading: boolean;
-  error: Error | null;
-  refetch: () => Promise<void>;
+interface TelemetryData {
+  data: any[];
+  timestamps: string[];
 }
 
-/**
- * Hook to fetch telemetry history for a device
- * @param deviceId The device ID to fetch telemetry for
- * @param duration Minutes of history to fetch
- */
-export function useTelemetryHistory(deviceId: string, metric: TelemetryMetric): TelemetryHistoryProps {
-  const [telemetry, setTelemetry] = useState<{ data: any[]; timestamps: string[] }>({ data: [], timestamps: [] });
+export function useTelemetryHistory(deviceId: string, metric: TelemetryMetric, limit = 24) {
+  const [telemetry, setTelemetry] = useState<TelemetryData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetchData = useCallback(async () => {
-    if (!deviceId) return;
-
-    setIsLoading(true);
-    setError(null);
-
+  const fetchTelemetry = useCallback(async () => {
     try {
-      // Calculate the timestamp from 'duration' minutes ago
-      const fromDate = new Date();
-      fromDate.setMinutes(fromDate.getMinutes() - 60); // Default to 60 mins
+      setIsLoading(true);
+      setError(null);
 
-      // Fetch the readings
-      const { data, error } = await supabase
+      const { data, error: apiError } = await supabase
         .from('energy_readings')
         .select('*')
         .eq('device_id', deviceId)
-        .gte('timestamp', fromDate.toISOString())
-        .order('timestamp', { ascending: true });
+        .order('timestamp', { ascending: false })
+        .limit(limit);
 
-      if (error) throw error;
+      if (apiError) throw apiError;
 
-      // Process the data
-      const readings = data || [];
-      const timestamps = readings.map(r => r.timestamp);
-      
-      setTelemetry({
-        data: readings,
-        timestamps: timestamps,
-      });
+      if (data && data.length > 0) {
+        // Extract timestamps
+        const timestamps = data.map(item => item.timestamp);
+        
+        // Reverse data to show oldest first
+        const sortedData = [...data].reverse();
+        
+        setTelemetry({
+          data: sortedData,
+          timestamps
+        });
+      } else {
+        setTelemetry({ data: [], timestamps: [] });
+      }
     } catch (err) {
-      console.error('Error fetching telemetry:', err);
-      setError(err instanceof Error ? err : new Error('Unknown error fetching telemetry'));
+      console.error('Error fetching telemetry history:', err);
+      setError(err instanceof Error ? err : new Error('Failed to fetch telemetry data'));
     } finally {
       setIsLoading(false);
     }
-  }, [deviceId]);
+  }, [deviceId, limit]);
 
+  // Fetch data initially
   useEffect(() => {
-    fetchData();
+    fetchTelemetry();
+  }, [fetchTelemetry]);
 
-    // Subscribe to real-time updates
+  // Subscribe to real-time updates
+  useEffect(() => {
     const unsubscribe = subscribeToTable(
       'energy_readings',
       'INSERT',
       (payload) => {
-        const newReading = payload.new;
-        if (newReading.device_id === deviceId) {
-          setTelemetry((prev) => ({
-            data: [...prev.data, newReading],
-            timestamps: [...prev.timestamps, newReading.timestamp],
-          }));
+        // If new reading is for current device, update data
+        if (payload.new && payload.new.device_id === deviceId) {
+          setTelemetry((prev) => {
+            if (!prev) return { data: [payload.new], timestamps: [payload.new.timestamp] };
+            
+            // Add to beginning of array and maintain limit
+            const newData = [...prev.data, payload.new].slice(-limit);
+            const newTimestamps = [...prev.timestamps, payload.new.timestamp].slice(-limit);
+            
+            return {
+              data: newData,
+              timestamps: newTimestamps
+            };
+          });
         }
-      },
-      `device_id=eq.${deviceId}`
+      }
     );
 
-    return () => {
-      unsubscribe();
-    };
-  }, [deviceId, fetchData]);
+    return () => unsubscribe();
+  }, [deviceId, limit]);
 
   return {
     telemetry,
     isLoading,
     error,
-    refetch: fetchData
+    refetch: fetchTelemetry
   };
 }

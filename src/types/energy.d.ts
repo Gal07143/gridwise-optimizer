@@ -2,7 +2,7 @@
 // File: src/types/energy.d.ts
 export type DeviceCategory = 'inverter' | 'meter' | 'battery' | 'solar' | 'load' | 'sensor' | 'evCharger' | 'wind';
 
-// Unifying device types to include all used values
+// Unified device types that resolve type comparison issues
 export type DeviceType = 
   | 'solar' 
   | 'wind' 
@@ -26,7 +26,7 @@ export type DeviceType =
   | 'weather_station'
   | 'wind_turbine';
 
-// Unifying device statuses to include all used values
+// Unified device statuses
 export type DeviceStatus = 
   | 'online' 
   | 'offline' 
@@ -55,7 +55,7 @@ export interface EnergyDevice {
   last_updated?: string;
   created_by?: string;
   
-  // Add additional properties needed by components
+  // Add missing properties
   protocol?: string;
   ip_address?: string;
   last_seen?: string;
@@ -133,6 +133,8 @@ export interface EnergyReading {
   unit?: string;
   quality?: number;
   created_at?: string;
+  readings?: any[];
+  latestValue?: number;
 }
 
 export interface DateRange {
@@ -151,7 +153,6 @@ export interface EnergyAggregation {
   average_power?: number;
 }
 
-// Add EnergyForecast for forecast functionality
 export interface EnergyForecast {
   id: string;
   site_id: string;
@@ -165,5 +166,21 @@ export interface EnergyForecast {
   temperature?: number;
   cloud_cover?: number;
   wind_speed?: number;
+  source?: string;
+}
+
+// Define Alert type
+export interface Alert {
+  id: string;
+  title: string;
+  message: string;
+  severity: 'critical' | 'warning' | 'info';
+  device_id?: string;
+  site_id?: string;
+  timestamp: string;
+  acknowledged: boolean;
+  created_at: string;
+  updated_at?: string;
+  category?: string;
   source?: string;
 }

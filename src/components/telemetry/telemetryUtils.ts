@@ -1,40 +1,69 @@
 
+import { TelemetryMetric } from './LiveTelemetryChart';
+
 /**
- * Get color for a specific metric type
+ * Format telemetry data for chart display
  */
-export const getMetricColor = (metric: string): string => {
+export function formatTelemetryData(
+  data: any[], 
+  metric: TelemetryMetric
+): { timestamp: string; value: number }[] {
+  if (!data || !Array.isArray(data)) {
+    return [];
+  }
+  
+  return data.map(item => ({
+    timestamp: item.timestamp,
+    value: item[metric] !== undefined ? item[metric] : (item.value || 0)
+  }));
+}
+
+/**
+ * Get appropriate unit label for a metric
+ */
+export function getMetricUnit(metric: TelemetryMetric): string {
   switch (metric) {
-    case 'power': return '#4f46e5'; // indigo
-    case 'voltage': return '#22c55e'; // green
-    case 'current': return '#f97316'; // orange
-    case 'temperature': return '#ef4444'; // red
-    case 'state_of_charge': return '#8b5cf6'; // purple
-    default: return '#3b82f6'; // blue
+    case 'power': return 'kW';
+    case 'voltage': return 'V';
+    case 'current': return 'A';
+    case 'temperature': return '°C';
+    case 'state_of_charge': return '%';
+    default: return '';
   }
-};
+}
 
 /**
- * Get color for a data source
+ * Get an appropriate color for a metric
  */
-export const getSourceColor = (source: string): string => {
-  switch (source?.toLowerCase()) {
-    case 'mqtt': return '#22c55e'; // green
-    case 'modbus': return '#f97316'; // orange
-    default: return '#3b82f6'; // blue
+export function getMetricColor(metric: TelemetryMetric): string {
+  switch (metric) {
+    case 'power': return '#10b981'; // Green
+    case 'voltage': return '#3b82f6'; // Blue
+    case 'current': return '#f97316'; // Orange
+    case 'temperature': return '#ef4444'; // Red
+    case 'state_of_charge': return '#8b5cf6'; // Purple
+    default: return '#6b7280'; // Gray
   }
-};
+}
 
 /**
- * Format telemetry data for display in charts
+ * Format telemetry value with the appropriate unit
  */
-export const formatTelemetryData = (data: any[], metricKey: string) => {
-  return data.map(entry => {
-    const timeObj = new Date(entry.timestamp);
-    return {
-      time: timeObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      timestamp: timeObj,
-      value: entry[metricKey] ?? 0,
-      source: entry.source || 'unknown'
-    };
-  }).sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
-};
+export function formatTelemetryValue(value: number, metric: TelemetryMetric): string {
+  if (value === undefined || value === null) return 'N/A';
+  
+  switch (metric) {
+    case 'power':
+      return `${value.toFixed(2)} kW`;
+    case 'voltage':
+      return `${value.toFixed(1)} V`;
+    case 'current':
+      return `${value.toFixed(2)} A`;
+    case 'temperature':
+      return `${value.toFixed(1)} °C`;
+    case 'state_of_charge':
+      return `${Math.round(value)}%`;
+    default:
+      return `${value}`;
+  }
+}

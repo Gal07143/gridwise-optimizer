@@ -1,73 +1,66 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 
 interface ConnectionStatusOptions {
   showToasts?: boolean;
-  checkInterval?: number;
+  onOffline?: () => void;
+  onOnline?: () => void;
 }
 
-export default function useConnectionStatus(options: ConnectionStatusOptions = {}) {
-  const { showToasts = true, checkInterval = 30000 } = options;
+function useConnectionStatus(options: ConnectionStatusOptions = {}) {
+  const { showToasts = true, onOffline, onOnline } = options;
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [wasOffline, setWasOffline] = useState(false);
 
-  useEffect(() => {
-    const handleOnline = () => {
-      setIsOnline(true);
-      if (wasOffline && showToasts) {
-        toast.success('Connection restored');
-      }
-      setWasOffline(false);
-    };
+  const handleOnline = useCallback(() => {
+    setIsOnline(true);
+    setWasOffline(false);
+    if (showToasts && wasOffline) {
+      toast.success('You are back online', {
+        description: 'Connection restored. Your data will now sync automatically.'
+      });
+    }
+    if (onOnline) onOnline();
+  }, [showToasts, wasOffline, onOnline]);
 
-    const handleOffline = () => {
-      setIsOnline(false);
-      if (showToasts) {
-        toast.error('Connection lost');
-      }
-      setWasOffline(true);
-    };
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    // Periodic check for connection status
-    const intervalId = setInterval(() => {
-      const online = navigator.onLine;
-      
-      // If our state doesn't match the actual state
-      if (online !== isOnline) {
-        if (online) {
+  const handleOffline = useCallback(() => {
+    setIsOnline(false);
+    setWasOffline(true);
+    if (showToasts) {
+      toast.warning('You are offline', {
+        description: 'Data will be saved locally and synced when you reconnect.'
+      });
+    }
+    if (onOffline) onOffline();
+  }, [showToasts, onOffline]);
+  
+  const retryConnection = useCallback(() => {
+    // Try to fetch a small resource to test connectivity
+    fetch('/api/ping', { method: 'GET', cache: 'no-store' })
+      .then(() => {
+        if (!isOnline) {
           handleOnline();
-        } else {
+        }
+      })
+      .catch(() => {
+        if (isOnline) {
           handleOffline();
         }
-      }
-    }, checkInterval);
+      });
+  }, [isOnline, handleOnline, handleOffline]);
+
+  useEffect(() => {
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
 
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
-      clearInterval(intervalId);
     };
-  }, [isOnline, wasOffline, showToasts, checkInterval]);
-
-  const retryConnection = () => {
-    if (!isOnline) {
-      toast.info("Checking connection...");
-      // Attempt to fetch a small resource to test connection
-      fetch('/api/ping', { method: 'HEAD' })
-        .then(() => {
-          setIsOnline(true);
-          toast.success('Connection restored');
-          setWasOffline(false);
-        })
-        .catch(() => {
-          toast.error('Still offline');
-        });
-    }
-  };
+  }, [handleOnline, handleOffline]);
 
   return { isOnline, retryConnection };
 }
+
+export default useConnectionStatus;

@@ -3,9 +3,9 @@ import React from 'react';
 import { ArrowUpRight, Battery, Cloud, Loader2, Plug, Sun, Waves, Wind } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MetricsCard } from '@/components/ui/dashboard/MetricsCard';
-import AlertSummaryCard from '@/components/dashboard/AlertSummaryCard';
-import CriticalAlertWidget from '@/components/dashboard/CriticalAlertWidget';
-import { useRouter } from 'react-router-dom';
+import AlertSummaryCard from './AlertSummaryCard';
+import CriticalAlertWidget from './CriticalAlertWidget';
+import { useNavigate } from 'react-router-dom';
 import LiveTelemetryChart from '@/components/telemetry/LiveTelemetryChart';
 import { Device } from '@/types/energy';
 
@@ -17,6 +17,7 @@ interface DashboardSummaryProps {
   batteryLevel?: number;
   energySavings?: number;
   devices?: Device[];
+  siteId?: string;
 }
 
 const DashboardSummary: React.FC<DashboardSummaryProps> = ({
@@ -27,11 +28,12 @@ const DashboardSummary: React.FC<DashboardSummaryProps> = ({
   batteryLevel = 0,
   energySavings = 0,
   devices = [],
+  siteId,
 }) => {
-  const router = useRouter();
+  const navigate = useNavigate();
   
   const navigateToAlerts = () => {
-    router.navigate('/alerts');
+    navigate('/alerts');
   };
 
   // Find devices by type
