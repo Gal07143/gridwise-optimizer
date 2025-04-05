@@ -1,6 +1,6 @@
-
 import { toast } from 'sonner';
 import { retryWithBackoff } from './errorUtils';
+import { lazy } from 'react';
 
 /**
  * Utility to attempt reinstallation of dependencies
