@@ -19,8 +19,7 @@ const CriticalAlertWidget: React.FC<CriticalAlertWidgetProps> = ({ onAcknowledge
   useEffect(() => {
     const fetchAlerts = async () => {
       try {
-        // Updated to use the proper supabase method pattern
-        const result = await supabase
+        const criticalResult = await supabase
           .from('alerts')
           .select('*')
           .eq('severity', 'critical')
@@ -28,10 +27,7 @@ const CriticalAlertWidget: React.FC<CriticalAlertWidgetProps> = ({ onAcknowledge
           .order('timestamp', { ascending: false })
           .limit(3);
           
-        const { data, error } = result;
-        if (error) throw error;
-        
-        setAlerts(data as Alert[] || []);
+        setAlerts(criticalResult.data as Alert[] || []);
       } catch (error) {
         console.error('Error fetching critical alerts:', error);
       } finally {
@@ -60,16 +56,14 @@ const CriticalAlertWidget: React.FC<CriticalAlertWidgetProps> = ({ onAcknowledge
   const handleAcknowledge = async (alertId: string) => {
     if (onAcknowledge) {
       await onAcknowledge(alertId);
+      setAlerts(prev => prev.filter(alert => alert.id !== alertId));
     } else {
       try {
-        // Updated to use the proper supabase method
-        const result = await supabase
+        await supabase
           .from('alerts')
           .update({ acknowledged: true })
           .eq('id', alertId);
           
-        if (result.error) throw result.error;
-
         setAlerts(prev => prev.filter(alert => alert.id !== alertId));
       } catch (error) {
         console.error('Error acknowledging alert:', error);

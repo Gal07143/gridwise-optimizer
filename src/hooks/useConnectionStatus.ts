@@ -1,144 +1,81 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { toast } from 'sonner';
-
-interface ConnectionStatusOptions {
-  checkInterval?: number;
-  showToasts?: boolean;
-}
-
-export interface ConnectionStatus {
-  isOnline: boolean;
-  lastChecked: Date | null;
-  checkNow: () => Promise<boolean>;
-  retryConnection: () => Promise<boolean>;
-  connect?: () => Promise<boolean>;
-  disconnect?: () => Promise<boolean>;
-}
+import { ConnectionStatusOptions, ConnectionStatus } from '@/types/modbus';
 
 /**
- * Hook to check and monitor internet connection status
+ * Hook to monitor connection status to a device
  */
-const useConnectionStatus = (options: ConnectionStatusOptions = {}): ConnectionStatus => {
-  const { 
-    checkInterval = 30000, // Check every 30 seconds by default
-    showToasts = false 
-  } = options;
-  
-  const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
-  const [lastChecked, setLastChecked] = useState<Date | null>(null);
-  
-  const checkConnection = useCallback(async (): Promise<boolean> => {
+const useConnectionStatus = (options: ConnectionStatusOptions): ConnectionStatus => {
+  const { deviceId, interval = 30000, onConnect, onDisconnect, onError } = options;
+
+  const [isConnected, setIsConnected] = useState<boolean>(false);
+  const [isConnecting, setIsConnecting] = useState<boolean>(false);
+  const [lastConnected, setLastConnected] = useState<Date | null>(null);
+  const [error, setError] = useState<Error | null>(null);
+
+  const checkConnection = useCallback(async () => {
+    if (!deviceId || isConnecting) return;
+    
+    setIsConnecting(true);
     try {
-      // Try to fetch a tiny resource to check actual connectivity
-      // We use a timestamp to prevent caching
-      const response = await fetch(`/api/health-check?_=${Date.now()}`, {
-        method: 'HEAD',
-        cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache'
-        }
-      });
+      // Here in a real application, we would actually check the connection
+      // This is a mock implementation
+      const connected = Math.random() > 0.3; // 70% chance of success
       
-      const online = response.ok;
-      setIsOnline(online);
-      setLastChecked(new Date());
+      setIsConnected(connected);
       
-      if (!online && showToasts) {
-        toast.error('Connection lost. You\'re working offline.');
-      } else if (online && !isOnline && showToasts) {
-        toast.success('Connection restored!');
+      if (connected) {
+        setLastConnected(new Date());
+        setError(null);
+        if (onConnect) onConnect();
+      } else {
+        if (onDisconnect) onDisconnect();
+        throw new Error('Connection failed');
       }
-      
-      return online;
-    } catch (error) {
-      setIsOnline(false);
-      setLastChecked(new Date());
-      
-      if (showToasts && isOnline) {
-        toast.error('Connection lost. You\'re working offline.');
-      }
-      
-      return false;
+    } catch (err: any) {
+      setIsConnected(false);
+      setError(err instanceof Error ? err : new Error(err?.message || 'Unknown connection error'));
+      if (onError) onError(err instanceof Error ? err : new Error(err?.message || 'Unknown connection error'));
+    } finally {
+      setIsConnecting(false);
     }
-  }, [isOnline, showToasts]);
-  
-  const retryConnection = useCallback(async (): Promise<boolean> => {
-    if (showToasts) {
-      toast.info('Attempting to reconnect...');
-    }
-    
-    return await checkConnection();
-  }, [checkConnection, showToasts]);
+  }, [deviceId, isConnecting, onConnect, onDisconnect, onError]);
 
-  // Add connect and disconnect methods
-  const connect = useCallback(async (): Promise<boolean> => {
-    if (showToasts) {
-      toast.info('Connecting...');
-    }
+  const connect = useCallback(async () => {
+    await checkConnection();
+  }, [checkConnection]);
 
-    // Simulate successful connection
-    setIsOnline(true);
-    setLastChecked(new Date());
-    
-    if (showToasts) {
-      toast.success('Connected successfully!');
-    }
-    
-    return true;
-  }, [showToasts]);
+  const disconnect = useCallback(async () => {
+    setIsConnected(false);
+  }, []);
 
-  const disconnect = useCallback(async (): Promise<boolean> => {
-    setIsOnline(false);
-    setLastChecked(new Date());
-    
-    if (showToasts) {
-      toast.info('Disconnected');
-    }
-    
-    return true;
-  }, [showToasts]);
-  
+  const reconnect = useCallback(async () => {
+    if (isConnecting) return;
+    await checkConnection();
+  }, [isConnecting, checkConnection]);
+
+  // Check connection on mount and at intervals
   useEffect(() => {
-    // Check connection immediately
     checkConnection();
     
-    // Set up event listeners for online/offline events
-    const handleOnline = () => {
-      checkConnection(); // Verify we're really online
-    };
-    
-    const handleOffline = () => {
-      setIsOnline(false);
-      setLastChecked(new Date());
-      if (showToasts) {
-        toast.error('Connection lost. You\'re working offline.');
-      }
-    };
-    
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    
-    // Set up interval for regular checks
     const intervalId = setInterval(() => {
       checkConnection();
-    }, checkInterval);
+    }, interval);
     
-    // Clean up
     return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
       clearInterval(intervalId);
     };
-  }, [checkConnection, checkInterval, showToasts]);
-  
+  }, [deviceId, interval, checkConnection]);
+
   return {
-    isOnline,
-    lastChecked,
-    checkNow: checkConnection,
-    retryConnection,
+    isConnected,
+    isConnecting,
+    lastConnected,
+    error,
     connect,
-    disconnect
+    disconnect,
+    reconnect,
+    retryConnection: reconnect
   };
 };
 

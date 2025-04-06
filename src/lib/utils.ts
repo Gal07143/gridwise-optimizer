@@ -1,102 +1,99 @@
 
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { format, formatDistanceToNow } from "date-fns";
+import { format, formatDistanceToNow, isToday, isYesterday, isThisWeek } from "date-fns";
 
-/**
- * Merges class names using clsx and tailwind-merge
- */
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
 /**
- * Returns a formatted date string from a Date object
+ * Format a timestamp for display
+ * @param timestamp - ISO string or Date object
+ * @param includeTime - Whether to include the time
+ * @returns Formatted string like "Today at 2:30 PM" or "Jan 15, 2023 at 2:30 PM"
  */
-export function formatDate(date: Date): string {
-  return new Intl.DateTimeFormat("en-US", {
-    day: "numeric",
-    month: "short", 
-    year: "numeric"
-  }).format(date);
-}
-
-/**
- * Formats a timestamp string to a readable date/time format
- */
-export function formatTimestamp(timestamp: string): string {
-  try {
-    const date = new Date(timestamp);
-    return format(date, "MMM d, yyyy h:mm a");
-  } catch (e) {
-    return "Invalid date";
+export function formatTimestamp(timestamp: string | Date | null, includeTime: boolean = true): string {
+  if (!timestamp) return 'Unknown';
+  
+  const date = typeof timestamp === 'string' ? new Date(timestamp) : timestamp;
+  
+  if (isNaN(date.getTime())) {
+    return 'Invalid date';
+  }
+  
+  if (isToday(date)) {
+    return includeTime ? `Today at ${format(date, 'h:mm a')}` : 'Today';
+  } else if (isYesterday(date)) {
+    return includeTime ? `Yesterday at ${format(date, 'h:mm a')}` : 'Yesterday';
+  } else if (isThisWeek(date)) {
+    return includeTime ? `${format(date, 'EEEE')} at ${format(date, 'h:mm a')}` : format(date, 'EEEE');
+  } else {
+    return includeTime 
+      ? `${format(date, 'MMM d, yyyy')} at ${format(date, 'h:mm a')}`
+      : format(date, 'MMM d, yyyy');
   }
 }
 
 /**
- * Formats a timestamp to relative time (e.g., "5 minutes ago")
+ * Format a date for display
+ * @param date - ISO string or Date object
+ * @returns Formatted string like "January 15, 2023"
  */
-export function formatRelativeTime(timestamp: string): string {
-  try {
-    const date = new Date(timestamp);
-    return formatDistanceToNow(date, { addSuffix: true });
-  } catch (e) {
-    return "Unknown time";
+export function formatDate(date: string | Date | null): string {
+  if (!date) return 'Unknown';
+  
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  
+  if (isNaN(dateObj.getTime())) {
+    return 'Invalid date';
   }
+  
+  return format(dateObj, 'MMMM d, yyyy');
 }
 
 /**
- * Formats a currency amount
+ * Format a date as a relative time
+ * @param date - ISO string or Date object
+ * @returns Formatted string like "2 days ago"
  */
-export function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
+export function formatRelativeTime(date: string | Date | null): string {
+  if (!date) return 'Unknown';
+  
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  
+  if (isNaN(dateObj.getTime())) {
+    return 'Invalid date';
+  }
+  
+  return formatDistanceToNow(dateObj, { addSuffix: true });
+}
+
+/**
+ * Format a number as a currency
+ * @param value - Number to format
+ * @param currency - Currency code (default: USD)
+ * @returns Formatted string like "$1,234.56"
+ */
+export function formatCurrency(value: number, currency: string = 'USD'): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
-  }).format(amount);
+  }).format(value);
 }
 
-/**
- * Creates a debounced function
- */
-export function debounce<T extends (...args: any[]) => any>(
-  func: T,
-  wait: number
-): (...args: Parameters<T>) => void {
-  let timeout: ReturnType<typeof setTimeout> | null = null;
+export function toFixedOptimal(num: number, maxDecimals: number = 2): string {
+  if (num === 0) return '0';
   
-  return function(...args: Parameters<T>): void {
-    const later = () => {
-      timeout = null;
-      func(...args);
-    };
-    
-    if (timeout !== null) {
-      clearTimeout(timeout);
-    }
-    timeout = setTimeout(later, wait);
-  };
-}
-
-/**
- * Truncates text with an ellipsis if it exceeds maxLength
- */
-export function truncateText(text: string, maxLength: number): string {
-  if (text.length <= maxLength) return text;
-  return `${text.slice(0, maxLength)}...`;
-}
-
-/**
- * Converts a value to a specific unit
- */
-export function convertUnit(value: number, fromUnit: string, toUnit: string): number {
-  // Handle common energy unit conversions
-  if (fromUnit === "Wh" && toUnit === "kWh") return value / 1000;
-  if (fromUnit === "kWh" && toUnit === "Wh") return value * 1000;
-  if (fromUnit === "kWh" && toUnit === "MWh") return value / 1000;
-  if (fromUnit === "MWh" && toUnit === "kWh") return value * 1000;
+  // Convert to a string with the max number of decimals
+  const strWithMaxDecimals = num.toFixed(maxDecimals);
   
-  // Return original value if conversion not supported
-  return value;
+  // Remove trailing zeros after decimal point
+  if (strWithMaxDecimals.indexOf('.') !== -1) {
+    return strWithMaxDecimals.replace(/\.?0+$/, '');
+  }
+  
+  return strWithMaxDecimals;
 }

@@ -32,6 +32,7 @@ export interface DeviceModel {
   has_video?: boolean;
   created_at?: string;
   updated_at?: string;
+  firmware_versions?: string[];
 }
 
 export interface DeviceModelListItem {

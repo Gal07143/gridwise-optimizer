@@ -3,7 +3,7 @@
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://xullgeycueouyxeirrqs.supabase.co";
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh1bGxnZXljdWVvdXl4ZWlycnFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDIzMjE2NDQsImV4cCI6MjA1Nzg5NzY0NH0.n5z7ce0elijXBkrpgW_RhTAASKKe3vmzYHxwl8f2KRg";
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh1bGxnZXljdWVvdXl4ZWlycnFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDIzMjE2NDQsImV4cCI6MjA1Nzg5Nzg0NH0.n5z7ce0elijXBkrpgW_RhTAASKKe3vmzYHxwl8f2KRg";
 
 // Create the actual Supabase client
 const realSupabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -23,67 +23,67 @@ export const supabase = {
         order: (column: string, { ascending = true } = {}) => ({
           limit: (limit: number) => Promise.resolve({ data: [{ id: value, [column]: value }], error: null }),
           range: (start: number, end: number) => Promise.resolve({ data: [{ id: value, [column]: value }], error: null }),
-          then: (cb: Function) => { cb({ data: [{ id: value, [column]: value }], error: null }); return Promise.resolve(); },
+          then: (cb: Function) => { return Promise.resolve(cb({ data: [{ id: value, [column]: value }], error: null })); },
         }),
         limit: (limit: number) => Promise.resolve({ data: [{ id: value, [column]: value }], error: null }),
         range: (start: number, end: number) => Promise.resolve({ data: [{ id: value, [column]: value }], error: null }),
         or: (filter: string) => ({
           order: (column: string, { ascending = true } = {}) => ({
             limit: (limit: number) => Promise.resolve({ data: [{ id: value, [column]: value }], error: null }),
-            then: (cb: Function) => { cb({ data: [{ id: value, [column]: value }], error: null }); return Promise.resolve(); },
+            then: (cb: Function) => { return Promise.resolve(cb({ data: [{ id: value, [column]: value }], error: null })); },
           }),
-          then: (cb: Function) => { cb({ data: [{ id: value, [column]: value }], error: null }); return Promise.resolve(); },
+          then: (cb: Function) => { return Promise.resolve(cb({ data: [{ id: value, [column]: value }], error: null })); },
         }),
         gte: (column: string, value: any) => ({
-          then: (cb: Function) => { cb({ data: [{ id: value, [column]: value }], error: null }); return Promise.resolve(); },
+          then: (cb: Function) => { return Promise.resolve(cb({ data: [{ id: value, [column]: value }], error: null })); },
         }),
-        then: (cb: Function) => { cb({ data: [{ id: value, [column]: value }], error: null }); return Promise.resolve(); },
+        then: (cb: Function) => { return Promise.resolve(cb({ data: [{ id: value, [column]: value }], error: null })); },
       }),
       order: (column: string, { ascending = true } = {}) => ({
         limit: (limit: number) => Promise.resolve({ data: [], error: null }),
         eq: (column: string, value: any) => ({
-          then: (cb: Function) => { cb({ data: [{ id: value, [column]: value }], error: null }); return Promise.resolve(); },
+          then: (cb: Function) => { return Promise.resolve(cb({ data: [{ id: value, [column]: value }], error: null })); },
         }),
-        then: (cb: Function) => { cb({ data: [], error: null }); return Promise.resolve(); },
+        then: (cb: Function) => { return Promise.resolve(cb({ data: [], error: null })); },
       }),
       limit: (limit: number) => ({
         eq: (column: string, value: any) => ({
-          then: (cb: Function) => { cb({ data: [{ id: value, [column]: value }], error: null }); return Promise.resolve(); },
+          then: (cb: Function) => { return Promise.resolve(cb({ data: [{ id: value, [column]: value }], error: null })); },
         }),
         or: (filter: string) => ({
-          then: (cb: Function) => { cb({ data: [], error: null }); return Promise.resolve(); },
+          then: (cb: Function) => { return Promise.resolve(cb({ data: [], error: null })); },
         }),
         range: (start: number, end: number) => Promise.resolve({ data: [], error: null }),
         gte: (column: string, value: any) => ({
-          then: (cb: Function) => { cb({ data: [], error: null }); return Promise.resolve(); },
+          then: (cb: Function) => { return Promise.resolve(cb({ data: [], error: null })); },
         }),
-        then: (cb: Function) => { cb({ data: [], error: null }); return Promise.resolve(); },
+        then: (cb: Function) => { return Promise.resolve(cb({ data: [], error: null })); },
       }),
       range: (start: number, end: number) => ({
         eq: (column: string, value: any) => Promise.resolve({ data: [{ id: value, [column]: value }], error: null }),
-        then: (cb: Function) => { cb({ data: [], error: null }); return Promise.resolve(); },
+        then: (cb: Function) => { return Promise.resolve(cb({ data: [], error: null })); },
       }),
       distinct: (column: string) => ({
         eq: (column: string, value: any) => Promise.resolve({ data: [{ id: value, [column]: value }], error: null }),
-        then: (cb: Function) => { cb({ data: [], error: null }); return Promise.resolve(); },
+        then: (cb: Function) => { return Promise.resolve(cb({ data: [], error: null })); },
       }),
-      then: (cb: Function) => { cb({ data: [], error: null }); return Promise.resolve(); },
+      then: (cb: Function) => { return Promise.resolve(cb({ data: [], error: null })); },
     }),
     insert: (data: any) => ({ 
       select: () => ({
         single: () => Promise.resolve({ data: { ...data, id: `mock-${Date.now()}` }, error: null }),
         maybeSingle: () => Promise.resolve({ data: { ...data, id: `mock-${Date.now()}` }, error: null }),
-        then: (cb: Function) => { cb({ data: { ...data, id: `mock-${Date.now()}` }, error: null }); return Promise.resolve(); },
+        then: (cb: Function) => { return Promise.resolve(cb({ data: { ...data, id: `mock-${Date.now()}` }, error: null })); },
       }),
-      then: (cb: Function) => { cb({ data: { ...data, id: `mock-${Date.now()}` }, error: null }); return Promise.resolve(); },
+      then: (cb: Function) => { return Promise.resolve(cb({ data: { ...data, id: `mock-${Date.now()}` }, error: null })); },
     }),
     update: (data: any) => ({ 
       eq: (column: string, value: any) => ({
         select: () => ({
           single: () => Promise.resolve({ data: { id: value, ...data }, error: null }),
-          then: (cb: Function) => { cb({ data: { id: value, ...data }, error: null }); return Promise.resolve(); },
+          then: (cb: Function) => { return Promise.resolve(cb({ data: { id: value, ...data }, error: null })); },
         }),
-        then: (cb: Function) => { cb({ data: { id: value, ...data }, error: null }); return Promise.resolve(); },
+        then: (cb: Function) => { return Promise.resolve(cb({ data: { id: value, ...data }, error: null })); },
       }),
     }),
     delete: () => ({ 
@@ -92,7 +92,7 @@ export const supabase = {
     upsert: (data: any) => Promise.resolve({ data: { ...data, id: data.id || `mock-${Date.now()}` }, error: null }),
     count: () => ({
       eq: (column: string, value: any) => Promise.resolve({ count: 1, error: null }),
-      then: (cb: Function) => { cb({ count: 0, error: null }); return Promise.resolve(); },
+      then: (cb: Function) => { return Promise.resolve(cb({ count: 0, error: null })); },
     }),
   }),
   channel: (name: string) => ({
@@ -200,22 +200,22 @@ export const supabase = {
 export const asyncSupabase = {
   from: (table: string) => ({
     select: async (columns: string = '*') => {
-      return Promise.resolve(supabase.from(table).select(columns));
+      return supabase.from(table).select(columns);
     },
     insert: async (data: any) => {
-      return Promise.resolve(supabase.from(table).insert(data));
+      return supabase.from(table).insert(data);
     },
     update: async (data: any) => {
       return {
         eq: async (column: string, value: any) => {
-          return Promise.resolve(supabase.from(table).update(data).eq(column, value));
+          return supabase.from(table).update(data).eq(column, value);
         }
       };
     },
     delete: async () => {
       return {
         eq: async (column: string, value: any) => {
-          return Promise.resolve(supabase.from(table).delete().eq(column, value));
+          return supabase.from(table).delete().eq(column, value);
         }
       };
     }

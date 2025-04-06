@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ModbusDataType, ModbusRegisterDefinition, ModbusRegisterMap } from '@/types/modbus';
+import { type ModbusRegisterDefinition, type ModbusRegisterMap } from '@/types/modbus';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getRegisterMap, saveRegisterMap } from '@/services/modbus/modbusRegisterService';
@@ -13,16 +13,17 @@ interface ModbusRegisterMapProps {
 
 const ModbusRegisterMap: React.FC<ModbusRegisterMapProps> = ({ deviceId }) => {
   const [registerMap, setRegisterMap] = useState<ModbusRegisterMap>({ 
-    device_id: deviceId,
-    registers: []
+    registers: [],
+    device_id: deviceId
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [newRegister, setNewRegister] = useState<ModbusRegisterDefinition>({
+  const [newRegister, setNewRegister] = useState<Partial<ModbusRegisterDefinition>>({
     name: '',
     address: 0,
     length: 1,
-    dataType: 'holding_register',
+    type: 'holding_register',
+    dataType: 'int16',
     unit: '',
     description: ''
   });
@@ -36,12 +37,15 @@ const ModbusRegisterMap: React.FC<ModbusRegisterMapProps> = ({ deviceId }) => {
         const data = await getRegisterMap(deviceId);
         if (data) {
           // Make sure there are registers array
-          setRegisterMap(data.registers ? data : { ...data, registers: [] });
+          setRegisterMap({
+            registers: data.registers || [],
+            device_id: deviceId
+          });
         } else {
           // Create empty register map
           setRegisterMap({ 
-            device_id: deviceId, 
-            registers: [] 
+            registers: [],
+            device_id: deviceId
           });
         }
         setError(null);
@@ -49,8 +53,8 @@ const ModbusRegisterMap: React.FC<ModbusRegisterMapProps> = ({ deviceId }) => {
         console.error('Failed to load register map:', err);
         setError(err.message || 'Failed to load register map');
         setRegisterMap({ 
-          device_id: deviceId, 
-          registers: [] 
+          registers: [],
+          device_id: deviceId
         });
       } finally {
         setLoading(false);
@@ -81,9 +85,21 @@ const ModbusRegisterMap: React.FC<ModbusRegisterMapProps> = ({ deviceId }) => {
       return;
     }
 
+    // Ensure newRegister has all required properties
+    const completeRegister: ModbusRegisterDefinition = {
+      name: newRegister.name || '',
+      address: newRegister.address || 0,
+      length: newRegister.length || 1,
+      type: newRegister.type || 'holding_register',
+      dataType: newRegister.dataType || 'int16',
+      unit: newRegister.unit,
+      description: newRegister.description,
+      scale: newRegister.scale,
+    };
+
     setRegisterMap(prev => ({
       ...prev,
-      registers: [...(prev.registers || []), { ...newRegister }]
+      registers: [...(prev.registers || []), completeRegister]
     }));
 
     // Reset form
@@ -91,7 +107,8 @@ const ModbusRegisterMap: React.FC<ModbusRegisterMapProps> = ({ deviceId }) => {
       name: '',
       address: 0,
       length: 1,
-      dataType: 'holding_register',
+      type: 'holding_register',
+      dataType: 'int16',
       unit: '',
       description: ''
     });
@@ -111,7 +128,7 @@ const ModbusRegisterMap: React.FC<ModbusRegisterMapProps> = ({ deviceId }) => {
   const handleNewRegisterChange = (field: keyof ModbusRegisterDefinition, value: string | number) => {
     setNewRegister(prev => ({
       ...prev,
-      [field]: field === 'address' || field === 'length' ? Number(value) : value
+      [field]: field === 'address' || field === 'length' || field === 'scale' ? Number(value) : value
     }));
   };
 
@@ -202,10 +219,10 @@ const ModbusRegisterMap: React.FC<ModbusRegisterMapProps> = ({ deviceId }) => {
             </div>
             
             <div>
-              <label htmlFor="register-type" className="block text-sm font-medium mb-1">Data Type</label>
+              <label htmlFor="register-type" className="block text-sm font-medium mb-1">Register Type</label>
               <Select
-                value={newRegister.dataType}
-                onValueChange={(value) => handleNewRegisterChange('dataType', value as ModbusDataType)}
+                value={newRegister.type}
+                onValueChange={(value) => handleNewRegisterChange('type', value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a register type" />
@@ -224,32 +241,56 @@ const ModbusRegisterMap: React.FC<ModbusRegisterMapProps> = ({ deviceId }) => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
+              <label htmlFor="register-dataType" className="block text-sm font-medium mb-1">Data Type</label>
+              <Select
+                value={newRegister.dataType}
+                onValueChange={(value) => handleNewRegisterChange('dataType', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a data type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="int16">INT16</SelectItem>
+                    <SelectItem value="uint16">UINT16</SelectItem>
+                    <SelectItem value="int32">INT32</SelectItem>
+                    <SelectItem value="uint32">UINT32</SelectItem>
+                    <SelectItem value="float32">FLOAT32</SelectItem>
+                    <SelectItem value="float64">FLOAT64</SelectItem>
+                    <SelectItem value="boolean">Boolean</SelectItem>
+                    <SelectItem value="string">String</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
               <label htmlFor="register-unit" className="block text-sm font-medium mb-1">Unit (optional)</label>
               <Input 
                 id="register-unit"
-                value={newRegister.unit}
+                value={newRegister.unit || ''}
                 onChange={(e) => handleNewRegisterChange('unit', e.target.value)}
                 placeholder="e.g., kW, V, A"
               />
             </div>
-            
-            <div>
-              <label htmlFor="register-scale" className="block text-sm font-medium mb-1">Scaling Factor (optional)</label>
-              <Input 
-                id="register-scale"
-                type="number"
-                value={newRegister.scale || ''}
-                onChange={(e) => handleNewRegisterChange('scale', e.target.value)}
-                placeholder="1.0"
-              />
-            </div>
+          </div>
+          
+          <div className="mb-4">
+            <label htmlFor="register-scale" className="block text-sm font-medium mb-1">Scaling Factor (optional)</label>
+            <Input 
+              id="register-scale"
+              type="number"
+              value={newRegister.scale || ''}
+              onChange={(e) => handleNewRegisterChange('scale', parseFloat(e.target.value))}
+              placeholder="1.0"
+            />
           </div>
           
           <div className="mb-4">
             <label htmlFor="register-description" className="block text-sm font-medium mb-1">Description (optional)</label>
             <Input 
               id="register-description"
-              value={newRegister.description}
+              value={newRegister.description || ''}
               onChange={(e) => handleNewRegisterChange('description', e.target.value)}
               placeholder="Register description"
             />

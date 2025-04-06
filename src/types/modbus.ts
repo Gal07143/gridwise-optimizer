@@ -21,6 +21,7 @@ export interface ModbusDevice {
   timeout?: number;
   status?: string;
   lastConnected?: string;
+  site_id?: string;
 }
 
 export type ModbusProtocol = 'TCP' | 'RTU' | 'ASCII';
@@ -34,6 +35,7 @@ export interface ModbusDeviceConfig {
   port: number;
   unit_id: number;
   protocol: ModbusProtocol;
+  is_active: boolean;
   description?: string;
   host?: string;
   serialPort?: string;
@@ -45,6 +47,9 @@ export interface ModbusDeviceConfig {
   autoReconnect?: boolean;
   status?: string;
   lastConnected?: string;
+  inserted_at?: string;
+  updated_at?: string;
+  site_id?: string;
 }
 
 export interface ModbusRegisterDefinition {
@@ -54,8 +59,19 @@ export interface ModbusRegisterDefinition {
   type: ModbusRegisterType;
   dataType: ModbusDataType;
   scaleFactor?: number;
+  scale?: number;
   unit?: string;
   description?: string;
+}
+
+export interface ModbusRegister {
+  id: string;
+  device_id: string;
+  register_address: number;
+  register_name: string;
+  register_length: number;
+  scaling_factor: number;
+  created_at?: string;
 }
 
 export type ModbusDataType = 
@@ -74,6 +90,7 @@ export type ModbusDataType =
 
 export interface ModbusRegisterMap {
   registers: ModbusRegisterDefinition[];
+  device_id?: string;
   lastUpdated?: string;
 }
 
@@ -84,6 +101,25 @@ export interface ModbusDataOptions {
   dataType?: ModbusDataType;
 }
 
+export interface ConnectionStatusOptions {
+  deviceId?: string;
+  interval?: number;
+  onConnect?: () => void;
+  onDisconnect?: () => void;
+  onError?: (error: Error) => void;
+}
+
+export interface ConnectionStatus {
+  isConnected: boolean;
+  isConnecting: boolean;
+  lastConnected: Date | null;
+  error: Error | null;
+  connect: () => Promise<void>;
+  disconnect: () => void;
+  reconnect: () => Promise<void>;
+  retryConnection?: () => void;
+}
+
 export interface ConnectionStatusResult {
   isConnected: boolean;
   error: Error | null;
@@ -92,4 +128,5 @@ export interface ConnectionStatusResult {
   connect?: () => Promise<boolean>;
   disconnect?: () => Promise<boolean>;
   refreshDevice?: () => Promise<void>;
+  retryConnection?: () => void;
 }

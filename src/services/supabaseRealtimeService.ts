@@ -2,34 +2,37 @@
 import { supabase } from '@/integrations/supabase/client';
 
 /**
- * Creates a real-time subscription to a Supabase table
+ * Subscribe to table changes in Supabase
  * 
- * @param tableName - The name of the table to subscribe to
- * @param event - The event type ('INSERT', 'UPDATE', 'DELETE', or '*' for all)
+ * @param tableName - Name of the table to subscribe to
+ * @param event - Event type to subscribe to (INSERT, UPDATE, DELETE, *)
  * @param callback - Function to call when an event occurs
- * @param filter - Optional filter condition for the subscription
- * @returns A function to unsubscribe from the real-time updates
+ * @param filter - Optional filter
+ * @returns Unsubscribe function
  */
 export const subscribeToTable = (
-  tableName: string, 
+  tableName: string,
   event: 'INSERT' | 'UPDATE' | 'DELETE' | '*',
   callback: (payload: any) => void,
   filter?: string
-): (() => void) => {
+): () => void => {
   try {
-    const channelName = `${tableName}-${event}-${Math.random().toString(36).slice(2, 9)}`;
+    const channelName = `${tableName}-${event}-${Math.random().toString(36).slice(2, 7)}`;
     
-    let config: any = {
-      event: event,
+    // Create configuration for the channel
+    const config = {
+      event,
       schema: 'public',
       table: tableName
     };
     
     // Add filter if provided
     if (filter) {
+      // @ts-ignore - filter is valid but not in the types
       config.filter = filter;
     }
     
+    // Subscribe to the channel
     const channel = supabase
       .channel(channelName)
       .on('postgres_changes', config, callback)
@@ -37,25 +40,15 @@ export const subscribeToTable = (
     
     // Return unsubscribe function
     return () => {
-      if (supabase.removeChannel) {
-        supabase.removeChannel(channel);
-      }
+      supabase.removeChannel(channel);
     };
   } catch (error) {
-    console.error('Error creating Supabase real-time subscription:', error);
+    console.error('Error setting up Supabase realtime subscription:', error);
     // Return no-op function as fallback
     return () => {};
   }
 };
 
-/**
- * Create a generic subscription handler for alerts
- */
-export const subscribeToAlerts = (callback: (payload: any) => void): (() => void) => {
-  return subscribeToTable('alerts', 'INSERT', callback);
-};
-
 export default {
-  subscribeToTable,
-  subscribeToAlerts
+  subscribeToTable
 };

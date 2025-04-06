@@ -17,7 +17,10 @@ interface ModbusDeviceCardProps {
 }
 
 const ModbusDeviceCard: React.FC<ModbusDeviceCardProps> = ({ device, onDeleted }) => {
-  const { isConnected, error } = useConnectionStatus(device.id);
+  const { isConnected, error } = useConnectionStatus({
+    deviceId: device.id
+  });
+  
   const [isDeleting, setIsDeleting] = useState(false);
   
   const handleDelete = async () => {

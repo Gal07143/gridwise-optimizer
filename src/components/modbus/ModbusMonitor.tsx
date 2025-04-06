@@ -24,7 +24,10 @@ const ModbusMonitor: React.FC<ModbusMonitorProps> = ({ deviceId }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  const connectionStatus = useConnectionStatus(deviceId);
+  const connectionStatus = useConnectionStatus({
+    deviceId: deviceId
+  });
+  
   const modbusData = useModbusData({
     deviceId,
     register: selectedRegister?.register_address || 0

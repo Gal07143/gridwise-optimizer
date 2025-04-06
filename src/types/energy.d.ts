@@ -27,6 +27,7 @@ export interface Device {
   manufacturer?: string;
   serialNumber?: string;
   tags?: string[] | Record<string, any>;
+  model_name?: string;
 }
 
 export interface DeviceModel {
@@ -34,6 +35,7 @@ export interface DeviceModel {
   name: string;
   manufacturer: string;
   model_number: string;
+  model_name?: string;
   device_type: string;
   category?: string;
   description?: string;
@@ -56,13 +58,15 @@ export interface Site {
   id: string;
   name: string;
   location: string;
-  lat?: number;
-  lng?: number;
   timezone: string;
+  lat: number;
+  lng: number;
   created_at: string;
   updated_at: string;
   type: string;
   status: string;
+  address?: string;
+  description?: string;
 }
 
 export interface EnergyReading {
@@ -96,6 +100,16 @@ export interface Alert {
   resolved_at?: string;
   type?: string;
   source?: string;
+  status?: string;
+  site_id?: string;
+  device_name?: string;
+  site_name?: string;
+  resolved_by?: string;
+  resolved?: boolean;
+  alert_source?: string;
+  assignedTo?: string;
+  category?: string;
+  metadata?: Record<string, any>;
 }
 
 export interface TelemetryData {

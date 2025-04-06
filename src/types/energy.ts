@@ -60,8 +60,8 @@ export interface Site {
   id: string;
   name: string;
   location: string;
-  lat?: number;
-  lng?: number;
+  lat: number;
+  lng: number;
   timezone: string; // Make timezone required to match site.ts
   created_at: string; // Make required to match site.ts
   updated_at: string; // Make required to match site.ts
@@ -176,6 +176,7 @@ export interface DeviceModel {
   name: string;
   manufacturer: string;
   model_number: string;
+  model_name?: string;
   device_type: string;
   category?: string;
   description?: string;
