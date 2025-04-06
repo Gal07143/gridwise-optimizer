@@ -1,8 +1,9 @@
+
 import axios from 'axios';
 import { Site } from '@/types/site';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
-import { mockSites } from './mockSites';
+import mockSites from './mockSites';
 import { isNetworkError } from '@/utils/errorUtils';
 
 // Helper to handle API errors
