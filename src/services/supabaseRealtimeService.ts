@@ -1,73 +1,91 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 /**
- * Type definition for subscription options
+ * Options for subscriptions
  */
 export interface SubscriptionOptions {
-  table: string;
-  event: 'INSERT' | 'UPDATE' | 'DELETE' | '*';
-  callback: (payload: any) => void;
-  filter?: { column: string; value: string | number };
+  event?: 'INSERT' | 'UPDATE' | 'DELETE' | '*';
+  schema?: string;
+  filter?: string;
+  context?: string;
+  showToast?: boolean;
 }
 
 /**
- * Subscribe to a Supabase table for real-time updates
- * 
- * @param table - The table to subscribe to
- * @param event - The event to subscribe to ('INSERT', 'UPDATE', 'DELETE', '*')
- * @param callback - The callback to execute when an event occurs
- * @returns - A function to unsubscribe from the channel
+ * Subscribe to changes in a Supabase table
+ * @param tableName - Name of the table to subscribe to
+ * @param callback - Function to call when an event occurs
+ * @param options - Subscription options
+ * @returns A subscription object with an unsubscribe method
  */
 export const subscribeToTable = (
-  tableOrOptions: string | SubscriptionOptions,
-  event?: 'INSERT' | 'UPDATE' | 'DELETE' | '*',
-  callback?: (payload: any) => void
+  tableName: string,
+  callback: (payload: any) => void,
+  options: string | SubscriptionOptions = {}
 ) => {
-  let table: string;
-  let eventType: 'INSERT' | 'UPDATE' | 'DELETE' | '*';
-  let callbackFn: (payload: any) => void;
-  let filter: { column: string; value: string | number } | undefined;
+  // Convert string format to options object
+  const opts = typeof options === 'string' 
+    ? { context: options, showToast: true } 
+    : options;
   
-  // Handle different parameter options
-  if (typeof tableOrOptions === 'object') {
-    // Object-based call
-    table = tableOrOptions.table;
-    eventType = tableOrOptions.event;
-    callbackFn = tableOrOptions.callback;
-    filter = tableOrOptions.filter;
-  } else {
-    // Parameter-based call
-    table = tableOrOptions;
-    eventType = event || '*';
-    callbackFn = callback || (() => {});
-  }
+  const {
+    event = '*',
+    schema = 'public',
+    filter,
+    context = 'default',
+    showToast = true
+  } = opts;
 
-  let channelName = `${table}_${eventType}_${Date.now()}`;
-  if (filter) {
-    channelName += `_${filter.column}_${filter.value}`;
-  }
-  
-  let config: any = {
-    event: eventType,
-    schema: 'public',
-    table
-  };
-  
-  if (filter) {
-    config.filter = `${filter.column}=eq.${filter.value}`;
-  }
-  
-  const channel = supabase
-    .channel(channelName)
-    .on('postgres_changes', config, callbackFn)
-    .subscribe();
+  try {
+    // Create a channel with a unique name to avoid conflicts
+    const channelName = `${tableName}-${context}-${Date.now()}`;
+    const channel = supabase.channel(channelName);
 
-  return () => {
-    supabase.removeChannel(channel);
-  };
+    // Set up the subscription
+    channel
+      .on(
+        'postgres_changes', 
+        { 
+          event, 
+          schema, 
+          table: tableName,
+          filter
+        }, 
+        (payload) => {
+          if (showToast) {
+            const action = payload.eventType === 'INSERT' ? 'added' : 
+                          payload.eventType === 'UPDATE' ? 'updated' : 'removed';
+            toast.info(`${tableName.replace('_', ' ')} ${action}`);
+          }
+          
+          callback(payload);
+        }
+      )
+      .subscribe();
+
+    // Return an object with an unsubscribe method
+    return {
+      unsubscribe: () => {
+        supabase.removeChannel(channel);
+      }
+    };
+  } catch (error) {
+    console.error(`Error subscribing to ${tableName}:`, error);
+    return {
+      unsubscribe: () => {}
+    };
+  }
 };
 
-export default {
-  subscribeToTable
+/**
+ * Unsubscribe from changes in a Supabase table
+ * @deprecated Use the unsubscribe method from the subscription object instead
+ * @param subscription - Subscription object returned from subscribeToTable
+ */
+export const unsubscribeFromTable = (subscription: { unsubscribe: () => void }) => {
+  if (subscription && typeof subscription.unsubscribe === 'function') {
+    subscription.unsubscribe();
+  }
 };

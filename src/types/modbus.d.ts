@@ -1,61 +1,62 @@
 
-export type ModbusDataType = 'holding_register' | 'input_register' | 'coil' | 'discrete_input';
-
+// Define interfaces for Modbus device configuration
 export interface ModbusDeviceConfig {
-  id: string;
+  id?: string;
   name: string;
-  ip: string;  // IP address of the Modbus device
-  port: number;  // Port number (usually 502 for Modbus TCP)
-  unit_id: number;  // Unit ID / Slave ID
-  protocol: string;  // Protocol type (TCP, RTU over TCP, etc)
-  description: string;
+  description?: string;
+  ip: string;
+  port: number;
+  unit_id: number;
   is_active: boolean;
+  protocol?: string;
 }
 
+// Extended ModbusDevice type that includes timestamps
 export interface ModbusDevice extends ModbusDeviceConfig {
-  inserted_at?: string;
-  updated_at?: string;
-  serialPort?: string;
-  baudRate?: number;
-  host?: string;
-  description: string;
-  protocol: string;
+  inserted_at: string;
+  updated_at: string;
 }
 
-export interface ModbusRegister {
-  id: string;
-  device_id: string;
-  register_address: number;
-  register_name: string;
-  register_length: number;
-  scaling_factor: number;
-  created_at?: string;
-  data_type?: ModbusDataType;
+// Define the type of Modbus data
+export type ModbusDataType = 
+  | 'input_register' 
+  | 'holding_register' 
+  | 'coil'
+  | 'discrete_input';
+
+// Define the interface for a Modbus register definition
+export interface ModbusRegisterDefinition {
+  name: string;
+  address: number;
+  length: number;
+  dataType: ModbusDataType;
+  scale?: number;
+  unit?: string;
+  description?: string;
 }
 
+// Define the interface for a Modbus register map
 export interface ModbusRegisterMap {
-  registers: {
-    [address: string]: {
-      name: string;
-      length: number;
-      scale: number;
-      type: ModbusDataType;
-    }
-  };
+  id?: string;
+  device_id?: string;
+  registers: ModbusRegisterDefinition[];
 }
 
-export interface ModbusDataOptions {
-  deviceId: string;
-  registerAddress: number;
-  length?: number;
-  dataType?: ModbusDataType;
-}
-
-export interface ConnectionStatusResult {
+// Connection status result
+export interface ConnectionStatus {
   isConnected: boolean;
-  lastConnection?: Date;
-  error?: Error | string | null;
-  connect: () => Promise<void>;
+  error?: string | null;
+}
+
+// Options for connection
+export interface ConnectionStatusOptions {
+  timeout?: number;
+  retries?: number;
+}
+
+// Result of connection check
+export interface ConnectionStatusResult {
+  status: ConnectionStatus;
+  connect: () => Promise<ConnectionStatus>;
   disconnect: () => Promise<void>;
-  retryConnection: () => Promise<boolean>;
 }

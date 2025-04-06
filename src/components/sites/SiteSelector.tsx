@@ -19,7 +19,7 @@ export interface SiteSelectorProps {
   loading?: boolean;
 }
 
-export function SiteSelector({ sites, activeSite, setActiveSite, loading }: SiteSelectorProps = {}) {
+export function SiteSelector({ sites, activeSite, setActiveSite, loading }: SiteSelectorProps) {
   const [open, setOpen] = useState(false);
   
   // Use the app store for sites if not provided via props
@@ -29,7 +29,7 @@ export function SiteSelector({ sites, activeSite, setActiveSite, loading }: Site
   const sitesLoading = useAppStore(state => state.sitesLoading);
   
   // Use either provided props or store values
-  const sitesToUse = sites || storeSites;
+  const sitesToUse = sites || storeSites || [];
   const activeSiteToUse = activeSite || storeActiveSite;
   const setActiveSiteFunc = setActiveSite || setStoreActiveSite;
   const isLoading = loading !== undefined ? loading : sitesLoading;
@@ -51,6 +51,7 @@ export function SiteSelector({ sites, activeSite, setActiveSite, loading }: Site
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         type: 'residential',
         status: 'active',
+        description: 'Automatically generated site for demo purposes',
         lat: 37.7749,
         lng: -122.4194,
         created_at: new Date().toISOString(),

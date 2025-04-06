@@ -55,3 +55,38 @@ export const handleError = (error: any, operation: string): string => {
   
   return error.message || 'An unexpected error occurred. Please try again.';
 };
+
+/**
+ * Handle API errors with consistent formatting
+ * @param error The error to handle
+ * @param operation The operation that was being performed
+ * @returns A formatted error message
+ */
+export const handleApiError = (error: any, operation: string): string => {
+  return handleError(error, operation);
+};
+
+/**
+ * Retry a function with exponential backoff
+ * @param fn The function to retry
+ * @param retries The number of retries
+ * @param delay The initial delay in milliseconds
+ * @param backoff The backoff factor
+ */
+export const retryWithBackoff = async <T>(
+  fn: () => Promise<T>,
+  retries = 3,
+  delay = 300,
+  backoff = 2
+): Promise<T> => {
+  try {
+    return await fn();
+  } catch (error) {
+    if (retries <= 0) {
+      throw error;
+    }
+    
+    await new Promise(resolve => setTimeout(resolve, delay));
+    return retryWithBackoff(fn, retries - 1, delay * backoff, backoff);
+  }
+};

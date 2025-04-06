@@ -9,12 +9,31 @@ export interface Site {
   name: string;
   location: string;
   timezone: string;
-  type?: string;
-  status?: string;
+  type: string;
+  status: string;
+  description?: string;
+  contact_person?: string;
+  contact_phone?: string;
+  contact_email?: string;
   lat: number | null;
   lng: number | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface SiteFormData {
+  id?: string;
+  name: string;
+  location: string;
+  timezone: string;
+  type: string;
+  status: string;
+  description?: string;
+  contact_person?: string;
+  contact_phone?: string;
+  contact_email?: string;
+  lat?: number | null;
+  lng?: number | null;
 }
 
 export type SiteType = 'residential' | 'commercial' | 'industrial' | 'utility';
