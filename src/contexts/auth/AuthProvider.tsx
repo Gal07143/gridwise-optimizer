@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { AuthContextType, User } from './AuthTypes';
@@ -163,7 +162,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const updateUserProfile = async (userData: Partial<User>) => {
+  const updateUserProfile = async (userData: Partial<User>): Promise<void> => {
     try {
       setLoading(true);
       
@@ -197,7 +196,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(updatedUser);
       
       toast.success('Profile updated successfully');
-      return true;
     } catch (error: any) {
       console.error('Error updating profile:', error);
       toast.error(`Error updating profile: ${error.message}`);

@@ -16,6 +16,13 @@ const Auth = () => {
   // Get the intended destination from location state, or default to dashboard
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/dashboard';
   
+  // Check if we should show signup initially (from URL state)
+  useEffect(() => {
+    if (location.state && (location.state as any).signUp) {
+      setIsSignUp(true);
+    }
+  }, [location.state]);
+  
   // Redirect if already logged in
   useEffect(() => {
     if (isAuthenticated) {
