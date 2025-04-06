@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
 
 // Public pages
@@ -51,6 +51,7 @@ import OperationalThresholds from "@/pages/settings/OperationalThresholds";
 import OptimizationAlgorithms from "@/pages/settings/OptimizationAlgorithms";
 import ExternalServices from "@/pages/settings/ExternalServices";
 import SystemUpdates from "@/pages/settings/SystemUpdates";
+import Authentication from "@/pages/settings/Authentication";
 
 // Device Catalog Routes
 import DeviceCatalog from '@/pages/devices/DeviceCatalog';
@@ -63,15 +64,23 @@ import AIModelTrainer from '@/components/admin/AIModelTrainer';
 // Authentication components
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import RoleProtectedRoute from '@/components/auth/RoleProtectedRoute';
+import LoadingScreen from '@/components/LoadingScreen';
 
 const AppRoutes = () => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  const location = useLocation();
+
+  if (loading) {
+    return <LoadingScreen message="Loading authentication..." />;
+  }
 
   return (
     <Routes>
-      <Route path="/auth" element={user ? <Navigate to="/" replace /> : <Auth />} />
+      {/* Public Routes */}
       <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <Index />} />
+      <Route path="/auth" element={user ? <Navigate to="/dashboard" replace /> : <Auth />} />
 
+      {/* Protected Routes */}
       <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
 
       <Route path="/devices" element={<ProtectedRoute><Devices /></ProtectedRoute>} />
@@ -92,6 +101,7 @@ const AppRoutes = () => {
       <Route path="/weather-forecast" element={<ProtectedRoute><WeatherForecast /></ProtectedRoute>} />
       <Route path="/ai/overview" element={<ProtectedRoute><AIOverview /></ProtectedRoute>} />
 
+      {/* Integration Routes */}
       <Route path="/integrations" element={<ProtectedRoute><IntegrationsHome /></ProtectedRoute>} />
       <Route path="/integrations/:categoryId" element={<ProtectedRoute><IntegrationCategoryPage /></ProtectedRoute>} />
       <Route path="/integrations/model/:modelId" element={<ProtectedRoute><DeviceModelDetailPage /></ProtectedRoute>} />
@@ -109,9 +119,11 @@ const AppRoutes = () => {
       <Route path="/integrations/meters" element={<ProtectedRoute><IntegrationCategoryPage /></ProtectedRoute>} />
       <Route path="/integrations/controllers" element={<ProtectedRoute><IntegrationCategoryPage /></ProtectedRoute>} />
 
+      {/* System Routes */}
       <Route path="/system-status" element={<ProtectedRoute><SystemStatus /></ProtectedRoute>} />
       <Route path="/security" element={<ProtectedRoute><Security /></ProtectedRoute>} />
 
+      {/* Settings Routes */}
       <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       <Route path="/settings/user" element={<ProtectedRoute><UserSettings /></ProtectedRoute>} />
       <Route path="/settings/sites" element={<ProtectedRoute><SiteSettings /></ProtectedRoute>} />
@@ -124,12 +136,18 @@ const AppRoutes = () => {
       <Route path="/settings/algorithms" element={<ProtectedRoute><OptimizationAlgorithms /></ProtectedRoute>} />
       <Route path="/settings/external" element={<ProtectedRoute><ExternalServices /></ProtectedRoute>} />
       <Route path="/settings/system-updates" element={<ProtectedRoute><SystemUpdates /></ProtectedRoute>} />
+      <Route path="/settings/authentication" element={<ProtectedRoute><Authentication /></ProtectedRoute>} />
       
+      {/* AI Routes */}
       <Route path="/ai/trainer" element={<ProtectedRoute><AIModelTrainer /></ProtectedRoute>} />
+      
+      {/* Device Catalog Routes */}
       <Route path="/device-view/:deviceId" element={<Navigate to={`/devices/${window.location.pathname.split('/').pop()}`} replace />} />
       <Route path="/devices/catalog" element={<ProtectedRoute><DeviceCatalog /></ProtectedRoute>} />
       <Route path="/devices/category/:categoryId" element={<ProtectedRoute><DeviceCategoryDetail /></ProtectedRoute>} />
       <Route path="/devices/model/:modelId" element={<ProtectedRoute><DeviceModelDetail /></ProtectedRoute>} />
+      
+      {/* Catch-all route */}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

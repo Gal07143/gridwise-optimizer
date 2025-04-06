@@ -1,7 +1,7 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth/AuthContext';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -16,13 +16,14 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { Eye, EyeOff, ArrowRight, LogIn } from 'lucide-react';
+import { Eye, EyeOff, LogIn } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 
 // Form validation schema
 const signInSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
-  rememberMe: z.boolean().optional()
+  rememberMe: z.boolean().default(false)
 });
 
 // Define types based on the schema
@@ -43,27 +44,17 @@ const SignInForm = ({ onToggleMode }: SignInFormProps) => {
   const form = useForm<SignInFormValues>({
     resolver: zodResolver(signInSchema),
     defaultValues: {
-      email: '',
+      email: localStorage.getItem('rememberedEmail') || '',
       password: '',
-      rememberMe: false
+      rememberMe: !!localStorage.getItem('rememberedEmail')
     }
   });
-  
-  // Load remembered email if available
-  useEffect(() => {
-    const rememberedEmail = localStorage.getItem('rememberedEmail');
-    if (rememberedEmail) {
-      form.setValue('email', rememberedEmail);
-      form.setValue('rememberMe', true);
-    }
-  }, [form]);
   
   const onSubmit = async (values: SignInFormValues) => {
     setIsSubmitting(true);
     
     try {
       await signIn(values.email, values.password);
-      toast.success('Signed in successfully! Welcome back.');
       
       // Save to localStorage if remember me is checked
       if (values.rememberMe) {
@@ -71,26 +62,10 @@ const SignInForm = ({ onToggleMode }: SignInFormProps) => {
       } else {
         localStorage.removeItem('rememberedEmail');
       }
-      
-      // Navigate to dashboard on success
-      navigate('/dashboard');
     } catch (error) {
       console.error('Authentication error:', error);
       
-      // Display user-friendly error messages
-      if (error instanceof Error) {
-        // Common error messages with friendly alternatives
-        const errorMessage = error.message.toLowerCase();
-        if (errorMessage.includes('invalid login')) {
-          toast.error('Invalid email or password. Please try again.');
-        } else if (errorMessage.includes('network')) {
-          toast.error('Network error. Please check your connection and try again.');
-        } else {
-          toast.error(error.message);
-        }
-      } else {
-        toast.error('An unexpected error occurred. Please try again.');
-      }
+      // Error handling is already done in the signIn method
     } finally {
       setIsSubmitting(false);
     }
@@ -98,15 +73,15 @@ const SignInForm = ({ onToggleMode }: SignInFormProps) => {
   
   return (
     <>
-      <div>
-        <h2 className="mt-4 text-center text-3xl font-bold tracking-tight text-gray-900">
+      <div className="text-center mb-6">
+        <h2 className="text-2xl font-bold tracking-tight">
           Sign in to your account
         </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
+        <p className="mt-2 text-sm text-muted-foreground">
           Don't have an account?{' '}
           <button
             type="button"
-            className="font-medium text-blue-600 hover:text-blue-500 focus:outline-none transition-colors"
+            className="font-medium text-primary hover:underline hover:text-primary/90 transition-colors"
             onClick={onToggleMode}
           >
             Sign up
@@ -115,7 +90,7 @@ const SignInForm = ({ onToggleMode }: SignInFormProps) => {
       </div>
       
       <Form {...form}>
-        <form className="mt-8 space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
+        <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
           {/* Email Field */}
           <FormField
             control={form.control}
@@ -155,7 +130,7 @@ const SignInForm = ({ onToggleMode }: SignInFormProps) => {
                   </FormControl>
                   <button 
                     type="button"
-                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-500"
+                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground"
                     onClick={() => setShowPassword(!showPassword)}
                     tabIndex={-1}
                   >
@@ -168,53 +143,55 @@ const SignInForm = ({ onToggleMode }: SignInFormProps) => {
           />
           
           {/* Remember Me Checkbox and Forgot Password */}
-          <FormField
-            control={form.control}
-            name="rememberMe"
-            render={({ field }) => (
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <input
-                    id="remember-me"
-                    type="checkbox"
-                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    checked={field.value || false}
-                    onChange={field.onChange}
+          <div className="flex items-center justify-between">
+            <FormField
+              control={form.control}
+              name="rememberMe"
+              render={({ field }) => (
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="remember-me" 
+                    checked={field.value} 
+                    onCheckedChange={field.onChange}
                   />
-                  <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
+                  <label 
+                    htmlFor="remember-me" 
+                    className="text-sm text-muted-foreground cursor-pointer"
+                  >
                     Remember me
                   </label>
                 </div>
-                
-                <div className="text-sm">
-                  <a 
-                    href="#" 
-                    className="font-medium text-blue-600 hover:text-blue-500 focus:outline-none transition-colors"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      toast.info('Password reset functionality coming soon!');
-                    }}
-                  >
-                    Forgot your password?
-                  </a>
-                </div>
-              </div>
-            )}
-          />
+              )}
+            />
+            
+            <div className="text-sm">
+              <button
+                type="button"
+                className="font-medium text-primary hover:underline hover:text-primary/90 transition-colors"
+                onClick={() => toast.info('Password reset not implemented yet')}
+              >
+                Forgot password?
+              </button>
+            </div>
+          </div>
           
           {/* Submit Button */}
           <Button
             type="submit"
-            className="w-full flex items-center justify-center gap-2"
+            className="w-full mt-2"
             disabled={isSubmitting}
           >
             {isSubmitting ? (
-              <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-r-transparent"></span>
+              <>
+                <span className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-solid border-current border-r-transparent" />
+                Signing in...
+              </>
             ) : (
-              <LogIn size={18} />
+              <>
+                <LogIn size={18} className="mr-2" />
+                Sign in
+              </>
             )}
-            {isSubmitting ? 'Processing...' : 'Sign in'}
-            <ArrowRight size={16} className="ml-1 opacity-70" />
           </Button>
         </form>
       </Form>

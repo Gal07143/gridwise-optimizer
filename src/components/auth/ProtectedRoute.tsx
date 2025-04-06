@@ -1,7 +1,7 @@
 
 import React, { useEffect } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth/AuthContext';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { toast } from 'sonner';
 
@@ -26,7 +26,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     return (
       <div className="flex flex-col items-center justify-center h-screen">
         <LoadingSpinner size="lg" />
-        <p className="mt-4 text-sm text-gray-500">Loading your profile...</p>
+        <p className="mt-4 text-sm text-muted-foreground">Loading your profile...</p>
       </div>
     );
   }

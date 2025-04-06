@@ -1,8 +1,6 @@
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { 
@@ -11,18 +9,24 @@ import {
   FormField, 
   FormItem, 
   FormLabel, 
-  FormMessage 
+  FormMessage,
+  FormDescription
 } from '@/components/ui/form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { Eye, EyeOff, ArrowRight, UserPlus } from 'lucide-react';
+import { Eye, EyeOff, UserPlus } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 
 // Form validation schema
 const signUpSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Please enter a valid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  password: z.string()
+    .min(8, 'Password must be at least 8 characters')
+    .refine(value => /[A-Z]/.test(value), 'Password must contain at least one uppercase letter')
+    .refine(value => /[a-z]/.test(value), 'Password must contain at least one lowercase letter')
+    .refine(value => /[0-9]/.test(value), 'Password must contain at least one number'),
   agreeTerms: z.boolean().refine(val => val === true, {
     message: 'You must agree to the terms and conditions'
   })
@@ -40,7 +44,6 @@ const SignUpForm = ({ onToggleMode }: SignUpFormProps) => {
   const [showPassword, setShowPassword] = useState(false);
   
   const { signUp } = useAuth();
-  const navigate = useNavigate();
   
   // Set up form with validation
   const form = useForm<SignUpFormValues>({
@@ -58,29 +61,10 @@ const SignUpForm = ({ onToggleMode }: SignUpFormProps) => {
     
     try {
       await signUp(values.email, values.password, values.name);
-      toast.success('Account created successfully! Redirecting to dashboard...');
-      
-      // Navigate to dashboard on success (for demo purposes)
-      setTimeout(() => {
-        navigate('/dashboard');
-      }, 1500);
+      // Auth context will handle redirection and toast messages
     } catch (error) {
+      // Error handling is already done in the signUp method
       console.error('Signup error:', error);
-      
-      // Display user-friendly error messages
-      if (error instanceof Error) {
-        // Common error messages with friendly alternatives
-        const errorMessage = error.message.toLowerCase();
-        if (errorMessage.includes('already in use') || errorMessage.includes('already registered')) {
-          toast.error('This email is already registered. Try signing in instead.');
-        } else if (errorMessage.includes('network')) {
-          toast.error('Network error. Please check your connection and try again.');
-        } else {
-          toast.error(error.message);
-        }
-      } else {
-        toast.error('An unexpected error occurred. Please try again.');
-      }
     } finally {
       setIsSubmitting(false);
     }
@@ -88,15 +72,15 @@ const SignUpForm = ({ onToggleMode }: SignUpFormProps) => {
   
   return (
     <>
-      <div>
-        <h2 className="mt-4 text-center text-3xl font-bold tracking-tight text-gray-900">
+      <div className="text-center mb-6">
+        <h2 className="text-2xl font-bold tracking-tight">
           Create your account
         </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
+        <p className="mt-2 text-sm text-muted-foreground">
           Already have an account?{' '}
           <button
             type="button"
-            className="font-medium text-blue-600 hover:text-blue-500 focus:outline-none transition-colors"
+            className="font-medium text-primary hover:underline hover:text-primary/90 transition-colors"
             onClick={onToggleMode}
           >
             Sign in
@@ -105,7 +89,7 @@ const SignUpForm = ({ onToggleMode }: SignUpFormProps) => {
       </div>
       
       <Form {...form}>
-        <form className="mt-8 space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
+        <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
           {/* Name Field */}
           <FormField
             control={form.control}
@@ -157,7 +141,7 @@ const SignUpForm = ({ onToggleMode }: SignUpFormProps) => {
                   <FormControl>
                     <Input 
                       type={showPassword ? "text" : "password"} 
-                      placeholder="Choose a strong password"
+                      placeholder="Create a strong password"
                       autoComplete="new-password"
                       className="pr-10"
                       {...field} 
@@ -165,13 +149,16 @@ const SignUpForm = ({ onToggleMode }: SignUpFormProps) => {
                   </FormControl>
                   <button 
                     type="button"
-                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-500"
+                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground"
                     onClick={() => setShowPassword(!showPassword)}
                     tabIndex={-1}
                   >
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
+                <FormDescription className="text-xs">
+                  Must be at least 8 characters with uppercase, lowercase, and numbers
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -182,40 +169,47 @@ const SignUpForm = ({ onToggleMode }: SignUpFormProps) => {
             control={form.control}
             name="agreeTerms"
             render={({ field }) => (
-              <div className="flex items-center">
-                <input
-                  id="agree-terms"
-                  type="checkbox"
-                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  checked={field.value}
-                  onChange={field.onChange}
-                />
-                <label htmlFor="agree-terms" className="ml-2 block text-sm text-gray-900">
-                  I agree to the{' '}
-                  <a href="#" className="font-medium text-blue-600 hover:text-blue-500">
-                    terms and conditions
-                  </a>
-                </label>
-                {form.formState.errors.agreeTerms && (
-                  <p className="mt-1 text-sm text-red-500">{form.formState.errors.agreeTerms.message}</p>
-                )}
-              </div>
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0 mt-4">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel className="text-sm font-normal">
+                    I agree to the{' '}
+                    <a
+                      href="#"
+                      className="text-primary hover:underline hover:text-primary/90"
+                      onClick={(e) => e.preventDefault()}
+                    >
+                      terms and conditions
+                    </a>
+                  </FormLabel>
+                  <FormMessage />
+                </div>
+              </FormItem>
             )}
           />
           
           {/* Submit Button */}
           <Button
             type="submit"
-            className="w-full flex items-center justify-center gap-2"
+            className="w-full mt-2"
             disabled={isSubmitting}
           >
             {isSubmitting ? (
-              <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-r-transparent"></span>
+              <>
+                <span className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-solid border-current border-r-transparent" />
+                Creating Account...
+              </>
             ) : (
-              <UserPlus size={18} />
+              <>
+                <UserPlus size={18} className="mr-2" />
+                Create Account
+              </>
             )}
-            {isSubmitting ? 'Creating Account...' : 'Create Account'}
-            <ArrowRight size={16} className="ml-1 opacity-70" />
           </Button>
         </form>
       </Form>

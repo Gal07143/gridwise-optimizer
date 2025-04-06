@@ -24,13 +24,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log('Auth state changed:', event, session);
+        
         if (session?.user) {
           const userData: User = {
             id: session.user.id,
             email: session.user.email || '',
-            role: 'admin', // Mock role for demo purposes
-            firstName: 'Demo',
-            lastName: 'User',
+            role: 'admin', // We'll fetch the actual role from profiles later
+            firstName: session.user.user_metadata?.first_name || session.user.user_metadata?.firstName || '',
+            lastName: session.user.user_metadata?.last_name || session.user.user_metadata?.lastName || '',
           };
           setUser(userData);
         } else {
@@ -58,11 +60,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const userData: User = {
           id: data.user.id,
           email: data.user.email || '',
-          role: 'admin', // Mock role for demo purposes
-          firstName: 'Demo',
-          lastName: 'User',
+          role: 'admin', // We'll fetch the actual role from profiles later
+          firstName: data.user.user_metadata?.first_name || data.user.user_metadata?.firstName || '',
+          lastName: data.user.user_metadata?.last_name || data.user.user_metadata?.lastName || '',
         };
         setUser(userData);
+        
+        // Also get profile data to get the role
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('role, first_name, last_name')
+          .eq('id', data.user.id)
+          .single();
+          
+        if (!profileError && profileData) {
+          setUser(prev => prev ? {
+            ...prev,
+            role: profileData.role,
+            firstName: profileData.first_name || prev.firstName,
+            lastName: profileData.last_name || prev.lastName,
+          } : null);
+        }
       }
     } catch (error) {
       console.error('Error checking user:', error);
@@ -79,15 +97,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (error) throw error;
 
       if (data.user) {
-        const userData: User = {
-          id: data.user.id,
-          email: data.user.email || '',
-          role: 'admin',
-          firstName: email.split('@')[0],
-          lastName: 'User',
-        };
-        
-        setUser(userData);
+        // We'll fetch the full profile in the auth state change event
         toast.success('Successfully signed in');
       }
     } catch (error: any) {
@@ -121,17 +131,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       if (error) throw error;
 
-      // For development, auto sign-in after signup
       if (data.user) {
-        const userData: User = {
-          id: data.user.id,
-          email: data.user.email || '',
-          role: 'admin',
-          firstName,
-          lastName,
-        };
-        
-        setUser(userData);
         toast.success('Account created successfully');
       } else {
         toast.success('Please check your email to verify your account');
@@ -169,12 +169,35 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       if (!user) throw new Error('No user is currently logged in');
       
-      // Update the user data
-      // In a real app, we would save this to the profiles table
+      // Update Supabase auth metadata
+      const { error: authUpdateError } = await supabase.auth.updateUser({
+        data: {
+          firstName: userData.firstName,
+          lastName: userData.lastName
+        }
+      });
+      
+      if (authUpdateError) throw authUpdateError;
+      
+      // Also update the profiles table
+      const { error: profileUpdateError } = await supabase
+        .from('profiles')
+        .update({
+          first_name: userData.firstName,
+          last_name: userData.lastName,
+          // Only update role if user is admin and role is provided
+          ...(user.role === 'admin' && userData.role ? { role: userData.role } : {})
+        })
+        .eq('id', user.id);
+      
+      if (profileUpdateError) throw profileUpdateError;
+      
+      // Update local state
       const updatedUser = { ...user, ...userData };
       setUser(updatedUser);
       
       toast.success('Profile updated successfully');
+      return true;
     } catch (error: any) {
       console.error('Error updating profile:', error);
       toast.error(`Error updating profile: ${error.message}`);
