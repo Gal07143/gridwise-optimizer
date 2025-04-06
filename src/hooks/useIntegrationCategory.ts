@@ -1,29 +1,122 @@
 
-import { useDeviceModels, DeviceModel } from './useDeviceModels';
+import { useState, useCallback, useEffect } from 'react';
+import { DeviceModel } from '@/types/device-model';
+import { useDeviceModels } from './useDeviceModels';
 
-// Create a type that ensures name is required
-type DeviceModelWithRequiredName = DeviceModel & { name: string };
+export const useIntegrationCategory = (categoryId?: string) => {
+  const { models, isLoading: loading, error } = useDeviceModels();
+  const [filteredModels, setFilteredModels] = useState<DeviceModel[]>([]);
+  const [sortField, setSortField] = useState<string>('name');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [deviceCount, setDeviceCount] = useState<number>(0);
+  const [categoryName, setCategoryName] = useState<string>('');
 
-export const useIntegrationCategory = (categoryId: string) => {
-  const result = useDeviceModels(categoryId);
-  
-  // Map the models to ensure they all have required name property
-  const devices = result.models.map(model => ({
-    ...model,
-    name: model.name || `${model.manufacturer} ${model.model_name}` // Provide fallback if name is missing
-  })) as DeviceModelWithRequiredName[];
-  
-  // Return the data with property names expected by IntegrationCategoryPage
+  // Get the category name from the categoryId
+  useEffect(() => {
+    if (categoryId) {
+      // Example mapping of categoryId to readable name
+      const categoryNames: Record<string, string> = {
+        'solar-inverters': 'Solar Inverters',
+        'battery-systems': 'Battery Systems',
+        'ev-chargers': 'EV Chargers',
+        'meters': 'Meters',
+        'load-controllers': 'Load Controllers',
+        'wind-turbines': 'Wind Turbines',
+        'generators': 'Generators',
+        'hvac': 'HVAC Systems'
+      };
+      
+      setCategoryName(categoryNames[categoryId] || categoryId);
+    }
+  }, [categoryId]);
+
+  // Filter and sort the models
+  useEffect(() => {
+    if (!loading && models.length > 0) {
+      let result = [...models];
+
+      // Apply category filter if specified
+      if (categoryId) {
+        result = result.filter(model => {
+          // Map categoryId to category property
+          const categoryMapping: Record<string, string> = {
+            'solar-inverters': 'Solar Inverters',
+            'battery-systems': 'Battery Systems',
+            'ev-chargers': 'EV Chargers',
+            'meters': 'Meters',
+            // Add more mappings as needed
+          };
+          
+          const category = categoryMapping[categoryId] || categoryId;
+          return model.category === category || model.device_type.toLowerCase().includes(categoryId);
+        });
+      }
+
+      // Apply search filter if specified
+      if (searchQuery) {
+        const lowerQuery = searchQuery.toLowerCase();
+        result = result.filter(model => 
+          model.name.toLowerCase().includes(lowerQuery) ||
+          model.manufacturer.toLowerCase().includes(lowerQuery) ||
+          model.model_number.toLowerCase().includes(lowerQuery)
+        );
+      }
+
+      // Apply sorting
+      result.sort((a, b) => {
+        // Ensure the field exists on both objects being compared
+        const aVal = a[sortField as keyof DeviceModel] || '';
+        const bVal = b[sortField as keyof DeviceModel] || '';
+        
+        // Compare the values
+        if (typeof aVal === 'string' && typeof bVal === 'string') {
+          return sortDirection === 'asc' 
+            ? aVal.localeCompare(bVal)
+            : bVal.localeCompare(aVal);
+        }
+        
+        // For numeric values
+        const aNumber = Number(aVal);
+        const bNumber = Number(bVal);
+        
+        if (!isNaN(aNumber) && !isNaN(bNumber)) {
+          return sortDirection === 'asc' ? aNumber - bNumber : bNumber - aNumber;
+        }
+        
+        // Default case
+        return 0;
+      });
+
+      setFilteredModels(result);
+      setDeviceCount(result.length);
+    } else {
+      setFilteredModels([]);
+      setDeviceCount(0);
+    }
+  }, [models, categoryId, sortField, sortDirection, searchQuery, loading]);
+
+  const handleSort = useCallback((field: string) => {
+    if (field === sortField) {
+      // Toggle direction if same field
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      // New field, default to ascending
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  }, [sortField]);
+
   return {
-    devices,
-    isLoading: result.loading,
-    error: result.error,
-    sortField: result.sortField,
-    sortDirection: result.sortDirection,
-    searchQuery: result.searchQuery,
-    setSearchQuery: result.setSearchQuery,
-    handleSort: result.handleSort,
-    deviceCount: result.deviceCount,
-    categoryName: result.categoryName
+    models: filteredModels,
+    loading,
+    error,
+    sortField,
+    sortDirection,
+    searchQuery,
+    setSearchQuery,
+    handleSort,
+    deviceCount,
+    categoryName
   };
 };

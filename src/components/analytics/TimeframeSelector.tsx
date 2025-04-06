@@ -1,47 +1,45 @@
 
 import React from 'react';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
-export interface TimeframeSelectorProps {
+interface TimeframeSelectorProps {
   timeframe: string;
-  onChange: (value: string) => void;
-  options?: { value: string; label: string }[];
+  onChange: (timeframe: string) => void;
   className?: string;
 }
-
-const defaultOptions = [
-  { value: 'day', label: 'Day' },
-  { value: 'week', label: 'Week' },
-  { value: 'month', label: 'Month' },
-  { value: 'year', label: 'Year' },
-];
 
 const TimeframeSelector: React.FC<TimeframeSelectorProps> = ({
   timeframe,
   onChange,
-  options = defaultOptions,
-  className = '',
+  className
 }) => {
+  const timeframeOptions = [
+    { value: 'day', label: 'Day' },
+    { value: 'week', label: 'Week' },
+    { value: 'month', label: 'Month' },
+    { value: 'year', label: 'Year' }
+  ];
+
   return (
-    <ToggleGroup
-      type="single"
-      value={timeframe}
-      onValueChange={(value) => {
-        if (value) onChange(value);
-      }}
-      className={`inline-flex rounded-md border p-1 bg-background ${className}`}
-    >
-      {options.map((option) => (
-        <ToggleGroupItem
+    <div className={cn('inline-flex rounded-md border bg-background', className)}>
+      {timeframeOptions.map((option) => (
+        <Button
           key={option.value}
-          value={option.value}
-          className="px-3 py-1 text-sm rounded-sm data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
-          aria-label={`Show ${option.label.toLowerCase()} data`}
+          variant={timeframe === option.value ? 'default' : 'ghost'}
+          size="sm"
+          className={cn(
+            'h-8 rounded-none border-0',
+            timeframe === option.value ? '' : 'text-muted-foreground',
+            option.value === timeframeOptions[0].value && 'rounded-l-md',
+            option.value === timeframeOptions[timeframeOptions.length - 1].value && 'rounded-r-md'
+          )}
+          onClick={() => onChange(option.value)}
         >
           {option.label}
-        </ToggleGroupItem>
+        </Button>
       ))}
-    </ToggleGroup>
+    </div>
   );
 };
 

@@ -1,18 +1,17 @@
 
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import App from './App.tsx'
-import './index.css'
 import { BrowserRouter } from 'react-router-dom'
-import { setupGlobalErrorHandler } from './utils/globalErrorHandler.ts'
+import App from './App'
+import './index.css'
+import GlobalErrorBoundary from './components/ui/GlobalErrorBoundary'
 
-// Setup global error handler for React refresh and dependency issues
-setupGlobalErrorHandler();
-
-ReactDOM.createRoot(document.getElementById('root')!).render(
+ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
+    <GlobalErrorBoundary>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </GlobalErrorBoundary>
   </React.StrictMode>,
 )

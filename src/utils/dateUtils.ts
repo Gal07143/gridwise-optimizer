@@ -1,76 +1,59 @@
 
-import { format, parseISO, formatDistanceToNow, isValid } from "date-fns";
-
-// Format date to specified format
-export const formatDate = (
-  date: Date | string | number,
-  formatString: string = "MMM dd, yyyy"
-): string => {
-  try {
-    const dateObj = typeof date === "string" ? parseISO(date) : new Date(date);
-    
-    if (!isValid(dateObj)) {
-      return "Invalid date";
-    }
-    
-    return format(dateObj, formatString);
-  } catch (error) {
-    console.error("Error formatting date:", error);
-    return "Invalid date";
-  }
-};
-
-// Format date as relative time (e.g. "2 days ago")
-export const formatRelativeTime = (date: Date | string | number): string => {
-  try {
-    const dateObj = typeof date === "string" ? parseISO(date) : new Date(date);
-    
-    if (!isValid(dateObj)) {
-      return "Invalid date";
-    }
-    
-    return formatDistanceToNow(dateObj, { addSuffix: true });
-  } catch (error) {
-    console.error("Error formatting relative time:", error);
-    return "Invalid date";
-  }
-};
-
-// Check if a date is today
-export const isToday = (date: Date | string | number): boolean => {
-  try {
-    const dateObj = typeof date === "string" ? parseISO(date) : new Date(date);
-    const today = new Date();
-    
-    return (
-      dateObj.getDate() === today.getDate() &&
-      dateObj.getMonth() === today.getMonth() &&
-      dateObj.getFullYear() === today.getFullYear()
-    );
-  } catch (error) {
-    return false;
-  }
-};
-
-// Get start and end dates for different time periods
-export const getDateRange = (period: 'day' | 'week' | 'month' | 'year'): { start: Date; end: Date } => {
-  const end = new Date();
-  const start = new Date();
+/**
+ * Format a date string or Date object into a human-readable format
+ * @param date The date to format
+ * @param includeTime Whether to include the time in the formatted output
+ * @returns Formatted date string
+ */
+export function formatDate(date: string | Date, includeTime: boolean = false): string {
+  if (!date) return 'N/A';
   
-  switch (period) {
-    case 'day':
-      start.setHours(0, 0, 0, 0);
-      break;
-    case 'week':
-      start.setDate(start.getDate() - 7);
-      break;
-    case 'month':
-      start.setMonth(start.getMonth() - 1);
-      break;
-    case 'year':
-      start.setFullYear(start.getFullYear() - 1);
-      break;
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  
+  if (isNaN(dateObj.getTime())) {
+    return 'Invalid date';
   }
   
-  return { start, end };
-};
+  const options: Intl.DateTimeFormatOptions = {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    ...(includeTime ? { hour: '2-digit', minute: '2-digit' } : {})
+  };
+  
+  return new Intl.DateTimeFormat('en-US', options).format(dateObj);
+}
+
+/**
+ * Format a relative time (e.g., "2 days ago")
+ * @param date The date to calculate relative time from
+ * @returns Formatted relative time string
+ */
+export function formatRelativeTime(date: string | Date): string {
+  if (!date) return 'N/A';
+  
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  
+  if (isNaN(dateObj.getTime())) {
+    return 'Invalid date';
+  }
+  
+  const now = new Date();
+  const diffMs = now.getTime() - dateObj.getTime();
+  const diffSecs = Math.floor(diffMs / 1000);
+  const diffMins = Math.floor(diffSecs / 60);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+  
+  if (diffSecs < 60) {
+    return 'Just now';
+  } else if (diffMins < 60) {
+    return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
+  } else if (diffHours < 24) {
+    return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
+  } else if (diffDays < 30) {
+    return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
+  } else {
+    return formatDate(dateObj);
+  }
+}

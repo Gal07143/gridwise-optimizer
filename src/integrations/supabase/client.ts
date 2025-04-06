@@ -23,76 +23,105 @@ export const supabase = {
   from: (table: string) => {
     // Base query object with all required methods
     const baseQuery = {
-      eq: (column: string, value: any) => ({
-        single: () => createMockPromise({ id: value, [column]: value }),
-        maybeSingle: () => createMockPromise({ id: value, [column]: value }),
-        order: (column: string, { ascending = true } = {}) => ({
-          limit: (limit: number) => createMockPromise([{ id: value, [column]: value }]),
-          range: (start: number, end: number) => createMockPromise([{ id: value, [column]: value }]),
-          then: (cb: Function) => Promise.resolve(cb({ data: [{ id: value, [column]: value }], error: null })),
-        }),
-        limit: (limit: number) => createMockPromise([{ id: value, [column]: value }]),
-        range: (start: number, end: number) => createMockPromise([{ id: value, [column]: value }]),
-        or: (filter: string) => ({
+      eq: (column: string, value: any) => {
+        const result = {
+          single: () => createMockPromise({ id: value, [column]: value }),
+          maybeSingle: () => createMockPromise({ id: value, [column]: value }),
           order: (column: string, { ascending = true } = {}) => ({
             limit: (limit: number) => createMockPromise([{ id: value, [column]: value }]),
-            then: (cb: Function) => Promise.resolve(cb({ data: [{ id: value, [column]: value }], error: null })),
+            range: (start: number, end: number) => createMockPromise([{ id: value, [column]: value }]),
+            then: (cb: Function) => Promise.resolve(cb({ data: [{ id: value, [column]: value }], error: null }))
           }),
-          then: (cb: Function) => Promise.resolve(cb({ data: [{ id: value, [column]: value }], error: null })),
+          limit: (limit: number) => createMockPromise([{ id: value, [column]: value }]),
+          range: (start: number, end: number) => createMockPromise([{ id: value, [column]: value }]),
+          or: (filter: string) => ({
+            order: (column: string, { ascending = true } = {}) => ({
+              limit: (limit: number) => createMockPromise([{ id: value, [column]: value }]),
+              then: (cb: Function) => Promise.resolve(cb({ data: [{ id: value, [column]: value }], error: null }))
+            }),
+            then: (cb: Function) => Promise.resolve(cb({ data: [{ id: value, [column]: value }], error: null }))
+          }),
+          gte: (column: string, value: any) => ({
+            then: (cb: Function) => Promise.resolve(cb({ data: [{ id: value, [column]: value }], error: null }))
+          }),
+          then: (cb: Function) => Promise.resolve(cb({ data: [{ id: value, [column]: value }], error: null }))
+        };
+        return result;
+      },
+      select: (columns: string = '*') => ({
+        eq: (column: string, value: any) => baseQuery.eq(column, value),
+        in: (column: string, values: any[]) => ({
+          then: (cb: Function) => Promise.resolve(cb({ data: values.map(v => ({ id: v, [column]: v })), error: null }))
         }),
-        gte: (column: string, value: any) => ({
-          then: (cb: Function) => Promise.resolve(cb({ data: [{ id: value, [column]: value }], error: null })),
+        order: (column: string, { ascending = true } = {}) => ({
+          limit: (limit: number) => createMockPromise([]),
+          range: (start: number, end: number) => createMockPromise([]),
+          then: (cb: Function) => Promise.resolve(cb({ data: [], error: null }))
         }),
-        then: (cb: Function) => Promise.resolve(cb({ data: [{ id: value, [column]: value }], error: null })),
+        distinct: (column: string) => ({
+          then: (cb: Function) => Promise.resolve(cb({ data: [], error: null }))
+        }),
+        limit: (limit: number) => ({
+          order: (column: string, { ascending = true } = {}) => ({
+            then: (cb: Function) => Promise.resolve(cb({ data: [], error: null }))
+          }),
+          eq: (column: string, value: any) => ({
+            then: (cb: Function) => Promise.resolve(cb({ data: [{ id: value, [column]: value }], error: null }))
+          }),
+          then: (cb: Function) => Promise.resolve(cb({ data: [], error: null }))
+        }),
+        single: () => createMockPromise({ id: 'mock-id' }),
+        maybeSingle: () => createMockPromise({ id: 'mock-id' }),
+        then: (cb: Function) => Promise.resolve(cb({ data: [], error: null }))
       }),
       order: (column: string, { ascending = true } = {}) => ({
         limit: (limit: number) => createMockPromise([]),
         eq: (column: string, value: any) => ({
-          then: (cb: Function) => Promise.resolve(cb({ data: [{ id: value, [column]: value }], error: null })),
+          then: (cb: Function) => Promise.resolve(cb({ data: [{ id: value, [column]: value }], error: null }))
         }),
-        then: (cb: Function) => Promise.resolve(cb({ data: [], error: null })),
+        then: (cb: Function) => Promise.resolve(cb({ data: [], error: null }))
       }),
       limit: (limit: number) => ({
         eq: (column: string, value: any) => ({
-          then: (cb: Function) => Promise.resolve(cb({ data: [{ id: value, [column]: value }], error: null })),
+          then: (cb: Function) => Promise.resolve(cb({ data: [{ id: value, [column]: value }], error: null }))
         }),
         or: (filter: string) => ({
-          then: (cb: Function) => Promise.resolve(cb({ data: [], error: null })),
+          then: (cb: Function) => Promise.resolve(cb({ data: [], error: null }))
         }),
         range: (start: number, end: number) => createMockPromise([]),
         gte: (column: string, value: any) => ({
-          then: (cb: Function) => Promise.resolve(cb({ data: [], error: null })),
+          then: (cb: Function) => Promise.resolve(cb({ data: [], error: null }))
         }),
-        then: (cb: Function) => Promise.resolve(cb({ data: [], error: null })),
+        then: (cb: Function) => Promise.resolve(cb({ data: [], error: null }))
       }),
       range: (start: number, end: number) => ({
         eq: (column: string, value: any) => createMockPromise([{ id: value, [column]: value }]),
-        then: (cb: Function) => Promise.resolve(cb({ data: [], error: null })),
+        then: (cb: Function) => Promise.resolve(cb({ data: [], error: null }))
       }),
       distinct: (column: string) => ({
         eq: (column: string, value: any) => createMockPromise([{ id: value, [column]: value }]),
-        then: (cb: Function) => Promise.resolve(cb({ data: [], error: null })),
+        then: (cb: Function) => Promise.resolve(cb({ data: [], error: null }))
       }),
-      then: (cb: Function) => Promise.resolve(cb({ data: [], error: null })),
+      then: (cb: Function) => Promise.resolve(cb({ data: [], error: null }))
     };
 
     return {
-      select: (columns: string = '*') => baseQuery,
+      select: (columns: string = '*') => baseQuery.select(columns),
       insert: (data: any) => ({ 
         select: () => ({
           single: () => createMockPromise({ ...data, id: `mock-${Date.now()}` }),
           maybeSingle: () => createMockPromise({ ...data, id: `mock-${Date.now()}` }),
-          then: (cb: Function) => Promise.resolve(cb({ data: { ...data, id: `mock-${Date.now()}` }, error: null })),
+          then: (cb: Function) => Promise.resolve(cb({ data: { ...data, id: `mock-${Date.now()}` }, error: null }))
         }),
-        then: (cb: Function) => Promise.resolve(cb({ data: { ...data, id: `mock-${Date.now()}` }, error: null })),
+        then: (cb: Function) => Promise.resolve(cb({ data: { ...data, id: `mock-${Date.now()}` }, error: null }))
       }),
       update: (data: any) => ({ 
         eq: (column: string, value: any) => ({
           select: () => ({
             single: () => createMockPromise({ id: value, ...data }),
-            then: (cb: Function) => Promise.resolve(cb({ data: { id: value, ...data }, error: null })),
+            then: (cb: Function) => Promise.resolve(cb({ data: { id: value, ...data }, error: null }))
           }),
-          then: (cb: Function) => Promise.resolve(cb({ data: { id: value, ...data }, error: null })),
+          then: (cb: Function) => Promise.resolve(cb({ data: { id: value, ...data }, error: null }))
         }),
       }),
       delete: () => ({ 
@@ -102,6 +131,7 @@ export const supabase = {
       count: () => ({
         eq: (column: string, value: any) => createMockPromise({ count: 1 }),
         then: (cb: Function) => Promise.resolve(cb({ count: 0, error: null })),
+        execute: () => Promise.resolve({ data: { count: 0 }, error: null })
       }),
     };
   },
@@ -124,20 +154,23 @@ export const supabase = {
         app_metadata: {},
         user_metadata: { name: "Test User" }
       };
-      return createMockPromise({ user: mockUser });
+      return Promise.resolve({ data: { user: mockUser }, error: null });
     },
     getSession: () => {
-      return createMockPromise({
-        session: {
-          user: {
-            id: "mock-user-id",
-            email: "user@example.com",
-            app_metadata: {},
-            user_metadata: { name: "Test User" }
-          },
-          access_token: "mock-access-token",
-          refresh_token: "mock-refresh-token"
-        }
+      return Promise.resolve({
+        data: {
+          session: {
+            user: {
+              id: "mock-user-id",
+              email: "user@example.com",
+              app_metadata: {},
+              user_metadata: { name: "Test User" }
+            },
+            access_token: "mock-access-token",
+            refresh_token: "mock-refresh-token"
+          }
+        },
+        error: null
       });
     },
     onAuthStateChange: (callback: (event: string, session: any) => void) => {
@@ -162,65 +195,45 @@ export const supabase = {
       };
     },
     signInWithPassword: ({ email, password }: { email: string, password: string }) => {
-      return createMockPromise({
-        user: {
-          id: "mock-user-id",
-          email,
-          app_metadata: {},
-          user_metadata: { name: "Test User" }
+      return Promise.resolve({
+        data: {
+          user: {
+            id: "mock-user-id",
+            email,
+            app_metadata: {},
+            user_metadata: { name: "Test User" }
+          },
+          session: {
+            access_token: "mock-access-token",
+            refresh_token: "mock-refresh-token"
+          }
         },
-        session: {
-          access_token: "mock-access-token",
-          refresh_token: "mock-refresh-token"
-        }
+        error: null
       });
     },
     signUp: ({ email, password, options }: { email: string, password: string, options?: any }) => {
-      return createMockPromise({
-        user: {
-          id: "mock-user-id",
-          email,
-          app_metadata: {},
-          user_metadata: options?.data || {}
+      return Promise.resolve({
+        data: {
+          user: {
+            id: "mock-user-id",
+            email,
+            app_metadata: {},
+            user_metadata: options?.data || {}
+          },
+          session: {
+            access_token: "mock-access-token",
+            refresh_token: "mock-refresh-token"
+          }
         },
-        session: {
-          access_token: "mock-access-token",
-          refresh_token: "mock-refresh-token"
-        }
+        error: null
       });
     },
-    signOut: () => createMockPromise(null),
-    updateUser: (updates: any) => createMockPromise({ user: { ...updates } }),
+    signOut: () => Promise.resolve({ error: null }),
+    updateUser: (updates: any) => Promise.resolve({ data: { user: { ...updates } }, error: null }),
   },
   functions: {
-    invoke: (name: string, options: any = {}) => createMockPromise(null),
+    invoke: (name: string, options: any = {}) => Promise.resolve({ data: null, error: null }),
   },
-};
-
-// Create a helper to handle async supabase calls
-export const asyncSupabase = {
-  from: (table: string) => ({
-    select: async (columns: string = '*') => {
-      return Promise.resolve(supabase.from(table).select(columns));
-    },
-    insert: async (data: any) => {
-      return Promise.resolve(supabase.from(table).insert(data));
-    },
-    update: async (data: any) => {
-      return {
-        eq: async (column: string, value: any) => {
-          return Promise.resolve(supabase.from(table).update(data).eq(column, value));
-        }
-      };
-    },
-    delete: async () => {
-      return {
-        eq: async (column: string, value: any) => {
-          return Promise.resolve(supabase.from(table).delete().eq(column, value));
-        }
-      };
-    }
-  })
 };
 
 export default supabase;

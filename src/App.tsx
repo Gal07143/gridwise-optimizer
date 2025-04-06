@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
-import AppRoutes from './Routes';
+import Routes from './Routes';
 import { AuthProvider } from '@/contexts/auth/AuthProvider';
 import { SiteProvider } from '@/contexts/SiteContext';
 import { ThemeProvider } from '@/components/theme/theme-provider';
@@ -51,10 +51,9 @@ function App() {
   return (
     <ThemeProvider defaultTheme="light" storageKey="energy-theme">
       <QueryClientProvider client={queryClient}>
-        {/* Removed the BrowserRouter here as it's already provided in main.tsx */}
         <AuthProvider>
           <SiteProvider>
-            <AppRoutes />
+            <Routes />
             <Toaster position="top-right" closeButton richColors />
           </SiteProvider>
         </AuthProvider>
