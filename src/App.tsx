@@ -1,12 +1,12 @@
 
 import { useState, useEffect } from 'react';
-import { BrowserRouter as Router } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
 import AppRoutes from './Routes';
 import { AuthProvider } from '@/contexts/auth/AuthProvider';
 import { SiteProvider } from '@/contexts/SiteContext';
 import { ThemeProvider } from '@/components/theme/theme-provider';
+import { BrowserRouter as Router } from 'react-router-dom';
 
 // Create a client for React Query
 const queryClient = new QueryClient({

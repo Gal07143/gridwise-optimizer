@@ -1,82 +1,64 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Site } from '@/types/site';
-import { getSites } from '@/services/sites/siteService';
 
-export interface SiteContextType {
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { Site } from '@/types/site';
+import mockSites from '@/services/sites/mockSites';
+import { toast } from 'sonner';
+
+interface SiteContextType {
+  currentSite: Site | null;
   sites: Site[];
-  activeSite: Site | null;
-  currentSite: Site | null; // Alias for activeSite for backward compatibility
   loading: boolean;
-  error: Error | null;
-  setActiveSite: (site: Site) => void;
-  refreshSites: () => Promise<void>;
+  setCurrentSite: (site: Site) => void;
 }
 
 const SiteContext = createContext<SiteContextType>({
-  sites: [],
-  activeSite: null,
   currentSite: null,
-  loading: false,
-  error: null,
-  setActiveSite: () => {},
-  refreshSites: async () => {}
+  sites: [],
+  loading: true,
+  setCurrentSite: () => {},
 });
 
-interface SiteProviderProps {
-  children: ReactNode;
-}
+export const useSite = () => useContext(SiteContext);
 
-export const SiteProvider: React.FC<SiteProviderProps> = ({ children }) => {
+export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [currentSite, setCurrentSite] = useState<Site | null>(null);
   const [sites, setSites] = useState<Site[]>([]);
-  const [activeSite, setActiveSite] = useState<Site | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
 
-  const fetchSites = async () => {
-    try {
-      setLoading(true);
-      const sitesData = await getSites();
-      setSites(sitesData);
-      
-      // If no active site is set, set the first site as active
-      if (!activeSite && sitesData.length > 0) {
-        setActiveSite(sitesData[0]);
-      }
-      
-      setError(null);
-    } catch (err) {
-      console.error('Error fetching sites:', err);
-      setError(err instanceof Error ? err : new Error('Failed to fetch sites'));
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Load sites on mount
   useEffect(() => {
-    fetchSites();
+    const loadSites = async () => {
+      try {
+        // In a real app, this would be a fetch from your API
+        const loadedSites = mockSites;
+        
+        setSites(loadedSites);
+        
+        // Set default site if available
+        if (loadedSites.length > 0) {
+          setCurrentSite(loadedSites[0]);
+        }
+      } catch (error) {
+        console.error('Error loading sites:', error);
+        toast.error('Failed to load sites');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadSites();
   }, []);
 
-  const refreshSites = async () => {
-    await fetchSites();
-  };
-
-  const value = {
+  const contextValue: SiteContextType = {
+    currentSite,
     sites,
-    activeSite,
-    currentSite: activeSite,
     loading,
-    error,
-    setActiveSite,
-    refreshSites
+    setCurrentSite,
   };
 
   return (
-    <SiteContext.Provider value={value}>
+    <SiteContext.Provider value={contextValue}>
       {children}
     </SiteContext.Provider>
   );
 };
-
-export const useSiteContext = () => useContext(SiteContext);
-
-export default SiteContext;

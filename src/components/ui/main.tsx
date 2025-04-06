@@ -1,23 +1,24 @@
+
 import React from 'react';
 import { cn } from '@/lib/utils';
 
 export interface MainProps extends React.HTMLAttributes<HTMLDivElement> {
+  children: React.ReactNode;
   title?: string;
   description?: string;
-  containerSize?: string;
 }
 
 export const Main = React.forwardRef<HTMLDivElement, MainProps>(
-  ({ className, children, title, description, containerSize = 'default', ...props }, ref) => {
+  ({ children, className, title, description, ...props }, ref) => {
     return (
       <main
         ref={ref}
-        className={cn("flex-1 overflow-auto p-6", className)}
+        className={cn("flex-1 p-6 md:p-8 lg:p-10", className)}
         {...props}
       >
-        {title && (
+        {(title || description) && (
           <div className="mb-6">
-            <h1 className="text-2xl font-bold mb-2">{title}</h1>
+            {title && <h1 className="text-2xl font-semibold mb-2">{title}</h1>}
             {description && <p className="text-muted-foreground">{description}</p>}
           </div>
         )}
@@ -26,4 +27,6 @@ export const Main = React.forwardRef<HTMLDivElement, MainProps>(
     );
   }
 );
-Main.displayName = 'Main';
+Main.displayName = "Main";
+
+export default Main;
