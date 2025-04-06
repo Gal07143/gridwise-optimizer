@@ -1,44 +1,40 @@
 
 import { create } from 'zustand';
 import { Site } from '@/types/site';
+import { mockSites } from '@/services/sites/mockSites';
 
 interface AppState {
+  // Sidebar state
   sidebarExpanded: boolean;
-  setSidebarExpanded: (expanded: boolean) => void;
   toggleSidebar: () => void;
+  setSidebarExpanded: (expanded: boolean) => void;
   
-  // Current active site
-  activeSiteId: string | null;
+  // Site management
+  sites: Site[];
+  sitesLoading: boolean;
   activeSite: Site | null;
-  setActiveSiteId: (siteId: string | null) => void;
+  setSites: (sites: Site[]) => void;
   setActiveSite: (site: Site | null) => void;
   
-  // Theme mode
-  darkMode: boolean;
-  setDarkMode: (enabled: boolean) => void;
-  toggleDarkMode: () => void;
+  // Theme management
+  theme: 'light' | 'dark' | 'system';
+  setTheme: (theme: 'light' | 'dark' | 'system') => void;
 }
 
-const useAppStore = create<AppState>((set) => ({
-  // Sidebar state
+export const useAppStore = create<AppState>((set) => ({
+  // Default sidebar state
   sidebarExpanded: true,
-  setSidebarExpanded: (expanded) => set({ sidebarExpanded: expanded }),
   toggleSidebar: () => set((state) => ({ sidebarExpanded: !state.sidebarExpanded })),
+  setSidebarExpanded: (expanded: boolean) => set({ sidebarExpanded: expanded }),
   
-  // Active site state
-  activeSiteId: null,
-  activeSite: null,
-  setActiveSiteId: (siteId) => set({ activeSiteId: siteId }),
-  setActiveSite: (site) => set({ 
-    activeSite: site,
-    activeSiteId: site?.id || null
-  }),
+  // Default site state with mock data for immediate usability
+  sites: mockSites,
+  sitesLoading: false,
+  activeSite: mockSites.length > 0 ? mockSites[0] : null,
+  setSites: (sites: Site[]) => set({ sites }),
+  setActiveSite: (site: Site | null) => set({ activeSite: site }),
   
-  // Theme state
-  darkMode: false,
-  setDarkMode: (enabled) => set({ darkMode: enabled }),
-  toggleDarkMode: () => set((state) => ({ darkMode: !state.darkMode })),
+  // Default theme
+  theme: 'light',
+  setTheme: (theme: 'light' | 'dark' | 'system') => set({ theme }),
 }));
-
-export { useAppStore };
-export default useAppStore;

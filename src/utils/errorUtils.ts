@@ -1,95 +1,57 @@
 
 /**
- * Utility functions for error handling
+ * Check if an error is a network error
+ * @param error The error to check
+ * @returns True if the error is a network error
  */
-
-/**
- * Checks if an error is a network-related error
- */
-export function isNetworkError(error: any): boolean {
+export const isNetworkError = (error: any): boolean => {
   if (!error) return false;
   
-  // Check for common network error conditions
-  if (error.message && (
-    error.message.includes('network') || 
-    error.message.includes('connection') ||
-    error.message.includes('offline') ||
-    error.message.includes('unreachable') ||
-    error.message.includes('timeout')
-  )) {
-    return true;
-  }
-  
-  // Check for HTTP status codes that indicate network issues
-  if (error.status === 0 || error.status === 408 || error.status === 502 || 
-      error.status === 503 || error.status === 504) {
-    return true;
-  }
-  
-  return false;
-}
+  // Check common network error cases
+  return (
+    error.message?.includes('network') ||
+    error.message?.includes('Network Error') ||
+    error.message?.includes('Failed to fetch') ||
+    error.message?.includes('Network request failed') ||
+    error.code === 'ECONNABORTED' ||
+    error.code === 'ECONNREFUSED' ||
+    error.code === 'ENOTFOUND' ||
+    error.code === 'TIMEOUT_ERROR' ||
+    (error.isAxiosError && !error.response) ||
+    error.name === 'AbortError'
+  );
+};
 
 /**
- * Retry a function with exponential backoff
- * @param fn Function to retry
- * @param maxRetries Maximum number of retries
- * @param delay Initial delay in ms
- * @param backoffRate Rate at which to increase delay (e.g., 2 will double delay each retry)
+ * Generic error handler that logs errors and returns a user-friendly message
+ * @param error The error to handle
+ * @param operation The operation that caused the error (for logging)
+ * @returns A user-friendly error message
  */
-export async function retryWithBackoff<T>(
-  fn: () => Promise<T>,
-  maxRetries: number = 3,
-  delay: number = 1000,
-  backoffRate: number = 2
-): Promise<T> {
-  let retries = 0;
-  let currentDelay = delay;
+export const handleError = (error: any, operation: string): string => {
+  console.error(`Error during ${operation}:`, error);
   
-  while (true) {
-    try {
-      return await fn();
-    } catch (error) {
-      retries++;
-      
-      if (retries >= maxRetries) {
-        throw error;
-      }
-      
-      console.log(`Attempt ${retries} failed, retrying in ${currentDelay}ms`);
-      
-      // Wait for the current delay
-      await new Promise(resolve => setTimeout(resolve, currentDelay));
-      
-      // Increase the delay for the next retry
-      currentDelay *= backoffRate;
+  if (isNetworkError(error)) {
+    return 'Unable to connect to the server. Please check your network connection.';
+  }
+  
+  if (error.response) {
+    // Server responded with a status code outside the 2xx range
+    switch (error.response.status) {
+      case 401:
+        return 'Authentication required. Please sign in.';
+      case 403:
+        return 'You do not have permission to perform this action.';
+      case 404:
+        return 'The requested resource was not found.';
+      case 429:
+        return 'Too many requests. Please try again later.';
+      case 500:
+        return 'An internal server error occurred. Please try again later.';
+      default:
+        return error.response.data?.message || 'An unexpected error occurred. Please try again.';
     }
   }
-}
-
-/**
- * Handle API errors with appropriate feedback
- */
-export function handleApiError(error: any, context: string, showToast: boolean = true): void {
-  console.error(`API Error in ${context}:`, error);
   
-  if (showToast) {
-    // You might want to import toast from 'sonner' here
-    // toast.error(`Error: ${error.message || 'Unknown error occurred'}`);
-    console.error(`Error: ${error.message || 'Unknown error occurred'}`);
-  }
-}
-
-/**
- * Handle dependency errors in components
- */
-export function handleDependencyError(error: Error, componentName: string, dependency: string): void {
-  console.error(`Error in ${componentName} with dependency ${dependency}:`, error);
-  // Additional logic for handling dependency errors
-}
-
-export default {
-  isNetworkError,
-  retryWithBackoff,
-  handleApiError,
-  handleDependencyError
+  return error.message || 'An unexpected error occurred. Please try again.';
 };

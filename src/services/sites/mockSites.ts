@@ -1,35 +1,43 @@
 
-import { Site } from '@/types/energy';
+import { Site } from '@/types/site';
 
 export const mockSites: Site[] = [
   {
     id: 'site-1',
-    name: 'Main Campus',
-    location: 'New York',
-    timezone: 'America/New_York',
-    lat: 40.7128,
-    lng: -74.0060,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    name: 'Main Residence',
+    location: 'San Francisco, CA',
+    timezone: 'America/Los_Angeles',
+    type: 'residential',
+    status: 'active',
+    lat: 37.7749,
+    lng: -122.4194,
+    created_at: '2023-01-15T12:00:00Z',
+    updated_at: '2023-06-22T14:30:00Z'
   },
   {
     id: 'site-2',
-    name: 'West Building',
-    location: 'San Francisco',
-    timezone: 'America/Los_Angeles',
-    lat: 37.7749,
-    lng: -122.4194,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    name: 'Office Building',
+    location: 'New York, NY',
+    timezone: 'America/New_York',
+    type: 'commercial',
+    status: 'active',
+    lat: 40.7128,
+    lng: -74.0060,
+    created_at: '2023-02-10T09:15:00Z',
+    updated_at: '2023-06-18T11:20:00Z'
   },
   {
     id: 'site-3',
-    name: 'East Campus',
-    location: 'Boston',
+    name: 'Beach House',
+    location: 'Miami, FL',
     timezone: 'America/New_York',
-    lat: 42.3601,
-    lng: -71.0589,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    type: 'residential',
+    status: 'active',
+    lat: 25.7617,
+    lng: -80.1918,
+    created_at: '2023-03-05T16:45:00Z',
+    updated_at: '2023-06-20T08:10:00Z'
   }
 ];
+
+export default mockSites;

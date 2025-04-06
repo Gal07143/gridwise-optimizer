@@ -1968,6 +1968,35 @@ export type Database = {
           },
         ]
       }
+      user_device_access: {
+        Row: {
+          created_at: string
+          device_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_device_access_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "modbus_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_preferences: {
         Row: {
           id: string

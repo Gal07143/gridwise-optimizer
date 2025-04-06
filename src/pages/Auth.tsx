@@ -1,22 +1,22 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth/AuthContext';
 import SignInForm from '@/components/auth/SignInForm';
 import SignUpForm from '@/components/auth/SignUpForm';
 
 // Auth page component
 const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false);
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   
   // Redirect if already logged in
   useEffect(() => {
-    if (user) {
+    if (isAuthenticated) {
       navigate('/dashboard');
     }
-  }, [user, navigate]);
+  }, [isAuthenticated, navigate]);
   
   const toggleFormMode = () => {
     setIsSignUp(!isSignUp);

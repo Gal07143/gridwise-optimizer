@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { AuthContextType, User } from './AuthTypes';
 import { toast } from 'sonner';
 
@@ -21,20 +21,40 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    // Check for active session on initial load
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (session?.user) {
+          const userData: User = {
+            id: session.user.id,
+            email: session.user.email || '',
+            role: 'admin', // Mock role for demo purposes
+            firstName: 'Demo',
+            lastName: 'User',
+          };
+          setUser(userData);
+        } else {
+          setUser(null);
+        }
+      }
+    );
+
+    // THEN check for existing session
     checkUser();
+    
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const checkUser = async () => {
     try {
       const { data, error } = await supabase.auth.getUser();
       if (error) {
-        throw error;
-      }
-
-      if (data.user) {
-        // In a real scenario we would fetch user profile from a profiles table
-        // with the matching user ID from auth.users
+        console.error('Error checking user:', error);
+        setUser(null);
+      } else if (data?.user) {
+        // Create a user object from the session data
         const userData: User = {
           id: data.user.id,
           email: data.user.email || '',
@@ -54,21 +74,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signIn = async (email: string, password: string) => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signIn({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       
       if (error) throw error;
 
-      // Simulate successful sign-in for demo
-      const userData: User = {
-        id: 'mock-user-id',
-        email: email,
-        role: 'admin',
-        firstName: email.split('@')[0],
-        lastName: 'User',
-      };
-      
-      setUser(userData);
-      toast.success('Successfully signed in');
+      if (data.user) {
+        const userData: User = {
+          id: data.user.id,
+          email: data.user.email || '',
+          role: 'admin',
+          firstName: email.split('@')[0],
+          lastName: 'User',
+        };
+        
+        setUser(userData);
+        toast.success('Successfully signed in');
+      }
     } catch (error: any) {
       console.error('Error signing in:', error);
       toast.error(`Error signing in: ${error.message}`);
@@ -87,7 +108,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const firstName = nameParts[0] || '';
       const lastName = nameParts.slice(1).join(' ') || '';
       
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -99,9 +120,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
       
       if (error) throw error;
-      
-      // In a real implementation, we'd wait for email verification
-      toast.success('Please check your email to verify your account');
+
+      // For development, auto sign-in after signup
+      if (data.user) {
+        const userData: User = {
+          id: data.user.id,
+          email: data.user.email || '',
+          role: 'admin',
+          firstName,
+          lastName,
+        };
+        
+        setUser(userData);
+        toast.success('Account created successfully');
+      } else {
+        toast.success('Please check your email to verify your account');
+      }
     } catch (error: any) {
       console.error('Error signing up:', error);
       toast.error(`Error signing up: ${error.message}`);

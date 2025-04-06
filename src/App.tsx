@@ -1,37 +1,67 @@
 
-import { Suspense, lazy } from 'react';
-import AppRoutes from './AppRoutes';
-import LoadingScreen from './components/LoadingScreen';
-import { ThemeProvider } from './theme/ThemeConfig';
-import { Toaster } from '@/components/ui/sonner';
-import SmartDependencyErrorBoundary from './components/ui/SmartDependencyErrorBoundary';
+import { useState, useEffect } from 'react';
+import { BrowserRouter as Router } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import DeviceDatabaseInitializer from './components/DeviceDatabaseInitializer';
-import './App.css';
+import { Toaster } from 'sonner';
+import AppRoutes from './Routes';
+import { AuthProvider } from '@/contexts/auth/AuthProvider';
+import { SiteProvider } from '@/contexts/SiteContext';
+import { ThemeProvider } from '@/components/theme/theme-provider';
 
-// Create a client
+// Create a client for React Query
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 60 * 1000,
+      refetchOnWindowFocus: false,
       retry: 1,
     },
   },
 });
 
 function App() {
+  // Add a setup check to make sure everything loads properly
+  const [isSetup, setIsSetup] = useState(false);
+
+  useEffect(() => {
+    // Simulate initialization process
+    const setupApp = async () => {
+      try {
+        // Give browser a moment to initialize everything
+        await new Promise(resolve => setTimeout(resolve, 100));
+        setIsSetup(true);
+      } catch (error) {
+        console.error("Error during app initialization:", error);
+        setIsSetup(true); // Continue anyway to avoid blocking the app
+      }
+    };
+
+    setupApp();
+  }, []);
+
+  if (!isSetup) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-background">
+        <div className="animate-pulse flex flex-col items-center">
+          <div className="h-12 w-12 rounded-md bg-primary/20 animate-spin"></div>
+          <p className="mt-4 text-muted-foreground">Initializing application...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <SmartDependencyErrorBoundary>
-      <ThemeProvider>
-        <QueryClientProvider client={queryClient}>
-          <Suspense fallback={<LoadingScreen />}>
-            <DeviceDatabaseInitializer />
-            <AppRoutes />
-            <Toaster position="top-right" closeButton richColors />
-          </Suspense>
-        </QueryClientProvider>
-      </ThemeProvider>
-    </SmartDependencyErrorBoundary>
+    <ThemeProvider defaultTheme="light" storageKey="energy-theme">
+      <QueryClientProvider client={queryClient}>
+        <Router>
+          <AuthProvider>
+            <SiteProvider>
+              <AppRoutes />
+              <Toaster position="top-right" closeButton richColors />
+            </SiteProvider>
+          </AuthProvider>
+        </Router>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
 

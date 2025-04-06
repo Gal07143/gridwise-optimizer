@@ -203,6 +203,8 @@ export const createSite = async (siteData: Partial<Site>): Promise<Site | null> 
     lng: siteData.lng !== undefined ? siteData.lng : null,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
+    type: siteData.type || 'residential',
+    status: siteData.status || 'active',
   };
 
   try {
@@ -356,6 +358,8 @@ export const getOrCreateDummySite = async (): Promise<Site> => {
       name: 'Default Site',
       location: 'Default Location',
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      type: 'residential',
+      status: 'active',
     });
     
     if (newSite) {
@@ -371,11 +375,11 @@ export const getOrCreateDummySite = async (): Promise<Site> => {
     name: 'Default Site',
     location: 'Default Location',
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    type: 'residential',
+    status: 'active',
     lat: null,
     lng: null,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   };
 };
-
-// Fix dependency installation issues by updating the AnomalyFeed component to have better error handling
