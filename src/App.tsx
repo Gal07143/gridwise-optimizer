@@ -6,7 +6,6 @@ import AppRoutes from './Routes';
 import { AuthProvider } from '@/contexts/auth/AuthProvider';
 import { SiteProvider } from '@/contexts/SiteContext';
 import { ThemeProvider } from '@/components/theme/theme-provider';
-import { BrowserRouter as Router } from 'react-router-dom';
 
 // Create a client for React Query
 const queryClient = new QueryClient({
@@ -52,14 +51,13 @@ function App() {
   return (
     <ThemeProvider defaultTheme="light" storageKey="energy-theme">
       <QueryClientProvider client={queryClient}>
-        <Router>
-          <AuthProvider>
-            <SiteProvider>
-              <AppRoutes />
-              <Toaster position="top-right" closeButton richColors />
-            </SiteProvider>
-          </AuthProvider>
-        </Router>
+        {/* Removed the BrowserRouter here as it's already provided in main.tsx */}
+        <AuthProvider>
+          <SiteProvider>
+            <AppRoutes />
+            <Toaster position="top-right" closeButton richColors />
+          </SiteProvider>
+        </AuthProvider>
       </QueryClientProvider>
     </ThemeProvider>
   );

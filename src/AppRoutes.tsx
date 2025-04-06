@@ -5,23 +5,17 @@ import Dashboard from './pages/Dashboard';
 import Devices from './pages/Devices';
 import NotFound from './pages/NotFound';
 import Settings from './pages/Settings';
-import ModbusDevicesPage from './pages/modbus/ModbusDevices';
-import ModbusDeviceDetails from './pages/modbus/ModbusDeviceDetails';
-import ModbusDeviceForm from './pages/modbus/ModbusDeviceForm';
+// We're redirecting to the main Routes.tsx for all routing
+// This file will be deprecated soon
 
 const AppRoutes: React.FC = () => {
+  console.warn('Using deprecated AppRoutes.tsx file. Please update imports to use Routes.tsx instead.');
+  
   return (
     <Routes>
       <Route path="/" element={<Dashboard />} />
       <Route path="/devices" element={<Devices />} />
       <Route path="/settings/*" element={<Settings />} />
-      
-      {/* Modbus Routes */}
-      <Route path="/modbus/devices" element={<ModbusDevicesPage />} />
-      <Route path="/modbus/devices/:deviceId" element={<ModbusDeviceDetails />} />
-      <Route path="/modbus/devices/:deviceId/edit" element={<ModbusDeviceForm />} />
-      <Route path="/modbus/devices/new" element={<ModbusDeviceForm />} />
-      
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
