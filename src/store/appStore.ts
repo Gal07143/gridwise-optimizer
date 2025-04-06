@@ -10,6 +10,10 @@ interface AppState {
   setSites: (sites: Site[]) => void;
   loading: boolean;
   setLoading: (loading: boolean) => void;
+  // Add missing sidebar state properties
+  sidebarExpanded: boolean;
+  setSidebarExpanded: (expanded: boolean) => void;
+  toggleSidebar: () => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -19,6 +23,10 @@ export const useAppStore = create<AppState>((set) => ({
   setSites: (sites) => set({ sites }),
   loading: false,
   setLoading: (loading) => set({ loading }),
+  // Initialize sidebar state
+  sidebarExpanded: true,
+  setSidebarExpanded: (expanded) => set({ sidebarExpanded: expanded }),
+  toggleSidebar: () => set((state) => ({ sidebarExpanded: !state.sidebarExpanded })),
 }));
 
 export default useAppStore;

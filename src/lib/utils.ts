@@ -1,6 +1,7 @@
 
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { format, formatDistanceToNow } from "date-fns";
 
 /**
  * Merges class names using clsx and tailwind-merge
@@ -18,6 +19,30 @@ export function formatDate(date: Date): string {
     month: "short", 
     year: "numeric"
   }).format(date);
+}
+
+/**
+ * Formats a timestamp string to a readable date/time format
+ */
+export function formatTimestamp(timestamp: string): string {
+  try {
+    const date = new Date(timestamp);
+    return format(date, "MMM d, yyyy h:mm a");
+  } catch (e) {
+    return "Invalid date";
+  }
+}
+
+/**
+ * Formats a timestamp to relative time (e.g., "5 minutes ago")
+ */
+export function formatRelativeTime(timestamp: string): string {
+  try {
+    const date = new Date(timestamp);
+    return formatDistanceToNow(date, { addSuffix: true });
+  } catch (e) {
+    return "Unknown time";
+  }
 }
 
 /**

@@ -1,121 +1,120 @@
-import { supabase } from '@/integrations/supabase/client';
-import { DeviceType, DeviceStatus } from '@/types/energy';
-import { toast } from 'sonner';
 
-export interface Device {
-  id: string;
-  name: string;
-  type: DeviceType;
-  status: DeviceStatus;
-  location?: string;
-  capacity?: number;
-  firmware?: string;
-  installation_date?: string;
-  created_at?: string;
-  updated_at?: string;
-  site_id?: string;
-}
+import { Device } from '@/types/device';
+import { nanoid } from 'nanoid';
 
-// Check if a string is a valid UUID
-export const isValidUuid = (id: string): boolean => {
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-  return uuidRegex.test(id);
+// Mock devices for development
+const mockDevices: Device[] = [
+  {
+    id: "device-001",
+    name: "Solar Inverter 5kW",
+    type: "solar",
+    status: "online",
+    description: "Main solar inverter for the rooftop array",
+    location: "Roof",
+    capacity: 5000,
+    firmware: "v2.3.4",
+    installation_date: "2022-06-15",
+    last_updated: new Date().toISOString(),
+    created_at: "2022-06-15T14:30:00Z",
+    model: "SolarEdge SE5000H",
+    manufacturer: "SolarEdge",
+  },
+  {
+    id: "device-002",
+    name: "Battery Storage System",
+    type: "battery",
+    status: "online",
+    description: "13.5kWh Lithium-ion battery storage system",
+    location: "Garage",
+    capacity: 13500,
+    firmware: "v3.1.2",
+    installation_date: "2022-06-15",
+    last_updated: new Date().toISOString(),
+    created_at: "2022-06-15T15:45:00Z",
+    model: "Powerwall 2",
+    manufacturer: "Tesla",
+  },
+  {
+    id: "device-003",
+    name: "Smart Meter",
+    type: "meter",
+    status: "online",
+    description: "Grid connection smart meter",
+    location: "Utility Room",
+    capacity: 0,
+    firmware: "v1.8.5",
+    installation_date: "2022-06-14",
+    last_updated: new Date().toISOString(),
+    created_at: "2022-06-14T10:15:00Z",
+    model: "EM115",
+    manufacturer: "Schneider Electric",
+  },
+  {
+    id: "device-004",
+    name: "EV Charging Station",
+    type: "ev_charger",
+    status: "idle",
+    description: "11kW EV charging station",
+    location: "Driveway",
+    capacity: 11000,
+    firmware: "v2.0.1",
+    installation_date: "2022-07-22",
+    last_updated: new Date().toISOString(),
+    created_at: "2022-07-22T11:20:00Z",
+    model: "Wallbox Pulsar Plus",
+    manufacturer: "Wallbox",
+  }
+];
+
+// In-memory store for devices
+let devices = [...mockDevices];
+
+export const getAllDevices = async (): Promise<Device[]> => {
+  return [...devices];
 };
 
-export const getDeviceById = async (deviceId: string): Promise<Device> => {
-  try {
-    // Sample device data for non-UUID IDs (for testing/demo purposes)
-    if (!isValidUuid(deviceId)) {
-      console.log("Non-UUID device ID detected, providing demo data", deviceId);
-      return {
-        id: deviceId,
-        name: `Device ${deviceId}`,
-        type: 'solar',
-        status: 'online',
-        location: 'Demo Location',
-        capacity: 5000,
-        firmware: 'v1.0.0',
-        installation_date: new Date().toISOString().slice(0, 10),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        site_id: '00000000-0000-0000-0000-000000000000'
-      };
-    }
-    
-    // Regular database query for valid UUIDs
-    const { data, error } = await supabase
-      .from('devices')
-      .select('*')
-      .eq('id', deviceId)
-      .single();
-      
-    if (error) {
-      console.error("Error fetching device:", error);
-      throw new Error(`Failed to fetch device: ${error.message}`);
-    }
-    
-    return data as Device;
-  } catch (error) {
-    console.error("Error in getDeviceById:", error);
-    throw error;
-  }
+export const getDeviceById = async (id: string): Promise<Device | null> => {
+  return devices.find(device => device.id === id) || null;
 };
 
-export const getDevices = async (): Promise<Device[]> => {
-  const { data, error } = await supabase
-    .from('devices')
-    .select('*')
-    .order('created_at', { ascending: false });
-    
-  if (error) {
-    console.error("Error fetching devices:", error);
-    throw new Error(`Failed to fetch devices: ${error.message}`);
-  }
+export const getDevicesBySiteId = async (siteId: string): Promise<Device[]> => {
+  return devices.filter(device => device.site_id === siteId);
+};
+
+export const getDevicesByType = async (type: string): Promise<Device[]> => {
+  return devices.filter(device => device.type === type);
+};
+
+export const createDevice = async (deviceData: Omit<Device, 'id' | 'created_at' | 'last_updated'>): Promise<Device> => {
+  const newDevice: Device = {
+    ...deviceData,
+    id: `device-${nanoid(8)}`,
+    created_at: new Date().toISOString(),
+    last_updated: new Date().toISOString()
+  };
   
-  return data as Device[];
+  devices.push(newDevice);
+  return newDevice;
 };
 
-export const createDevice = async (deviceData: Partial<Device>): Promise<Device> => {
-  const { data, error } = await supabase
-    .from('devices')
-    .insert([deviceData])
-    .select()
-    .single();
-    
-  if (error) {
-    console.error("Error creating device:", error);
-    throw new Error(`Failed to create device: ${error.message}`);
-  }
+export const updateDevice = async (id: string, deviceData: Partial<Device>): Promise<Device | null> => {
+  const deviceIndex = devices.findIndex(device => device.id === id);
+  if (deviceIndex === -1) return null;
   
-  return data as Device;
-};
-
-export const updateDevice = async (deviceId: string, deviceData: Partial<Device>): Promise<Device> => {
-  const { data, error } = await supabase
-    .from('devices')
-    .update(deviceData)
-    .eq('id', deviceId)
-    .select()
-    .single();
-    
-  if (error) {
-    console.error("Error updating device:", error);
-    throw new Error(`Failed to update device: ${error.message}`);
-  }
+  const updatedDevice = {
+    ...devices[deviceIndex],
+    ...deviceData,
+    last_updated: new Date().toISOString()
+  };
   
-  return data as Device;
+  devices[deviceIndex] = updatedDevice;
+  return updatedDevice;
 };
 
-export const deleteDevice = async (deviceId: string): Promise<void> => {
-  const { error } = await supabase
-    .from('devices')
-    .delete()
-    .eq('id', deviceId);
-    
-  if (error) {
-    console.error("Error deleting device:", error);
-    throw new Error(`Failed to delete device: ${error.message}`);
-  }
+export const deleteDevice = async (id: string): Promise<boolean> => {
+  const initialLength = devices.length;
+  devices = devices.filter(device => device.id !== id);
+  return initialLength > devices.length;
 };
 
-export const fetchDeviceById = getDeviceById; // Alias for compatibility
+export type { Device };

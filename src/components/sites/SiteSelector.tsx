@@ -11,18 +11,32 @@ import { Site } from '@/types/site';
 import { useAppStore } from '@/store/appStore';
 
 export interface SiteSelectorProps {
-  sites: Site[];
-  activeSite: Site | null;
-  setActiveSite: (site: Site) => void;
+  sites?: Site[];
+  activeSite?: Site | null;
+  setActiveSite?: (site: Site) => void;
   loading?: boolean;
 }
 
 export const SiteSelector: React.FC<SiteSelectorProps> = ({ 
-  sites, 
-  activeSite, 
-  setActiveSite,
-  loading = false 
+  sites: propSites, 
+  activeSite: propActiveSite,
+  setActiveSite: propSetActiveSite,
+  loading: propLoading 
 }) => {
+  // Use props if provided, otherwise use from global store
+  const {
+    sites: storeSites,
+    activeSite: storeActiveSite,
+    setActiveSite: storeSetActiveSite,
+    loading: storeLoading
+  } = useAppStore();
+
+  // Use provided props or fall back to store
+  const sites = propSites || storeSites;
+  const activeSite = propActiveSite !== undefined ? propActiveSite : storeActiveSite;
+  const setActiveSite = propSetActiveSite || storeSetActiveSite;
+  const loading = propLoading !== undefined ? propLoading : storeLoading;
+
   // Handle site selection
   const handleSiteChange = (siteId: string) => {
     const selectedSite = sites.find(site => site.id === siteId);

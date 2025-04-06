@@ -1,62 +1,67 @@
 
-// Define interfaces for Modbus device configuration
-export interface ModbusDeviceConfig {
-  id?: string;
+export interface ModbusDevice {
+  id: string;
   name: string;
   description?: string;
   ip: string;
   port: number;
   unit_id: number;
+  protocol: string;
   is_active: boolean;
-  protocol?: string;
-}
-
-// Extended ModbusDevice type that includes timestamps
-export interface ModbusDevice extends ModbusDeviceConfig {
+  site_id?: string;
   inserted_at: string;
   updated_at: string;
 }
 
-// Define the type of Modbus data
-export type ModbusDataType = 
-  | 'input_register' 
-  | 'holding_register' 
-  | 'coil'
-  | 'discrete_input';
+export interface ModbusDeviceConfig {
+  name: string;
+  description?: string;
+  ip: string;
+  port: number;
+  unit_id: number;
+  protocol: string;
+  is_active: boolean;
+  site_id?: string;
+  inserted_at: string;
+  updated_at: string;
+}
 
-// Define the interface for a Modbus register definition
 export interface ModbusRegisterDefinition {
+  id?: string;
   name: string;
   address: number;
   length: number;
-  dataType: ModbusDataType;
-  scale?: number;
-  unit?: string;
+  type: string;
+  dataType: string; 
+  unit: string;
   description?: string;
+  register_map_id?: string;
 }
 
-// Define the interface for a Modbus register map
 export interface ModbusRegisterMap {
   id?: string;
+  name: string;
   device_id?: string;
+  description?: string;
   registers: ModbusRegisterDefinition[];
+  created_at?: string;
+  updated_at?: string;
 }
 
-// Connection status result
+export interface ConnectionStatusOptions {
+  deviceId?: string;
+  interval?: number;
+  onConnect?: () => void;
+  onDisconnect?: () => void;
+  onError?: (error: Error) => void;
+}
+
 export interface ConnectionStatus {
   isConnected: boolean;
-  error?: string | null;
-}
-
-// Options for connection
-export interface ConnectionStatusOptions {
-  timeout?: number;
-  retries?: number;
-}
-
-// Result of connection check
-export interface ConnectionStatusResult {
-  status: ConnectionStatus;
-  connect: () => Promise<ConnectionStatus>;
-  disconnect: () => Promise<void>;
+  isConnecting: boolean;
+  lastConnected: Date | null;
+  error: Error | null;
+  connect: () => Promise<void>;
+  disconnect: () => void;
+  reconnect: () => Promise<void>;
 }

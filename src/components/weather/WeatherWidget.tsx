@@ -1,79 +1,79 @@
 
 import React from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Cloud, CloudRain, Sun, Wind } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Sun, Cloud, CloudRain, Wind } from 'lucide-react';
 
-interface WeatherWidgetProps {
-  siteId: string;
+interface WeatherData {
+  condition: 'sunny' | 'cloudy' | 'rainy' | 'windy';
+  temperature: number;
+  wind: number;
+  humidity: number;
+  forecast: {
+    condition: 'sunny' | 'cloudy' | 'rainy' | 'windy';
+    temperature: number;
+  }[];
 }
 
-const WeatherWidget: React.FC<WeatherWidgetProps> = ({ siteId }) => {
-  // Mock weather data - in a real app this would come from an API
-  const weather = {
-    condition: 'cloudy',
-    temperature: 22,
-    humidity: 65,
-    windSpeed: 12,
-    windDirection: 'NW',
-    precipitation: 20,
+interface WeatherWidgetProps {
+  siteId?: string;
+  className?: string;
+}
+
+const WeatherWidget: React.FC<WeatherWidgetProps> = ({ siteId, className }) => {
+  // Mock weather data - in a real app, this would come from an API
+  const weatherData: WeatherData = {
+    condition: 'sunny',
+    temperature: 72,
+    wind: 8,
+    humidity: 45,
     forecast: [
-      { day: 'Today', high: 22, low: 14, condition: 'cloudy' },
-      { day: 'Tomorrow', high: 24, low: 16, condition: 'sunny' },
-      { day: 'Wednesday', high: 21, low: 15, condition: 'rainy' }
+      { condition: 'sunny', temperature: 74 },
+      { condition: 'sunny', temperature: 76 },
+      { condition: 'cloudy', temperature: 72 },
+      { condition: 'rainy', temperature: 68 },
+      { condition: 'cloudy', temperature: 70 },
     ]
   };
-  
-  // Get weather icon based on condition
-  const getWeatherIcon = (condition: string) => {
+
+  const getWeatherIcon = (condition: 'sunny' | 'cloudy' | 'rainy' | 'windy') => {
     switch (condition) {
-      case 'sunny': return <Sun className="h-6 w-6" />;
-      case 'rainy': return <CloudRain className="h-6 w-6" />;
-      case 'cloudy': 
-      default:
-        return <Cloud className="h-6 w-6" />;
+      case 'sunny':
+        return <Sun className="h-8 w-8 text-yellow-500" />;
+      case 'cloudy':
+        return <Cloud className="h-8 w-8 text-gray-400" />;
+      case 'rainy':
+        return <CloudRain className="h-8 w-8 text-blue-400" />;
+      case 'windy':
+        return <Wind className="h-8 w-8 text-blue-300" />;
     }
   };
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className={className}>
+      <CardHeader className="pb-2">
         <CardTitle className="flex items-center justify-between">
-          <span>Weather Conditions</span>
-          {getWeatherIcon(weather.condition)}
+          <span>Weather</span>
+          <span className="text-sm font-normal text-muted-foreground">Today & Forecast</span>
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <p className="text-3xl font-bold">{weather.temperature}°C</p>
-            <p className="text-sm text-muted-foreground capitalize">{weather.condition}</p>
-          </div>
-          <div className="space-y-1">
-            <div className="flex justify-between">
-              <span className="text-sm">Humidity</span>
-              <span className="text-sm font-medium">{weather.humidity}%</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm flex items-center">
-                <Wind className="h-3 w-3 mr-1" /> Wind
-              </span>
-              <span className="text-sm font-medium">{weather.windSpeed} km/h {weather.windDirection}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm">Rain</span>
-              <span className="text-sm font-medium">{weather.precipitation}%</span>
+        <div className="flex flex-col md:flex-row items-center justify-between">
+          <div className="flex items-center gap-4 mb-4 md:mb-0">
+            {getWeatherIcon(weatherData.condition)}
+            <div>
+              <div className="text-3xl font-bold">{weatherData.temperature}°F</div>
+              <div className="text-sm text-muted-foreground">
+                Wind: {weatherData.wind} mph | Humidity: {weatherData.humidity}%
+              </div>
             </div>
           </div>
-        </div>
-        
-        <div className="mt-4 border-t pt-4">
-          <p className="text-sm font-medium mb-2">3-Day Forecast</p>
-          <div className="flex justify-between">
-            {weather.forecast.map((day) => (
-              <div key={day.day} className="text-center">
-                <p className="text-xs">{day.day}</p>
+          
+          <div className="flex gap-3">
+            {weatherData.forecast.map((day, index) => (
+              <div key={index} className="flex flex-col items-center">
+                <div className="text-xs text-muted-foreground">{index === 0 ? 'Today' : `+${index}`}</div>
                 <div className="my-1">{getWeatherIcon(day.condition)}</div>
-                <p className="text-xs font-medium">{day.high}° / {day.low}°</p>
+                <div className="text-xs">{day.temperature}°</div>
               </div>
             ))}
           </div>

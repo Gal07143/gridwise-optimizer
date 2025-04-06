@@ -1,68 +1,108 @@
 
-import React from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import React, { useEffect, useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useAppStore } from '@/store/appStore';
 
 interface DashboardSummaryProps {
   siteId: string;
 }
 
 const DashboardSummary: React.FC<DashboardSummaryProps> = ({ siteId }) => {
-  // In a real app, you would fetch data based on the siteId
-  const isLoading = false;
+  const [activeTab, setActiveTab] = useState<string>('overview');
+  const { activeSite } = useAppStore();
+
+  if (!activeSite) {
+    return (
+      <div className="flex flex-col space-y-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle>No Site Selected</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>Please select a site to view dashboard data.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-      <SummaryCard
-        title="Total Energy"
-        value={isLoading ? null : "245 kWh"}
-        description="Last 30 days"
-        isLoading={isLoading}
-      />
-      <SummaryCard
-        title="Peak Demand"
-        value={isLoading ? null : "12.8 kW"}
-        description="Last 30 days"
-        isLoading={isLoading}
-      />
-      <SummaryCard
-        title="Cost Savings"
-        value={isLoading ? null : "$124.50"}
-        description="Last 30 days"
-        isLoading={isLoading}
-      />
-      <SummaryCard
-        title="CO₂ Reduction"
-        value={isLoading ? null : "78.2 kg"}
-        description="Last 30 days"
-        isLoading={isLoading}
-      />
+    <div className="flex flex-col space-y-4">
+      <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="production">Production</TabsTrigger>
+          <TabsTrigger value="consumption">Consumption</TabsTrigger>
+          <TabsTrigger value="optimization">Optimization</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="overview" className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">Total Energy</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">4,382 kWh</div>
+                <p className="text-sm text-muted-foreground mt-1">+5.3% from last month</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">Self Consumption</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">76%</div>
+                <p className="text-sm text-muted-foreground mt-1">+12% from last month</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">Grid Import</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">1,247 kWh</div>
+                <p className="text-sm text-muted-foreground mt-1">-8.2% from last month</p>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="production">
+          <Card>
+            <CardHeader>
+              <CardTitle>Energy Production</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>Production data for {activeSite.name} will be displayed here.</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="consumption">
+          <Card>
+            <CardHeader>
+              <CardTitle>Energy Consumption</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>Consumption data for {activeSite.name} will be displayed here.</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="optimization">
+          <Card>
+            <CardHeader>
+              <CardTitle>Energy Optimization</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>Optimization data for {activeSite.name} will be displayed here.</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
-  );
-};
-
-interface SummaryCardProps {
-  title: string;
-  value: string | null;
-  description: string;
-  isLoading: boolean;
-}
-
-const SummaryCard: React.FC<SummaryCardProps> = ({ title, value, description, isLoading }) => {
-  return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <Skeleton className="h-8 w-28 mb-1" />
-        ) : (
-          <p className="text-2xl font-bold">{value}</p>
-        )}
-        <p className="text-xs text-muted-foreground">{description}</p>
-      </CardContent>
-    </Card>
   );
 };
 
