@@ -1,200 +1,190 @@
 
 import React from 'react';
-import { 
-  Battery, 
-  Sun, 
-  Wind, 
-  Zap, 
-  Activity, 
-  BatteryCharging,
-  Settings,
-  MapPin,
-  Calendar,
-  Info,
-  BarChart3,
-  AlertTriangle,
-  Clock
-} from 'lucide-react';
-import { DeviceStatus, DeviceType } from '@/types/energy';
-import { Separator } from '@/components/ui/separator';
+import { Device } from '@/types/energy';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { formatDistanceToNow, format } from 'date-fns';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 
-interface DeviceDetailProps {
-  device: {
-    id: string;
-    name: string;
-    type: DeviceType;
-    status: DeviceStatus;
-    capacity: number;
-    firmware?: string;
-    location: string;
-    description?: string;
-  };
+interface DeviceDetailTabProps {
+  device: Device;
 }
 
-const DeviceDetailTab: React.FC<DeviceDetailProps> = ({ device }) => {
-  const getDeviceTypeIcon = (type: DeviceType) => {
-    switch (type) {
-      case 'battery':
-        return <Battery className="h-5 w-5 text-blue-500" />;
-      case 'solar':
-        return <Sun className="h-5 w-5 text-yellow-500" />;
-      case 'wind':
-        return <Wind className="h-5 w-5 text-teal-500" />;
-      case 'grid':
-        return <Zap className="h-5 w-5 text-purple-500" />;
-      case 'load':
-        return <Activity className="h-5 w-5 text-red-500" />;
-      case 'ev_charger':
-        return <BatteryCharging className="h-5 w-5 text-green-500" />;
-      case 'inverter':
-        return <Settings className="h-5 w-5 text-indigo-500" />;
-      case 'meter':
-        return <BarChart3 className="h-5 w-5 text-orange-500" />;
-      default:
-        return <Settings className="h-5 w-5 text-gray-500" />;
-    }
-  };
-
-  const getDeviceStatusIcon = (status: DeviceStatus) => {
-    switch (status) {
+const DeviceDetailTab: React.FC<DeviceDetailTabProps> = ({ device }) => {
+  // Function to get status color based on device status
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
       case 'online':
-        return <Badge className="bg-green-500">Online</Badge>;
-      case 'offline':
-        return <Badge variant="outline" className="text-gray-500 border-gray-300">Offline</Badge>;
-      case 'maintenance':
-        return <Badge className="bg-blue-500">Maintenance</Badge>;
-      case 'error':
-        return <Badge variant="destructive">Error</Badge>;
+      case 'active':
+      case 'connected':
+        return 'bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-400';
+      case 'standby':
+      case 'idle':
+        return 'bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900/20 dark:text-blue-400';
       case 'warning':
-        return <Badge className="bg-amber-500">Warning</Badge>;
+      case 'degraded':
+        return 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400';
+      case 'error':
+      case 'fault':
+      case 'offline':
+      case 'disconnected':
+        return 'bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400';
       default:
-        return <Badge variant="secondary">Unknown</Badge>;
+        return 'bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-900/20 dark:text-gray-400';
     }
-  };
-
-  const getDeviceTypeLabel = (type: DeviceType) => {
-    return type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   };
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-4">
-          <div className="flex items-center space-x-2 text-muted-foreground">
-            {getDeviceTypeIcon(device.type)}
-            <span className="capitalize">{getDeviceTypeLabel(device.type)}</span>
-          </div>
-          
-          <h2 className="text-xl font-semibold">{device.name}</h2>
-          
-          <div className="flex items-center space-x-2">
-            <MapPin className="h-4 w-4 text-muted-foreground" />
-            <span>{device.location || 'No location set'}</span>
-          </div>
-          
-          <p className="text-muted-foreground">
-            {device.description || `No description available for this ${device.type.replace(/_/g, ' ')}.`}
-          </p>
-          
-          <Separator className="my-4" />
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <div className="text-sm text-muted-foreground">Status</div>
-              <div className="flex items-center mt-1">
-                {getDeviceStatusIcon(device.status)}
-              </div>
+      {/* Basic info section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Device Information</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableBody>
+              <TableRow>
+                <TableCell className="font-medium">Name</TableCell>
+                <TableCell>{device.name}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Type</TableCell>
+                <TableCell className="capitalize">{device.type}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Status</TableCell>
+                <TableCell>
+                  <Badge variant="outline" className={getStatusColor(device.status)}>
+                    {device.status}
+                  </Badge>
+                </TableCell>
+              </TableRow>
+              {device.model && (
+                <TableRow>
+                  <TableCell className="font-medium">Model</TableCell>
+                  <TableCell>{device.model}</TableCell>
+                </TableRow>
+              )}
+              {device.manufacturer && (
+                <TableRow>
+                  <TableCell className="font-medium">Manufacturer</TableCell>
+                  <TableCell>{device.manufacturer}</TableCell>
+                </TableRow>
+              )}
+              {device.serialNumber && (
+                <TableRow>
+                  <TableCell className="font-medium">Serial Number</TableCell>
+                  <TableCell>{device.serialNumber}</TableCell>
+                </TableRow>
+              )}
+              {device.firmware && (
+                <TableRow>
+                  <TableCell className="font-medium">Firmware Version</TableCell>
+                  <TableCell>{device.firmware}</TableCell>
+                </TableRow>
+              )}
+              {device.protocol && (
+                <TableRow>
+                  <TableCell className="font-medium">Protocol</TableCell>
+                  <TableCell>{device.protocol}</TableCell>
+                </TableRow>
+              )}
+              {device.capacity && (
+                <TableRow>
+                  <TableCell className="font-medium">Capacity</TableCell>
+                  <TableCell>{device.capacity} {device.type === 'battery' ? 'kWh' : 'kW'}</TableCell>
+                </TableRow>
+              )}
+              {device.installation_date && (
+                <TableRow>
+                  <TableCell className="font-medium">Installation Date</TableCell>
+                  <TableCell>{format(new Date(device.installation_date), 'PPP')}</TableCell>
+                </TableRow>
+              )}
+              {device.last_seen && (
+                <TableRow>
+                  <TableCell className="font-medium">Last Seen</TableCell>
+                  <TableCell>{formatDistanceToNow(new Date(device.last_seen))} ago</TableCell>
+                </TableRow>
+              )}
+              {device.location && (
+                <TableRow>
+                  <TableCell className="font-medium">Location</TableCell>
+                  <TableCell>{device.location}</TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      {/* Description section (if available) */}
+      {device.description && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Description</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>{device.description}</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Metrics section (if available) */}
+      {device.metrics && Object.keys(device.metrics).length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Current Metrics</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Metric</TableHead>
+                  <TableHead>Value</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {Object.entries(device.metrics).map(([key, value]) => (
+                  <TableRow key={key}>
+                    <TableCell className="font-medium capitalize">
+                      {key.replace(/_/g, ' ')}
+                    </TableCell>
+                    <TableCell>
+                      {value} 
+                      {key.includes('temp') ? '°C' : 
+                       key.includes('power') ? 'W' :
+                       key.includes('voltage') ? 'V' :
+                       key.includes('current') ? 'A' :
+                       key.includes('energy') ? 'kWh' :
+                       key.includes('frequency') ? 'Hz' : ''}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Tags section (if available) */}
+      {device.tags && (device.tags as string[]).length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Tags</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              {(device.tags as string[]).map((tag, index) => (
+                <Badge key={index} variant="secondary">
+                  {tag}
+                </Badge>
+              ))}
             </div>
-            
-            <div>
-              <div className="text-sm text-muted-foreground">Capacity</div>
-              <div className="font-medium mt-1">
-                {device.capacity} {device.type === 'battery' ? 'kWh' : 'kW'}
-              </div>
-            </div>
-            
-            <div>
-              <div className="text-sm text-muted-foreground">Firmware</div>
-              <div className="font-medium mt-1">
-                {device.firmware || 'Not available'}
-              </div>
-            </div>
-            
-            <div>
-              <div className="text-sm text-muted-foreground">ID</div>
-              <div className="font-mono text-xs truncate mt-1">
-                {device.id}
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div className="space-y-4">
-          <div className="rounded-md border p-4 bg-muted/10">
-            <h3 className="text-lg font-medium mb-2 flex items-center gap-2">
-              <Info className="h-5 w-5 text-primary" />
-              Device Information
-            </h3>
-            
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Type:</span>
-                <span className="font-medium">{getDeviceTypeLabel(device.type)}</span>
-              </div>
-              
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Model:</span>
-                <span className="font-medium">Standard {getDeviceTypeLabel(device.type)}</span>
-              </div>
-              
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Manufacturer:</span>
-                <span className="font-medium">Generic</span>
-              </div>
-              
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Capacity:</span>
-                <span className="font-medium">{device.capacity} {device.type === 'battery' ? 'kWh' : 'kW'}</span>
-              </div>
-              
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Firmware:</span>
-                <span className="font-medium">{device.firmware || 'Not available'}</span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="rounded-md border p-4 bg-muted/10">
-            <h3 className="text-lg font-medium mb-2 flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-amber-500" />
-              Status Information
-            </h3>
-            
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Current Status:</span>
-                <span className="font-medium">{device.status}</span>
-              </div>
-              
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Last Maintenance:</span>
-                <span className="font-medium">Not recorded</span>
-              </div>
-              
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Warranty Status:</span>
-                <span className="font-medium">Active</span>
-              </div>
-              
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Next Scheduled Check:</span>
-                <span className="font-medium">Not scheduled</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

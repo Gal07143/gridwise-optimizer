@@ -1,17 +1,41 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { ConnectionStatusOptions, ConnectionStatus } from '@/types/modbus';
+import { isOnline as checkIsOnline } from '@/utils/connectionUtils';
+import { toast } from 'sonner';
 
 /**
  * Hook to monitor connection status to a device
  */
-const useConnectionStatus = (options: ConnectionStatusOptions): ConnectionStatus => {
-  const { deviceId, interval = 30000, onConnect, onDisconnect, onError } = options;
+const useConnectionStatus = (options?: ConnectionStatusOptions): ConnectionStatus => {
+  const { 
+    deviceId, 
+    interval = 30000, 
+    onConnect, 
+    onDisconnect, 
+    onError, 
+    showToasts = false 
+  } = options || {};
 
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [isConnecting, setIsConnecting] = useState<boolean>(false);
   const [lastConnected, setLastConnected] = useState<Date | null>(null);
   const [error, setError] = useState<Error | null>(null);
+  const [isOnline, setIsOnline] = useState<boolean>(checkIsOnline());
+
+  // Check network status
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   const checkConnection = useCallback(async () => {
     if (!deviceId || isConnecting) return;
@@ -28,18 +52,22 @@ const useConnectionStatus = (options: ConnectionStatusOptions): ConnectionStatus
         setLastConnected(new Date());
         setError(null);
         if (onConnect) onConnect();
+        if (showToasts) toast.success("Connection established");
       } else {
         if (onDisconnect) onDisconnect();
+        if (showToasts) toast.error("Connection failed");
         throw new Error('Connection failed');
       }
     } catch (err: any) {
       setIsConnected(false);
-      setError(err instanceof Error ? err : new Error(err?.message || 'Unknown connection error'));
-      if (onError) onError(err instanceof Error ? err : new Error(err?.message || 'Unknown connection error'));
+      const errorObj = err instanceof Error ? err : new Error(err?.message || 'Unknown connection error');
+      setError(errorObj);
+      if (onError) onError(errorObj);
+      if (showToasts) toast.error(`Connection error: ${errorObj.message}`);
     } finally {
       setIsConnecting(false);
     }
-  }, [deviceId, isConnecting, onConnect, onDisconnect, onError]);
+  }, [deviceId, isConnecting, onConnect, onDisconnect, onError, showToasts]);
 
   const connect = useCallback(async () => {
     await checkConnection();
@@ -47,7 +75,8 @@ const useConnectionStatus = (options: ConnectionStatusOptions): ConnectionStatus
 
   const disconnect = useCallback(async () => {
     setIsConnected(false);
-  }, []);
+    if (showToasts) toast.info("Disconnected");
+  }, [showToasts]);
 
   const reconnect = useCallback(async () => {
     if (isConnecting) return;
@@ -56,15 +85,17 @@ const useConnectionStatus = (options: ConnectionStatusOptions): ConnectionStatus
 
   // Check connection on mount and at intervals
   useEffect(() => {
-    checkConnection();
-    
-    const intervalId = setInterval(() => {
+    if (deviceId) {
       checkConnection();
-    }, interval);
-    
-    return () => {
-      clearInterval(intervalId);
-    };
+      
+      const intervalId = setInterval(() => {
+        checkConnection();
+      }, interval);
+      
+      return () => {
+        clearInterval(intervalId);
+      };
+    }
   }, [deviceId, interval, checkConnection]);
 
   return {
@@ -75,7 +106,8 @@ const useConnectionStatus = (options: ConnectionStatusOptions): ConnectionStatus
     connect,
     disconnect,
     reconnect,
-    retryConnection: reconnect
+    retryConnection: reconnect,
+    isOnline
   };
 };
 

@@ -9,7 +9,7 @@ import { AlertTriangle, RefreshCw, WifiOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { isNetworkError, retryWithBackoff } from '@/utils/errorUtils';
-import useConnectionStatus from '@/hooks/useConnectionStatus';
+import { isOnline } from '@/utils/connectionUtils';
 
 interface Anomaly {
   id: string;
@@ -65,15 +65,30 @@ const fetchAnomalies = async (): Promise<Anomaly[]> => {
 };
 
 const AnomalyFeed = () => {
-  const { isOnline } = useConnectionStatus();
+  // Use local state for online status since we don't need the full hook functionality here
+  const [networkOnline, setNetworkOnline] = useState(isOnline());
   const [useFallbackData, setUseFallbackData] = useState(false);
+  
+  // Listen for online/offline events
+  useEffect(() => {
+    const handleOnline = () => setNetworkOnline(true);
+    const handleOffline = () => setNetworkOnline(false);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
   
   // Use different settings based on network connectivity
   const queryOptions = {
     queryKey: ['anomalies'],
     queryFn: fetchAnomalies,
-    refetchInterval: isOnline ? 30000 : false as const, // Only auto-refresh when online
-    retry: isOnline ? 3 : 1, // More retries when online
+    refetchInterval: networkOnline ? 30000 : false as const, // Only auto-refresh when online
+    retry: networkOnline ? 3 : 1, // More retries when online
     staleTime: 60000,
     gcTime: 300000,
   };
@@ -91,12 +106,12 @@ const AnomalyFeed = () => {
   
   // Reset to using real data when coming back online
   useEffect(() => {
-    if (isOnline && useFallbackData) {
+    if (networkOnline && useFallbackData) {
       refetch().then(() => {
         setUseFallbackData(false);
       });
     }
-  }, [isOnline, useFallbackData, refetch]);
+  }, [networkOnline, useFallbackData, refetch]);
 
   // Handle errors
   useEffect(() => {
@@ -105,7 +120,7 @@ const AnomalyFeed = () => {
       
       if (isNetworkError(error)) {
         // Don't show toast for network errors if we already know we're offline
-        if (isOnline) {
+        if (networkOnline) {
           toast.error(`Network error loading anomalies: ${error.message}`);
         }
         
@@ -115,7 +130,7 @@ const AnomalyFeed = () => {
         toast.error(`Failed to load anomalies: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     }
-  }, [error, isOnline]);
+  }, [error, networkOnline]);
 
   // Function to determine severity color
   const getSeverityClass = (severity?: string) => {
@@ -153,30 +168,32 @@ const AnomalyFeed = () => {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="flex items-center">
-          <AlertTriangle className="h-5 w-5 mr-2 text-red-500" />
-          Anomaly Events
-          {useFallbackData && (
-            <span className="ml-2 text-xs bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200 px-2 py-0.5 rounded-full">
-              Offline Data
-            </span>
-          )}
-        </CardTitle>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={handleRetry} 
-          disabled={isFetching}
-          className={isFetching ? 'animate-spin' : ''}
-          title={isOnline ? 'Refresh data' : 'Currently offline'}
-        >
-          {isOnline ? (
-            <RefreshCw className="h-4 w-4" />
-          ) : (
-            <WifiOff className="h-4 w-4 text-muted-foreground" />
-          )}
-        </Button>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center">
+            <AlertTriangle className="mr-2 h-5 w-5 text-red-500" />
+            Anomaly Events
+            {useFallbackData && (
+              <span className="ml-2 text-xs bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200 px-2 py-0.5 rounded-full">
+                Offline Data
+              </span>
+            )}
+          </CardTitle>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={handleRetry} 
+            disabled={isFetching}
+            className={isFetching ? 'animate-spin' : ''}
+            title={networkOnline ? 'Refresh data' : 'Currently offline'}
+          >
+            {networkOnline ? (
+              <RefreshCw className="h-4 w-4" />
+            ) : (
+              <WifiOff className="h-4 w-4 text-muted-foreground" />
+            )}
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-2 text-sm max-h-[400px] overflow-y-auto">
         {error && !useFallbackData && (

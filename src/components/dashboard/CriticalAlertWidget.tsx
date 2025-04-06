@@ -19,9 +19,12 @@ const CriticalAlertWidget: React.FC<CriticalAlertWidgetProps> = ({ onAcknowledge
   useEffect(() => {
     const fetchAlerts = async () => {
       try {
-        const criticalResult = await supabase
+        // Build a query in steps
+        const query = supabase
           .from('alerts')
-          .select('*')
+          .select('*');
+          
+        const criticalResult = await query
           .eq('severity', 'critical')
           .eq('acknowledged', false)
           .order('timestamp', { ascending: false })
@@ -59,11 +62,12 @@ const CriticalAlertWidget: React.FC<CriticalAlertWidgetProps> = ({ onAcknowledge
       setAlerts(prev => prev.filter(alert => alert.id !== alertId));
     } else {
       try {
-        await supabase
+        const query = supabase
           .from('alerts')
-          .update({ acknowledged: true })
-          .eq('id', alertId);
+          .update({ acknowledged: true });
           
+        await query.eq('id', alertId);
+        
         setAlerts(prev => prev.filter(alert => alert.id !== alertId));
       } catch (error) {
         console.error('Error acknowledging alert:', error);

@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 export interface MainProps extends React.HTMLAttributes<HTMLDivElement> {
   title?: string;
   description?: string;
-  containerSize?: 'sm' | 'md' | 'lg' | 'xl' | 'full' | string;
+  containerSize?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full' | string;
   children: React.ReactNode;
 }
 

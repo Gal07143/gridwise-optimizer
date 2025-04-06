@@ -1,178 +1,250 @@
 
 import React, { useState } from 'react';
-import { PanelTop, Wind, Sun, Battery, Bolt } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { DeviceType } from '@/types/energy';
+import { Slider } from '@/components/ui/slider';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Device } from '@/types/energy';
+import { Power, BarChart3, Battery, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
-// Import specific device controls
-import WindControls from '@/components/devices/controls/WindControls';
-import SolarControls from '@/components/devices/controls/SolarControls';
-import BatteryControls from '@/components/devices/controls/BatteryControls';
-import LoadControls from '@/components/devices/controls/LoadControls';
+interface DeviceControlsPanelProps {
+  device: Device;
+  onControlChange?: (control: string, value: any) => Promise<void>;
+}
 
-const DeviceControlsPanel: React.FC = () => {
-  const [activeDialog, setActiveDialog] = useState<{
-    isOpen: boolean;
-    deviceType: DeviceType;
-    deviceId: string;
-  }>({
-    isOpen: false,
-    deviceType: 'wind',
-    deviceId: 'wind-1'
-  });
+const DeviceControlsPanel: React.FC<DeviceControlsPanelProps> = ({ device, onControlChange }) => {
+  const [powerState, setPowerState] = useState(device?.status === 'online');
+  const [outputLevel, setOutputLevel] = useState(75);
+  const [chargingAllowed, setChargingAllowed] = useState(true);
+  const [dischargingAllowed, setDischargingAllowed] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const openControlDialog = (deviceType: DeviceType, deviceId: string) => {
-    setActiveDialog({
-      isOpen: true,
-      deviceType,
-      deviceId
-    });
-    toast.info(`Opening ${deviceType} controls`);
-  };
-
-  const closeControlDialog = () => {
-    setActiveDialog(prev => ({ ...prev, isOpen: false }));
-  };
-
-  // Render the appropriate control component based on device type
-  const renderDeviceControl = () => {
-    const { deviceType, deviceId } = activeDialog;
+  // Choose controls based on device type
+  const renderControls = () => {
+    if (!device) return null;
     
-    switch (deviceType) {
-      case 'wind':
-        return <WindControls deviceId={deviceId} />;
-      case 'solar':
-        return <SolarControls deviceId={deviceId} />;
+    switch (device.type) {
+      case 'inverter':
+        return (
+          <>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="power-state">Power State</Label>
+                <Switch 
+                  id="power-state" 
+                  checked={powerState}
+                  onCheckedChange={async (checked) => {
+                    setPowerState(checked);
+                    await handleControlChange('power', checked);
+                  }}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <Label htmlFor="output-level">Output Level ({outputLevel}%)</Label>
+                </div>
+                <Slider
+                  id="output-level"
+                  min={0}
+                  max={100}
+                  step={5}
+                  value={[outputLevel]}
+                  onValueChange={(values) => setOutputLevel(values[0])}
+                  onValueCommit={async (values) => {
+                    await handleControlChange('output', values[0]);
+                  }}
+                  disabled={!powerState}
+                />
+              </div>
+
+              <div className="flex justify-between">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleReset}
+                  className="w-full mt-2"
+                >
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Reset to Defaults
+                </Button>
+              </div>
+            </div>
+          </>
+        );
+        
       case 'battery':
-        return <BatteryControls deviceId={deviceId} />;
-      case 'load':
-        return <LoadControls deviceId={deviceId} />;
+        return (
+          <>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="charging-allowed">Allow Charging</Label>
+                <Switch 
+                  id="charging-allowed" 
+                  checked={chargingAllowed}
+                  onCheckedChange={async (checked) => {
+                    setChargingAllowed(checked);
+                    await handleControlChange('charging', checked);
+                  }}
+                />
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <Label htmlFor="discharging-allowed">Allow Discharging</Label>
+                <Switch 
+                  id="discharging-allowed" 
+                  checked={dischargingAllowed}
+                  onCheckedChange={async (checked) => {
+                    setDischargingAllowed(checked);
+                    await handleControlChange('discharging', checked);
+                  }}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <Label htmlFor="max-charge">Max Charge Rate ({outputLevel}%)</Label>
+                </div>
+                <Slider
+                  id="max-charge"
+                  min={0}
+                  max={100}
+                  step={5}
+                  value={[outputLevel]}
+                  onValueChange={(values) => setOutputLevel(values[0])}
+                  onValueCommit={async (values) => {
+                    await handleControlChange('charge_rate', values[0]);
+                  }}
+                  disabled={!chargingAllowed && !dischargingAllowed}
+                />
+              </div>
+              
+              <div className="flex justify-between">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleReset}
+                  className="w-full mt-2"
+                >
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Reset to Defaults
+                </Button>
+              </div>
+            </div>
+          </>
+        );
+        
       default:
-        return null;
+        return (
+          <p className="text-center text-muted-foreground py-4">
+            No controls available for this device type.
+          </p>
+        );
     }
   };
 
+  const handleControlChange = async (control: string, value: any) => {
+    setIsLoading(true);
+    try {
+      if (onControlChange) {
+        await onControlChange(control, value);
+      }
+      toast.success(`${device.name}: ${control} set to ${value}`);
+    } catch (error) {
+      console.error(`Error setting ${control}:`, error);
+      toast.error(`Failed to set ${control}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      
+      // Revert UI state on error
+      switch (control) {
+        case 'power':
+          setPowerState(!value);
+          break;
+        case 'output':
+          setOutputLevel(outputLevel); // Revert to previous value
+          break;
+        case 'charging':
+          setChargingAllowed(!value);
+          break;
+        case 'discharging':
+          setDischargingAllowed(!value);
+          break;
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleReset = async () => {
+    setIsLoading(true);
+    try {
+      // Set default values
+      if (device.type === 'inverter') {
+        setPowerState(true);
+        setOutputLevel(100);
+        if (onControlChange) {
+          await onControlChange('power', true);
+          await onControlChange('output', 100);
+        }
+      } else if (device.type === 'battery') {
+        setChargingAllowed(true);
+        setDischargingAllowed(true);
+        setOutputLevel(50);
+        if (onControlChange) {
+          await onControlChange('charging', true);
+          await onControlChange('discharging', true);
+          await onControlChange('charge_rate', 50);
+        }
+      }
+      toast.success(`${device.name} reset to default settings`);
+    } catch (error) {
+      console.error('Error resetting device:', error);
+      toast.error(`Failed to reset device: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getIcon = () => {
+    switch (device?.type) {
+      case 'inverter':
+        return <Power className="h-5 w-5 mr-2" />;
+      case 'battery':
+        return <Battery className="h-5 w-5 mr-2" />;
+      default:
+        return <BarChart3 className="h-5 w-5 mr-2" />;
+    }
+  };
+
+  if (!device) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Device Controls</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-center text-muted-foreground">No device selected</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
-      <CardHeader className="bg-primary/5">
-        <CardTitle className="flex items-center text-lg">
-          <PanelTop className="mr-2 h-5 w-5 text-primary" />
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center">
+          {getIcon()}
           Device Controls
         </CardTitle>
-        <CardDescription>
-          Individual device management and configuration
-        </CardDescription>
       </CardHeader>
-      
-      <CardContent className="pt-6">
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          <Button 
-            variant="outline" 
-            className="flex flex-col items-center justify-center h-32 gap-2"
-            onClick={() => openControlDialog('wind', 'wind-1')}
-          >
-            <Wind className="h-10 w-10 text-blue-500" />
-            <div className="text-center">
-              <p className="font-medium">Wind Turbine</p>
-              <p className="text-xs text-muted-foreground">Control wind generation</p>
-            </div>
-          </Button>
-          
-          <Button 
-            variant="outline" 
-            className="flex flex-col items-center justify-center h-32 gap-2"
-            onClick={() => openControlDialog('solar', 'solar-1')}
-          >
-            <Sun className="h-10 w-10 text-yellow-500" />
-            <div className="text-center">
-              <p className="font-medium">Solar Array</p>
-              <p className="text-xs text-muted-foreground">Manage solar production</p>
-            </div>
-          </Button>
-          
-          <Button 
-            variant="outline" 
-            className="flex flex-col items-center justify-center h-32 gap-2"
-            onClick={() => openControlDialog('battery', 'battery-1')}
-          >
-            <Battery className="h-10 w-10 text-green-500" />
-            <div className="text-center">
-              <p className="font-medium">Battery System</p>
-              <p className="text-xs text-muted-foreground">Control energy storage</p>
-            </div>
-          </Button>
-          
-          <Button 
-            variant="outline" 
-            className="flex flex-col items-center justify-center h-32 gap-2"
-            onClick={() => openControlDialog('load', 'load-1')}
-          >
-            <Bolt className="h-10 w-10 text-orange-500" />
-            <div className="text-center">
-              <p className="font-medium">Loads</p>
-              <p className="text-xs text-muted-foreground">Manage consumption</p>
-            </div>
-          </Button>
-        </div>
-
-        <div className="mt-8 grid grid-cols-2 gap-4">
-          <Button 
-            variant="outline" 
-            className="flex flex-col items-center justify-center h-24 gap-2"
-            onClick={() => toast.info("Switching to automatic control mode")}
-          >
-            <div className="text-center">
-              <p className="font-medium">Automatic</p>
-              <p className="text-xs text-muted-foreground">Optimized control</p>
-            </div>
-          </Button>
-          
-          <Button 
-            variant="default" 
-            className="flex flex-col items-center justify-center h-24 gap-2 bg-blue-500 hover:bg-blue-600"
-            onClick={() => toast.info("Manual control mode active")}
-          >
-            <div className="text-center">
-              <p className="font-medium">Manual</p>
-              <p className="text-xs text-muted-foreground">User-defined settings</p>
-            </div>
-          </Button>
-          
-          <Button 
-            variant="outline" 
-            className="flex flex-col items-center justify-center h-24 gap-2"
-            onClick={() => toast.success("Island Mode activated")}
-          >
-            <div className="text-center">
-              <p className="font-medium">Island Mode</p>
-              <p className="text-xs text-muted-foreground">Off-grid operation</p>
-            </div>
-          </Button>
-          
-          <Button 
-            variant="outline" 
-            className="flex flex-col items-center justify-center h-24 gap-2"
-            onClick={() => toast.success("Grid Connected Mode activated")}
-          >
-            <div className="text-center">
-              <p className="font-medium">Grid Connected</p>
-              <p className="text-xs text-muted-foreground">Grid-tied operation</p>
-            </div>
-          </Button>
-        </div>
-        
-        {/* Conditionally render device control dialog */}
-        {activeDialog.isOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-            <div className="bg-background rounded-lg shadow-lg w-full max-w-md">
-              <div className="p-6">
-                {renderDeviceControl()}
-                <Button className="mt-4 w-full" onClick={closeControlDialog}>Close</Button>
-              </div>
-            </div>
+      <CardContent>
+        {isLoading ? (
+          <div className="flex justify-center py-4">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
           </div>
+        ) : (
+          renderControls()
         )}
       </CardContent>
     </Card>

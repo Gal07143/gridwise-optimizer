@@ -187,7 +187,8 @@ export interface DeviceModel {
   firmware_version?: string;
   firmware_versions?: string[]; // Add this property that was referenced
   protocol: string;
-  support_level: 'none' | 'full' | 'partial' | 'beta'; // Include 'beta' in the union
+  support_level: 'none' | 'full' | 'partial' | 'beta' | 'community'; // Include all values
+  compatible_with?: string[];
   images?: string[];
   has_manual?: boolean;
   has_datasheet?: boolean;

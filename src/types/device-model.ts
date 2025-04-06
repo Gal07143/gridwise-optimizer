@@ -65,6 +65,7 @@ export interface DeviceModelCategory {
   image_url?: string;
 }
 
+// Update SupportLevel to include 'beta'
 export type SupportLevel = 'full' | 'partial' | 'beta' | 'community' | 'none';
 
 // Add CategoryNames for reference

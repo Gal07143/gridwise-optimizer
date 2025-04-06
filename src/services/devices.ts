@@ -3,7 +3,7 @@
 
 import { toast } from 'sonner';
 import { executeSql } from './sqlExecutor';
-import { DeviceModel } from '@/types/energy';
+import { DeviceModel } from '@/types/device-model';
 
 // Mock data for device models since we're now using SQL execution
 const deviceModels: DeviceModel[] = [
@@ -11,22 +11,26 @@ const deviceModels: DeviceModel[] = [
     id: '1',
     name: 'SolarEdge Inverter',
     manufacturer: 'SolarEdge',
+    model_number: 'SE7600H-US',
     model_name: 'SE7600H-US',
     device_type: 'inverter',
+    category: 'Solar Inverters',
+    protocol: 'SunSpec',
+    support_level: 'full',
     specifications: {},
-    compatible_with: [],
-    firmware_versions: [],
     created_at: new Date().toISOString()
   },
   {
     id: '2',
     name: 'Tesla Powerwall',
     manufacturer: 'Tesla',
+    model_number: 'Powerwall 2',
     model_name: 'Powerwall 2',
     device_type: 'battery',
+    category: 'Battery Systems',
+    protocol: 'Proprietary',
+    support_level: 'full',
     specifications: {},
-    compatible_with: [],
-    firmware_versions: [],
     created_at: new Date().toISOString()
   }
 ];
@@ -70,72 +74,84 @@ export const getMockDeviceModels = (): DeviceModel[] => {
       id: '1',
       name: 'SolarEdge Inverter',
       manufacturer: 'SolarEdge',
+      model_number: 'SE7600H-US',
       model_name: 'SE7600H-US',
       device_type: 'inverter',
+      category: 'Solar Inverters',
       description: 'High-efficiency solar inverter',
+      protocol: 'SunSpec',
+      support_level: 'full',
       specifications: {},
-      compatible_with: [],
-      firmware_versions: [],
       created_at: new Date().toISOString()
     },
     {
       id: '2',
       name: 'Tesla Powerwall',
       manufacturer: 'Tesla',
+      model_number: 'Powerwall 2',
       model_name: 'Powerwall 2',
       device_type: 'battery',
+      category: 'Battery Systems',
       description: 'Home battery storage system',
+      protocol: 'Proprietary',
+      support_level: 'full',
       specifications: {},
-      compatible_with: [],
-      firmware_versions: [],
       created_at: new Date().toISOString()
     },
     {
       id: '3',
       name: 'Fronius Symo',
       manufacturer: 'Fronius',
+      model_number: 'Symo 10.0-3',
       model_name: 'Symo 10.0-3',
       device_type: 'inverter',
+      category: 'Solar Inverters',
       description: 'Three-phase inverter for commercial applications',
+      protocol: 'SunSpec',
+      support_level: 'full',
       specifications: {},
-      compatible_with: [],
-      firmware_versions: [],
       created_at: new Date().toISOString()
     },
     {
       id: '4',
       name: 'Enphase Microinverter',
       manufacturer: 'Enphase',
+      model_number: 'IQ7+',
       model_name: 'IQ7+',
       device_type: 'inverter',
+      category: 'Solar Inverters',
       description: 'Module-level power electronics',
+      protocol: 'Envoy',
+      support_level: 'full',
       specifications: {},
-      compatible_with: [],
-      firmware_versions: [],
       created_at: new Date().toISOString()
     },
     {
       id: '5',
       name: 'SMA Sunny Boy',
       manufacturer: 'SMA',
+      model_number: 'SB 7.7-US',
       model_name: 'SB 7.7-US',
       device_type: 'inverter',
+      category: 'Solar Inverters',
       description: 'String inverter for residential applications',
+      protocol: 'WebConnect',
+      support_level: 'full',
       specifications: {},
-      compatible_with: [],
-      firmware_versions: [],
       created_at: new Date().toISOString()
     },
     {
       id: '6',
       name: 'LG Chem RESU',
       manufacturer: 'LG Chem',
+      model_number: 'RESU10H',
       model_name: 'RESU10H',
       device_type: 'battery',
+      category: 'Battery Systems',
       description: 'Residential energy storage unit',
+      protocol: 'CAN',
+      support_level: 'full',
       specifications: {},
-      compatible_with: [],
-      firmware_versions: [],
       created_at: new Date().toISOString()
     }
   ];

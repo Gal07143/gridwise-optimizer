@@ -31,9 +31,13 @@ const AlertSummaryCard: React.FC<AlertSummaryCardProps> = ({
     const fetchAlerts = async () => {
       setLoading(true);
       try {
-        // Get critical alerts count
-        const criticalResult = await supabase
+        // Get critical alerts count - use a reference first
+        const criticalRef = supabase
           .from('alerts')
+          .select('*');
+          
+        // We build a query and then execute it
+        const criticalResult = await criticalRef
           .select('*')
           .eq('severity', 'critical')
           .eq('acknowledged', false);

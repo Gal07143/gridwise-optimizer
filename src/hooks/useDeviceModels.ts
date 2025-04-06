@@ -1,171 +1,116 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { DeviceModel } from '@/types/device-model';
 import { DeviceType } from '@/types/energy';
-import { DeviceModel, categoryNames } from '@/types/device-model';
 
-export type { DeviceModel };
-export { categoryNames };
-
-export function useDeviceModels(categoryId?: string) {
+// Custom hook for device model management
+export const useDeviceModels = () => {
   const [models, setModels] = useState<DeviceModel[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-  const [sortField, setSortField] = useState<string>('manufacturer');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [deviceCount, setDeviceCount] = useState(0);
-  const [categoryName, setCategoryName] = useState('All Devices');
-
-  // Add other state and functions as needed
   
-  useEffect(() => {
-    const fetchDeviceModels = async () => {
-      setLoading(true);
-      try {
-        // Simulate API call delay
-        await new Promise(r => setTimeout(r, 500));
-        
-        // Mock data - in a real app, this would be an API call
-        const mockModels: DeviceModel[] = [
-          {
-            id: "dm-1",
-            manufacturer: "SunPower",
-            model_name: "X-Series",
-            name: "SunPower X-Series",
-            model_number: "SPR-X22-370",
-            device_type: "solar_panel" as DeviceType,
-            description: "High-efficiency solar panel for residential installations",
-            compatible_with: ["inv-001", "inv-002"],
-            firmware_versions: ["1.2.3"],
-            created_at: new Date().toISOString(),
-            protocol: "Modbus",
-            power_rating: 370,
-            capacity: 0,
-            release_date: "2022-01-15",
-            support_level: "full",
-            has_manual: true
-          },
-          {
-            id: "dm-2",
-            manufacturer: "Tesla",
-            model_name: "Powerwall",
-            name: "Tesla Powerwall 2",
-            model_number: "PW-2",
-            device_type: "battery" as DeviceType,
-            description: "Home battery for energy storage",
-            compatible_with: ["inv-003"],
-            firmware_versions: ["2.1.4"],
-            created_at: new Date().toISOString(),
-            protocol: "Proprietary",
-            power_rating: 5000,
-            capacity: 13.5,
-            release_date: "2021-03-20",
-            support_level: "full",
-            has_manual: true
-          },
-          {
-            id: "dm-3",
-            manufacturer: "SMA",
-            model_name: "Sunny Boy",
-            name: "SMA Sunny Boy",
-            model_number: "SB-7.7",
-            device_type: "inverter" as DeviceType,
-            description: "Solar inverter for residential installations",
-            compatible_with: ["dm-1"],
-            firmware_versions: ["3.0.1"],
-            created_at: new Date().toISOString(),
-            protocol: "Modbus",
-            power_rating: 7700,
-            capacity: 0,
-            release_date: "2022-06-10",
-            support_level: "full",
-            has_manual: true
-          }
-        ];
-        
-        // Filter by category if provided
-        let filteredModels = categoryId 
-          ? mockModels.filter(model => model.device_type === categoryId)
-          : mockModels;
-        
-        // Filter by search query
-        if (searchQuery) {
-          const query = searchQuery.toLowerCase();
-          filteredModels = filteredModels.filter(model => 
-            model.manufacturer.toLowerCase().includes(query) ||
-            model.model_name.toLowerCase().includes(query) ||
-            model.description?.toLowerCase().includes(query) ||
-            model.model_number.toLowerCase().includes(query)
-          );
-        }
-        
-        // Sort the data
-        filteredModels.sort((a, b) => {
-          const aValue = a[sortField as keyof DeviceModel];
-          const bValue = b[sortField as keyof DeviceModel];
-          
-          if (aValue === undefined || bValue === undefined) return 0;
-          
-          // String comparison
-          if (typeof aValue === 'string' && typeof bValue === 'string') {
-            return sortDirection === 'asc'
-              ? aValue.localeCompare(bValue)
-              : bValue.localeCompare(aValue);
-          }
-          
-          // Number comparison
-          if (typeof aValue === 'number' && typeof bValue === 'number') {
-            return sortDirection === 'asc'
-              ? aValue - bValue
-              : bValue - aValue;
-          }
-          
-          return 0;
-        });
-        
-        setModels(filteredModels);
-        setDeviceCount(filteredModels.length);
-        
-        // Set category name
-        if (categoryId && categoryId in categoryNames) {
-          setCategoryName(categoryNames[categoryId]);
-        } else if (categoryId) {
-          setCategoryName(categoryId.charAt(0).toUpperCase() + categoryId.slice(1).replace('_', ' '));
-        } else {
-          setCategoryName('All Devices');
-        }
-        
-        setError(null);
-      } catch (err) {
-        console.error('Error fetching device models:', err);
-        setError(err instanceof Error ? err : new Error('Unknown error fetching device models'));
-      } finally {
-        setLoading(false);
+  // Mock retrieve models - in real implementation this would fetch from API
+  const retrieveDeviceModels = (): DeviceModel[] => {
+    // Sample device models (would come from API)
+    const sampleModels: DeviceModel[] = [
+      {
+        id: '1',
+        name: 'Tesla Powerwall',
+        manufacturer: 'Tesla',
+        model_name: 'Powerwall 2',
+        model_number: 'PW2',
+        device_type: 'battery' as DeviceType,
+        category: 'Battery Systems',
+        description: 'Home battery system for energy storage',
+        specifications: {
+          capacity: 13.5,
+          power: 7,
+          efficiency: 90
+        },
+        power_rating: 7,
+        capacity: 13.5,
+        protocol: 'Modbus TCP',
+        support_level: 'full',
+        compatible_with: ['SolarEdge', 'Fronius', 'SMA'],
+        firmware_versions: ['1.45.0', '1.46.1'],
+        warranty: '10 years',
+        release_date: '2016-10-28',
+        firmware_version: '1.46.1',
+        has_manual: true,
+      },
+      {
+        id: '2',
+        name: 'SolarEdge Inverter',
+        manufacturer: 'SolarEdge',
+        model_name: 'SE10K',
+        model_number: 'SE10000H-US',
+        device_type: 'inverter' as DeviceType,
+        category: 'Solar Inverters',
+        description: 'Three-phase string inverter with HD-Wave technology',
+        specifications: {
+          power: 10,
+          mppt: 2,
+          efficiency: 99
+        },
+        power_rating: 10,
+        protocol: 'SunSpec',
+        support_level: 'full',
+        compatible_with: ['Tesla Powerwall', 'LG Chem RESU'],
+        firmware_versions: ['3.2243', '3.2249'],
+        warranty: '12 years',
+        release_date: '2018-05-15',
+        firmware_version: '3.2249',
+        has_manual: true,
+      },
+      {
+        id: '3',
+        name: 'Enphase IQ8',
+        manufacturer: 'Enphase',
+        model_name: 'IQ8+',
+        model_number: 'IQ8PLUS-72-2-US',
+        device_type: 'inverter' as DeviceType,
+        category: 'Solar Inverters',
+        description: 'Grid-forming microinverter with Sunlight Backup™',
+        specifications: {
+          power: 0.29,
+          efficiency: 97,
+        },
+        power_rating: 0.29,
+        protocol: 'Envoy',
+        support_level: 'beta',
+        compatible_with: ['Enphase Battery', 'Enphase Combiner'],
+        firmware_versions: ['7.0.1', '7.0.2'],
+        warranty: '25 years',
+        release_date: '2021-10-25',
+        firmware_version: '7.0.2',
+        has_manual: true,
       }
-    };
+    ];
     
-    fetchDeviceModels();
-  }, [categoryId, sortField, sortDirection, searchQuery]);
-  
-  const handleSort = (field: string) => {
-    if (field === sortField) {
-      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
-    }
+    return sampleModels;
   };
   
-  return { 
-    models, 
-    loading, 
-    error, 
-    sortField, 
-    sortDirection, 
-    searchQuery, 
-    setSearchQuery, 
-    handleSort, 
-    deviceCount, 
-    categoryName 
+  // Load models
+  const loadModels = () => {
+    const deviceModels = retrieveDeviceModels();
+    setModels(deviceModels);
+    return deviceModels;
   };
-}
+  
+  // Filter models by type
+  const filterModelsByType = (type: string): DeviceModel[] => {
+    return models.filter(model => model.device_type === type);
+  };
+  
+  // Get model by ID
+  const getModelById = (id: string): DeviceModel | undefined => {
+    return models.find(model => model.id === id);
+  };
+  
+  return {
+    models,
+    loadModels,
+    filterModelsByType,
+    getModelById
+  };
+};
+
+export default useDeviceModels;

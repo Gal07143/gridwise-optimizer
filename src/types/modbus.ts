@@ -107,6 +107,7 @@ export interface ConnectionStatusOptions {
   onConnect?: () => void;
   onDisconnect?: () => void;
   onError?: (error: Error) => void;
+  showToasts?: boolean; // Added this missing property
 }
 
 export interface ConnectionStatus {
@@ -118,6 +119,7 @@ export interface ConnectionStatus {
   disconnect: () => void;
   reconnect: () => Promise<void>;
   retryConnection?: () => void;
+  isOnline?: boolean; // Added this missing property
 }
 
 export interface ConnectionStatusResult {
