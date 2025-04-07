@@ -18,6 +18,7 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { Eye, EyeOff, UserPlus } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
+import { toast } from 'sonner';
 
 // Form validation schema
 const signUpSchema = z.object({
@@ -63,11 +64,11 @@ const SignUpForm = ({ onToggleMode }: SignUpFormProps) => {
     
     try {
       await signUp(values.email, values.password, values.name);
-      // Auth context will handle redirection
+      toast.success("Account created successfully! You can now sign in.");
       navigate('/dashboard');
-    } catch (error) {
-      // Error handling is already done in the signUp method
+    } catch (error: any) {
       console.error('Signup error:', error);
+      toast.error(`Registration failed: ${error?.message || 'Unknown error'}`);
     } finally {
       setIsSubmitting(false);
     }

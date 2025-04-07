@@ -1,65 +1,72 @@
+
 export interface ModbusDevice {
   id: string;
   name: string;
-  ip_address: string;
+  ip: string;         // Backward compatibility with ip_address
+  ip_address?: string; // New property name
   port: number;
   unit_id: number;
-  status: 'online' | 'offline' | 'error';
-  last_connected?: string;
-  created_at: string;
-  updated_at: string;
-  protocol?: string;
+  is_active: boolean;
+  status?: string;
   description?: string;
+  protocol?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
-export interface ModbusDeviceConfig {
-  id?: string;
-  name: string;
-  ip_address: string;
-  port: number;
-  unit_id: number;
-  protocol: string;
-}
+export type ModbusDeviceConfig = Omit<ModbusDevice, 'id'>;
 
 export interface ModbusRegisterDefinition {
-  address: number;
   name: string;
+  address: number;
+  registerType: 'input' | 'holding' | 'coil' | 'discrete';
+  dataType: 'int16' | 'uint16' | 'int32' | 'uint32' | 'float32' | 'float64' | 'bit';
+  access: 'read' | 'write' | 'read/write';
   description?: string;
-  dataType: 'uint16' | 'int16' | 'uint32' | 'int32' | 'float32' | 'string';
-  scaleFactor?: number;
   unit?: string;
-  access: 'read' | 'write' | 'read-write';
-  registerType: 'holding' | 'input' | 'coil' | 'discrete';
+  scaleFactor?: number;
+  // Legacy properties for compatibility
+  length?: number;
+  type?: string;
+  scale?: number;
 }
 
 export interface ModbusRegisterMap {
   id?: string;
   name: string;
-  description?: string;
-  device_id?: string;
+  device_id: string;
+  registers: ModbusRegisterDefinition[];
   created_at?: string;
   updated_at?: string;
-  registers: ModbusRegisterDefinition[];
+}
+
+export interface ModbusReadingResult {
+  value: number | boolean;
+  address: number;
+  buffer?: Buffer;
+  raw?: any;
+  error?: Error;
 }
 
 export interface ConnectionStatusOptions {
+  initialStatus?: boolean;
+  reconnectDelay?: number;
   showToasts?: boolean;
-  autoConnect?: boolean;
-  deviceId?: string;
 }
 
 export interface ConnectionStatus {
-  isOnline: boolean;
-  lastConnected?: Date;
-  connectionAttempts: number;
-  error?: Error;
+  online: boolean;
+  lastOnline: Date | null;
+  lastOffline: Date | null;
 }
 
 export interface ConnectionStatusResult {
   isOnline: boolean;
+  lastOnline: Date | null;
+  lastOffline: Date | null;
+  isConnected?: boolean;
   isConnecting?: boolean;
-  lastConnected?: Date;
-  error: Error | null;
-  connect?: () => Promise<void>;
+  connect?: () => void;
   disconnect?: () => void;
+  retryConnection?: () => void;
 }

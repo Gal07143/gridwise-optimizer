@@ -1,60 +1,120 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 
-interface RealtimeUpdateOptions {
+import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
+
+interface RealtimeOptions {
   table: string;
+  schema?: string;
   event?: 'INSERT' | 'UPDATE' | 'DELETE' | '*';
-  filter?: Record<string, any>;
+  filter?: string;
+  showToasts?: boolean;
 }
 
-export function useRealtimeUpdates<T = any>(
-  options: RealtimeUpdateOptions,
-  onDataReceived?: (payload: T) => void
-) {
-  const [isSubscribed, setIsSubscribed] = useState(false);
-  const { table, event = '*', filter } = options;
+interface RealtimeResult<T> {
+  data: T[];
+  loading: boolean;
+  error: Error | null;
+}
+
+/**
+ * Hook for subscribing to real-time updates from Supabase
+ */
+export function useRealtimeUpdates<T = any>({
+  table,
+  schema = 'public',
+  event = '*',
+  filter,
+  showToasts = false,
+}: RealtimeOptions): RealtimeResult<T> {
+  const [data, setData] = useState<T[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    if (!table) return;
+    // Fetch initial data
+    const fetchInitialData = async () => {
+      try {
+        let query = supabase.from(table).select('*');
 
-    // Create a unique channel name based on table and event
-    const channelName = `realtime-${table}-${event}-${Date.now()}`;
-    
-    let changesConfig = {
-      event: event,
-      schema: 'public',
-      table: table,
+        if (filter) {
+          // Example filter: 'status=eq.active'
+          const [column, operation] = filter.split('=');
+          const [op, value] = operation.split('.');
+          
+          if (op === 'eq') {
+            query = query.eq(column, value);
+          } else if (op === 'gt') {
+            query = query.gt(column, value);
+          } else if (op === 'lt') {
+            query = query.lt(column, value);
+          }
+        }
+
+        const { data: initialData, error: initialError } = await query;
+
+        if (initialError) {
+          throw initialError;
+        }
+
+        setData(initialData as T[]);
+        setError(null);
+      } catch (err) {
+        console.error(`Error fetching ${table} data:`, err);
+        setError(err instanceof Error ? err : new Error(`Failed to fetch ${table} data`));
+        if (showToasts) {
+          toast.error(`Failed to fetch data from ${table}`);
+        }
+      } finally {
+        setLoading(false);
+      }
     };
-    
-    // Add filter if provided
-    if (filter) {
-      changesConfig = { ...changesConfig, ...filter };
-    }
 
-    // Subscribe to the channel
+    fetchInitialData();
+
+    // Subscribe to real-time updates
     const channel = supabase
-      .channel(channelName)
+      .channel(`${table}-changes`)
       .on(
         'postgres_changes',
-        changesConfig,
+        {
+          event,
+          schema,
+          table,
+          filter: filter ? `${filter}` : undefined,
+        },
         (payload) => {
-          if (onDataReceived) {
-            onDataReceived(payload.new as T);
+          if (payload.eventType === 'INSERT') {
+            setData((prevData) => [...prevData, payload.new as T]);
+            if (showToasts) {
+              toast.success(`New record added to ${table}`);
+            }
+          } else if (payload.eventType === 'UPDATE') {
+            setData((prevData) =>
+              prevData.map((item: any) =>
+                item.id === (payload.new as any).id ? payload.new as T : item
+              )
+            );
+            if (showToasts) {
+              toast.info(`Record updated in ${table}`);
+            }
+          } else if (payload.eventType === 'DELETE') {
+            setData((prevData) =>
+              prevData.filter((item: any) => item.id !== (payload.old as any).id)
+            );
+            if (showToasts) {
+              toast.info(`Record deleted from ${table}`);
+            }
           }
         }
       )
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          setIsSubscribed(true);
-        }
-      });
+      .subscribe();
 
-    // Cleanup function to remove the channel when the component unmounts
+    // Cleanup on unmount
     return () => {
       supabase.removeChannel(channel);
-      setIsSubscribed(false);
     };
-  }, [table, event, filter, onDataReceived]);
+  }, [table, schema, event, filter, showToasts]);
 
-  return { isSubscribed };
+  return { data, loading, error };
 }

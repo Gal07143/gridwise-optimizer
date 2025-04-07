@@ -1,120 +1,151 @@
+
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { TelemetryData } from '@/types/energy';
+import { supabase } from '@/lib/supabase';
 
-interface UseTelemetryHistoryOptions {
-  deviceId?: string;
-  metricId?: string;
-  range?: 'hour' | 'day' | 'week' | 'month';
+interface TelemetryHistoryParams {
+  deviceId: string;
+  metricId: string;
   limit?: number;
-  interval?: string;
-  aggregation?: 'avg' | 'sum' | 'min' | 'max';
+  timeRange?: 'hour' | 'day' | 'week' | 'month';
 }
 
-interface UseTelemetryHistoryResult {
-  data: TelemetryData[];
-  isLoading: boolean;
-  error: Error | null;
-  refetch: () => Promise<void>;
-}
-
-export const useTelemetryHistory = ({
+const useTelemetryHistory = ({
   deviceId,
   metricId,
-  range = 'day',
   limit = 100,
-  interval = '15m',
-  aggregation = 'avg'
-}: UseTelemetryHistoryOptions): UseTelemetryHistoryResult => {
+  timeRange = 'day'
+}: TelemetryHistoryParams) => {
   const [data, setData] = useState<TelemetryData[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetchData = async () => {
-    if (!deviceId) {
-      setData([]);
-      setIsLoading(false);
-      return;
-    }
+  useEffect(() => {
+    const fetchTelemetry = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
 
+        // Calculate the time range filter
+        const now = new Date();
+        let startTime = new Date();
+        
+        switch (timeRange) {
+          case 'hour':
+            startTime.setHours(now.getHours() - 1);
+            break;
+          case 'day':
+            startTime.setDate(now.getDate() - 1);
+            break;
+          case 'week':
+            startTime.setDate(now.getDate() - 7);
+            break;
+          case 'month':
+            startTime.setMonth(now.getMonth() - 1);
+            break;
+        }
+
+        // Format to ISO string for Supabase query
+        const startTimeStr = startTime.toISOString();
+
+        const { data, error } = await supabase
+          .from('energy_readings')
+          .select('*')
+          .eq('device_id', deviceId)
+          .eq('metric', metricId)
+          .gte('timestamp', startTimeStr)
+          .order('timestamp', { ascending: true })
+          .limit(limit);
+
+        if (error) throw error;
+
+        // Format the data to match TelemetryData
+        const formattedData: TelemetryData[] = (data || []).map(item => ({
+          timestamp: item.timestamp,
+          value: item.value,
+          deviceId: item.device_id,
+          metricId: item.metric
+        }));
+
+        setData(formattedData);
+      } catch (err) {
+        console.error('Error fetching telemetry data:', err);
+        setError(err instanceof Error ? err : new Error('Failed to fetch telemetry data'));
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTelemetry();
+    
+    // Set up subscription for real-time updates
+    const channel = supabase
+      .channel('energy_readings_changes')
+      .on('postgres_changes', 
+        { 
+          event: 'INSERT', 
+          schema: 'public', 
+          table: 'energy_readings',
+          filter: `device_id=eq.${deviceId}` 
+        }, 
+        (payload) => {
+          if (payload.new && payload.new.metric === metricId) {
+            const newReading: TelemetryData = {
+              timestamp: payload.new.timestamp,
+              value: payload.new.value,
+              deviceId: payload.new.device_id,
+              metricId: payload.new.metric
+            };
+            
+            setData(prevData => [...prevData, newReading]);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [deviceId, metricId, limit, timeRange]);
+
+  const refetch = async () => {
     setIsLoading(true);
-    setError(null);
-
     try {
-      // Calculate the time range
-      const now = new Date();
-      let startDate: Date;
+      const { data, error } = await supabase
+        .from('energy_readings')
+        .select('*')
+        .eq('device_id', deviceId)
+        .eq('metric', metricId)
+        .order('timestamp', { ascending: true })
+        .limit(limit);
 
-      switch (range) {
-        case 'hour':
-          startDate = new Date(now.getTime() - 60 * 60 * 1000);
-          break;
-        case 'day':
-          startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-          break;
-        case 'week':
-          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-          break;
-        case 'month':
-          startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-          break;
-        default:
-          startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-      }
+      if (error) throw error;
 
-      // Format the dates for the query
-      const startTimestamp = startDate.toISOString();
-      const endTimestamp = now.toISOString();
+      const formattedData: TelemetryData[] = (data || []).map(item => ({
+        timestamp: item.timestamp,
+        value: item.value,
+        deviceId: item.device_id,
+        metricId: item.metric
+      }));
 
-      // Using proper string interpolation for the SQL query
-      const query = `
-        SELECT 
-          time_bucket('${interval}', timestamp) AS timestamp,
-          ${aggregation}(value) AS value,
-          device_id AS "deviceId",
-          ${metricId ? `'${metricId}'` : 'metric_type'} AS "metricId"
-        FROM 
-          telemetry
-        WHERE 
-          device_id = '${deviceId}'
-          ${metricId ? `AND metric_type = '${metricId}'` : ''}
-          AND timestamp > '${startTimestamp}'
-          AND timestamp <= '${endTimestamp}'
-        GROUP BY 
-          time_bucket('${interval}', timestamp), 
-          device_id
-          ${metricId ? '' : ', metric_type'}
-        ORDER BY 
-          timestamp ASC
-        LIMIT ${limit}
-      `;
-
-      const { data: telemetryData, error: supabaseError } = await supabase.rpc('run_query', { query_text: query });
-
-      if (supabaseError) {
-        throw new Error(supabaseError.message);
-      }
-
-      setData(telemetryData || []);
+      setData(formattedData);
+      setError(null);
     } catch (err) {
-      console.error('Error fetching telemetry history:', err);
-      setError(err instanceof Error ? err : new Error('Unknown error fetching telemetry data'));
+      console.error('Error refetching telemetry data:', err);
+      setError(err instanceof Error ? err : new Error('Failed to refetch telemetry data'));
     } finally {
       setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, [deviceId, metricId, range, limit, interval, aggregation]);
-
   return {
     data,
     isLoading,
     error,
-    refetch: fetchData
+    refetch
   };
 };
 
-// Add this default export to maintain compatibility with existing code
+// Make sure to export both as named export and default
+export { useTelemetryHistory };
 export default useTelemetryHistory;

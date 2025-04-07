@@ -20,6 +20,15 @@ export interface Site {
   tags?: string[];
   main_image_url?: string;
   organization_id?: string;
+  
+  // Legacy/compatibility properties
+  location?: string; // Maps to address
+  type?: string;     // Maps to site_type
+  building_type?: string;
+  area?: number;
+  contact_person?: string;
+  contact_email?: string;
+  contact_phone?: string;
 }
 
 export interface SiteFormData {
@@ -38,6 +47,15 @@ export interface SiteFormData {
   tags?: string[];
   main_image_url?: string;
   organization_id?: string;
+  
+  // Legacy/compatibility properties
+  location?: string;
+  type?: string;
+  building_type?: string;
+  area?: number;
+  contact_person?: string;
+  contact_email?: string;
+  contact_phone?: string;
 }
 
 export type DateRange = RDPDateRange;
