@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { TelemetryData } from '@/types/energy';
 import { supabase } from '@/lib/supabase';
