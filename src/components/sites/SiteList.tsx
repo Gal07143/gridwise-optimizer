@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Site } from '@/types/site';
 import SiteCard from './SiteCard';
