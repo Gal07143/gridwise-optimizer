@@ -7,7 +7,7 @@ import ErrorMessage from '@/components/ui/error-message';
 import { useIntegrationCategory } from '@/hooks/useIntegrationCategory';
 import IntegrationDeviceModelsCard from '@/components/integrations/IntegrationDeviceModelsCard';
 import IntegrationInstallationCard from '@/components/integrations/IntegrationInstallationCard';
-import PageHeader from '@/components/pages/PageHeader';
+import PageHeader from '@/components/layout/PageHeader';
 import NoResults from '@/components/ui/no-results';
 import SearchFilterBar from '@/components/ui/SearchFilterBar';
 
@@ -17,7 +17,7 @@ const IntegrationCategoryPage = () => {
   
   const {
     devices: deviceModels,
-    isLoading,
+    loading,
     error,
     sortField,
     sortDirection,
@@ -28,7 +28,7 @@ const IntegrationCategoryPage = () => {
     categoryName
   } = useIntegrationCategory(categoryId !== 'all' ? categoryId : '');
   
-  if (isLoading) {
+  if (loading) {
     return (
       <AppLayout>
         <div className="flex-1 p-6 flex items-center justify-center">

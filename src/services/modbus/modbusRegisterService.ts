@@ -48,15 +48,15 @@ export const getRegisterMap = async (deviceId: string): Promise<ModbusRegisterMa
     }));
     
     return {
-      registers: registerDefinitions,
-      device_id: deviceId
+      device_id: deviceId,
+      registers: registerDefinitions
     };
   } catch (error) {
     console.error("Error creating register map:", error);
     toast.error("Failed to create register map");
     return {
-      registers: [],
-      device_id: deviceId
+      device_id: deviceId,
+      registers: []
     };
   }
 };

@@ -1,148 +1,73 @@
-import React, { useState } from 'react';
+
+// Update to handle Error as ReactNode and ensure device has description property
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Main } from '@/components/ui/main';
-import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { 
-  ArrowLeft, 
-  ServerIcon, 
-  Trash, 
-  Settings, 
-  Activity, 
-  Terminal, 
-  Database,
-  ChevronRight,
-  AlertTriangle
-} from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft, ServerIcon, Power, PowerOff } from 'lucide-react';
 import { useModbusConnection } from '@/hooks/useModbusConnection';
-import ModbusRegisterMapEditor from '@/components/modbus/ModbusRegisterMap';
-import ModbusMonitor from '@/components/modbus/ModbusMonitor';
-import { supabase } from '@/integrations/supabase/client';
+import ModbusRegisterMap from '@/components/modbus/ModbusRegisterMap';
+import ModbusReadRegister from '@/components/modbus/ModbusReadRegister';
+import ModbusWriteRegister from '@/components/modbus/ModbusWriteRegister';
+import ModbusDeviceSettings from '@/components/modbus/ModbusDeviceSettings';
+import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
 
-const ModbusDeviceDetailsPage: React.FC = () => {
+const ModbusDeviceDetails: React.FC = () => {
   const { deviceId } = useParams<{ deviceId: string }>();
   const navigate = useNavigate();
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('registers');
   
   const { 
     device, 
-    loading, 
-    error, 
-    connect, 
-    disconnect, 
     isConnected,
-    refreshDevice
+    isConnecting,
+    connect,
+    disconnect,
+    loading, 
+    error 
   } = useModbusConnection(deviceId);
-
+  
+  useEffect(() => {
+    if (device) {
+      // Set page title
+      document.title = `${device.name} - Modbus Device`;
+    }
+  }, [device]);
+  
   const handleBack = () => {
     navigate('/modbus/devices');
   };
-
-  const handleEdit = () => {
-    navigate(`/modbus/devices/${deviceId}/edit`);
-  };
-
-  const handleDelete = async () => {
-    if (!deviceId) return;
-
-    // If connected, disconnect first
+  
+  const toggleConnection = async () => {
     if (isConnected) {
       await disconnect();
-    }
-
-    try {
-      // Delete register maps first
-      await supabase
-        .from('modbus_register_maps')
-        .delete()
-        .eq('device_id', deviceId);
-      
-      // Delete device readings
-      await supabase
-        .from('modbus_readings')
-        .delete()
-        .eq('device_id', deviceId);
-      
-      // Delete the device itself
-      const { error } = await supabase
-        .from('modbus_devices')
-        .delete()
-        .eq('id', deviceId);
-      
-      if (error) throw error;
-      
-      toast.success('Device deleted successfully');
-      navigate('/modbus/devices');
-    } catch (err: any) {
-      toast.error(`Error deleting device: ${err.message}`);
-    }
-  };
-
-  const handleToggleConnection = async () => {
-    if (isConnected) {
-      await disconnect();
+      toast.success("Disconnected from device");
     } else {
-      const success = await connect();
-      if (!success) {
-        toast.error('Failed to connect to device');
+      try {
+        await connect();
+        toast.success("Connected to device successfully");
+      } catch (err) {
+        toast.error("Failed to connect to device");
       }
     }
   };
-
-  if (loading) {
-    return (
-      <Main title="Device Details">
-        <div className="flex items-center mb-6">
-          <Button variant="ghost" onClick={handleBack} className="mr-4">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
-          </Button>
-          <div className="animate-pulse h-8 w-60 bg-secondary rounded"></div>
-        </div>
-        <div className="animate-pulse space-y-4">
-          <div className="h-10 bg-secondary rounded w-full max-w-md"></div>
-          <div className="h-64 bg-secondary rounded"></div>
-        </div>
-      </Main>
-    );
-  }
-
-  if (error || !device) {
-    return (
-      <Main title="Device Details">
-        <div className="flex items-center mb-6">
-          <Button variant="ghost" onClick={handleBack} className="mr-4">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
-          </Button>
-          <h1 className="text-2xl font-bold">Device Not Found</h1>
-        </div>
-        <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-6 text-center">
-          <AlertTriangle className="h-12 w-12 mx-auto text-destructive mb-4" />
-          <p className="text-lg font-medium mb-2 text-destructive">Error Loading Device</p>
-          <p className="text-muted-foreground mb-4">
-            {error || "The device you're looking for could not be found."}
-          </p>
-          <Button onClick={handleBack}>Return to Devices List</Button>
-        </div>
-      </Main>
-    );
-  }
-
+  
+  const getConnectionStatusColor = () => {
+    if (isConnected) return "bg-green-500";
+    if (isConnecting) return "bg-yellow-500";
+    return "bg-red-500";
+  };
+  
+  const getConnectionStatusText = () => {
+    if (isConnected) return "Connected";
+    if (isConnecting) return "Connecting";
+    return "Disconnected";
+  };
+  
   return (
-    <Main title={`Modbus: ${device.name}`}>
+    <Main title={device?.name || "Modbus Device"}>
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center">
           <Button variant="ghost" onClick={handleBack} className="mr-4">
@@ -151,98 +76,97 @@ const ModbusDeviceDetailsPage: React.FC = () => {
           </Button>
           <div className="flex items-center">
             <ServerIcon className="h-6 w-6 mr-2" />
-            <h1 className="text-2xl font-bold">{device.name}</h1>
-            <Badge 
-              variant={isConnected ? "success" : "outline"}
-              className="ml-3"
-            >
-              {isConnected ? "Connected" : "Disconnected"}
-            </Badge>
+            <h1 className="text-2xl font-bold">
+              {device?.name || 'Loading...'}
+            </h1>
           </div>
         </div>
         
-        <div className="flex space-x-2">
-          <Button 
-            variant="outline"
-            onClick={handleToggleConnection}
-          >
-            {isConnected ? 'Disconnect' : 'Connect to Device'}
-            {!isConnected && <ChevronRight className="ml-2 h-4 w-4" />}
-          </Button>
-          <Button variant="outline" onClick={handleEdit}>
-            <Settings className="mr-2 h-4 w-4" />
-            Edit
-          </Button>
-          <Button variant="destructive" onClick={() => setDeleteDialogOpen(true)}>
-            <Trash className="mr-2 h-4 w-4" />
-            Delete
-          </Button>
-        </div>
+        {device && (
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 mr-4">
+              <div className={`h-3 w-3 rounded-full ${getConnectionStatusColor()}`}></div>
+              <span className="text-sm font-medium">{getConnectionStatusText()}</span>
+            </div>
+            <Button 
+              variant={isConnected ? "destructive" : "default"}
+              onClick={toggleConnection}
+              disabled={isConnecting}
+            >
+              {isConnected ? (
+                <>
+                  <PowerOff className="mr-2 h-4 w-4" />
+                  Disconnect
+                </>
+              ) : (
+                <>
+                  <Power className="mr-2 h-4 w-4" />
+                  Connect
+                </>
+              )}
+            </Button>
+          </div>
+        )}
       </div>
-
-      {device.description && (
-        <p className="text-muted-foreground mb-6">{device.description}</p>
-      )}
-
-      <Tabs defaultValue="monitor" className="mt-6">
-        <TabsList className="mb-4">
-          <TabsTrigger value="monitor">
-            <Terminal className="mr-2 h-4 w-4" />
-            Monitor
-          </TabsTrigger>
-          <TabsTrigger value="registers">
-            <Database className="mr-2 h-4 w-4" />
-            Register Map
-          </TabsTrigger>
-          <TabsTrigger value="log">
-            <Activity className="mr-2 h-4 w-4" />
-            Data Log
-          </TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="monitor">
-          <ModbusMonitor deviceId={deviceId!} />
-        </TabsContent>
-        
-        <TabsContent value="registers">
-          <ModbusRegisterMapEditor deviceId={deviceId!} />
-        </TabsContent>
-        
-        <TabsContent value="log">
-          <div className="bg-card border rounded-md p-8 text-center">
-            <Activity className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium mb-2">Data Logging</h3>
-            <p className="text-muted-foreground mb-4 max-w-md mx-auto">
-              View historical data and export readings for this Modbus device.
-              This feature will be available soon.
-            </p>
-            <Button disabled variant="outline">Coming Soon</Button>
+      
+      {loading ? (
+        <div className="flex justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      ) : error ? (
+        <div className="bg-destructive/10 border border-destructive/30 p-4 rounded-md">
+          <p className="text-destructive font-medium">Error loading device</p>
+          <p className="text-sm text-destructive/80 mt-1">{error instanceof Error ? error.message : String(error)}</p>
+          <div className="mt-4">
+            <Button onClick={handleBack}>Return to Devices</Button>
           </div>
-        </TabsContent>
-      </Tabs>
-
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete the Modbus device "{device.name}" and all associated data. 
-              This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        </div>
+      ) : device ? (
+        <>
+          <div className="mb-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+            <div>
+              <div className="flex flex-wrap gap-2 mb-2">
+                <Badge variant="outline">{`IP: ${device.ip}:${device.port}`}</Badge>
+                <Badge variant="outline">{`Unit ID: ${device.unit_id}`}</Badge>
+                <Badge>{device.protocol}</Badge>
+                <Badge variant={device.is_active ? "default" : "secondary"}>
+                  {device.is_active ? "Active" : "Inactive"}
+                </Badge>
+              </div>
+              {device.description && (
+                <p className="text-muted-foreground text-sm">{device.description}</p>
+              )}
+            </div>
+          </div>
+          
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="registers">Register Map</TabsTrigger>
+              <TabsTrigger value="read">Read Registers</TabsTrigger>
+              <TabsTrigger value="write">Write Registers</TabsTrigger>
+              <TabsTrigger value="settings">Device Settings</TabsTrigger>
+            </TabsList>
+            <TabsContent value="registers">
+              <ModbusRegisterMap deviceId={deviceId || ''} />
+            </TabsContent>
+            <TabsContent value="read">
+              <ModbusReadRegister deviceId={deviceId || ''} />
+            </TabsContent>
+            <TabsContent value="write">
+              <ModbusWriteRegister deviceId={deviceId || ''} />
+            </TabsContent>
+            <TabsContent value="settings">
+              <ModbusDeviceSettings device={device} />
+            </TabsContent>
+          </Tabs>
+        </>
+      ) : (
+        <div className="text-center py-8">
+          <p className="text-muted-foreground">Device not found</p>
+        </div>
+      )}
     </Main>
   );
 };
 
-export default ModbusDeviceDetailsPage;
+export default ModbusDeviceDetails;

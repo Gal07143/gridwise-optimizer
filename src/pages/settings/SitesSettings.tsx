@@ -1,448 +1,377 @@
-import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { 
-  Building, 
-  Plus, 
-  Trash, 
-  Edit, 
-  MoreHorizontal, 
-  Loader2,
-  MapPin,
-  Check,
-  X
-} from 'lucide-react';
-import { toast } from 'sonner';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import React, { useState, useEffect } from 'react';
+import { Plus, Pencil, Trash, Check, X, Search, ArrowUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogDescription,
-  DialogFooter,
-  DialogClose
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { useAppStore } from '@/store';
-import axios from 'axios';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
+import { Site } from '@/types/site';
+import { getAllSites, createSite, updateSite, deleteSite } from '@/services/siteService';
+import SiteForm from '@/components/sites/SiteForm';
+import PageHeader from '@/components/layout/PageHeader';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { Skeleton } from '@/components/ui/skeleton';
+import useConfirm from '@/hooks/useConfirm';
 
-interface Site {
-  id: string;
-  name: string;
-  location: string;
-  type: string;
-  status: string;
-  devices?: number;
-  lastUpdated?: string;
-}
-
-const fetchSites = async (): Promise<Site[]> => {
-  // This would be a real API call in production
-  try {
-    const response = await axios.get('/api/sites');
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching sites:', error);
-    // Return mock data for now
-    return [
-      {
-        id: '1',
-        name: 'Main Campus',
-        location: 'New York, NY',
-        type: 'Commercial',
-        status: 'active',
-        devices: 12,
-        lastUpdated: new Date().toISOString(),
-      },
-      {
-        id: '2',
-        name: 'West Building',
-        location: 'San Francisco, CA',
-        type: 'Industrial',
-        status: 'active',
-        devices: 8,
-        lastUpdated: new Date().toISOString(),
-      },
-      {
-        id: '3',
-        name: 'Data Center',
-        location: 'Austin, TX',
-        type: 'Data Center',
-        status: 'maintenance',
-        devices: 15,
-        lastUpdated: new Date().toISOString(),
-      },
-    ];
-  }
-};
-
-const SitesSettings: React.FC = () => {
-  const queryClient = useQueryClient();
-  const { activeSite, setActiveSite } = useAppStore();
+const SitesSettings = () => {
+  const [sites, setSites] = useState<Site[]>([]);
+  const [filteredSites, setFilteredSites] = useState<Site[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingSite, setEditingSite] = useState<Site | null>(null);
-  const [newSite, setNewSite] = useState({
-    name: '',
-    location: '',
-    type: 'Commercial',
+  const [sortField, setSortField] = useState<keyof Site>('name');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [isAddingNewSite, setIsAddingNewSite] = useState(false);
+  const [editingSiteId, setEditingSiteId] = useState<string | null>(null);
+  const [deletingSiteId, setDeletingSiteId] = useState<string | null>(null);
+  const { isOpen, confirm, onConfirm, onCancel } = useConfirm({
+    title: "Delete Site",
+    message: "Are you sure you want to delete this site? All associated data will be permanently removed. This action cannot be undone."
   });
-  
-  const { data: sites = [], isLoading } = useQuery({
-    queryKey: ['sites'],
-    queryFn: fetchSites,
-  });
-  
-  const createSiteMutation = useMutation({
-    mutationFn: async (site: Omit<Site, 'id' | 'status'>) => {
-      // This would be a real API call in production
-      return { id: Date.now().toString(), ...site, status: 'active' };
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sites'] });
-      toast.success('Site created successfully');
-      setDialogOpen(false);
-      resetForm();
-    },
-    onError: (error) => {
-      toast.error('Failed to create site');
-      console.error('Error creating site:', error);
-    },
-  });
-  
-  const updateSiteMutation = useMutation({
-    mutationFn: async (site: Site) => {
-      // This would be a real API call in production
-      return site;
-    },
-    onSuccess: (updatedSite) => {
-      queryClient.invalidateQueries({ queryKey: ['sites'] });
-      
-      // If the active site was updated, update it in the store
-      if (activeSite?.id === updatedSite.id) {
-        setActiveSite(updatedSite);
+
+  useEffect(() => {
+    const loadSites = async () => {
+      try {
+        setIsLoading(true);
+        const data = await getAllSites();
+        setSites(data);
+      } catch (err: any) {
+        setError(err.message || 'Error loading sites');
+        toast.error('Failed to load sites');
+      } finally {
+        setIsLoading(false);
       }
-      
-      toast.success('Site updated successfully');
-      setDialogOpen(false);
-      setEditingSite(null);
-    },
-    onError: (error) => {
-      toast.error('Failed to update site');
-      console.error('Error updating site:', error);
-    },
-  });
-  
-  const deleteSiteMutation = useMutation({
-    mutationFn: async (siteId: string) => {
-      // This would be a real API call in production
-      return siteId;
-    },
-    onSuccess: (deletedSiteId) => {
-      queryClient.invalidateQueries({ queryKey: ['sites'] });
-      
-      // If the active site was deleted, set active site to null
-      if (activeSite?.id === deletedSiteId) {
-        setActiveSite(null);
-      }
-      
-      toast.success('Site deleted successfully');
-    },
-    onError: (error) => {
-      toast.error('Failed to delete site');
-      console.error('Error deleting site:', error);
-    },
-  });
-  
-  const filteredSites = sites.filter(site => 
-    site.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    site.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    site.type.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-  
-  const handleCreateSite = () => {
-    createSiteMutation.mutate(newSite);
-  };
-  
-  const handleUpdateSite = () => {
-    if (editingSite) {
-      updateSiteMutation.mutate(editingSite);
-    }
-  };
-  
-  const handleDeleteSite = (siteId: string) => {
-    if (confirm('Are you sure you want to delete this site? This action cannot be undone.')) {
-      deleteSiteMutation.mutate(siteId);
-    }
-  };
-  
-  const openEditDialog = (site: Site) => {
-    setEditingSite(site);
-    setDialogOpen(true);
-  };
-  
-  const openCreateDialog = () => {
-    setEditingSite(null);
-    resetForm();
-    setDialogOpen(true);
-  };
-  
-  const resetForm = () => {
-    setNewSite({
-      name: '',
-      location: '',
-      type: 'Commercial',
-    });
-  };
-  
-  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
+    };
+
+    loadSites();
+  }, []);
+
+  useEffect(() => {
+    // Filter sites based on search query
+    let filtered = [...sites];
     
-    if (editingSite) {
-      setEditingSite({
-        ...editingSite,
-        [name]: value,
-      });
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(site => 
+        site.name.toLowerCase().includes(query) ||
+        site.location.toLowerCase().includes(query) ||
+        site.type?.toLowerCase().includes(query) ||
+        site.status?.toLowerCase().includes(query)
+      );
+    }
+    
+    // Sort sites
+    filtered.sort((a, b) => {
+      const aValue = a[sortField];
+      const bValue = b[sortField];
+      
+      if (!aValue && !bValue) return 0;
+      if (!aValue) return sortDirection === 'asc' ? 1 : -1;
+      if (!bValue) return sortDirection === 'asc' ? -1 : 1;
+      
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        return sortDirection === 'asc' 
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue);
+      }
+      
+      return 0;
+    });
+    
+    setFilteredSites(filtered);
+  }, [sites, searchQuery, sortField, sortDirection]);
+
+  const handleSort = (field: keyof Site) => {
+    if (field === sortField) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
-      setNewSite({
-        ...newSite,
-        [name]: value,
-      });
+      setSortField(field);
+      setSortDirection('asc');
     }
   };
-  
-  const getStatusBadge = (status: string) => {
-    switch (status) {
+
+  const handleCreateSite = async (siteData: Omit<Site, 'id' | 'created_at' | 'updated_at'>) => {
+    try {
+      // Add default values that might be missing
+      const completeData = {
+        ...siteData,
+        lat: siteData.lat || 0,
+        lng: siteData.lng || 0,
+        timezone: siteData.timezone || 'UTC'
+      };
+      
+      // Now we have all the required fields
+      const newSite = await createSite(completeData);
+      
+      if (newSite) {
+        setSites([...sites, newSite]);
+        setIsAddingNewSite(false);
+        toast.success(`Site "${newSite.name}" has been created`);
+      }
+    } catch (err: any) {
+      toast.error(`Failed to create site: ${err.message}`);
+    }
+  };
+
+  const handleUpdateSite = async (siteId: string, updates: Partial<Site>) => {
+    try {
+      // Ensure we have the required fields if they were updated
+      if (updates.lat === undefined) updates.lat = sites.find(s => s.id === siteId)?.lat || 0;
+      if (updates.lng === undefined) updates.lng = sites.find(s => s.id === siteId)?.lng || 0;
+      if (updates.timezone === undefined) updates.timezone = sites.find(s => s.id === siteId)?.timezone || 'UTC';
+      
+      const updatedSite = await updateSite(siteId, updates);
+      if (updatedSite) {
+        setSites(sites.map(site => site.id === siteId ? { ...site, ...updatedSite } : site));
+        setEditingSiteId(null);
+        toast.success(`Site "${updatedSite.name}" has been updated`);
+      }
+    } catch (err: any) {
+      toast.error(`Failed to update site: ${err.message}`);
+    }
+  };
+
+  const handleDeleteSite = async (siteId: string) => {
+    try {
+      const success = await deleteSite(siteId);
+      if (success) {
+        setSites(sites.filter(site => site.id !== siteId));
+        toast.success('Site has been deleted');
+      }
+    } catch (err: any) {
+      toast.error(`Failed to delete site: ${err.message}`);
+    } finally {
+      setDeletingSiteId(null);
+    }
+  };
+
+  const confirmDeleteSite = (siteId: string) => {
+    setDeletingSiteId(siteId);
+    confirm(() => handleDeleteSite(siteId));
+  };
+
+  const getSiteStatusBadge = (status?: string) => {
+    if (!status) return <Badge variant="outline">Not Set</Badge>;
+    
+    switch (status.toLowerCase()) {
       case 'active':
-        return <Badge className="bg-green-500">Active</Badge>;
+        return <Badge variant="default">Active</Badge>;
       case 'inactive':
-        return <Badge variant="outline" className="text-gray-500">Inactive</Badge>;
+        return <Badge variant="secondary">Inactive</Badge>;
       case 'maintenance':
-        return <Badge className="bg-amber-500">Maintenance</Badge>;
-      case 'error':
-        return <Badge variant="destructive">Error</Badge>;
+        return <Badge variant="warning">Maintenance</Badge>;
+      case 'offline':
+        return <Badge variant="destructive">Offline</Badge>;
       default:
-        return <Badge variant="secondary">Unknown</Badge>;
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
-  
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Sites</h2>
-          <p className="text-muted-foreground">
-            Manage your energy monitoring sites
-          </p>
-        </div>
-        <Button 
-          onClick={openCreateDialog} 
-          className="shrink-0"
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          Add Site
-        </Button>
-      </div>
+      <PageHeader 
+        title="Sites"
+        description="Manage your energy monitoring sites"
+        actions={
+          <Button onClick={() => setIsAddingNewSite(true)}>
+            <Plus className="h-4 w-4 mr-2" /> Add Site
+          </Button>
+        }
+      />
       
-      <div className="relative">
-        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search sites by name, location or type..."
-          className="pl-10"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-      </div>
-      
-      {isLoading ? (
-        <div className="flex justify-center items-center py-8">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
-      ) : filteredSites.length === 0 ? (
-        <div className="text-center py-8 rounded-lg border border-dashed">
-          <Building className="mx-auto h-12 w-12 text-muted-foreground opacity-50" />
-          <h3 className="mt-4 text-lg font-semibold">No sites found</h3>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {searchQuery
-              ? "No sites match your search criteria"
-              : "You haven't added any sites yet"}
-          </p>
-          {searchQuery && (
-            <Button
-              variant="outline"
-              className="mt-4"
-              onClick={() => setSearchQuery('')}
-            >
-              Clear search
-            </Button>
-          )}
-        </div>
-      ) : (
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Devices</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredSites.map((site) => (
-                <TableRow key={site.id} className={activeSite?.id === site.id ? "bg-muted/50" : undefined}>
-                  <TableCell className="font-medium">{site.name}</TableCell>
-                  <TableCell>{site.location}</TableCell>
-                  <TableCell>{site.type}</TableCell>
-                  <TableCell>{site.devices || 0}</TableCell>
-                  <TableCell>{getStatusBadge(site.status)}</TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => openEditDialog(site)}>
-                          <Edit className="mr-2 h-4 w-4" />
-                          Edit
-                        </DropdownMenuItem>
-                        {activeSite?.id !== site.id ? (
-                          <DropdownMenuItem onClick={() => setActiveSite(site)}>
-                            <Check className="mr-2 h-4 w-4" />
-                            Set as active
-                          </DropdownMenuItem>
-                        ) : (
-                          <DropdownMenuItem disabled>
-                            <Check className="mr-2 h-4 w-4" />
-                            Current active site
-                          </DropdownMenuItem>
-                        )}
-                        <DropdownMenuItem 
-                          className="text-red-500 focus:text-red-500"
-                          onClick={() => handleDeleteSite(site.id)}
-                        >
-                          <Trash className="mr-2 h-4 w-4" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+      {isAddingNewSite && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Add New Site</CardTitle>
+            <CardDescription>Enter the details for the new site.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <SiteForm 
+              onSubmit={handleCreateSite}
+              onCancel={() => setIsAddingNewSite(false)}
+            />
+          </CardContent>
+        </Card>
       )}
       
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {editingSite ? 'Edit Site' : 'Add New Site'}
-            </DialogTitle>
-            <DialogDescription>
-              {editingSite 
-                ? 'Update your site information here.'
-                : 'Enter the details for your new site.'}
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">
-                Name
-              </Label>
+      <Card>
+        <CardHeader>
+          <CardTitle>Sites</CardTitle>
+          <CardDescription>
+            {filteredSites.length} {filteredSites.length === 1 ? 'site' : 'sites'} found
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="mb-4">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                id="name"
-                name="name"
-                value={editingSite ? editingSite.name : newSite.name}
-                onChange={handleFormChange}
-                className="col-span-3"
-                placeholder="Site name"
+                type="search"
+                placeholder="Search sites..."
+                className="pl-8"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
-            </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="location" className="text-right">
-                Location
-              </Label>
-              <Input
-                id="location"
-                name="location"
-                value={editingSite ? editingSite.location : newSite.location}
-                onChange={handleFormChange}
-                className="col-span-3"
-                placeholder="City, State"
-              />
-            </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="type" className="text-right">
-                Type
-              </Label>
-              <select
-                id="type"
-                name="type"
-                value={editingSite ? editingSite.type : newSite.type}
-                onChange={handleFormChange}
-                className="col-span-3 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <option value="Commercial">Commercial</option>
-                <option value="Residential">Residential</option>
-                <option value="Industrial">Industrial</option>
-                <option value="Data Center">Data Center</option>
-                <option value="Educational">Educational</option>
-                <option value="Healthcare">Healthcare</option>
-              </select>
             </div>
           </div>
           
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="outline" type="button">
-                <X className="mr-2 h-4 w-4" />
-                Cancel
+          {isLoading ? (
+            <div className="space-y-2">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          ) : error ? (
+            <div className="text-center py-8">
+              <p className="text-destructive text-lg font-semibold mb-2">Error</p>
+              <p className="text-muted-foreground">{error}</p>
+              <Button 
+                className="mt-4" 
+                onClick={() => window.location.reload()}
+              >
+                Retry
               </Button>
-            </DialogClose>
-            <Button 
-              type="button" 
-              onClick={editingSite ? handleUpdateSite : handleCreateSite}
-              disabled={
-                createSiteMutation.isPending || 
-                updateSiteMutation.isPending ||
-                (editingSite
-                  ? !editingSite.name || !editingSite.location
-                  : !newSite.name || !newSite.location)
-              }
-            >
-              {(createSiteMutation.isPending || updateSiteMutation.isPending) && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            </div>
+          ) : filteredSites.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">
+                {searchQuery ? 'No sites match your search' : 'No sites have been added yet'}
+              </p>
+              {searchQuery && (
+                <Button 
+                  variant="outline" 
+                  className="mt-4"
+                  onClick={() => setSearchQuery('')}
+                >
+                  Clear Search
+                </Button>
               )}
-              {editingSite ? 'Save Changes' : 'Create Site'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+              {!searchQuery && (
+                <Button 
+                  className="mt-4"
+                  onClick={() => setIsAddingNewSite(true)}
+                >
+                  Add Your First Site
+                </Button>
+              )}
+            </div>
+          ) : (
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead 
+                      className="cursor-pointer"
+                      onClick={() => handleSort('name')}
+                    >
+                      Name 
+                      {sortField === 'name' && (
+                        <ArrowUpDown className={`ml-1 h-3 w-3 inline ${sortDirection === 'desc' ? 'rotate-180' : ''}`} />
+                      )}
+                    </TableHead>
+                    <TableHead 
+                      className="cursor-pointer"
+                      onClick={() => handleSort('location')}
+                    >
+                      Location
+                      {sortField === 'location' && (
+                        <ArrowUpDown className={`ml-1 h-3 w-3 inline ${sortDirection === 'desc' ? 'rotate-180' : ''}`} />
+                      )}
+                    </TableHead>
+                    <TableHead 
+                      className="cursor-pointer"
+                      onClick={() => handleSort('type')}
+                    >
+                      Type
+                      {sortField === 'type' && (
+                        <ArrowUpDown className={`ml-1 h-3 w-3 inline ${sortDirection === 'desc' ? 'rotate-180' : ''}`} />
+                      )}
+                    </TableHead>
+                    <TableHead 
+                      className="cursor-pointer"
+                      onClick={() => handleSort('status')}
+                    >
+                      Status
+                      {sortField === 'status' && (
+                        <ArrowUpDown className={`ml-1 h-3 w-3 inline ${sortDirection === 'desc' ? 'rotate-180' : ''}`} />
+                      )}
+                    </TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredSites.map((site) => (
+                    <TableRow key={site.id}>
+                      {editingSiteId === site.id ? (
+                        <TableCell colSpan={5}>
+                          <SiteForm 
+                            initialValues={site}
+                            onSubmit={(data) => handleUpdateSite(site.id, data)}
+                            onCancel={() => setEditingSiteId(null)}
+                          />
+                        </TableCell>
+                      ) : (
+                        <>
+                          <TableCell className="font-medium">{site.name}</TableCell>
+                          <TableCell>{site.location}</TableCell>
+                          <TableCell>{site.type || 'Not specified'}</TableCell>
+                          <TableCell>{getSiteStatusBadge(site.status)}</TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-2">
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={() => setEditingSiteId(site.id)}
+                              >
+                                <Pencil className="h-4 w-4" />
+                                <span className="sr-only">Edit</span>
+                              </Button>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button variant="ghost" size="icon">
+                                    <Trash className="h-4 w-4" />
+                                    <span className="sr-only">Delete</span>
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Delete Site</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Are you sure you want to delete "{site.name}"? All associated data will be permanently removed. This action cannot be undone.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleDeleteSite(site.id)}>
+                                      Delete
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          </TableCell>
+                        </>
+                      )}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };

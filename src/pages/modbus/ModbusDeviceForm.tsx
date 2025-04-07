@@ -1,8 +1,9 @@
+
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Main } from '@/components/ui/main';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ServerIcon, Trash } from 'lucide-react';
+import { ArrowLeft, ServerIcon } from 'lucide-react';
 import { useModbusConnection } from '@/hooks/useModbusConnection';
 import ModbusDeviceForm from '@/components/modbus/ModbusDeviceForm';
 import { toast } from 'sonner';
@@ -34,7 +35,7 @@ const ModbusDeviceFormPage: React.FC = () => {
     navigate('/modbus/devices');
   };
   
-  const handleSuccess = (device: ModbusDeviceConfig) => {
+  const handleSuccess = (device: ModbusDeviceConfig & { id: string }) => {
     navigate(`/modbus/devices/${device.id}`);
     toast.success(
       isNew 
@@ -68,7 +69,7 @@ const ModbusDeviceFormPage: React.FC = () => {
         ) : error && !isNew ? (
           <div className="bg-destructive/10 border border-destructive/30 p-4 rounded-md">
             <p className="text-destructive font-medium">Error loading device</p>
-            <p className="text-sm text-destructive/80 mt-1">{error}</p>
+            <p className="text-sm text-destructive/80 mt-1">{error instanceof Error ? error.message : String(error)}</p>
             <div className="mt-4">
               <Button onClick={handleBack}>Return to Devices</Button>
             </div>

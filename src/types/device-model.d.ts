@@ -20,6 +20,7 @@ export interface DeviceModel {
   has_video?: boolean;
   datasheets?: string[];
   firmware_versions?: string[];
+  model_name?: string;
 }
 
 export interface DeviceModelWithRequiredName {
@@ -30,6 +31,14 @@ export interface DeviceModelWithRequiredName {
   device_type: string;
   category?: string;
   protocol?: string; // Make protocol optional here
+}
+
+export interface DeviceModelCategory {
+  id: string;
+  name: string;
+  description?: string;
+  device_count?: number;
+  image_url?: string;
 }
 
 export const categoryNames = {
@@ -43,4 +52,5 @@ export const categoryNames = {
   wind: 'Wind Turbines'
 };
 
-export type SupportLevel = 'none' | 'full' | 'partial' | 'beta';
+export type SupportLevel = 'none' | 'full' | 'partial' | 'beta' | 'community';
+

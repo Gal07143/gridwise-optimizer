@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Main } from '@/components/ui/main';
 import { useNavigate } from 'react-router-dom';
@@ -23,7 +24,7 @@ import {
 import { useState } from 'react';
 
 const ModbusDevicesPage: React.FC = () => {
-  const { devices, loading, error, refreshDevices } = useModbusDevices();
+  const { devices, isLoading, error, refetch } = useModbusDevices();
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
 
@@ -33,7 +34,7 @@ const ModbusDevicesPage: React.FC = () => {
 
   const filteredDevices = devices.filter(device => 
     device.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    device.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (device.description?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
     device.id.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -47,95 +48,86 @@ const ModbusDevicesPage: React.FC = () => {
         <div className="flex items-center gap-2">
           <ServerIcon className="h-5 w-5" />
           <h1 className="text-2xl font-bold">Modbus Devices</h1>
-          <Badge variant="outline" className="ml-2">
-            {devices.length} {devices.length === 1 ? 'Device' : 'Devices'}
-          </Badge>
         </div>
         <Button onClick={handleCreateDevice}>
-          <Plus className="mr-2 h-4 w-4" />
+          <Plus className="h-4 w-4 mr-2" />
           Add Device
         </Button>
       </div>
-
-      <div className="mb-6">
-        <div className="flex gap-4 mb-4 items-center">
-          <div className="relative flex-1">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search devices..."
-              className="pl-8"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            {searchTerm && (
-              <button
-                className="absolute right-2.5 top-2.5"
-                onClick={() => setSearchTerm('')}
-              >
-                <XCircle className="h-4 w-4 text-muted-foreground" />
-              </button>
-            )}
-          </div>
-          <Button variant="outline" size="icon" onClick={refreshDevices}>
-            <RefreshCw className="h-4 w-4" />
-          </Button>
+      
+      <div className="flex flex-col md:flex-row gap-4 mb-6">
+        <div className="relative flex-grow">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+          <Input
+            placeholder="Search devices..."
+            className="pl-10"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          {searchTerm && (
+            <button 
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              onClick={() => setSearchTerm('')}
+            >
+              <XCircle size={18} />
+            </button>
+          )}
         </div>
+        
+        <Button variant="outline" onClick={refetch}>
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Refresh
+        </Button>
+        
+        <Button variant="outline">
+          <Settings className="h-4 w-4 mr-2" />
+          Options
+        </Button>
       </div>
-
-      {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-64 bg-secondary rounded-lg"></div>
-          ))}
+      
+      {isLoading ? (
+        <div className="flex justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
       ) : error ? (
         <Card>
-          <CardHeader>
-            <CardTitle>Error</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-destructive">{error}</p>
-            <Button className="mt-4" onClick={refreshDevices}>
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Retry
-            </Button>
+          <CardContent className="py-8">
+            <div className="text-center">
+              <div className="text-red-500 font-semibold mb-2">Error Loading Devices</div>
+              <p className="text-muted-foreground mb-4">
+                {error instanceof Error ? error.message : String(error)}
+              </p>
+              <Button variant="outline" onClick={refetch}>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Try Again
+              </Button>
+            </div>
           </CardContent>
         </Card>
-      ) : filteredDevices.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredDevices.map(device => (
-            <ModbusDeviceCard
-              key={device.id}
-              device={device}
-              onClick={() => handleDeviceClick(device.id)}
-            />
-          ))}
-        </div>
-      ) : searchTerm ? (
+      ) : filteredDevices.length === 0 ? (
         <Card>
-          <CardContent className="flex flex-col items-center justify-center py-8">
-            <Search className="h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-muted-foreground mb-2">No devices found matching "{searchTerm}"</p>
-            <Button variant="ghost" onClick={() => setSearchTerm('')}>
-              Clear Search
-            </Button>
+          <CardContent className="py-8">
+            <div className="text-center">
+              <p className="text-muted-foreground mb-4">
+                {searchTerm ? "No devices matching your search" : "No devices have been added yet"}
+              </p>
+              <Button onClick={handleCreateDevice}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Your First Device
+              </Button>
+            </div>
           </CardContent>
         </Card>
       ) : (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <ServerIcon className="h-16 w-16 text-muted-foreground mb-4" />
-            <h3 className="text-xl font-medium mb-2">No Modbus Devices</h3>
-            <p className="text-muted-foreground mb-4 text-center max-w-md">
-              You haven't added any Modbus devices yet. Create your first device to start monitoring and controlling your equipment.
-            </p>
-            <Button onClick={handleCreateDevice}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Your First Device
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredDevices.map((device) => (
+            <ModbusDeviceCard 
+              key={device.id} 
+              device={device} 
+              onClick={() => handleDeviceClick(device.id)} 
+            />
+          ))}
+        </div>
       )}
     </Main>
   );

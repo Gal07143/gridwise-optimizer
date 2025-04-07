@@ -21,3 +21,10 @@ export interface Site {
 }
 
 export type SiteFormInput = Omit<Site, 'id' | 'created_at' | 'updated_at'>;
+
+export type SiteFormData = Omit<Site, 'id' | 'created_at' | 'updated_at'>;
+
+export interface DateRange {
+  from: Date;
+  to: Date;
+}
