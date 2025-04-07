@@ -14,13 +14,6 @@ export interface LiveTelemetryChartProps {
   showSource?: boolean;
 }
 
-interface TelemetryData {
-  data: any[];
-  timestamps: string[];
-  readings?: any[];
-  latestValue?: number;
-}
-
 const LiveTelemetryChart: React.FC<LiveTelemetryChartProps> = ({ 
   deviceId, 
   metric, 
@@ -28,10 +21,13 @@ const LiveTelemetryChart: React.FC<LiveTelemetryChartProps> = ({
   height = 200,
   showSource = false
 }) => {
-  const { telemetry, isLoading, error, refetch } = useTelemetryHistory(deviceId, metric);
+  const { data: telemetry, isLoading, error, refetch } = useTelemetryHistory({
+    deviceId,
+    metricId: metric
+  });
   
   // Format the data for the chart
-  const formattedData = telemetry?.data ? formatTelemetryData(telemetry.data, metric) : [];
+  const formattedData = telemetry ? formatTelemetryData(telemetry, metric) : [];
 
   return (
     <TelemetryChart

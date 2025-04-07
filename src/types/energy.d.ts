@@ -1,141 +1,80 @@
 
-export type DeviceType = string;
-export type DeviceStatus = string;
-export type DeviceModelCategory = string;
-export type SupportLevel = 'none' | 'full' | 'partial' | 'beta' | 'community';
-
-export interface Device {
+export interface DeviceType {
   id: string;
   name: string;
-  type: DeviceType;
-  status: DeviceStatus;
+  icon?: string;
+  category?: string;
   description?: string;
-  location?: string;
-  capacity: number;
-  metrics?: Record<string, any> | null;
-  site_id?: string;
-  firmware?: string;
-  installation_date?: string;
-  last_updated?: string;
-  created_at?: string;
-  created_by?: string;
-  lat?: number;
-  lng?: number;
-  protocol?: string;
-  ip_address?: string;
-  model?: string;
-  manufacturer?: string;
-  serialNumber?: string;
-  tags?: string[] | Record<string, any>;
-  model_name?: string;
 }
 
-export interface EnergyDevice extends Device {
-  energy_sources?: string[];
-  peak_power?: number;
-  control_mode?: string;
-  efficiency?: number;
-  rated_voltage?: number;
-  rated_current?: number;
+export interface DeviceStatus {
+  id: string;
+  name: string;
+  description?: string;
+  severity?: 'info' | 'warning' | 'error' | 'success';
+  icon?: string;
+}
+
+export interface EnergyDevice {
+  id: string;
+  name: string;
+  type: string;
+  status: string;
+  site_id?: string;
+  manufacturer?: string;
+  model?: string;
+  serial_number?: string;
+  install_date?: string;
+  last_maintenance?: string;
+  next_maintenance?: string;
+  firmware_version?: string;
+  ip_address?: string;
+  mac_address?: string;
+  location?: string;
+  description?: string;
+  tags?: string[];
+  created_at: string;
+  updated_at: string;
+  metadata?: Record<string, any>;
+  telemetry_prefix?: string;
 }
 
 export interface DeviceModel {
   id: string;
   name: string;
   manufacturer: string;
-  model_number: string;
-  model_name?: string;
-  device_type: string;
-  category?: string;
+  type: string;
+  protocol?: string;
   description?: string;
   power_rating?: number;
-  capacity?: number;
-  specifications?: Record<string, any>;
-  release_date?: string;
+  voltage_rating?: number;
+  current_rating?: number;
+  dimensions?: string;
+  weight?: number;
+  efficiency?: number;
+  warranty_years?: number;
+  datasheet_url?: string;
+  manual_url?: string;
+  image_url?: string;
   firmware_version?: string;
-  protocol: string;
-  support_level: SupportLevel;
-  images?: string[];
+  support_level: 'none' | 'partial' | 'full' | 'beta';
+  created_at?: string;
+  updated_at?: string;
+  features?: string[];
+  certifications?: string[];
+  images?: string[] | Record<string, any>;
   has_manual?: boolean;
   has_datasheet?: boolean;
-  has_video?: boolean;
-  datasheets?: string[];
-  certifications?: string[];
-  firmware_versions?: string[];
-}
-
-export interface Site {
-  id: string;
-  name: string;
-  address: string;
-  city: string;
-  state: string;
-  country: string;
-  postal_code: string;
-  timezone: string;
-  lat: number;
-  lng: number;
-  created_at: string;
-  updated_at: string;
-  status?: 'active' | 'inactive' | 'maintenance';
-  description?: string;
-  site_type?: string;
-  tags?: string[];
-  main_image_url?: string;
-  organization_id?: string;
-  location?: string;
-  type?: string;
-  building_type?: string;
-  area?: number;
-  contact_person?: string;
-  contact_phone?: string;
-  contact_email?: string;
 }
 
 export interface EnergyReading {
-  id: string;
+  id?: string;
   device_id: string;
   timestamp: string;
+  metric: string;
   value: number;
-  reading_type: string;
-  unit: string;
-  quality: number;
-  power: number;
-  energy: number;
-  voltage?: number;
-  current?: number;
-  frequency?: number;
-  temperature?: number;
-  state_of_charge?: number;
-  created_at: string;
-}
-
-export interface Alert {
-  id: string;
-  title?: string;
-  message: string;
-  severity: string;
-  timestamp: string;
-  acknowledged: boolean;
-  acknowledged_at?: string;
-  acknowledged_by?: string;
-  device_id: string;
-  resolved_at?: string;
-  type?: string;
-  source?: string;
-  status?: string;
-  site_id?: string;
-  device_name?: string;
-  site_name?: string;
-  resolved_by?: string;
-  resolved?: boolean;
-  alert_source?: string;
-  ack_by?: string;
-  ack_at?: string;
-  alert_type?: string;
-  assignedTo?: string;
-  category?: string;
-  metadata?: Record<string, any>;
+  unit?: string;
+  created_at?: string;
 }
 
 export interface TelemetryData {
@@ -146,17 +85,13 @@ export interface TelemetryData {
 }
 
 export interface EnergyForecast {
-  id: string;
+  id?: string;
+  site_id: string;
+  forecast_type: 'production' | 'consumption' | 'demand' | 'price';
   timestamp: string;
-  forecast_type: string;
   value: number;
-  confidence: number;
-  unit: string;
-  site_id?: string;
-  device_id?: string;
+  confidence?: number;
+  unit?: string;
   source?: string;
-  created_at: string;
-  updated_at: string;
+  created_at?: string;
 }
-
-export type UserRole = 'viewer' | 'user' | 'admin' | 'manager' | 'installer' | 'operator';

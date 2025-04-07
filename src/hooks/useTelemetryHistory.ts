@@ -19,7 +19,7 @@ interface UseTelemetryHistoryResult {
   refetch: () => Promise<void>;
 }
 
-const useTelemetryHistory = ({
+export const useTelemetryHistory = ({
   deviceId,
   metricId,
   range = 'day',
@@ -68,7 +68,6 @@ const useTelemetryHistory = ({
       const endTimestamp = now.toISOString();
 
       // Using proper string interpolation for the SQL query
-      // This fixes the issue where a String object was treated as a function
       const query = `
         SELECT 
           time_bucket('${interval}', timestamp) AS timestamp,
@@ -118,4 +117,5 @@ const useTelemetryHistory = ({
   };
 };
 
+// Add this default export to maintain compatibility with existing code
 export default useTelemetryHistory;
