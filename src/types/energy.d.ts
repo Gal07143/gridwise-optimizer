@@ -2,7 +2,7 @@
 export type DeviceType = string;
 export type DeviceStatus = string;
 export type DeviceModelCategory = string;
-export type SupportLevel = 'none' | 'full' | 'partial' | 'beta';
+export type SupportLevel = 'none' | 'full' | 'partial' | 'beta' | 'community';
 
 export interface Device {
   id: string;
@@ -30,6 +30,15 @@ export interface Device {
   model_name?: string;
 }
 
+export interface EnergyDevice extends Device {
+  energy_sources?: string[];
+  peak_power?: number;
+  control_mode?: string;
+  efficiency?: number;
+  rated_voltage?: number;
+  rated_current?: number;
+}
+
 export interface DeviceModel {
   id: string;
   name: string;
@@ -49,6 +58,7 @@ export interface DeviceModel {
   images?: string[];
   has_manual?: boolean;
   has_datasheet?: boolean;
+  has_video?: boolean;
   datasheets?: string[];
   certifications?: string[];
   firmware_versions?: string[];
@@ -57,16 +67,29 @@ export interface DeviceModel {
 export interface Site {
   id: string;
   name: string;
-  location: string;
+  address: string;
+  city: string;
+  state: string;
+  country: string;
+  postal_code: string;
   timezone: string;
   lat: number;
   lng: number;
   created_at: string;
   updated_at: string;
-  type: string;
-  status: string;
-  address?: string;
+  status?: 'active' | 'inactive' | 'maintenance';
   description?: string;
+  site_type?: string;
+  tags?: string[];
+  main_image_url?: string;
+  organization_id?: string;
+  location?: string;
+  type?: string;
+  building_type?: string;
+  area?: number;
+  contact_person?: string;
+  contact_phone?: string;
+  contact_email?: string;
 }
 
 export interface EnergyReading {
@@ -107,6 +130,9 @@ export interface Alert {
   resolved_by?: string;
   resolved?: boolean;
   alert_source?: string;
+  ack_by?: string;
+  ack_at?: string;
+  alert_type?: string;
   assignedTo?: string;
   category?: string;
   metadata?: Record<string, any>;
@@ -117,6 +143,20 @@ export interface TelemetryData {
   value: number;
   deviceId: string;
   metricId: string;
+}
+
+export interface EnergyForecast {
+  id: string;
+  timestamp: string;
+  forecast_type: string;
+  value: number;
+  confidence: number;
+  unit: string;
+  site_id?: string;
+  device_id?: string;
+  source?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export type UserRole = 'viewer' | 'user' | 'admin' | 'manager' | 'installer' | 'operator';

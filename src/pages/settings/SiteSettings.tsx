@@ -65,13 +65,11 @@ const SiteSettings = () => {
     if (!site || !siteId) return;
     
     try {
-      const result = await updateSite(siteId, updatedSite);
-      
-      if (result) {
-        setSite({ ...site, ...updatedSite });
-        setIsEditing(false);
-        toast.success('Site updated successfully');
-      }
+      await updateSite(siteId, updatedSite);
+      // Update the site after successful API call
+      setSite({ ...site, ...updatedSite });
+      setIsEditing(false);
+      toast.success('Site updated successfully');
     } catch (err: any) {
       toast.error(`Failed to update site: ${err.message}`);
     }
@@ -96,6 +94,10 @@ const SiteSettings = () => {
   const handleBack = () => {
     navigate('/settings/sites');
   };
+
+  // Determine location and type from either property
+  const location = site?.location || (site ? `${site.address || ''}, ${site.city || ''}, ${site.state || ''}` : '');
+  const siteType = site?.type || site?.site_type;
 
   return (
     <div className="space-y-6">
@@ -193,11 +195,11 @@ const SiteSettings = () => {
                     </div>
                     <div>
                       <div className="text-sm font-medium text-muted-foreground">Location</div>
-                      <div>{site.location || 'Not specified'}</div>
+                      <div>{location || 'Not specified'}</div>
                     </div>
                     <div>
                       <div className="text-sm font-medium text-muted-foreground">Type</div>
-                      <div>{site.type || 'Not specified'}</div>
+                      <div>{siteType || 'Not specified'}</div>
                     </div>
                     <div>
                       <div className="text-sm font-medium text-muted-foreground">Status</div>

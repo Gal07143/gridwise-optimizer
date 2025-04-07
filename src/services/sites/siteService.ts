@@ -1,386 +1,297 @@
 
-import axios from 'axios';
-import { Site } from '@/types/site';
+import { supabase } from '@/integrations/supabase/client';
+import { Site, SiteFormData } from '@/types/site';
 import { toast } from 'sonner';
-import { supabase } from '@/lib/supabase';
-import mockSites from './mockSites';
-import { isNetworkError } from '@/utils/errorUtils';
 
-// Helper to handle API errors
-const handleApiError = (error: any, operation: string): null => {
-  console.error(`Error ${operation}:`, error);
-  
-  // Check for specific types of errors
-  if (isNetworkError(error)) {
-    const errorMessage = error?.message || 'Network connectivity issue';
-    toast.error(`Failed to ${operation}: ${errorMessage}. Please check your connection.`);
-  } else {
-    const errorMessage = error?.response?.data?.message || error?.message || 'Unknown error';
-    toast.error(`Failed to ${operation}: ${errorMessage}`);
-  }
-  
-  return null;
-};
-
-// Get sites from local storage cache
-const getLocalSitesCache = (): Site[] | null => {
-  try {
-    const cachedData = localStorage.getItem('sitesCache');
-    if (cachedData) {
-      const { data, timestamp } = JSON.parse(cachedData);
-      
-      // Check if cache is still valid (less than 1 hour old)
-      const cacheAge = Date.now() - new Date(timestamp).getTime();
-      if (cacheAge < 3600000) {
-        console.log('Using sites from local cache');
-        return data as Site[];
-      }
-    }
-    return null;
-  } catch (error) {
-    console.warn('Failed to read from local cache:', error);
-    return null;
-  }
-};
-
-// Update the local storage cache
-const updateLocalSitesCache = (sites: Site[]): void => {
-  try {
-    localStorage.setItem('sitesCache', JSON.stringify({
-      data: sites,
-      timestamp: new Date().toISOString()
-    }));
-  } catch (error) {
-    console.warn('Failed to update local cache:', error);
-  }
-};
-
+/**
+ * Get all sites from the database
+ */
 export const getSites = async (): Promise<Site[]> => {
   try {
-    // First try to get from Supabase
-    const { data, error } = await supabase
-      .from('sites')
-      .select('*');
-    
-    if (error) {
-      throw error;
-    }
-    
-    if (data?.length) {
-      // Update local cache
-      updateLocalSitesCache(data as Site[]);
-      return data as Site[];
-    }
-    
-    // If no data from Supabase, try API
-    try {
-      const response = await axios.get('/api/sites');
-      const apiData = response.data;
-      
-      // Update local cache
-      updateLocalSitesCache(apiData);
-      
-      return apiData;
-    } catch (apiError) {
-      console.warn('API fetch failed, checking cache:', apiError);
-      
-      // Try to get from local cache
-      const cachedSites = getLocalSitesCache();
-      if (cachedSites?.length) {
-        toast.warning('Using cached site data. Some information may be outdated.');
-        return cachedSites;
-      }
-      
-      console.warn('No cache available, using mock data:', apiError);
-      // Return mock sites as last resort
-      return mockSites;
-    }
-  } catch (error) {
-    console.warn('Supabase fetch failed, trying API:', error);
-    
-    // Try API as fallback
-    try {
-      const response = await axios.get('/api/sites');
-      const apiData = response.data;
-      
-      // Update local cache
-      updateLocalSitesCache(apiData);
-      
-      return apiData;
-    } catch (apiError) {
-      console.warn('API fetch failed, checking cache:', apiError);
-      
-      // Try to get from local cache
-      const cachedSites = getLocalSitesCache();
-      if (cachedSites?.length) {
-        toast.warning('Using cached site data. Some information may be outdated.');
-        return cachedSites;
-      }
-      
-      console.warn('No cache available, using mock data:', apiError);
-      // Return mock sites as last resort
-      return mockSites;
-    }
-  }
-};
-
-export const getSiteById = async (siteId: string): Promise<Site | null> => {
-  // If it's a temporary site ID, check local storage for pending operations
-  if (siteId.startsWith('temp-')) {
-    try {
-      const pendingOperations = JSON.parse(localStorage.getItem('pendingSiteOperations') || '[]');
-      const operation = pendingOperations.find(op => op.data.id === siteId);
-      
-      if (operation) {
-        return operation.data as Site;
-      }
-    } catch (error) {
-      console.warn('Failed to retrieve temporary site from local storage:', error);
-    }
-  }
-
-  try {
-    // Try Supabase first
     const { data, error } = await supabase
       .from('sites')
       .select('*')
-      .eq('id', siteId)
-      .single();
+      .order('name');
     
-    if (error) {
-      if (error.code === 'PGRST116') {
-        // No data found, not an actual error
-        // Try to get from local cache
-        const cachedSites = getLocalSitesCache();
-        if (cachedSites) {
-          const cachedSite = cachedSites.find(site => site.id === siteId);
-          if (cachedSite) {
-            return cachedSite;
-          }
-        }
-        
-        // If not in cache, check mock data
-        const mockSite = mockSites.find(site => site.id === siteId);
-        return mockSite || null;
-      }
-      throw error;
-    }
+    if (error) throw error;
+    return data as Site[];
     
-    return data as Site;
   } catch (error) {
-    console.warn('Supabase fetch failed, trying API:', error);
-    
-    // Try API as fallback
-    try {
-      const response = await axios.get(`/api/sites/${siteId}`);
-      return response.data;
-    } catch (apiError) {
-      console.warn('API fetch failed, checking cache:', apiError);
-      
-      // Try to get from local cache
-      const cachedSites = getLocalSitesCache();
-      if (cachedSites) {
-        const cachedSite = cachedSites.find(site => site.id === siteId);
-        if (cachedSite) {
-          return cachedSite;
-        }
-      }
-      
-      console.warn('No cache available, checking mock data:', apiError);
-      // Check mock data as last resort
-      const site = mockSites.find(site => site.id === siteId);
-      return site || null;
-    }
+    console.error('Error fetching sites:', error);
+    throw error;
   }
 };
 
-export const createSite = async (siteData: Partial<Site>): Promise<Site | null> => {
-  // Prepare complete site data with defaults for any missing fields
-  const completeData = {
-    name: siteData.name || 'New Site',
-    location: siteData.location || 'Unknown',
-    timezone: siteData.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
-    lat: siteData.lat !== undefined ? siteData.lat : null,
-    lng: siteData.lng !== undefined ? siteData.lng : null,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    type: siteData.type || 'residential',
-    status: siteData.status || 'active',
-  };
+/**
+ * Alias for getSites for backward compatibility
+ */
+export const getAllSites = getSites;
 
+/**
+ * Get a site by ID
+ */
+export const getSiteById = async (id: string): Promise<Site | null> => {
   try {
-    // Try Supabase first
     const { data, error } = await supabase
       .from('sites')
-      .insert([completeData])
-      .select()
-      .single();
-    
-    if (error) throw error;
-    
-    // Update local cache after successful creation
-    const sites = await getSites();
-    updateLocalSitesCache(sites);
-    
-    toast.success('Site created successfully');
-    return data as Site;
-  } catch (supabaseError) {
-    console.warn('Supabase create failed, trying API:', supabaseError);
-    
-    // Try API as fallback
-    try {
-      const response = await axios.post('/api/sites', completeData);
-      
-      // Update local cache after successful creation
-      const sites = await getSites();
-      updateLocalSitesCache(sites);
-      
-      toast.success('Site created successfully');
-      return response.data;
-    } catch (apiError) {
-      // Specific handling for network errors
-      if (isNetworkError(apiError)) {
-        toast.error('Network error while creating site. Please check your connection and try again.');
-      }
-      return handleApiError(apiError, 'create site');
-    }
-  }
-};
-
-export const updateSite = async (id: string, siteData: Partial<Site>): Promise<Site | null> => {
-  try {
-    // Get existing site to avoid overwriting data
-    const existingSite = await getSiteById(id);
-    if (!existingSite) {
-      toast.error(`Site with ID ${id} not found`);
-      return null;
-    }
-    
-    // Prepare update data
-    const updateData = {
-      ...siteData,
-      updated_at: new Date().toISOString()
-    };
-    
-    // Try Supabase first
-    const { data, error } = await supabase
-      .from('sites')
-      .update(updateData)
+      .select('*')
       .eq('id', id)
+      .single();
+    
+    if (error) throw error;
+    return data as Site;
+    
+  } catch (error) {
+    console.error(`Error fetching site ${id}:`, error);
+    return null;
+  }
+};
+
+/**
+ * Create a new site
+ */
+export const createSite = async (siteData: SiteFormData): Promise<Site | null> => {
+  try {
+    // Convert field names if needed
+    const siteForDb: any = { ...siteData };
+    
+    // Map address to location if needed
+    if (!siteForDb.location && siteForDb.address) {
+      siteForDb.location = siteForDb.address;
+    }
+    
+    // Map site_type to type if needed
+    if (!siteForDb.type && siteForDb.site_type) {
+      siteForDb.type = siteForDb.site_type;
+    }
+    
+    const { data, error } = await supabase
+      .from('sites')
+      .insert([siteForDb])
       .select()
       .single();
     
     if (error) throw error;
-    
-    // Update local cache after successful update
-    const sites = await getSites();
-    updateLocalSitesCache(sites);
-    
-    toast.success('Site updated successfully');
     return data as Site;
-  } catch (supabaseError) {
-    console.warn('Supabase update failed, trying API:', supabaseError);
     
-    // Try API as fallback
-    try {
-      const response = await axios.put(`/api/sites/${id}`, siteData);
-      
-      // Update local cache after successful update
-      const sites = await getSites();
-      updateLocalSitesCache(sites);
-      
-      toast.success('Site updated successfully');
-      return response.data;
-    } catch (apiError) {
-      // Specific handling for network errors
-      if (isNetworkError(apiError)) {
-        toast.error('Network error while updating site. Please check your connection and try again.');
-      }
-      return handleApiError(apiError, 'update site');
-    }
+  } catch (error) {
+    console.error('Error creating site:', error);
+    throw error;
   }
 };
 
+/**
+ * Update an existing site
+ */
+export const updateSite = async (id: string, siteData: Partial<Site>): Promise<boolean> => {
+  try {
+    // Convert field names if needed
+    const siteForDb: any = { ...siteData };
+    
+    // Map address to location if needed
+    if (siteForDb.address && !siteForDb.location) {
+      siteForDb.location = siteForDb.address;
+    }
+    
+    // Map site_type to type if needed
+    if (siteForDb.site_type && !siteForDb.type) {
+      siteForDb.type = siteForDb.site_type;
+    }
+    
+    const { error } = await supabase
+      .from('sites')
+      .update(siteForDb)
+      .eq('id', id);
+    
+    if (error) throw error;
+    return true;
+    
+  } catch (error) {
+    console.error(`Error updating site ${id}:`, error);
+    throw error;
+  }
+};
+
+/**
+ * Delete a site
+ */
 export const deleteSite = async (id: string): Promise<boolean> => {
   try {
-    // Try Supabase first
+    // Check if site has devices
+    const { data: devices, error: devicesError } = await supabase
+      .from('devices')
+      .select('id')
+      .eq('site_id', id);
+    
+    if (devicesError) throw devicesError;
+    
+    if (devices && devices.length > 0) {
+      toast.error(`Cannot delete site: ${devices.length} devices are still assigned to it`);
+      return false;
+    }
+    
     const { error } = await supabase
       .from('sites')
       .delete()
       .eq('id', id);
     
     if (error) throw error;
-    
-    // Update local cache after successful deletion
-    const sites = await getSites();
-    updateLocalSitesCache(sites);
-    
-    toast.success('Site deleted successfully');
     return true;
-  } catch (supabaseError) {
-    console.warn('Supabase delete failed, trying API:', supabaseError);
     
-    // Try API as fallback
-    try {
-      await axios.delete(`/api/sites/${id}`);
-      
-      // Update local cache after successful deletion
-      const sites = await getSites();
-      updateLocalSitesCache(sites);
-      
-      toast.success('Site deleted successfully');
-      return true;
-    } catch (apiError) {
-      // Specific handling for network errors
-      if (isNetworkError(apiError)) {
-        toast.error('Network error while deleting site. Please check your connection and try again.');
-      }
-      handleApiError(apiError, 'delete site');
-      return false;
-    }
+  } catch (error) {
+    console.error(`Error deleting site ${id}:`, error);
+    throw error;
   }
 };
 
-export const getOrCreateDummySite = async (): Promise<Site> => {
-  // First try to get sites from any available source
+/**
+ * Search sites by name
+ */
+export const searchSites = async (query: string): Promise<Site[]> => {
   try {
-    const sites = await getSites();
-    
-    if (sites.length > 0) {
-      return sites[0];
+    if (!query) {
+      return getSites();
     }
+    
+    const { data, error } = await supabase
+      .from('sites')
+      .select('*')
+      .ilike('name', `%${query}%`)
+      .order('name');
+    
+    if (error) throw error;
+    return data as Site[];
+    
   } catch (error) {
-    console.warn('Failed to get existing sites:', error);
+    console.error('Error searching sites:', error);
+    throw error;
   }
-  
-  // Create a dummy site if no sites exist
+};
+
+/**
+ * Get sites with filters
+ */
+export const getFilteredSites = async (
+  filters: { status?: string; type?: string; }
+): Promise<Site[]> => {
   try {
-    const newSite = await createSite({
-      name: 'Default Site',
-      location: 'Default Location',
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      type: 'residential',
-      status: 'active',
-    });
+    let query = supabase.from('sites').select('*');
     
-    if (newSite) {
-      return newSite;
+    if (filters.status) {
+      query = query.eq('status', filters.status);
     }
+    
+    if (filters.type) {
+      query = query.eq('type', filters.type);
+    }
+    
+    const { data, error } = await query.order('name');
+    
+    if (error) throw error;
+    return data as Site[];
+    
   } catch (error) {
-    console.error('Failed to create default site:', error);
+    console.error('Error fetching filtered sites:', error);
+    throw error;
   }
-  
-  // If all else fails, return a mock site
+};
+
+/**
+ * Convert a Site to a SiteFormData object
+ */
+export const siteToFormData = (site: Site): SiteFormData => {
   return {
-    id: 'mock-default',
-    name: 'Default Site',
-    location: 'Default Location',
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    type: 'residential',
-    status: 'active',
-    lat: null,
-    lng: null,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
+    name: site.name,
+    address: site.address || site.location || '',
+    city: site.city || '',
+    state: site.state || '',
+    country: site.country || '',
+    postal_code: site.postal_code || '',
+    timezone: site.timezone || '',
+    lat: site.lat,
+    lng: site.lng,
+    status: site.status,
+    description: site.description || '',
+    site_type: site.site_type || site.type || '',
+    tags: site.tags || [],
+    main_image_url: site.main_image_url || '',
+    organization_id: site.organization_id || '',
   };
+};
+
+/**
+ * Convert SiteFormData to a Site object
+ */
+export const formDataToSite = (formData: SiteFormData, existingSite?: Site): Partial<Site> => {
+  const site: Partial<Site> = {
+    ...formData,
+    // Support legacy fields
+    location: formData.address,
+    type: formData.site_type,
+  };
+  
+  return site;
+};
+
+// Add a mock implementation for testing
+export const getMockSites = (): Site[] => {
+  return [
+    {
+      id: '1',
+      name: 'Headquarters',
+      address: '123 Main St',
+      city: 'San Francisco',
+      state: 'CA',
+      country: 'USA',
+      postal_code: '94105',
+      location: '123 Main St, San Francisco, CA',
+      timezone: 'America/Los_Angeles',
+      lat: 37.7749,
+      lng: -122.4194,
+      type: 'Commercial',
+      site_type: 'Commercial',
+      status: 'active',
+      description: 'Main office building',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    {
+      id: '2',
+      name: 'Manufacturing Plant',
+      address: '456 Industry Ave',
+      city: 'Detroit',
+      state: 'MI',
+      country: 'USA',
+      postal_code: '48202',
+      location: '456 Industry Ave, Detroit, MI',
+      timezone: 'America/Detroit',
+      lat: 42.3314,
+      lng: -83.0458,
+      type: 'Industrial',
+      site_type: 'Industrial',
+      status: 'active',
+      description: 'Main manufacturing facility',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    {
+      id: '3',
+      name: 'Data Center',
+      address: '789 Server Rd',
+      city: 'Austin',
+      state: 'TX',
+      country: 'USA',
+      postal_code: '73301',
+      location: '789 Server Rd, Austin, TX',
+      timezone: 'America/Chicago',
+      lat: 30.2672,
+      lng: -97.7431,
+      type: 'Data Center',
+      site_type: 'Data Center',
+      status: 'active',
+      description: 'Primary data center',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }
+  ];
 };

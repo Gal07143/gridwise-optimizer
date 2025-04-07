@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Site } from '@/types/energy';
+import { Site } from '@/types/site';
 import SiteCard from './SiteCard';
 import { Skeleton } from '@/components/ui/skeleton';
 

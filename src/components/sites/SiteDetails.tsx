@@ -10,6 +10,11 @@ interface SiteDetailsProps {
 }
 
 const SiteDetails: React.FC<SiteDetailsProps> = ({ site }) => {
+  // Get the location from various possible properties
+  const location = site.location || `${site.address || ''}, ${site.city || ''}, ${site.state || ''}`;
+  // Get the type from either property
+  const siteType = site.type || site.site_type;
+  
   return (
     <Card className="w-full">
       <CardHeader>
@@ -22,7 +27,7 @@ const SiteDetails: React.FC<SiteDetailsProps> = ({ site }) => {
               <MapPin className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm font-medium">Location:</span>
             </div>
-            <p className="text-sm pl-6">{site.location}</p>
+            <p className="text-sm pl-6">{location}</p>
             
             {site.lat && site.lng && (
               <p className="text-xs text-muted-foreground pl-6">
@@ -44,7 +49,7 @@ const SiteDetails: React.FC<SiteDetailsProps> = ({ site }) => {
               <Building2 className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm font-medium">Type:</span>
             </div>
-            <p className="text-sm pl-6">{site.type || "Not specified"}</p>
+            <p className="text-sm pl-6">{siteType || "Not specified"}</p>
           </div>
           
           <div className="space-y-2">

@@ -1,86 +1,65 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { RealtimeChannel } from '@supabase/supabase-js';
+import { RealtimePostgresInsertPayload, RealtimePostgresUpdatePayload, RealtimePostgresDeletePayload } from '@supabase/supabase-js';
 
-type ChannelEvent = 'INSERT' | 'UPDATE' | 'DELETE' | '*';
-type ChannelCallback = (payload: any) => void;
-
-interface ChannelSubscription {
-  channel: RealtimeChannel;
-  id: string;
-}
-
-// Store active channel subscriptions
-const activeSubscriptions: ChannelSubscription[] = [];
+type ChangeEvent = 'INSERT' | 'UPDATE' | 'DELETE' | '*';
+type PayloadHandler = (payload: RealtimePostgresInsertPayload<any> | RealtimePostgresUpdatePayload<any> | RealtimePostgresDeletePayload<any>) => void;
 
 /**
- * Subscribe to realtime changes on a table
- * @param tableName - The name of the table to subscribe to
- * @param event - The event to listen for (INSERT, UPDATE, DELETE, *)
- * @param callback - The callback to execute when the event occurs
- * @returns A subscription ID that can be used to unsubscribe
+ * Subscribe to real-time changes for a specific table
+ * @param table The table to subscribe to
+ * @param event The event to subscribe to (INSERT, UPDATE, DELETE, or * for all)
+ * @param callback The callback function to execute when an event occurs
+ * @returns A function to unsubscribe from the channel
  */
 export const subscribeToTable = (
-  tableName: string,
-  event: ChannelEvent = '*',
-  callback: ChannelCallback
-): string => {
-  // Generate a unique subscription ID
-  const subscriptionId = `${tableName}-${event}-${Date.now()}`;
-  
-  // Create and subscribe to the channel
+  table: string,
+  event: ChangeEvent = '*',
+  callback?: PayloadHandler
+): (() => void) | string => {
+  if (typeof table === 'string' && table.startsWith('SUPABASE_SUB_')) {
+    // This is an unsubscribe call with a subscription ID
+    const channel = supabase.getChannel(table);
+    if (channel) {
+      supabase.removeChannel(channel);
+    }
+    return () => {};
+  }
+
   const channel = supabase
-    .channel(`table-changes-${subscriptionId}`)
+    .channel(`table-changes-${table}-${event}`)
     .on(
       'postgres_changes',
       {
         event: event,
         schema: 'public',
-        table: tableName,
+        table: table
       },
       (payload) => {
-        callback(payload);
+        if (callback) {
+          callback(payload);
+        }
       }
     )
-    .subscribe((status) => {
-      console.log(`Subscription status for ${tableName}:`, status);
-    });
-  
-  // Store the subscription
-  activeSubscriptions.push({
-    channel,
-    id: subscriptionId,
-  });
-  
-  return subscriptionId;
+    .subscribe();
+
+  // Return a function to unsubscribe
+  return () => {
+    supabase.removeChannel(channel);
+  };
 };
 
 /**
- * Unsubscribe from a table subscription
- * @param subscriptionId - The ID of the subscription to unsubscribe from
+ * Unsubscribe from a real-time subscription
+ * @param subscriptionId The subscription ID to unsubscribe from
  */
-export const unsubscribeFromTable = async (subscriptionId: string): Promise<void> => {
-  const index = activeSubscriptions.findIndex((sub) => sub.id === subscriptionId);
-  
-  if (index !== -1) {
-    const { channel } = activeSubscriptions[index];
-    
-    // Remove the subscription from our tracking array
-    activeSubscriptions.splice(index, 1);
-    
-    // Unsubscribe from the channel
-    await supabase.removeChannel(channel);
+export const unsubscribeFromTable = (
+  subscriptionId: string
+): void => {
+  if (subscriptionId.startsWith('SUPABASE_SUB_')) {
+    const channel = supabase.getChannel(subscriptionId);
+    if (channel) {
+      supabase.removeChannel(channel);
+    }
   }
-};
-
-/**
- * Unsubscribe from all active subscriptions
- */
-export const unsubscribeFromAll = async (): Promise<void> => {
-  for (const subscription of activeSubscriptions) {
-    await supabase.removeChannel(subscription.channel);
-  }
-  
-  // Clear the tracking array
-  activeSubscriptions.length = 0;
 };

@@ -42,6 +42,7 @@ const CriticalAlertWidget: React.FC<CriticalAlertWidgetProps> = ({ onAcknowledge
   }, []);
 
   useEffect(() => {
+    // Fix for the argument count issue - pass required parameters
     const unsubscribe = subscribeToTable(
       'alerts', 
       'INSERT',
@@ -54,9 +55,11 @@ const CriticalAlertWidget: React.FC<CriticalAlertWidgetProps> = ({ onAcknowledge
     );
 
     return () => { 
-      if (typeof unsubscribe === 'string') {
-        // If unsubscribe is a string (subscription ID)
-        void subscribeToTable(unsubscribe);
+      if (typeof unsubscribe === 'function') {
+        unsubscribe();
+      } else if (typeof unsubscribe === 'string') {
+        // Handle string subscription ID
+        void subscribeToTable(unsubscribe, undefined, undefined);
       }
     };
   }, []);

@@ -2,96 +2,65 @@
 export interface ModbusDevice {
   id: string;
   name: string;
-  description?: string;
-  ip: string;
+  ip_address: string;
   port: number;
   unit_id: number;
-  protocol: string;
-  is_active: boolean;
-  site_id?: string;
-  inserted_at: string;
+  status: 'online' | 'offline' | 'error';
+  last_connected?: string;
+  created_at: string;
   updated_at: string;
+  protocol?: string;
+  description?: string;
 }
 
 export interface ModbusDeviceConfig {
   id?: string;
   name: string;
-  description?: string;
-  ip: string;
+  ip_address: string;
   port: number;
   unit_id: number;
   protocol: string;
-  is_active: boolean;
-  site_id?: string;
-  inserted_at?: string;
-  updated_at?: string;
-}
-
-export interface ModbusRegister {
-  id: string;
-  device_id: string;
-  register_name: string;
-  register_address: number;
-  register_length: number;
-  scaling_factor: number;
-  created_at?: string;
 }
 
 export interface ModbusRegisterDefinition {
-  id?: string;
-  name: string;
   address: number;
-  length: number;
-  type: string;
-  dataType: string; 
-  unit?: string;
+  name: string;
   description?: string;
-  scale?: number;
-  register_map_id?: string;
+  dataType: 'uint16' | 'int16' | 'uint32' | 'int32' | 'float32' | 'string';
+  scaleFactor?: number;
+  unit?: string;
+  access: 'read' | 'write' | 'read-write';
+  registerType: 'holding' | 'input' | 'coil' | 'discrete';
 }
 
 export interface ModbusRegisterMap {
   id?: string;
-  name?: string;
-  device_id: string;
+  name: string;
   description?: string;
-  registers: ModbusRegisterDefinition[];
+  device_id?: string;
   created_at?: string;
   updated_at?: string;
-}
-
-export interface ModbusReadingResult {
-  success: boolean;
-  value?: number;
-  error?: string;
-  timestamp?: string;
-}
-
-export interface ModbusDeviceStatus {
-  online: boolean;
-  lastSeen?: string;
-  error?: string;
+  registers: ModbusRegisterDefinition[];
 }
 
 export interface ConnectionStatusOptions {
-  deviceId?: string;
-  interval?: number;
   showToasts?: boolean;
-  onConnect?: () => void;
-  onDisconnect?: () => void;
-  onError?: (error: Error) => void;
+  autoConnect?: boolean;
+  deviceId?: string;
 }
 
 export interface ConnectionStatus {
-  isConnected: boolean;
-  isConnecting: boolean;
-  lastConnected: Date | null;
-  error: Error | null;
-  connect: () => Promise<void>;
-  disconnect: () => void;
-  reconnect: () => Promise<void>;
-  retryConnection?: () => Promise<void>;
-  isOnline?: boolean;
+  isOnline: boolean;
+  lastConnected?: Date;
+  connectionAttempts: number;
+  error?: Error;
 }
 
-export type ConnectionStatusResult = ConnectionStatus;
+export interface ConnectionStatusResult {
+  isOnline: boolean;
+  isConnecting?: boolean;
+  lastConnected?: Date;
+  error: Error | null;
+  connect?: () => Promise<void>;
+  disconnect?: () => void;
+}

@@ -2,66 +2,60 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
-export type RealtimeEvent = 'INSERT' | 'UPDATE' | 'DELETE' | '*';
+interface RealtimeUpdateOptions {
+  table: string;
+  event?: 'INSERT' | 'UPDATE' | 'DELETE' | '*';
+  filter?: Record<string, any>;
+}
 
 export function useRealtimeUpdates<T = any>(
-  tableName: string,
-  event: RealtimeEvent = '*',
-  callback?: (item: T, eventType: RealtimeEvent) => void
+  options: RealtimeUpdateOptions,
+  onDataReceived?: (payload: T) => void
 ) {
-  const [items, setItems] = useState<T[]>([]);
-  const [error, setError] = useState<Error | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const { table, event = '*', filter } = options;
 
   useEffect(() => {
-    setIsLoading(true);
+    if (!table) return;
+
+    // Create a unique channel name based on table and event
+    const channelName = `realtime-${table}-${event}-${Date.now()}`;
     
-    // Set up subscription - updated to use the proper Supabase channel API
-    const channelName = `realtime-updates-${tableName}-${Math.random().toString(36).substr(2, 9)}`;
+    let changesConfig = {
+      event: event,
+      schema: 'public',
+      table: table,
+    };
     
+    // Add filter if provided
+    if (filter) {
+      changesConfig = { ...changesConfig, ...filter };
+    }
+
+    // Subscribe to the channel
     const channel = supabase
       .channel(channelName)
       .on(
         'postgres_changes',
-        {
-          event: event,
-          schema: 'public',
-          table: tableName,
-        },
+        changesConfig,
         (payload) => {
-          const eventType = payload.eventType as RealtimeEvent;
-          const item = (payload.new || payload.old) as T;
-          
-          // Call the callback if provided
-          if (callback && item) {
-            callback(item, eventType);
-          }
-          
-          // Update state based on event type
-          if (eventType === 'INSERT') {
-            setItems((prev) => [...prev, payload.new as T]);
-          } else if (eventType === 'UPDATE') {
-            setItems((prev) => 
-              prev.map((prevItem: any) => 
-                prevItem.id === (payload.new as any).id ? payload.new as T : prevItem
-              )
-            );
-          } else if (eventType === 'DELETE') {
-            setItems((prev) => 
-              prev.filter((prevItem: any) => prevItem.id !== (payload.old as any).id)
-            );
+          if (onDataReceived) {
+            onDataReceived(payload.new as T);
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          setIsSubscribed(true);
+        }
+      });
 
-    setIsLoading(false);
-    
-    // Cleanup
+    // Cleanup function to remove the channel when the component unmounts
     return () => {
       supabase.removeChannel(channel);
+      setIsSubscribed(false);
     };
-  }, [tableName, event, callback]);
+  }, [table, event, filter, onDataReceived]);
 
-  return { items, error, isLoading };
+  return { isSubscribed };
 }

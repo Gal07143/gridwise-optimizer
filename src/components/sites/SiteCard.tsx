@@ -18,6 +18,11 @@ const SiteCard: React.FC<SiteCardProps> = ({
   onEdit,
   onDelete,
 }) => {
+  // Get the location from either property
+  const location = site.location || `${site.city || ''}, ${site.state || ''}`;
+  // Get the type from either property
+  const siteType = site.type || site.site_type;
+
   return (
     <Card className="overflow-hidden transition-all hover:shadow-md">
       <CardHeader className="pb-3">
@@ -37,14 +42,14 @@ const SiteCard: React.FC<SiteCardProps> = ({
             </div>
           )}
         </div>
-        <CardDescription>{site.location}</CardDescription>
+        <CardDescription>{location}</CardDescription>
       </CardHeader>
 
       <CardContent>
         <div className="grid grid-cols-2 gap-2 text-sm">
           <div>
             <span className="text-muted-foreground">Type:</span>
-            <p>{site.type || 'N/A'}</p>
+            <p>{siteType || 'N/A'}</p>
           </div>
           <div>
             <span className="text-muted-foreground">Timezone:</span>

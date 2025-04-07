@@ -29,17 +29,20 @@ import { Site, SiteFormData } from '@/types/site';
 // Form validation schema
 const formSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters'),
-  location: z.string().min(3, 'Location is required'),
-  type: z.string(),
-  timezone: z.string().optional(),
-  latitude: z.number().optional(),
-  longitude: z.number().optional(),
-  address: z.string().optional(),
+  address: z.string().min(3, 'Address is required'),
   city: z.string().optional(),
   state: z.string().optional(),
-  postalCode: z.string().optional(),
   country: z.string().optional(),
+  postal_code: z.string().optional(),
+  site_type: z.string().optional(),
+  timezone: z.string().optional(),
+  lat: z.number().optional(),
+  lng: z.number().optional(),
   description: z.string().optional(),
+  status: z.enum(['active', 'inactive', 'maintenance']).optional(),
+  // Adding support for legacy properties
+  location: z.string().optional(),
+  type: z.string().optional(),
 });
 
 export interface SiteFormProps {
@@ -50,21 +53,50 @@ export interface SiteFormProps {
   onCancel?: () => void;
 }
 
-const SiteForm: React.FC<SiteFormProps> = ({ initialData, initialValues, onSubmit, isSubmitting = false, onCancel }) => {
-  const formData = initialData || initialValues;
+const SiteForm: React.FC<SiteFormProps> = ({ 
+  initialData, 
+  initialValues, 
+  onSubmit, 
+  isSubmitting = false, 
+  onCancel 
+}) => {
+  // Support both initialData and initialValues for backward compatibility
+  const formData = initialData || initialValues || {
+    name: '',
+    address: '',
+    city: '',
+    state: '',
+    country: '',
+    postal_code: '',
+    site_type: 'Commercial',
+    timezone: 'UTC',
+    description: '',
+  };
   
-  const form = useForm<SiteFormData>({
+  // Map legacy fields if they exist
+  if (initialValues) {
+    if (initialValues.location && !formData.address) {
+      formData.address = initialValues.location;
+    }
+    if (initialValues.type && !formData.site_type) {
+      formData.site_type = initialValues.type;
+    }
+  }
+  
+  const form = useForm<any>({
     resolver: zodResolver(formSchema),
-    defaultValues: formData || {
-      name: '',
-      location: '',
-      type: 'Commercial',
-      timezone: 'UTC',
-      description: '',
-    },
+    defaultValues: formData,
   });
 
   const handleSubmit = form.handleSubmit((data) => {
+    // Map legacy fields back if they were used
+    if (data.location && !data.address) {
+      data.address = data.location;
+    }
+    if (data.type && !data.site_type) {
+      data.site_type = data.type;
+    }
+    
     onSubmit(data);
   });
 
@@ -93,15 +125,15 @@ const SiteForm: React.FC<SiteFormProps> = ({ initialData, initialValues, onSubmi
 
               <FormField
                 control={form.control}
-                name="location"
+                name="address"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Location</FormLabel>
+                    <FormLabel>Address</FormLabel>
                     <FormControl>
-                      <Input placeholder="New York, NY" {...field} />
+                      <Input placeholder="123 Main St" {...field} />
                     </FormControl>
                     <FormDescription>
-                      General location of the site
+                      Physical address of the site
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -112,7 +144,7 @@ const SiteForm: React.FC<SiteFormProps> = ({ initialData, initialValues, onSubmi
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField
                 control={form.control}
-                name="type"
+                name="site_type"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Site Type</FormLabel>
