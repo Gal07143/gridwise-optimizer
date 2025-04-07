@@ -8,8 +8,8 @@ export const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
   isAuthenticated: false,
-  signIn: async () => {},
-  signUp: async () => {},
+  signIn: async () => undefined,
+  signUp: async () => undefined,
   signOut: async () => {},
   updateUserProfile: async () => {},
 });
@@ -25,7 +25,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Set up auth state listener FIRST to catch any auth events
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log('Auth state changed:', event, session);
+        console.log('Auth state changed:', event);
         
         if (session?.user) {
           const userData: User = {
@@ -59,12 +59,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           console.error('Error checking session:', error);
           setLoading(false);
           return;
-        }
-        
-        if (data?.session?.user) {
-          console.log('Found existing session:', data.session.user);
-        } else {
-          console.log('No existing session');
         }
         
         // Loading state will be updated by the onAuthStateChange handler
@@ -117,8 +111,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (data.user) {
         toast.success('Successfully signed in');
-        return data;
       }
+      
+      return undefined;
     } catch (error: any) {
       console.error('Error signing in:', error);
       toast.error(`Error signing in: ${error.message}`);
@@ -152,10 +147,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (data.user) {
         toast.success('Account created successfully');
-        return data;
       } else {
         toast.success('Please check your email to verify your account');
       }
+      
+      return undefined;
     } catch (error: any) {
       console.error('Error signing up:', error);
       toast.error(`Error signing up: ${error.message}`);

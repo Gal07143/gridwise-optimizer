@@ -2,9 +2,21 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Zap, Lightbulb, BarChart3, Battery } from 'lucide-react';
+import { ArrowRight, Zap, Lightbulb, BarChart3, Battery, LineChart, Clock } from 'lucide-react';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 const Index = () => {
+  const { isAuthenticated, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
+        <LoadingSpinner size="lg" text="Loading..." />
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 py-12 px-4 sm:px-6 lg:px-8">
       <div className="text-center space-y-8 max-w-4xl">
@@ -21,21 +33,32 @@ const Index = () => {
         </p>
         
         <div className="flex flex-col sm:flex-row justify-center gap-4 pt-6">
-          <Link to="/auth">
-            <Button size="lg" className="font-medium gap-2 px-8 py-6 text-lg">
-              Sign in
-              <ArrowRight size={20} />
-            </Button>
-          </Link>
-          
-          <Link to="/auth" state={{ signUp: true }}>
-            <Button variant="outline" size="lg" className="font-medium px-8 py-6 text-lg">
-              Create an account
-            </Button>
-          </Link>
+          {isAuthenticated ? (
+            <Link to="/dashboard">
+              <Button size="lg" className="font-medium gap-2 px-8 py-6 text-lg">
+                Go to dashboard
+                <ArrowRight size={20} />
+              </Button>
+            </Link>
+          ) : (
+            <>
+              <Link to="/auth">
+                <Button size="lg" className="font-medium gap-2 px-8 py-6 text-lg">
+                  Sign in
+                  <ArrowRight size={20} />
+                </Button>
+              </Link>
+              
+              <Link to="/auth" state={{ signUp: true }}>
+                <Button variant="outline" size="lg" className="font-medium px-8 py-6 text-lg">
+                  Create an account
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
         
-        <div className="pt-16 grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-5xl mx-auto">
+        <div className="pt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
           <div className="bg-card border rounded-lg p-8 shadow-sm hover:shadow-md transition-all">
             <div className="rounded-full bg-primary/10 p-3 w-14 h-14 flex items-center justify-center mb-4">
               <Battery className="h-7 w-7 text-primary" />
@@ -58,6 +81,22 @@ const Index = () => {
             </div>
             <h3 className="font-semibold text-xl mb-3">Detailed Analytics</h3>
             <p className="text-muted-foreground">Comprehensive insights into your energy consumption, production, and savings with actionable recommendations.</p>
+          </div>
+
+          <div className="bg-card border rounded-lg p-8 shadow-sm hover:shadow-md transition-all">
+            <div className="rounded-full bg-primary/10 p-3 w-14 h-14 flex items-center justify-center mb-4">
+              <LineChart className="h-7 w-7 text-primary" />
+            </div>
+            <h3 className="font-semibold text-xl mb-3">Real-time Monitoring</h3>
+            <p className="text-muted-foreground">Track energy flows in real-time across all connected devices with intuitive visualizations and alerts.</p>
+          </div>
+
+          <div className="bg-card border rounded-lg p-8 shadow-sm hover:shadow-md transition-all">
+            <div className="rounded-full bg-primary/10 p-3 w-14 h-14 flex items-center justify-center mb-4">
+              <Clock className="h-7 w-7 text-primary" />
+            </div>
+            <h3 className="font-semibold text-xl mb-3">Smart Scheduling</h3>
+            <p className="text-muted-foreground">Automatically optimize energy usage based on time-of-use rates and dynamic pricing to maximize savings.</p>
           </div>
         </div>
       </div>

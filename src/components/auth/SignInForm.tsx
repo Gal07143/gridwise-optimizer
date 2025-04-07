@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { 
@@ -18,6 +17,7 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { Eye, EyeOff, LogIn } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
+import { toast } from 'sonner';
 
 // Form validation schema
 const signInSchema = z.object({
@@ -62,9 +62,10 @@ const SignInForm = ({ onToggleMode }: SignInFormProps) => {
       } else {
         localStorage.removeItem('rememberedEmail');
       }
+      
+      navigate('/dashboard');
     } catch (error) {
       console.error('Authentication error:', error);
-      
       // Error handling is already done in the signIn method
     } finally {
       setIsSubmitting(false);

@@ -1,5 +1,6 @@
 
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -44,6 +45,7 @@ const SignUpForm = ({ onToggleMode }: SignUpFormProps) => {
   const [showPassword, setShowPassword] = useState(false);
   
   const { signUp } = useAuth();
+  const navigate = useNavigate();
   
   // Set up form with validation
   const form = useForm<SignUpFormValues>({
@@ -61,7 +63,8 @@ const SignUpForm = ({ onToggleMode }: SignUpFormProps) => {
     
     try {
       await signUp(values.email, values.password, values.name);
-      // Auth context will handle redirection and toast messages
+      // Auth context will handle redirection
+      navigate('/dashboard');
     } catch (error) {
       // Error handling is already done in the signUp method
       console.error('Signup error:', error);
