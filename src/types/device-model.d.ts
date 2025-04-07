@@ -12,8 +12,8 @@ export interface DeviceModel {
   specifications?: Record<string, any>;
   release_date?: string;
   firmware_version?: string;
-  protocol: string;
-  support_level: 'none' | 'full' | 'partial' | 'beta';
+  protocol?: string;
+  support_level: 'none' | 'full' | 'partial' | 'beta' | 'community';
   images?: string[];
   has_manual?: boolean;
   has_datasheet?: boolean;
@@ -53,4 +53,3 @@ export const categoryNames = {
 };
 
 export type SupportLevel = 'none' | 'full' | 'partial' | 'beta' | 'community';
-

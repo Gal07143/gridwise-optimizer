@@ -25,8 +25,8 @@ const CriticalAlertWidget: React.FC<CriticalAlertWidgetProps> = ({ onAcknowledge
           .select('*');
           
         const criticalResult = await query
-          .eq('severity', 'critical')
-          .eq('acknowledged', false)
+          .filter('severity', 'eq', 'critical')
+          .filter('acknowledged', 'eq', false)
           .order('timestamp', { ascending: false })
           .limit(3);
           
@@ -53,7 +53,12 @@ const CriticalAlertWidget: React.FC<CriticalAlertWidgetProps> = ({ onAcknowledge
       }
     );
 
-    return () => unsubscribe();
+    return () => { 
+      if (typeof unsubscribe === 'string') {
+        // If unsubscribe is a string (subscription ID)
+        void subscribeToTable(unsubscribe);
+      }
+    };
   }, []);
 
   const handleAcknowledge = async (alertId: string) => {
@@ -66,7 +71,7 @@ const CriticalAlertWidget: React.FC<CriticalAlertWidgetProps> = ({ onAcknowledge
           .from('alerts')
           .update({ acknowledged: true });
           
-        await query.eq('id', alertId);
+        await query.filter('id', 'eq', alertId);
         
         setAlerts(prev => prev.filter(alert => alert.id !== alertId));
       } catch (error) {

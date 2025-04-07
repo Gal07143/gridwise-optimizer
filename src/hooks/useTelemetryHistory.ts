@@ -1,92 +1,126 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { subscribeToTable } from '@/services/supabaseRealtimeService';
-import { TelemetryMetric } from '@/components/telemetry/LiveTelemetryChart';
-import { handleApiError } from '@/utils/errorUtils';
 
-interface TelemetryData {
-  data: any[];
-  timestamps: string[];
+interface UseTelemetryHistoryOptions {
+  deviceId: string;
+  metric: string;
+  interval?: 'day' | 'hour' | 'minute';
+  timeRange?: 'day' | 'week' | 'month' | 'year';
+  limit?: number;
+  enabled?: boolean;
 }
 
-export function useTelemetryHistory(deviceId: string, metric: TelemetryMetric, limit = 24) {
-  const [telemetry, setTelemetry] = useState<TelemetryData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+interface TelemetryPoint {
+  timestamp: string;
+  value: number;
+}
+
+interface TelemetryStats {
+  min: number;
+  max: number;
+  avg: number;
+  current: number;
+  total: number;
+}
+
+const useTelemetryHistory = ({
+  deviceId,
+  metric,
+  interval = 'minute',
+  timeRange = 'day',
+  limit = 100,
+  enabled = true,
+}: UseTelemetryHistoryOptions) => {
+  const [data, setData] = useState<TelemetryPoint[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetchTelemetry = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
+  const fetchData = async () => {
+    if (!deviceId || !metric || !enabled) {
+      return;
+    }
 
-      const { data, error: apiError } = await supabase
-        .from('energy_readings')
-        .select('*')
-        .eq('device_id', deviceId)
-        .order('timestamp', { ascending: false })
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // Calculate time range based on timeRange value
+      const rangeMs = {
+        day: 24 * 60 * 60 * 1000,
+        week: 7 * 24 * 60 * 60 * 1000,
+        month: 30 * 24 * 60 * 60 * 1000,
+        year: 365 * 24 * 60 * 60 * 1000,
+      }[timeRange];
+
+      const startDate = new Date(Date.now() - rangeMs).toISOString();
+
+      // Query telemetry data
+      const { data: telemetryData, error: telemetryError } = await supabase
+        .from('telemetry')
+        .select('timestamp, value')
+        .filter('device_id', 'eq', deviceId)
+        .filter('metric', 'eq', metric)
+        .filter('timestamp', 'gte', startDate)
+        .order('timestamp', { ascending: true })
         .limit(limit);
 
-      if (apiError) throw apiError;
-
-      if (data && data.length > 0) {
-        // Extract timestamps
-        const timestamps = data.map(item => item.timestamp);
-        
-        // Reverse data to show oldest first
-        const sortedData = [...data].reverse();
-        
-        setTelemetry({
-          data: sortedData,
-          timestamps
-        });
-      } else {
-        setTelemetry({ data: [], timestamps: [] });
+      if (telemetryError) {
+        throw new Error(telemetryError.message);
       }
-    } catch (err) {
+
+      // Process and set the data
+      setData(
+        telemetryData?.map((point) => ({
+          timestamp: new Date(point.timestamp).toISOString(),
+          value: Number(point.value),
+        })) || []
+      );
+    } catch (err: any) {
       console.error('Error fetching telemetry history:', err);
-      setError(err instanceof Error ? err : new Error('Failed to fetch telemetry data'));
+      setError(err instanceof Error ? err : new Error(err?.message || 'Unknown error'));
     } finally {
       setIsLoading(false);
     }
-  }, [deviceId, limit]);
+  };
 
-  // Fetch data initially
   useEffect(() => {
-    fetchTelemetry();
-  }, [fetchTelemetry]);
+    if (enabled) {
+      fetchData();
+    }
+  }, [deviceId, metric, interval, timeRange, limit, enabled]);
 
-  // Subscribe to real-time updates
-  useEffect(() => {
-    const unsubscribe = subscribeToTable(
-      'energy_readings',
-      'INSERT',
-      (payload) => {
-        // If new reading is for current device, update data
-        if (payload.new && payload.new.device_id === deviceId) {
-          setTelemetry((prev) => {
-            if (!prev) return { data: [payload.new], timestamps: [payload.new.timestamp] };
-            
-            // Add to beginning of array and maintain limit
-            const newData = [...prev.data, payload.new].slice(-limit);
-            const newTimestamps = [...prev.timestamps, payload.new.timestamp].slice(-limit);
-            
-            return {
-              data: newData,
-              timestamps: newTimestamps
-            };
-          });
-        }
-      }
-    );
+  // Calculate statistics from the data
+  const stats: TelemetryStats = useMemo(() => {
+    if (!data.length) {
+      return {
+        min: 0,
+        max: 0,
+        avg: 0,
+        current: 0,
+        total: 0,
+      };
+    }
 
-    return () => unsubscribe();
-  }, [deviceId, limit]);
+    const values = data.map((point) => point.value);
+    const sum = values.reduce((a, b) => a + b, 0);
+
+    return {
+      min: Math.min(...values),
+      max: Math.max(...values),
+      avg: sum / values.length,
+      current: values[values.length - 1],
+      total: sum,
+    };
+  }, [data]);
 
   return {
-    telemetry,
+    data,
     isLoading,
     error,
-    refetch: fetchTelemetry
+    stats,
+    refetch: fetchData,
   };
-}
+};
+
+export default useTelemetryHistory;

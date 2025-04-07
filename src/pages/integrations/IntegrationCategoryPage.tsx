@@ -11,12 +11,18 @@ import PageHeader from '@/components/layout/PageHeader';
 import NoResults from '@/components/ui/no-results';
 import SearchFilterBar from '@/components/ui/SearchFilterBar';
 
+interface PageHeaderProps {
+  title: string;
+  description: string;
+  categoryId?: string;
+}
+
 const IntegrationCategoryPage = () => {
   const { categoryId = 'all' } = useParams<{ categoryId: string }>();
   const [activeTab, setActiveTab] = useState('all');
   
   const {
-    devices: deviceModels,
+    models,
     loading,
     error,
     sortField,
@@ -54,7 +60,6 @@ const IntegrationCategoryPage = () => {
         <PageHeader 
           title={categoryName}
           description={`Browse and manage ${categoryName.toLowerCase()} integrations`}
-          categoryId={categoryId}
         />
         
         <SearchFilterBar 
@@ -65,12 +70,23 @@ const IntegrationCategoryPage = () => {
           deviceCount={deviceCount}
         />
         
-        {deviceModels.length === 0 ? (
+        {models.length === 0 ? (
           <NoResults message="No integrations found" suggestion="Try changing your search or filter criteria" />
         ) : (
           <div className="grid grid-cols-1 gap-6">
             <IntegrationDeviceModelsCard 
-              deviceModels={deviceModels}
+              deviceModels={models.map(model => ({
+                id: model.id,
+                name: model.name,
+                manufacturer: model.manufacturer,
+                model_number: model.model_number,
+                device_type: model.device_type,
+                protocol: model.protocol || 'unknown',
+                power_rating: model.power_rating,
+                firmware_version: model.firmware_version,
+                support_level: model.support_level || 'none',
+                has_manual: model.has_manual || false
+              }))}
               sortField={sortField}
               sortDirection={sortDirection}
               onSort={handleSort}

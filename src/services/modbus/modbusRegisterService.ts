@@ -19,7 +19,7 @@ export const getModbusRegistersByDeviceId = async (deviceId: string): Promise<Mo
     const { data, error } = await supabase
       .from('modbus_registers')
       .select('*')
-      .eq('device_id', deviceId);
+      .filter('device_id', 'eq', deviceId);
 
     if (error) {
       throw error;
@@ -67,7 +67,7 @@ export const saveRegisterMap = async (deviceId: string, registerMap: ModbusRegis
     const { error: deleteError } = await supabase
       .from('modbus_registers')
       .delete()
-      .eq('device_id', deviceId);
+      .filter('device_id', 'eq', deviceId);
     
     if (deleteError) throw deleteError;
     
@@ -123,7 +123,7 @@ export const updateModbusRegister = async (registerId: string, registerData: Par
     const { data, error } = await supabase
       .from('modbus_registers')
       .update(registerData)
-      .eq('id', registerId)
+      .filter('id', 'eq', registerId)
       .select();
       
     if (error) {
@@ -143,7 +143,7 @@ export const deleteModbusRegister = async (registerId: string): Promise<boolean>
     const { error } = await supabase
       .from('modbus_registers')
       .delete()
-      .eq('id', registerId);
+      .filter('id', 'eq', registerId);
       
     if (error) {
       throw error;

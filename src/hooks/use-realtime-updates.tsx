@@ -16,9 +16,11 @@ export function useRealtimeUpdates<T = any>(
   useEffect(() => {
     setIsLoading(true);
     
-    // Set up subscription
+    // Set up subscription - updated to use the proper Supabase channel API
+    const channelName = `realtime-updates-${tableName}-${Math.random().toString(36).substr(2, 9)}`;
+    
     const channel = supabase
-      .channel('realtime-updates-' + tableName)
+      .channel(channelName)
       .on(
         'postgres_changes',
         {

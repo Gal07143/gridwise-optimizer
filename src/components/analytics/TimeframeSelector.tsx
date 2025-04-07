@@ -8,7 +8,7 @@ export interface TimeframeOption {
   label: string;
 }
 
-interface TimeframeSelectorProps {
+export interface TimeframeSelectorProps {
   timeframe: string;
   onChange: (timeframe: string) => void;
   className?: string;

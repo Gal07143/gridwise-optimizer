@@ -1,62 +1,134 @@
 
-import React from 'react';
-import { useAppStore } from '@/store/appStore';
-import { SiteSelector } from '@/components/sites';
-import { DashboardSummary } from '@/components/dashboard';
-import { WeatherWidget } from '@/components/weather';
+import React, { useState } from 'react';
+import AppLayout from '@/components/layout/AppLayout';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DateRange } from '@/types/site';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
+import { addDays } from 'date-fns';
 
-// Dashboard component with proper imports
-const Dashboard = () => {
-  const activeSite = useAppStore((state) => state.activeSite);
-  
-  // Create a proper DateRange object
-  const dateRange: DateRange = { 
-    from: new Date(), 
-    to: new Date()
-  };
+// Define your Dashboard component here
+const Dashboard: React.FC = () => {
+  const [activeTab, setActiveTab] = useState('overview');
+  const [dateRange, setDateRange] = useState<DateRange>({
+    from: addDays(new Date(), -30),
+    to: new Date(),
+  });
 
   return (
-    <div className="container mx-auto py-6">
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-4">
-        <div className="w-full md:w-1/2">
-          <h1 className="text-3xl font-semibold mb-2">Dashboard</h1>
-          <p className="text-muted-foreground">
-            {activeSite
-              ? `Welcome to the ${activeSite.name} dashboard. Here's an overview of your site.`
-              : 'Select a site to view its dashboard.'}
-          </p>
-        </div>
-        <div className="w-full md:w-1/3 mt-4 md:mt-0">
-          {/* Placeholder for SiteSelector - it would be provided real sites in a real app */}
-          <SiteSelector 
-            sites={[]}
-            activeSite={activeSite}
-            setActiveSite={() => {}}
-            loading={false}
+    <AppLayout>
+      <div className="flex-1 space-y-4 p-4 md:p-8">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <DateRangePicker 
+            dateRange={dateRange} 
+            onUpdate={setDateRange}
           />
         </div>
-      </div>
 
-      {activeSite ? (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Weather widget placeholder */}
-          <div className="p-4 border border-gray-200 rounded-md md:col-span-3">
-            <div className="font-medium">Weather data for site: {activeSite.id}</div>
-            <div className="text-sm text-muted-foreground">Date range: {dateRange.from.toLocaleDateString()} - {dateRange.to.toLocaleDateString()}</div>
-          </div>
+        <Tabs defaultValue="overview" className="space-y-4" onValueChange={setActiveTab}>
+          <TabsList>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="reports">Reports</TabsTrigger>
+            <TabsTrigger value="notifications">Notifications</TabsTrigger>
+          </TabsList>
           
-          {/* Dashboard summary placeholder */}
-          <div className="md:col-span-3">
-            <DashboardSummary siteId={activeSite.id} />
-          </div>
-        </div>
-      ) : (
-        <div className="text-center py-12">
-          <p className="text-gray-500">Please select a site to view its dashboard.</p>
-        </div>
-      )}
-    </div>
+          <TabsContent value="overview" className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Total Energy Consumption
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">235.4 kWh</div>
+                  <p className="text-xs text-muted-foreground">
+                    +2.1% from last month
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Peak Demand
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">12.7 kW</div>
+                  <p className="text-xs text-muted-foreground">
+                    -0.5% from last month
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Energy Cost
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">$123.45</div>
+                  <p className="text-xs text-muted-foreground">
+                    +4.2% from last month
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+            
+            {/* Add more dashboard content here */}
+          </TabsContent>
+          
+          <TabsContent value="analytics" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Energy Analytics</CardTitle>
+                <CardDescription>
+                  Detailed analysis of your energy usage patterns
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pl-2">
+                {/* Add analytics content */}
+                <p>Analytics content goes here</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="reports" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Energy Reports</CardTitle>
+                <CardDescription>
+                  View and download energy reports
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {/* Add reports content */}
+                <p>Reports content goes here</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="notifications" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Notifications</CardTitle>
+                <CardDescription>
+                  Energy system alerts and notifications
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {/* Add notifications content */}
+                <p>Notifications content goes here</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </AppLayout>
   );
 };
 

@@ -1,7 +1,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { ConnectionStatusOptions, ConnectionStatus } from '@/types/modbus';
-import { isOnline as checkIsOnline } from '@/utils/connectionUtils';
 import { toast } from 'sonner';
 
 /**
@@ -21,7 +20,7 @@ const useConnectionStatus = (options?: ConnectionStatusOptions): ConnectionStatu
   const [isConnecting, setIsConnecting] = useState<boolean>(false);
   const [lastConnected, setLastConnected] = useState<Date | null>(null);
   const [error, setError] = useState<Error | null>(null);
-  const [isOnline, setIsOnline] = useState<boolean>(checkIsOnline());
+  const [isOnline, setIsOnline] = useState<boolean>(true);
 
   // Check network status
   useEffect(() => {

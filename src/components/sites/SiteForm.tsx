@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2, Save } from 'lucide-react';
-import { SiteFormData } from '@/types/site';
+import { Site, SiteFormData } from '@/types/site';
 
 // Form validation schema
 const formSchema = z.object({
@@ -42,16 +42,20 @@ const formSchema = z.object({
   description: z.string().optional(),
 });
 
-interface SiteFormProps {
+export interface SiteFormProps {
   initialData?: SiteFormData;
+  initialValues?: Site;
   onSubmit: (data: SiteFormData) => void;
   isSubmitting?: boolean;
+  onCancel?: () => void;
 }
 
-const SiteForm: React.FC<SiteFormProps> = ({ initialData, onSubmit, isSubmitting = false }) => {
+const SiteForm: React.FC<SiteFormProps> = ({ initialData, initialValues, onSubmit, isSubmitting = false, onCancel }) => {
+  const formData = initialData || initialValues;
+  
   const form = useForm<SiteFormData>({
     resolver: zodResolver(formSchema),
-    defaultValues: initialData || {
+    defaultValues: formData || {
       name: '',
       location: '',
       type: 'Commercial',
@@ -194,7 +198,12 @@ const SiteForm: React.FC<SiteFormProps> = ({ initialData, onSubmit, isSubmitting
               )}
             />
 
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-2">
+              {onCancel && (
+                <Button type="button" variant="outline" onClick={onCancel}>
+                  Cancel
+                </Button>
+              )}
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? (
                   <>
