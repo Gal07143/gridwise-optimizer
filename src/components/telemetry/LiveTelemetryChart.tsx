@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useTelemetryHistory } from '@/hooks/useTelemetryHistory';
 import TelemetryChart from './TelemetryChart';
