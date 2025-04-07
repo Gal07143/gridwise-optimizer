@@ -1,316 +1,219 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { type ModbusRegisterDefinition, type ModbusRegisterMap } from '@/types/modbus';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getRegisterMap, saveRegisterMap } from '@/services/modbus/modbusRegisterService';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Plus, Save, Trash } from 'lucide-react';
+import { toast } from 'sonner';
+import { ModbusRegisterDefinition, ModbusRegisterMap } from '@/types/modbus';
+import { getDefaultRegisterMap } from '@/services/modbus/modbusRegisterService';
 
 interface ModbusRegisterMapProps {
   deviceId: string;
+  onSave?: (map: ModbusRegisterMap) => void;
 }
 
-const ModbusRegisterMap: React.FC<ModbusRegisterMapProps> = ({ deviceId }) => {
-  const [registerMap, setRegisterMap] = useState<ModbusRegisterMap>({ 
-    registers: [],
-    device_id: deviceId
-  });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [newRegister, setNewRegister] = useState<Partial<ModbusRegisterDefinition>>({
+export default function ModbusRegisterMapComponent({ deviceId, onSave }: ModbusRegisterMapProps) {
+  const [registerMap, setRegisterMap] = useState<ModbusRegisterMap>(getDefaultRegisterMap(deviceId));
+  const [newRegister, setNewRegister] = useState({
     name: '',
     address: 0,
-    length: 1,
-    type: 'holding_register',
+    registerType: 'holding',
     dataType: 'int16',
-    unit: '',
+    access: 'read',
     description: ''
   });
-  const [saving, setSaving] = useState(false);
 
-  // Fetch register map for device on mount
   useEffect(() => {
-    const fetchRegisterMap = async () => {
-      setLoading(true);
-      try {
-        const data = await getRegisterMap(deviceId);
-        if (data) {
-          // Make sure there are registers array
-          setRegisterMap({
-            registers: data.registers || [],
-            device_id: deviceId
-          });
-        } else {
-          // Create empty register map
-          setRegisterMap({ 
-            registers: [],
-            device_id: deviceId
-          });
-        }
-        setError(null);
-      } catch (err: any) {
-        console.error('Failed to load register map:', err);
-        setError(err.message || 'Failed to load register map');
-        setRegisterMap({ 
-          registers: [],
-          device_id: deviceId
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchRegisterMap();
+    // If the device ID changes, reset the map
+    setRegisterMap(getDefaultRegisterMap(deviceId));
   }, [deviceId]);
 
-  // Save register map
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      await saveRegisterMap(deviceId, registerMap);
-      setError(null);
-    } catch (err: any) {
-      console.error('Failed to save register map:', err);
-      setError(err.message || 'Failed to save register map');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  // Add new register
   const handleAddRegister = () => {
     if (!newRegister.name) {
-      setError('Register name is required');
+      toast.error('Register name is required');
       return;
     }
 
-    // Ensure newRegister has all required properties
-    const completeRegister: ModbusRegisterDefinition = {
-      name: newRegister.name || '',
-      address: newRegister.address || 0,
-      length: newRegister.length || 1,
-      type: newRegister.type || 'holding_register',
-      dataType: newRegister.dataType || 'int16',
-      unit: newRegister.unit,
-      description: newRegister.description,
-      scale: newRegister.scale,
-    };
+    const updatedRegisters = [
+      ...registerMap.registers,
+      {
+        ...newRegister,
+        address: Number(newRegister.address)
+      } as ModbusRegisterDefinition
+    ];
 
-    setRegisterMap(prev => ({
-      ...prev,
-      registers: [...(prev.registers || []), completeRegister]
-    }));
+    setRegisterMap({
+      ...registerMap,
+      registers: updatedRegisters
+    });
 
-    // Reset form
+    // Reset the form
     setNewRegister({
       name: '',
       address: 0,
-      length: 1,
-      type: 'holding_register',
+      registerType: 'holding',
       dataType: 'int16',
-      unit: '',
+      access: 'read',
       description: ''
     });
-    
-    setError(null);
+
+    toast.success('Register added');
   };
 
-  // Remove register
   const handleRemoveRegister = (index: number) => {
-    setRegisterMap(prev => ({
-      ...prev,
-      registers: prev.registers.filter((_, i) => i !== index)
-    }));
+    const updatedRegisters = [...registerMap.registers];
+    updatedRegisters.splice(index, 1);
+
+    setRegisterMap({
+      ...registerMap,
+      registers: updatedRegisters
+    });
+
+    toast.info('Register removed');
   };
 
-  // Update new register fields
-  const handleNewRegisterChange = (field: keyof ModbusRegisterDefinition, value: string | number) => {
-    setNewRegister(prev => ({
-      ...prev,
-      [field]: field === 'address' || field === 'length' || field === 'scale' ? Number(value) : value
-    }));
-  };
+  const handleSaveMap = () => {
+    if (registerMap.registers.length === 0) {
+      toast.warning('Add at least one register before saving');
+      return;
+    }
 
-  if (loading) {
-    return <div className="p-4">Loading register map...</div>;
-  }
+    if (onSave) {
+      onSave(registerMap);
+    }
+  };
 
   return (
-    <Card className="w-full">
+    <Card>
       <CardHeader>
         <CardTitle>Modbus Register Map</CardTitle>
-        <CardDescription>Configure the registers for this Modbus device</CardDescription>
       </CardHeader>
       <CardContent>
-        {error && <div className="text-red-500 mb-4">{error}</div>}
-        
-        <div className="mb-6">
-          <h3 className="text-lg font-medium mb-3">Registers</h3>
-          {registerMap.registers.length === 0 ? (
-            <div className="text-muted-foreground">No registers configured yet.</div>
-          ) : (
-            <div className="space-y-4">
-              {registerMap.registers.map((register, index) => (
-                <div key={index} className="flex flex-col md:flex-row items-start md:items-center gap-2 p-3 border rounded-md">
-                  <div className="flex-grow">
-                    <div className="flex flex-col md:flex-row md:items-center gap-2">
-                      <div className="font-medium">{register.name}</div>
-                      <div className="text-sm text-muted-foreground">
-                        Address: {register.address}, Length: {register.length}, Type: {register.dataType}
-                      </div>
-                    </div>
-                    {register.description && (
-                      <div className="text-sm text-muted-foreground mt-1">{register.description}</div>
-                    )}
-                  </div>
-                  <Button 
-                    variant="destructive" 
-                    size="sm"
-                    onClick={() => handleRemoveRegister(index)}
-                    className="mt-2 md:mt-0"
-                  >
-                    Remove
-                  </Button>
-                </div>
-              ))}
+        <div className="space-y-4">
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
+            <div>
+              <Label htmlFor="register-name">Register Name</Label>
+              <Input
+                id="register-name"
+                value={newRegister.name}
+                onChange={(e) => setNewRegister({ ...newRegister, name: e.target.value })}
+                placeholder="e.g., Battery Voltage"
+              />
+            </div>
+            <div>
+              <Label htmlFor="register-address">Register Address</Label>
+              <Input
+                id="register-address"
+                type="number"
+                value={newRegister.address}
+                onChange={(e) => setNewRegister({ ...newRegister, address: parseInt(e.target.value) })}
+                placeholder="e.g., 40001"
+              />
+            </div>
+            <div>
+              <Label htmlFor="register-type">Register Type</Label>
+              <select
+                id="register-type"
+                className="w-full p-2 border rounded-md"
+                value={newRegister.registerType}
+                onChange={(e) => setNewRegister({ ...newRegister, registerType: e.target.value as any })}
+              >
+                <option value="holding">Holding Register</option>
+                <option value="input">Input Register</option>
+                <option value="coil">Coil</option>
+                <option value="discrete">Discrete Input</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
+            <div>
+              <Label htmlFor="data-type">Data Type</Label>
+              <select
+                id="data-type"
+                className="w-full p-2 border rounded-md"
+                value={newRegister.dataType}
+                onChange={(e) => setNewRegister({ ...newRegister, dataType: e.target.value as any })}
+              >
+                <option value="int16">INT16</option>
+                <option value="uint16">UINT16</option>
+                <option value="int32">INT32</option>
+                <option value="uint32">UINT32</option>
+                <option value="float32">FLOAT32</option>
+                <option value="float64">FLOAT64</option>
+                <option value="bit">BIT</option>
+              </select>
+            </div>
+            <div>
+              <Label htmlFor="access">Access</Label>
+              <select
+                id="access"
+                className="w-full p-2 border rounded-md"
+                value={newRegister.access}
+                onChange={(e) => setNewRegister({ ...newRegister, access: e.target.value as any })}
+              >
+                <option value="read">Read Only</option>
+                <option value="write">Write Only</option>
+                <option value="read/write">Read/Write</option>
+              </select>
+            </div>
+            <div>
+              <Label htmlFor="description">Description</Label>
+              <Input
+                id="description"
+                value={newRegister.description}
+                onChange={(e) => setNewRegister({ ...newRegister, description: e.target.value })}
+                placeholder="Optional description"
+              />
+            </div>
+          </div>
+
+          <Button onClick={handleAddRegister} className="w-full">
+            <Plus className="mr-2 h-4 w-4" /> Add Register
+          </Button>
+
+          {registerMap.registers.length > 0 && (
+            <div className="mt-4">
+              <h3 className="text-lg font-medium mb-2">Registers ({registerMap.registers.length})</h3>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Address</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Data Type</TableHead>
+                    <TableHead>Access</TableHead>
+                    <TableHead></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {registerMap.registers.map((reg, index) => (
+                    <TableRow key={index}>
+                      <TableCell>{reg.name}</TableCell>
+                      <TableCell>{reg.address}</TableCell>
+                      <TableCell>{reg.registerType}</TableCell>
+                      <TableCell>{reg.dataType}</TableCell>
+                      <TableCell>{reg.access}</TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="icon" onClick={() => handleRemoveRegister(index)}>
+                          <Trash className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              
+              <Button onClick={handleSaveMap} className="mt-4">
+                <Save className="mr-2 h-4 w-4" /> Save Map
+              </Button>
             </div>
           )}
         </div>
-        
-        <div className="border-t pt-6">
-          <h3 className="text-lg font-medium mb-4">Add Register</h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div>
-              <label htmlFor="register-name" className="block text-sm font-medium mb-1">Name</label>
-              <Input 
-                id="register-name"
-                value={newRegister.name}
-                onChange={(e) => handleNewRegisterChange('name', e.target.value)}
-                placeholder="Register name"
-              />
-            </div>
-            
-            <div>
-              <label htmlFor="register-address" className="block text-sm font-medium mb-1">Address</label>
-              <Input 
-                id="register-address"
-                type="number"
-                min={0}
-                value={newRegister.address}
-                onChange={(e) => handleNewRegisterChange('address', e.target.value)}
-                placeholder="0"
-              />
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div>
-              <label htmlFor="register-length" className="block text-sm font-medium mb-1">Length</label>
-              <Input 
-                id="register-length"
-                type="number"
-                min={1}
-                value={newRegister.length}
-                onChange={(e) => handleNewRegisterChange('length', e.target.value)}
-                placeholder="1"
-              />
-            </div>
-            
-            <div>
-              <label htmlFor="register-type" className="block text-sm font-medium mb-1">Register Type</label>
-              <Select
-                value={newRegister.type}
-                onValueChange={(value) => handleNewRegisterChange('type', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a register type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="holding_register">Holding Register</SelectItem>
-                    <SelectItem value="input_register">Input Register</SelectItem>
-                    <SelectItem value="coil">Coil</SelectItem>
-                    <SelectItem value="discrete_input">Discrete Input</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div>
-              <label htmlFor="register-dataType" className="block text-sm font-medium mb-1">Data Type</label>
-              <Select
-                value={newRegister.dataType}
-                onValueChange={(value) => handleNewRegisterChange('dataType', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a data type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="int16">INT16</SelectItem>
-                    <SelectItem value="uint16">UINT16</SelectItem>
-                    <SelectItem value="int32">INT32</SelectItem>
-                    <SelectItem value="uint32">UINT32</SelectItem>
-                    <SelectItem value="float32">FLOAT32</SelectItem>
-                    <SelectItem value="float64">FLOAT64</SelectItem>
-                    <SelectItem value="boolean">Boolean</SelectItem>
-                    <SelectItem value="string">String</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div>
-              <label htmlFor="register-unit" className="block text-sm font-medium mb-1">Unit (optional)</label>
-              <Input 
-                id="register-unit"
-                value={newRegister.unit || ''}
-                onChange={(e) => handleNewRegisterChange('unit', e.target.value)}
-                placeholder="e.g., kW, V, A"
-              />
-            </div>
-          </div>
-          
-          <div className="mb-4">
-            <label htmlFor="register-scale" className="block text-sm font-medium mb-1">Scaling Factor (optional)</label>
-            <Input 
-              id="register-scale"
-              type="number"
-              value={newRegister.scale || ''}
-              onChange={(e) => handleNewRegisterChange('scale', parseFloat(e.target.value))}
-              placeholder="1.0"
-            />
-          </div>
-          
-          <div className="mb-4">
-            <label htmlFor="register-description" className="block text-sm font-medium mb-1">Description (optional)</label>
-            <Input 
-              id="register-description"
-              value={newRegister.description || ''}
-              onChange={(e) => handleNewRegisterChange('description', e.target.value)}
-              placeholder="Register description"
-            />
-          </div>
-          
-          <Button type="button" onClick={handleAddRegister}>
-            Add Register
-          </Button>
-        </div>
       </CardContent>
-      <CardFooter className="flex justify-end">
-        <Button 
-          onClick={handleSave} 
-          disabled={saving}
-        >
-          {saving ? 'Saving...' : 'Save Register Map'}
-        </Button>
-      </CardFooter>
     </Card>
   );
-};
-
-export default ModbusRegisterMap;
+}

@@ -1,92 +1,126 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { EnergyDevice } from '@/types/energy';
-import { formatDate } from '@/utils/dateUtils';
+import { capitalizeWords } from '@/lib/textUtils';
 
 interface DeviceDetailTabProps {
   device: EnergyDevice;
 }
 
 const DeviceDetailTab: React.FC<DeviceDetailTabProps> = ({ device }) => {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Device Details</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <h3 className="text-sm font-medium text-muted-foreground">Device Name</h3>
-            <p className="mt-1">{device.name}</p>
-          </div>
-          
-          <div>
-            <h3 className="text-sm font-medium text-muted-foreground">Device Type</h3>
-            <p className="mt-1 capitalize">{device.type}</p>
-          </div>
-          
-          <div>
-            <h3 className="text-sm font-medium text-muted-foreground">Status</h3>
-            <p className="mt-1 capitalize">{device.status}</p>
-          </div>
-          
-          <div>
-            <h3 className="text-sm font-medium text-muted-foreground">Capacity</h3>
-            <p className="mt-1">{device.capacity} {device.type === 'battery' ? 'kWh' : 'kW'}</p>
-          </div>
-          
-          {device.location && (
-            <div>
-              <h3 className="text-sm font-medium text-muted-foreground">Location</h3>
-              <p className="mt-1">{device.location}</p>
-            </div>
-          )}
-          
-          {device.installation_date && (
-            <div>
-              <h3 className="text-sm font-medium text-muted-foreground">Installation Date</h3>
-              <p className="mt-1">{formatDate(device.installation_date)}</p>
-            </div>
-          )}
-          
-          {device.firmware && (
-            <div>
-              <h3 className="text-sm font-medium text-muted-foreground">Firmware Version</h3>
-              <p className="mt-1">{device.firmware}</p>
-            </div>
-          )}
+  const renderDeviceStatus = (status: string) => {
+    let variant = 'outline';
+    
+    switch (status) {
+      case 'online':
+        variant = 'success';
+        break;
+      case 'offline':
+        variant = 'destructive';
+        break;
+      case 'maintenance':
+        variant = 'warning';
+        break;
+      case 'error':
+        variant = 'destructive';
+        break;
+      default:
+        variant = 'outline';
+    }
+    
+    return (
+      <Badge variant={variant as any} className="ml-2">
+        {capitalizeWords(status)}
+      </Badge>
+    );
+  };
 
-          {device.last_seen && (
-            <div>
-              <h3 className="text-sm font-medium text-muted-foreground">Last Seen</h3>
-              <p className="mt-1">{formatDate(device.last_seen, true)}</p>
-            </div>
-          )}
-        </div>
-        
-        {device.description && (
-          <div className="mt-4">
-            <h3 className="text-sm font-medium text-muted-foreground">Description</h3>
-            <p className="mt-1">{device.description}</p>
-          </div>
-        )}
-        
-        {device.metrics && Object.keys(device.metrics).length > 0 && (
-          <div className="mt-6">
-            <h3 className="text-sm font-medium mb-2">Current Metrics</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {Object.entries(device.metrics).map(([key, value]) => (
-                <div key={key} className="bg-muted/50 p-3 rounded-md">
-                  <div className="text-xs text-muted-foreground capitalize">{key.replace('_', ' ')}</div>
-                  <div className="font-medium mt-1">{value}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+  return (
+    <div className="grid gap-4 md:grid-cols-2">
+      <Card>
+        <CardHeader>
+          <CardTitle>General Information</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <dl className="grid grid-cols-2 gap-2 text-sm">
+            <dt className="font-medium">ID:</dt>
+            <dd className="text-muted-foreground">{device.id}</dd>
+            
+            <dt className="font-medium">Name:</dt>
+            <dd className="text-muted-foreground">{device.name}</dd>
+            
+            <dt className="font-medium">Type:</dt>
+            <dd className="text-muted-foreground">{capitalizeWords(device.type)}</dd>
+            
+            <dt className="font-medium">Status:</dt>
+            <dd className="text-muted-foreground">
+              {renderDeviceStatus(device.status)}
+            </dd>
+            
+            {device.location && (
+              <>
+                <dt className="font-medium">Location:</dt>
+                <dd className="text-muted-foreground">{device.location}</dd>
+              </>
+            )}
+            
+            {device.capacity && (
+              <>
+                <dt className="font-medium">Capacity:</dt>
+                <dd className="text-muted-foreground">{device.capacity} kW</dd>
+              </>
+            )}
+          </dl>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Technical Details</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <dl className="grid grid-cols-2 gap-2 text-sm">
+            {device.firmware && (
+              <>
+                <dt className="font-medium">Firmware:</dt>
+                <dd className="text-muted-foreground">{device.firmware}</dd>
+              </>
+            )}
+            
+            {device.description && (
+              <>
+                <dt className="font-medium">Description:</dt>
+                <dd className="text-muted-foreground">{device.description}</dd>
+              </>
+            )}
+            
+            {device.installation_date && (
+              <>
+                <dt className="font-medium">Installation Date:</dt>
+                <dd className="text-muted-foreground">
+                  {new Date(device.installation_date).toLocaleDateString()}
+                </dd>
+              </>
+            )}
+            
+            {device.metrics && Object.keys(device.metrics).length > 0 && (
+              <>
+                <dt className="font-medium">Metrics:</dt>
+                <dd className="text-muted-foreground">
+                  {Object.keys(device.metrics).map(key => (
+                    <div key={key}>
+                      {key}: {String(device.metrics?.[key])}
+                    </div>
+                  ))}
+                </dd>
+              </>
+            )}
+          </dl>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

@@ -1,52 +1,68 @@
 
-import { Site } from '@/types/site';
+import { Site } from '@/types/energy';
 
-const mockSites: Site[] = [
+export const mockSites: Site[] = [
   {
-    id: "site-001",
-    name: "Residential Home",
-    location: "San Francisco, CA",
+    id: "1",
+    name: "Solar Farm Alpha",
+    location: "Arizona, USA",
+    timezone: "America/Phoenix",
+    type: "solar_farm",
+    status: "active",
+    description: "Large-scale solar installation with 5,000 panels",
+    contact_person: "John Smith",
+    contact_email: "john.smith@example.com",
+    lat: 33.448376,
+    lng: -112.074036,
+    created_at: "2023-01-15T00:00:00Z",
+    updated_at: "2023-04-10T00:00:00Z",
+    // Adding missing properties required by Site interface
+    address: "123 Solar Way",
+    city: "Phoenix",
+    state: "Arizona",
+    country: "USA",
+    postal_code: "85001"
+  },
+  {
+    id: "2",
+    name: "Wind Farm Beta",
+    location: "Oregon, USA",
     timezone: "America/Los_Angeles",
-    type: "residential",
+    type: "wind_farm",
     status: "active",
-    description: "Single-family home with solar panels, battery storage, and EV charging.",
-    contact_person: "John Doe",
-    contact_email: "john.doe@example.com",
-    lat: 37.7749,
-    lng: -122.4194,
-    created_at: "2023-01-15T08:00:00Z",
-    updated_at: "2023-04-20T14:30:00Z"
+    description: "Coastal wind farm with 30 turbines",
+    contact_person: "Jane Doe",
+    contact_email: "jane.doe@example.com",
+    lat: 45.523064,
+    lng: -122.676483,
+    created_at: "2023-02-20T00:00:00Z",
+    updated_at: "2023-04-12T00:00:00Z",
+    // Adding missing properties required by Site interface
+    address: "456 Wind Drive",
+    city: "Portland",
+    state: "Oregon",
+    country: "USA",
+    postal_code: "97201"
   },
   {
-    id: "site-002",
-    name: "Commercial Office",
-    location: "Austin, TX",
+    id: "3",
+    name: "Hybrid Site Gamma",
+    location: "Texas, USA",
     timezone: "America/Chicago",
-    type: "commercial",
-    status: "active",
-    description: "Multi-story office building with rooftop solar and energy storage.",
-    contact_person: "Jane Smith",
-    contact_email: "jane.smith@example.com",
-    lat: 30.2672,
-    lng: -97.7431,
-    created_at: "2023-02-10T09:15:00Z",
-    updated_at: "2023-05-05T11:45:00Z"
-  },
-  {
-    id: "site-003",
-    name: "Industrial Plant",
-    location: "Detroit, MI",
-    timezone: "America/Detroit",
-    type: "industrial",
+    type: "hybrid",
     status: "maintenance",
-    description: "Manufacturing facility with combined heat and power system.",
+    description: "Combined solar and wind installation with battery storage",
     contact_person: "Robert Johnson",
     contact_email: "robert.johnson@example.com",
-    lat: 42.3314,
-    lng: -83.0458,
-    created_at: "2023-03-05T10:30:00Z",
-    updated_at: "2023-06-12T16:20:00Z"
+    lat: 29.760427,
+    lng: -95.369804,
+    created_at: "2023-03-05T00:00:00Z",
+    updated_at: "2023-04-15T00:00:00Z",
+    // Adding missing properties required by Site interface
+    address: "789 Energy Blvd",
+    city: "Houston",
+    state: "Texas",
+    country: "USA",
+    postal_code: "77001"
   }
 ];
-
-export default mockSites;

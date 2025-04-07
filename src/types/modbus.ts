@@ -1,3 +1,4 @@
+
 export interface ModbusDevice {
   id: string;
   name: string;
@@ -45,12 +46,15 @@ export interface ModbusReadingResult {
   buffer?: Buffer;
   raw?: any;
   error?: Error;
+  success?: boolean; // Adding for backward compatibility
+  timestamp?: string; // Adding for backward compatibility
 }
 
 export interface ConnectionStatusOptions {
   initialStatus?: boolean;
   reconnectDelay?: number;
   showToasts?: boolean;
+  deviceId?: string; // Adding for backward compatibility
 }
 
 export interface ConnectionStatus {
@@ -68,4 +72,8 @@ export interface ConnectionStatusResult {
   connect?: () => void;
   disconnect?: () => void;
   retryConnection?: () => void;
+  error?: Error; // Adding for backward compatibility
 }
+
+// Adding ModbusRegister for backward compatibility
+export type ModbusRegister = ModbusRegisterDefinition;

@@ -1,116 +1,89 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { ModbusDevice, ModbusReadingResult } from '@/types/modbus';
+import { ModbusDevice, ModbusReadingResult, ModbusRegisterDefinition } from '@/types/modbus';
 import { toast } from 'sonner';
 
-// Get a Modbus device by ID
-export const getModbusDeviceById = async (id: string): Promise<ModbusDevice | null> => {
-  try {
-    const { data, error } = await supabase
-      .from('modbus_devices')
-      .select('*')
-      .eq('id', id)
-      .single();
-
-    if (error) throw error;
-    return data as ModbusDevice;
-  } catch (error) {
-    console.error('Error fetching Modbus device:', error);
-    throw error;
-  }
-};
-
-// Update a Modbus device
-export const updateModbusDevice = async (
-  id: string,
-  deviceData: Partial<ModbusDevice>
-): Promise<ModbusDevice> => {
-  try {
-    const { data, error } = await supabase
-      .from('modbus_devices')
-      .update(deviceData)
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data as ModbusDevice;
-  } catch (error) {
-    console.error('Error updating Modbus device:', error);
-    throw error;
-  }
-};
-
-// Delete a Modbus device
-export const deleteModbusDevice = async (id: string): Promise<void> => {
-  try {
-    const { error } = await supabase
-      .from('modbus_devices')
-      .delete()
-      .eq('id', id);
-
-    if (error) throw error;
-  } catch (error) {
-    console.error('Error deleting Modbus device:', error);
-    throw error;
-  }
-};
-
-// Mock function for reading a Modbus register (in a real app, this would communicate with a backend API)
-export const readRegister = async (
+/**
+ * Read a Modbus register from a device
+ */
+export const readModbusRegister = async (
   deviceId: string,
-  address: number,
-  length: number
+  register: ModbusRegisterDefinition
 ): Promise<ModbusReadingResult> => {
   try {
-    // In a real app, this would make an API call to read from the device
-    // For demo purposes, simulate a successful read with a random value
-    await new Promise(resolve => setTimeout(resolve, 500)); // Add a small delay
+    console.log(`Reading register ${register.name} from device ${deviceId}`);
     
-    return {
-      success: true,
-      value: Math.floor(Math.random() * 1000),
-      timestamp: new Date().toISOString()
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to read register',
-      timestamp: new Date().toISOString()
-    };
-  }
-};
-
-// Mock function for writing to a Modbus register
-export const writeRegister = async (
-  deviceId: string,
-  address: number,
-  value: number,
-  dataType: string
-): Promise<boolean> => {
-  try {
-    // In a real app, this would make an API call to write to the device
-    // For demo purposes, simulate a successful write
-    await new Promise(resolve => setTimeout(resolve, 700)); // Add a small delay
-    
-    // Randomly fail some requests for demonstration
-    if (Math.random() > 0.9) {
-      throw new Error('Simulated write failure');
+    // First, get the device details to ensure it exists
+    const { data: device, error: deviceError } = await supabase
+      .from('modbus_devices')
+      .select('*')
+      .eq('id', deviceId)
+      .single();
+      
+    if (deviceError) {
+      console.error('Error fetching device:', deviceError);
+      throw new Error(`Device not found: ${deviceError.message}`);
     }
     
-    return true;
-  } catch (error) {
-    throw error;
+    if (!device) {
+      throw new Error(`Device with ID ${deviceId} not found`);
+    }
+    
+    // Prepare the request to the Edge Function
+    const payload = {
+      deviceId,
+      ip: device.ip,
+      port: device.port,
+      unitId: device.unit_id,
+      register: {
+        address: register.address,
+        quantity: register.length || 1,
+        type: register.registerType || 'holding',
+        dataType: register.dataType || 'int16'
+      }
+    };
+    
+    // Call the Supabase Edge Function for Modbus communication
+    const { data, error } = await supabase.functions.invoke('modbus-read', {
+      body: JSON.stringify(payload)
+    });
+    
+    if (error) {
+      console.error('Error calling Modbus function:', error);
+      throw new Error(`Modbus read error: ${error.message}`);
+    }
+    
+    // Apply scaling if needed
+    let scaledValue = data.value;
+    if (register.scaleFactor !== undefined) {
+      scaledValue = data.value * register.scaleFactor;
+    } else if (register.scale !== undefined) {
+      scaledValue = data.value * register.scale;
+    }
+    
+    const result: ModbusReadingResult = {
+      value: scaledValue,
+      address: register.address,
+      buffer: data.buffer,
+      raw: data.raw,
+      success: true, // Adding for backward compatibility
+      timestamp: new Date().toISOString(), // Adding for backward compatibility
+    };
+    
+    return result;
+    
+  } catch (err) {
+    console.error('Error reading Modbus register:', err);
+    const errorMessage = err instanceof Error ? err.message : 'Unknown error reading Modbus register';
+    const errorObj = err instanceof Error ? err : new Error(errorMessage);
+    
+    return {
+      value: 0,
+      address: register.address,
+      error: errorObj,
+      success: false, // Adding for backward compatibility
+    };
   }
 };
 
-// Check if a device is online
-export const checkDeviceConnection = async (deviceId: string): Promise<boolean> => {
-  try {
-    // In a real app, this would ping the device or check its status
-    // For demo purposes, return true most of the time
-    return Math.random() > 0.2;
-  } catch {
-    return false;
-  }
-};
+// More functions will be added here as needed

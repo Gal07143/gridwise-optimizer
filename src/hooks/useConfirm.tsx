@@ -27,9 +27,16 @@ const useConfirm = () => {
   });
   
   const [resolveRef, setResolveRef] = useState<(value: boolean) => void>(() => () => {});
+  const [callback, setCallback] = useState<(() => void) | null>(null);
 
-  const confirm = useCallback((confirmOptions?: UseConfirmOptions) => {
-    setOptions({ ...options, ...confirmOptions });
+  const confirm = useCallback((confirmOptions?: UseConfirmOptions | (() => Promise<void>)) => {
+    if (typeof confirmOptions === 'function') {
+      setCallback(() => confirmOptions as () => Promise<void>);
+      setIsOpen(true);
+      return Promise.resolve();
+    }
+    
+    setOptions(prev => ({ ...prev, ...confirmOptions }));
     setIsOpen(true);
     
     return new Promise<boolean>((resolve) => {
@@ -37,15 +44,27 @@ const useConfirm = () => {
     });
   }, [options]);
 
-  const handleConfirm = useCallback(() => {
+  const onConfirm = useCallback(() => {
     setIsOpen(false);
     resolveRef(true);
-  }, [resolveRef]);
+    if (callback) {
+      callback();
+    }
+  }, [resolveRef, callback]);
 
-  const handleCancel = useCallback(() => {
+  const onCancel = useCallback(() => {
     setIsOpen(false);
     resolveRef(false);
+    setCallback(null);
   }, [resolveRef]);
+
+  const handleConfirm = useCallback(() => {
+    onConfirm();
+  }, [onConfirm]);
+
+  const handleCancel = useCallback(() => {
+    onCancel();
+  }, [onCancel]);
 
   const ConfirmationDialog = useCallback(() => {
     return (
@@ -64,7 +83,7 @@ const useConfirm = () => {
     );
   }, [isOpen, options, handleCancel, handleConfirm]);
 
-  return { confirm, ConfirmationDialog };
+  return { confirm, ConfirmationDialog, isOpen, onConfirm, onCancel };
 };
 
 export default useConfirm;

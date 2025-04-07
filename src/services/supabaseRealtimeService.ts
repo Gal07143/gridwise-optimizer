@@ -19,7 +19,8 @@ export const subscribeToTable = (
 ): (() => void) | string => {
   if (typeof table === 'string' && table.startsWith('SUPABASE_SUB_')) {
     // This is an unsubscribe call with a subscription ID
-    const channel = supabase.getChannel(table);
+    const channels = supabase.getChannels();
+    const channel = channels.find(ch => ch.id === table);
     if (channel) {
       supabase.removeChannel(channel);
     }
@@ -57,7 +58,8 @@ export const unsubscribeFromTable = (
   subscriptionId: string
 ): void => {
   if (subscriptionId.startsWith('SUPABASE_SUB_')) {
-    const channel = supabase.getChannel(subscriptionId);
+    const channels = supabase.getChannels();
+    const channel = channels.find(ch => ch.id === subscriptionId);
     if (channel) {
       supabase.removeChannel(channel);
     }
