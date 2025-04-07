@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Site } from '@/types/site';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
