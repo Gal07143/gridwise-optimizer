@@ -1,15 +1,14 @@
 
 import React from 'react';
-import TimeframeSelector from './TimeframeSelector';
 import { ArrowUpRight } from 'lucide-react';
 
 interface AnalyticsHeaderProps {
-  timeframe: string;
+  timeframe?: string;
   siteName?: string;
 }
 
-const AnalyticsHeader = ({
-  timeframe,
+const AnalyticsHeader: React.FC<AnalyticsHeaderProps> = ({
+  timeframe = 'today',
   siteName = 'Energy Analytics'
 }: AnalyticsHeaderProps) => {
   return (

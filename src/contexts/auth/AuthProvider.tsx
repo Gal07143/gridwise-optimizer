@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { AuthContextType, User } from './AuthTypes';
@@ -24,7 +23,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     // Set up auth state listener FIRST to catch any auth events
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         console.log('Auth state changed:', event);
         
         if (session?.user) {
@@ -37,16 +36,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           };
           setUser(userData);
           
-          // Fetch profile data using setTimeout to avoid auth deadlock
-          setTimeout(() => {
-            fetchUserProfile(session.user.id);
-          }, 0);
+          // Fetch profile data (but don't await directly to avoid auth deadlock)
+          fetchUserProfile(session.user.id);
         } else {
           setUser(null);
+          setLoading(false);
         }
-        
-        // Always update loading state when auth changes
-        setLoading(false);
       }
     );
 
@@ -61,7 +56,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           return;
         }
         
-        // Loading state will be updated by the onAuthStateChange handler
+        // If no session, set loading to false
+        if (!data.session) {
+          setLoading(false);
+        }
+        // Otherwise the onAuthStateChange handler above will handle it
       } catch (error) {
         console.error('Error in checkUser:', error);
         setLoading(false);
@@ -86,6 +85,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       if (error) {
         console.error('Error fetching profile:', error);
+        setLoading(false);
         return;
       }
       
@@ -97,8 +97,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           lastName: data.last_name || prev.lastName,
         } : null);
       }
+      
+      // Always update loading state when profile fetch completes
+      setLoading(false);
     } catch (error) {
       console.error('Error in fetchUserProfile:', error);
+      setLoading(false);
     }
   };
 
@@ -117,9 +121,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } catch (error: any) {
       console.error('Error signing in:', error);
       toast.error(`Error signing in: ${error.message}`);
-      throw error;
-    } finally {
       setLoading(false);
+      throw error;
     }
   };
 
@@ -155,9 +158,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } catch (error: any) {
       console.error('Error signing up:', error);
       toast.error(`Error signing up: ${error.message}`);
-      throw error;
-    } finally {
       setLoading(false);
+      throw error;
     }
   };
 
@@ -188,8 +190,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Update Supabase auth metadata
       const { error: authUpdateError } = await supabase.auth.updateUser({
         data: {
-          firstName: userData.firstName,
-          lastName: userData.lastName
+          first_name: userData.firstName,
+          last_name: userData.lastName
         }
       });
       

@@ -22,7 +22,7 @@ export function useRealtimeUpdates<T = any>(
       .on(
         'postgres_changes',
         {
-          event,
+          event: event as any,
           schema: 'public',
           table: tableName,
         },

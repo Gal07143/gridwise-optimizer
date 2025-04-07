@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { getSiteById, updateSite } from '@/services/sites/siteService';
 import SettingsPageTemplate from '@/components/settings/SettingsPageTemplate';
 import SiteForm from '@/components/sites/SiteForm';
-import { CornerDownLeft, Loader2, Save } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Site } from '@/types/site';
 import { useSiteActions } from '@/hooks/useSiteActions';
@@ -57,18 +57,15 @@ const EditSite = () => {
         data 
       });
       
-      // Use non-nullable assertion to avoid type error
-      if (result) {
-        toast.success(`Site "${data.name}" updated successfully`);
-        navigate('/settings/sites');
-        return true;
-      } else if (!isOnline) {
+      if (!isOnline) {
         toast.success(`Site update saved and will be processed when you reconnect`);
         navigate('/settings/sites');
         return true;
-      } else {
-        throw new Error('Failed to update site');
       }
+      
+      toast.success(`Site "${data.name}" updated successfully`);
+      navigate('/settings/sites');
+      return true;
     } catch (error: any) {
       console.error('Error updating site:', error);
       toast.error(`An error occurred: ${error?.message || 'Unknown error'}`);

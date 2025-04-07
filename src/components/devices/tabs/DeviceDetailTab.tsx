@@ -50,10 +50,10 @@ const DeviceDetailTab: React.FC<DeviceDetailTabProps> = ({ device }) => {
             </div>
           )}
           
-          {device.firmware_version && (
+          {device.firmware && (
             <div>
               <h3 className="text-sm font-medium text-muted-foreground">Firmware Version</h3>
-              <p className="mt-1">{device.firmware_version}</p>
+              <p className="mt-1">{device.firmware}</p>
             </div>
           )}
 

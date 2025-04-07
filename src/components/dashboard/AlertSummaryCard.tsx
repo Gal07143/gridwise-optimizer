@@ -1,164 +1,131 @@
 
 import React, { useEffect, useState } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Bell, AlertTriangle } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import { Bell, ArrowRight, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { subscribeToTable } from '@/services/supabaseRealtimeService';
-import { supabase } from '@/integrations/supabase/client';
-import { formatDistanceToNow } from 'date-fns';
-import { Alert } from '@/types/energy';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Alert } from '@/types/energy';
+import { supabase } from '@/lib/supabase';
+import { Link } from 'react-router-dom';
 
-interface AlertSummaryCardProps {
-  limit?: number;
-  showFooter?: boolean;
-  onViewAll?: () => void;
-}
-
-const AlertSummaryCard: React.FC<AlertSummaryCardProps> = ({ 
-  limit = 5,
-  showFooter = true,
-  onViewAll
-}) => {
+const AlertSummaryCard = () => {
   const [alerts, setAlerts] = useState<Alert[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [newAlertsCount, setNewAlertsCount] = useState(0);
-  const [criticalCount, setCriticalCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Load initial alerts
   useEffect(() => {
     const fetchAlerts = async () => {
-      setLoading(true);
       try {
-        // Get critical alerts count - use a reference first
-        const criticalRef = supabase
-          .from('alerts')
-          .select('*');
-          
-        // We build a query and then execute it
-        const criticalResult = await criticalRef
-          .select('*')
-          .eq('severity', 'critical')
-          .eq('acknowledged', false);
-          
-        setCriticalCount(criticalResult.data?.length || 0);
+        setIsLoading(true);
+        setError(null);
         
-        // Get recent alerts
-        const alertsResult = await supabase
+        // Get alerts that are not acknowledged
+        const { data, error: alertsError } = await supabase
           .from('alerts')
           .select('*')
+          .filter('acknowledged', 'eq', false)
           .order('timestamp', { ascending: false })
-          .limit(limit);
-          
-        if (alertsResult.data) {
-          setAlerts(alertsResult.data as Alert[]);
-        }
-      } catch (error) {
-        console.error('Error fetching alerts:', error);
+          .limit(5);
+        
+        if (alertsError) throw alertsError;
+        
+        setAlerts(data || []);
+      } catch (err) {
+        console.error('Error fetching alerts:', err);
+        setError('Failed to load alerts');
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
-
+    
     fetchAlerts();
-  }, [limit]);
-
-  // Subscribe to new alerts
-  useEffect(() => {
-    const unsubscribe = subscribeToTable(
-      'alerts',
-      'INSERT',
-      (payload) => {
-        const newAlert = payload.new as Alert;
-        setAlerts(prev => [newAlert, ...prev].slice(0, limit));
-        setNewAlertsCount(prev => prev + 1);
-        
-        if (newAlert.severity === 'critical') {
-          setCriticalCount(prev => prev + 1);
-        }
-      }
-    );
-
-    return () => unsubscribe();
-  }, [limit]);
-
-  const getSeverityColor = (severity: string) => {
-    switch(severity) {
-      case 'critical': return 'bg-red-100 text-red-800';
-      case 'warning': return 'bg-amber-100 text-amber-800';
-      case 'info': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
+  }, []);
+  
+  const getSeverityClass = (severity: string) => {
+    switch (severity?.toLowerCase()) {
+      case 'critical':
+        return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400';
+      case 'warning':
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400';
+      default:
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400';
     }
   };
-
+  
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <Skeleton className="h-5 w-24" />
+          <Skeleton className="h-7 w-7" />
+        </CardHeader>
+        <CardContent className="pb-2">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="mb-3">
+              <Skeleton className="h-4 w-3/4 mb-1" />
+              <Skeleton className="h-4 w-1/2" />
+            </div>
+          ))}
+        </CardContent>
+        <CardFooter>
+          <Skeleton className="h-9 w-full" />
+        </CardFooter>
+      </Card>
+    );
+  }
+  
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>Error Loading Alerts</CardHeader>
+        <CardContent>
+          <p className="text-red-500">{error}</p>
+        </CardContent>
+      </Card>
+    );
+  }
+  
   return (
     <Card>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg flex items-center">
-            <Bell className="mr-2 h-5 w-5" />
-            Alerts
-            {newAlertsCount > 0 && (
-              <Badge variant="destructive" className="ml-2">
-                {newAlertsCount} new
-              </Badge>
-            )}
-          </CardTitle>
-          {criticalCount > 0 && (
-            <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-              <AlertTriangle className="mr-1 h-3 w-3" />
-              {criticalCount} critical
-            </Badge>
-          )}
-        </div>
-        <CardDescription>Recent system alerts and notifications</CardDescription>
-      </CardHeader>
-      <CardContent>
-        {loading ? (
-          <div className="space-y-3">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="flex items-center space-x-4">
-                <Skeleton className="h-12 w-12 rounded-full" />
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-[200px]" />
-                  <Skeleton className="h-4 w-[150px]" />
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : alerts.length > 0 ? (
-          <div className="space-y-4">
-            {alerts.map((alert) => (
-              <div key={alert.id} className="flex items-start gap-3 pb-3 last:pb-0">
-                <div className="flex-shrink-0">
-                  <Badge variant="outline" className={`${getSeverityColor(alert.severity)} h-7 w-7 rounded-full p-1`}>
-                    <AlertTriangle className="h-5 w-5" />
-                  </Badge>
-                </div>
-                <div className="flex-1 space-y-1">
-                  <p className="text-sm font-medium leading-none">{alert.title}</p>
-                  <p className="text-xs text-muted-foreground">{alert.message}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {formatDistanceToNow(new Date(alert.timestamp), { addSuffix: true })}
-                  </p>
-                </div>
-              </div>
-            ))}
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <h3 className="text-sm font-medium">Recent Alerts</h3>
+        {alerts.length > 0 ? (
+          <div className="bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400 h-7 w-7 rounded-full flex items-center justify-center">
+            <AlertTriangle size={14} />
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-4 text-center">
-            <p className="text-muted-foreground">No alerts found</p>
+          <div className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 h-7 w-7 rounded-full flex items-center justify-center">
+            <Bell size={14} />
+          </div>
+        )}
+      </CardHeader>
+      <CardContent className="pb-2">
+        {alerts.length === 0 ? (
+          <div className="text-center py-6">
+            <p className="text-muted-foreground">No unacknowledged alerts</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {alerts.map((alert, i) => (
+              <div key={alert.id} className="flex items-start gap-3">
+                <div className={`flex-shrink-0 h-2 w-2 mt-2 rounded-full ${getSeverityClass(alert.severity)}`} />
+                <div>
+                  <p className="text-sm font-medium line-clamp-1">{alert.title || 'Untitled Alert'}</p>
+                  <p className="text-xs text-muted-foreground line-clamp-1">{alert.message || 'No details'}</p>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </CardContent>
-      {showFooter && (
-        <CardFooter className="border-t pt-3">
-          <Button variant="ghost" className="w-full" onClick={onViewAll}>
-            View all alerts
-          </Button>
-        </CardFooter>
-      )}
+      <CardFooter>
+        <Button variant="outline" size="sm" className="w-full" asChild>
+          <Link to="/alerts">
+            View All Alerts
+            <ArrowRight size={14} className="ml-2" />
+          </Link>
+        </Button>
+      </CardFooter>
     </Card>
   );
 };

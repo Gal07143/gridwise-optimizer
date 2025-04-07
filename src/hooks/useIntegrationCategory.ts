@@ -4,7 +4,12 @@ import { DeviceModel } from '@/types/device-model';
 import { useDeviceModels } from './useDeviceModels';
 
 export const useIntegrationCategory = (categoryId?: string) => {
-  const { models, isLoading: loading, error } = useDeviceModels();
+  // Update to correctly handle the properties from useDeviceModels
+  const { models, isLoading, error } = useDeviceModels() as { 
+    models: DeviceModel[]; 
+    isLoading: boolean; 
+    error: any;
+  };
   const [filteredModels, setFilteredModels] = useState<DeviceModel[]>([]);
   const [sortField, setSortField] = useState<string>('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
@@ -33,7 +38,7 @@ export const useIntegrationCategory = (categoryId?: string) => {
 
   // Filter and sort the models
   useEffect(() => {
-    if (!loading && models.length > 0) {
+    if (!isLoading && models.length > 0) {
       let result = [...models];
 
       // Apply category filter if specified
@@ -94,7 +99,7 @@ export const useIntegrationCategory = (categoryId?: string) => {
       setFilteredModels([]);
       setDeviceCount(0);
     }
-  }, [models, categoryId, sortField, sortDirection, searchQuery, loading]);
+  }, [models, categoryId, sortField, sortDirection, searchQuery, isLoading]);
 
   const handleSort = useCallback((field: string) => {
     if (field === sortField) {
@@ -109,7 +114,7 @@ export const useIntegrationCategory = (categoryId?: string) => {
 
   return {
     models: filteredModels,
-    loading,
+    loading: isLoading,
     error,
     sortField,
     sortDirection,

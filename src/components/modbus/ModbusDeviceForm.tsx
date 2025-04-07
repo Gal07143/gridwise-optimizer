@@ -8,7 +8,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { ModbusDeviceConfig } from '@/types/modbus';
+import { ModbusDevice, ModbusDeviceConfig } from '@/types/modbus';
 import { createModbusDevice, updateModbusDevice } from '@/services/modbus/modbusDeviceService';
 import { Textarea } from '@/components/ui/textarea';
 
@@ -57,10 +57,10 @@ const ModbusDeviceForm: React.FC<ModbusDeviceFormProps> = ({
       let result;
       if (initialData?.id) {
         // Update existing device
-        result = await updateModbusDevice(initialData.id, values);
+        result = await updateModbusDevice(initialData.id, values as ModbusDeviceConfig);
       } else {
         // Create new device
-        result = await createModbusDevice(values);
+        result = await createModbusDevice(values as ModbusDeviceConfig);
       }
       
       if (result && onSuccess) {
