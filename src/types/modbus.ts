@@ -1,4 +1,3 @@
-
 export interface ModbusDevice {
   id: string;
   name: string;
