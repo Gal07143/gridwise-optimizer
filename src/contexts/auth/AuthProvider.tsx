@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { AuthContextType, User } from './AuthTypes';
@@ -18,9 +19,10 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-
+  
+  // Initialize the auth state
   useEffect(() => {
-    // Set up auth state listener FIRST
+    // Set up auth state listener FIRST to catch any auth events
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         console.log('Auth state changed:', event, session);
@@ -34,57 +36,75 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             lastName: session.user.user_metadata?.last_name || session.user.user_metadata?.lastName || '',
           };
           setUser(userData);
+          
+          // Fetch profile data using setTimeout to avoid auth deadlock
+          setTimeout(() => {
+            fetchUserProfile(session.user.id);
+          }, 0);
         } else {
           setUser(null);
         }
+        
+        // Always update loading state when auth changes
+        setLoading(false);
       }
     );
 
     // THEN check for existing session
+    const checkUser = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error checking session:', error);
+          setLoading(false);
+          return;
+        }
+        
+        if (data?.session?.user) {
+          console.log('Found existing session:', data.session.user);
+        } else {
+          console.log('No existing session');
+        }
+        
+        // Loading state will be updated by the onAuthStateChange handler
+      } catch (error) {
+        console.error('Error in checkUser:', error);
+        setLoading(false);
+      }
+    };
+    
     checkUser();
     
     return () => {
       subscription.unsubscribe();
     };
   }, []);
-
-  const checkUser = async () => {
+  
+  // Fetch user profile data
+  const fetchUserProfile = async (userId: string) => {
     try {
-      const { data, error } = await supabase.auth.getUser();
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('role, first_name, last_name')
+        .eq('id', userId)
+        .single();
+      
       if (error) {
-        console.error('Error checking user:', error);
-        setUser(null);
-      } else if (data?.user) {
-        // Create a user object from the session data
-        const userData: User = {
-          id: data.user.id,
-          email: data.user.email || '',
-          role: 'admin', // We'll fetch the actual role from profiles later
-          firstName: data.user.user_metadata?.first_name || data.user.user_metadata?.firstName || '',
-          lastName: data.user.user_metadata?.last_name || data.user.user_metadata?.lastName || '',
-        };
-        setUser(userData);
-        
-        // Also get profile data to get the role
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('role, first_name, last_name')
-          .eq('id', data.user.id)
-          .single();
-          
-        if (!profileError && profileData) {
-          setUser(prev => prev ? {
-            ...prev,
-            role: profileData.role,
-            firstName: profileData.first_name || prev.firstName,
-            lastName: profileData.last_name || prev.lastName,
-          } : null);
-        }
+        console.error('Error fetching profile:', error);
+        return;
+      }
+      
+      if (data) {
+        setUser(prev => prev ? {
+          ...prev,
+          role: data.role,
+          firstName: data.first_name || prev.firstName,
+          lastName: data.last_name || prev.lastName,
+        } : null);
       }
     } catch (error) {
-      console.error('Error checking user:', error);
-    } finally {
-      setLoading(false);
+      console.error('Error in fetchUserProfile:', error);
     }
   };
 
@@ -96,8 +116,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (error) throw error;
 
       if (data.user) {
-        // We'll fetch the full profile in the auth state change event
         toast.success('Successfully signed in');
+        return data;
       }
     } catch (error: any) {
       console.error('Error signing in:', error);
@@ -112,7 +132,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       setLoading(true);
       
-      // Simulate the name split into first and last name
+      // Split name into first and last name
       const nameParts = name.split(' ');
       const firstName = nameParts[0] || '';
       const lastName = nameParts.slice(1).join(' ') || '';
@@ -132,6 +152,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (data.user) {
         toast.success('Account created successfully');
+        return data;
       } else {
         toast.success('Please check your email to verify your account');
       }
