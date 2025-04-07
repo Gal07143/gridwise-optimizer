@@ -1,62 +1,39 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Loader2 } from 'lucide-react';
+
+type LoadingSpinnerSize = 'sm' | 'md' | 'lg' | 'xl';
 
 interface LoadingSpinnerProps {
-  size?: 'sm' | 'md' | 'lg' | 'xl';
-  variant?: 'default' | 'primary' | 'secondary' | 'ghost';
-  className?: string;
+  size?: LoadingSpinnerSize;
   text?: string;
-  fullScreen?: boolean;
+  className?: string;
 }
+
+const sizes = {
+  sm: 'w-4 h-4 border-2',
+  md: 'w-6 h-6 border-2',
+  lg: 'w-8 h-8 border-3',
+  xl: 'w-12 h-12 border-4',
+};
 
 const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   size = 'md',
-  variant = 'default',
-  className,
   text,
-  fullScreen = false,
+  className,
 }) => {
-  const sizeClasses = {
-    sm: 'h-4 w-4',
-    md: 'h-6 w-6',
-    lg: 'h-8 w-8',
-    xl: 'h-12 w-12',
-  };
-
-  const variantClasses = {
-    default: 'text-muted-foreground',
-    primary: 'text-primary',
-    secondary: 'text-secondary-foreground',
-    ghost: 'text-gray-400',
-  };
-
-  const spinnerClasses = cn(
-    'animate-spin',
-    sizeClasses[size],
-    variantClasses[variant],
-    className
-  );
-
-  const content = (
-    <div className={cn(
-      "flex flex-col items-center justify-center",
-      fullScreen ? "fixed inset-0 bg-background/80 backdrop-blur-sm z-50" : ""
-    )}>
-      <Loader2 className={spinnerClasses} />
-      {text && (
-        <span className={cn(
-          "mt-2 text-sm",
-          variantClasses[variant]
-        )}>
-          {text}
-        </span>
-      )}
+  return (
+    <div className="flex flex-col items-center justify-center">
+      <div
+        className={cn(
+          'animate-spin rounded-full border-solid border-primary border-t-transparent',
+          sizes[size],
+          className
+        )}
+      />
+      {text && <p className="mt-4 text-sm text-muted-foreground">{text}</p>}
     </div>
   );
-
-  return content;
 };
 
 export default LoadingSpinner;

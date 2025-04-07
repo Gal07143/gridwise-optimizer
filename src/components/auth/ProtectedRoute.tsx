@@ -25,8 +25,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen">
-        <LoadingSpinner size="lg" text="Loading your profile..." />
+      <div className="flex flex-col items-center justify-center h-screen bg-background">
+        <LoadingSpinner size="lg" text="Verifying your credentials..." />
+        <p className="mt-4 text-sm text-muted-foreground">
+          If this takes too long, please try refreshing the page
+        </p>
       </div>
     );
   }

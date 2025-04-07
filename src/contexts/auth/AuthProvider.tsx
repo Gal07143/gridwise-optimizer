@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { AuthContextType, User } from './AuthTypes';
@@ -7,8 +8,8 @@ export const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
   isAuthenticated: false,
-  signIn: async () => undefined,
-  signUp: async () => undefined,
+  signIn: async () => null,
+  signUp: async () => null,
   signOut: async () => {},
   updateUserProfile: async () => {},
 });
@@ -78,10 +79,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     checkUser();
 
+    // Add a safety timeout to prevent infinite loading
+    const safetyTimeout = setTimeout(() => {
+      if (loading) {
+        console.warn('Auth loading timeout reached, forcing completion');
+        setLoading(false);
+      }
+    }, 5000); // 5 second safety timeout
+
     return () => {
       subscription.unsubscribe();
+      clearTimeout(safetyTimeout);
     };
-  }, []);
+  }, [loading]);
 
   const fetchUserProfile = async (userId: string) => {
     try {
@@ -93,6 +103,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (error) {
         console.error('Error fetching profile:', error);
+        // If there's an error, we still want to complete loading
         setLoading(false);
         return;
       }
@@ -120,6 +131,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (error) {
         toast.error(`Login failed: ${error.message}`);
+        setLoading(false);
         throw error;
       }
 

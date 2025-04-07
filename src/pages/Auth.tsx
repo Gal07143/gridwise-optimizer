@@ -6,6 +6,7 @@ import SignInForm from '@/components/auth/SignInForm';
 import SignUpForm from '@/components/auth/SignUpForm';
 import { Card, CardContent } from '@/components/ui/card';
 import { Zap } from 'lucide-react';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 // Auth page component
 const Auth = () => {
@@ -34,6 +35,14 @@ const Auth = () => {
   const toggleFormMode = () => {
     setIsSignUp(!isSignUp);
   };
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
+        <LoadingSpinner size="lg" text="Preparing authentication..." />
+      </div>
+    );
+  }
   
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 py-12 px-4 sm:px-6 lg:px-8">
