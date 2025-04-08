@@ -1,27 +1,15 @@
 
-import React, { useEffect } from 'react';
-import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import React from 'react';
+import { Outlet } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
-import { toast } from 'sonner';
 
 export interface ProtectedRouteProps {
   children?: React.ReactNode;
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { user, loading, isAuthenticated } = useAuth();
-  const location = useLocation();
-  
-  useEffect(() => {
-    // Only show the toast if we've finished loading and the user isn't authenticated
-    if (!loading && !isAuthenticated) {
-      toast.error("Please sign in to access this page", {
-        id: "auth-required",
-        duration: 3000
-      });
-    }
-  }, [loading, isAuthenticated, location.pathname]);
+  const { loading } = useAuth();
   
   if (loading) {
     return (
@@ -34,11 +22,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     );
   }
   
-  if (!isAuthenticated) {
-    // Redirect to auth page but save the current location
-    return <Navigate to="/auth" state={{ from: location }} replace />;
-  }
-  
+  // Always allow access, no authentication check
   return children ? <>{children}</> : <Outlet />;
 };
 

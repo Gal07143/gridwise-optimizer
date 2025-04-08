@@ -1,7 +1,5 @@
-
 import React from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/contexts/auth/AuthContext';
 
 // Public pages
 import Auth from '@/pages/Auth';
@@ -67,85 +65,80 @@ import RoleProtectedRoute from '@/components/auth/RoleProtectedRoute';
 import LoadingScreen from '@/components/LoadingScreen';
 
 const AppRoutes = () => {
-  const { user, loading } = useAuth();
   const location = useLocation();
-
-  if (loading) {
-    return <LoadingScreen message="Loading authentication..." />;
-  }
 
   return (
     <Routes>
-      {/* Public Routes */}
-      <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <Index />} />
-      <Route path="/auth" element={user ? <Navigate to="/dashboard" replace /> : <Auth />} />
+      {/* Public Routes - Make Index redirect to Dashboard */}
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/auth" element={<Auth />} />
 
-      {/* Protected Routes */}
-      <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+      {/* Protected Routes - No real protection for testing */}
+      <Route path="/dashboard" element={<Dashboard />} />
+      
+      <Route path="/devices" element={<Devices />} />
+      <Route path="/devices/add" element={<AddDevice />} />
+      <Route path="/devices/:deviceId" element={<DeviceView />} />
+      <Route path="/devices/:deviceId/edit" element={<EditDevice />} />
 
-      <Route path="/devices" element={<ProtectedRoute><Devices /></ProtectedRoute>} />
-      <Route path="/devices/add" element={<ProtectedRoute><AddDevice /></ProtectedRoute>} />
-      <Route path="/devices/:deviceId" element={<ProtectedRoute><DeviceView /></ProtectedRoute>} />
-      <Route path="/devices/:deviceId/edit" element={<ProtectedRoute><EditDevice /></ProtectedRoute>} />
+      <Route path="/analytics" element={<Analytics />} />
+      <Route path="/consumption" element={<Consumption />} />
+      <Route path="/production" element={<Production />} />
+      <Route path="/reports" element={<Reports />} />
+      <Route path="/alerts" element={<Alerts />} />
+      <Route path="/energy-flow" element={<EnergyFlow />} />
+      <Route path="/microgrid-control" element={<MicrogridControl />} />
 
-      <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
-      <Route path="/consumption" element={<ProtectedRoute><Consumption /></ProtectedRoute>} />
-      <Route path="/production" element={<ProtectedRoute><Production /></ProtectedRoute>} />
-      <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
-      <Route path="/alerts" element={<ProtectedRoute><Alerts /></ProtectedRoute>} />
-      <Route path="/energy-flow" element={<ProtectedRoute><EnergyFlow /></ProtectedRoute>} />
-      <Route path="/microgrid-control" element={<ProtectedRoute><MicrogridControl /></ProtectedRoute>} />
-
-      <Route path="/battery-management" element={<ProtectedRoute><BatteryManagement /></ProtectedRoute>} />
-      <Route path="/energy-optimization" element={<ProtectedRoute><EnergyOptimization /></ProtectedRoute>} />
-      <Route path="/weather-forecast" element={<ProtectedRoute><WeatherForecast /></ProtectedRoute>} />
-      <Route path="/ai/overview" element={<ProtectedRoute><AIOverview /></ProtectedRoute>} />
+      <Route path="/battery-management" element={<BatteryManagement />} />
+      <Route path="/energy-optimization" element={<EnergyOptimization />} />
+      <Route path="/weather-forecast" element={<WeatherForecast />} />
+      <Route path="/ai/overview" element={<AIOverview />} />
 
       {/* Integration Routes */}
-      <Route path="/integrations" element={<ProtectedRoute><IntegrationsHome /></ProtectedRoute>} />
-      <Route path="/integrations/:categoryId" element={<ProtectedRoute><IntegrationCategoryPage /></ProtectedRoute>} />
-      <Route path="/integrations/model/:modelId" element={<ProtectedRoute><DeviceModelDetailPage /></ProtectedRoute>} />
-      <Route path="/integrations/device-model/:modelId" element={<ProtectedRoute><DeviceModelDetailPage /></ProtectedRoute>} />
-      <Route path="/integrations/model/add" element={<ProtectedRoute><AddDeviceModelPage /></ProtectedRoute>} />
-      <Route path="/integrations/model/:modelId/edit" element={<ProtectedRoute><EditDeviceModelPage /></ProtectedRoute>} />
-      <Route path="/integrations/mqtt" element={<ProtectedRoute><MQTTIntegration /></ProtectedRoute>} />
+      <Route path="/integrations" element={<IntegrationsHome />} />
+      <Route path="/integrations/:categoryId" element={<IntegrationCategoryPage />} />
+      <Route path="/integrations/model/:modelId" element={<DeviceModelDetailPage />} />
+      <Route path="/integrations/device-model/:modelId" element={<DeviceModelDetailPage />} />
+      <Route path="/integrations/model/add" element={<AddDeviceModelPage />} />
+      <Route path="/integrations/model/:modelId/edit" element={<EditDeviceModelPage />} />
+      <Route path="/integrations/mqtt" element={<MQTTIntegration />} />
 
-      <Route path="/integrations/communication" element={<ProtectedRoute><CommunicationDevices /></ProtectedRoute>} />
-      <Route path="/integrations/communication/:deviceId" element={<ProtectedRoute><CommunicationDeviceDetail /></ProtectedRoute>} />
+      <Route path="/integrations/communication" element={<CommunicationDevices />} />
+      <Route path="/integrations/communication/:deviceId" element={<CommunicationDeviceDetail />} />
 
-      <Route path="/integrations/batteries" element={<ProtectedRoute><IntegrationCategoryPage /></ProtectedRoute>} />
-      <Route path="/integrations/inverters" element={<ProtectedRoute><IntegrationCategoryPage /></ProtectedRoute>} />
-      <Route path="/integrations/ev-chargers" element={<ProtectedRoute><IntegrationCategoryPage /></ProtectedRoute>} />
-      <Route path="/integrations/meters" element={<ProtectedRoute><IntegrationCategoryPage /></ProtectedRoute>} />
-      <Route path="/integrations/controllers" element={<ProtectedRoute><IntegrationCategoryPage /></ProtectedRoute>} />
+      <Route path="/integrations/batteries" element={<IntegrationCategoryPage />} />
+      <Route path="/integrations/inverters" element={<IntegrationCategoryPage />} />
+      <Route path="/integrations/ev-chargers" element={<IntegrationCategoryPage />} />
+      <Route path="/integrations/meters" element={<IntegrationCategoryPage />} />
+      <Route path="/integrations/controllers" element={<IntegrationCategoryPage />} />
 
       {/* System Routes */}
-      <Route path="/system-status" element={<ProtectedRoute><SystemStatus /></ProtectedRoute>} />
-      <Route path="/security" element={<ProtectedRoute><Security /></ProtectedRoute>} />
+      <Route path="/system-status" element={<SystemStatus />} />
+      <Route path="/security" element={<Security />} />
 
-      {/* Settings Routes */}
-      <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-      <Route path="/settings/user" element={<ProtectedRoute><UserSettings /></ProtectedRoute>} />
-      <Route path="/settings/sites" element={<ProtectedRoute><SiteSettings /></ProtectedRoute>} />
-      <Route path="/settings/sites/add" element={<RoleProtectedRoute allowedRoles={['admin', 'installer']}><AddSite /></RoleProtectedRoute>} />
-      <Route path="/settings/sites/:siteId/edit" element={<RoleProtectedRoute allowedRoles={['admin', 'installer']}><EditSite /></RoleProtectedRoute>} />
-      <Route path="/settings/tariffs" element={<ProtectedRoute><TariffSettings /></ProtectedRoute>} />
-      <Route path="/settings/api" element={<RoleProtectedRoute allowedRoles={['admin']}><ApiSettings /></RoleProtectedRoute>} />
-      <Route path="/settings/notifications" element={<ProtectedRoute><NotificationServices /></ProtectedRoute>} />
-      <Route path="/settings/thresholds" element={<ProtectedRoute><OperationalThresholds /></ProtectedRoute>} />
-      <Route path="/settings/algorithms" element={<ProtectedRoute><OptimizationAlgorithms /></ProtectedRoute>} />
-      <Route path="/settings/external" element={<ProtectedRoute><ExternalServices /></ProtectedRoute>} />
-      <Route path="/settings/system-updates" element={<ProtectedRoute><SystemUpdates /></ProtectedRoute>} />
-      <Route path="/settings/authentication" element={<ProtectedRoute><Authentication /></ProtectedRoute>} />
+      {/* Settings Routes - No role protection */}
+      <Route path="/settings" element={<Settings />} />
+      <Route path="/settings/user" element={<UserSettings />} />
+      <Route path="/settings/sites" element={<SiteSettings />} />
+      <Route path="/settings/sites/add" element={<AddSite />} />
+      <Route path="/settings/sites/:siteId/edit" element={<EditSite />} />
+      <Route path="/settings/tariffs" element={<TariffSettings />} />
+      <Route path="/settings/api" element={<ApiSettings />} />
+      <Route path="/settings/notifications" element={<NotificationServices />} />
+      <Route path="/settings/thresholds" element={<OperationalThresholds />} />
+      <Route path="/settings/algorithms" element={<OptimizationAlgorithms />} />
+      <Route path="/settings/external" element={<ExternalServices />} />
+      <Route path="/settings/system-updates" element={<SystemUpdates />} />
+      <Route path="/settings/authentication" element={<Authentication />} />
       
       {/* AI Routes */}
-      <Route path="/ai/trainer" element={<ProtectedRoute><AIModelTrainer /></ProtectedRoute>} />
+      <Route path="/ai/trainer" element={<AIModelTrainer />} />
       
       {/* Device Catalog Routes */}
       <Route path="/device-view/:deviceId" element={<Navigate to={`/devices/${window.location.pathname.split('/').pop()}`} replace />} />
-      <Route path="/devices/catalog" element={<ProtectedRoute><DeviceCatalog /></ProtectedRoute>} />
-      <Route path="/devices/category/:categoryId" element={<ProtectedRoute><DeviceCategoryDetail /></ProtectedRoute>} />
-      <Route path="/devices/model/:modelId" element={<ProtectedRoute><DeviceModelDetail /></ProtectedRoute>} />
+      <Route path="/devices/catalog" element={<DeviceCatalog />} />
+      <Route path="/devices/category/:categoryId" element={<DeviceCategoryDetail />} />
+      <Route path="/devices/model/:modelId" element={<DeviceModelDetail />} />
       
       {/* Catch-all route */}
       <Route path="*" element={<NotFound />} />
