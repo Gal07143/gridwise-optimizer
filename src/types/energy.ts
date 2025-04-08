@@ -1,7 +1,28 @@
 
-export type DeviceType = 'inverter' | 'battery' | 'solar' | 'wind' | 'ev_charger' | 'meter' | 'grid' | 'load';
-export type DeviceStatus = 'online' | 'offline' | 'warning' | 'error' | 'maintenance';
-export type SupportLevel = 'none' | 'partial' | 'full' | 'beta';
+// Energy Data Types
+export type DeviceType = 
+  | 'solar' 
+  | 'battery' 
+  | 'ev_charger' 
+  | 'grid' 
+  | 'load'
+  | 'inverter' 
+  | 'meter'
+  | 'wind' 
+  | 'hydro'
+  | 'generator'
+  | 'light';
+
+export type DeviceStatus = 
+  | 'online' 
+  | 'offline'
+  | 'maintenance'
+  | 'error'
+  | 'warning'
+  | 'idle'
+  | 'active'
+  | 'charging'
+  | 'discharging';
 
 export interface Site {
   id: string;
@@ -10,40 +31,36 @@ export interface Site {
   timezone: string;
   lat?: number;
   lng?: number;
-  status?: 'active' | 'inactive' | 'maintenance';
   created_at?: string;
   updated_at?: string;
+  type?: string;
 }
 
 export interface EnergyDevice {
   id: string;
-  site_id?: string;
   name: string;
   type: DeviceType;
   status: DeviceStatus;
-  description?: string;
-  firmware_version?: string;
-  location?: string;
+  site_id?: string;
   capacity: number;
-  connection_info?: Record<string, any>;
-  protocol?: string;
-  config?: Record<string, any>;
-  metrics?: Record<string, number>;
+  location?: string;
+  description?: string;
   lat?: number;
   lng?: number;
-  installation_date?: string;
-  created_by?: string;
   created_at: string;
-  updated_at: string;
-  last_seen?: string;
+  last_updated: string;
+  metrics?: Record<string, any>;
+  connection_info?: Record<string, any>;
+  installation_date?: string;
+  firmware?: string;
+  firmware_version?: string;
+  tags?: string[] | Record<string, any>;
 }
 
 export interface EnergyReading {
   id: string;
   device_id: string;
   timestamp: string;
-  value: number;
-  unit: string;
   power: number;
   energy: number;
   voltage?: number;
@@ -51,14 +68,45 @@ export interface EnergyReading {
   frequency?: number;
   temperature?: number;
   state_of_charge?: number;
-  created_at: string;
+  value?: number;
+  unit?: string;
+  created_at?: string;
+}
+
+export interface DeviceModel {
+  id: string;
+  name: string;
+  manufacturer: string;
+  model_number: string;
+  device_type: DeviceType;
+  power_rating?: number;
+  capacity?: number;
+  support_level: "none" | "partial" | "full";
+  category: string;
+  description?: string;
+  protocol?: string;
+  dimensions?: string;
+  weight?: number;
+  release_date?: string;
+  firmware_version?: string;
+  warranty?: string;
+  connectivity?: Record<string, any>;
+  specifications?: Record<string, any>;
+  images?: string[] | Record<string, any>;
+  manuals?: Record<string, any>;
+  datasheets?: Record<string, any>;
+  videos?: Record<string, any>;
+  compatible_with?: string[];
+  certifications?: string[];
+  has_manual?: boolean;
+  has_datasheet?: boolean;
 }
 
 export interface EnergyForecast {
   id: string;
   site_id: string;
-  timestamp: string;
   forecast_time: string;
+  timestamp: string;
   generation_forecast: number;
   consumption_forecast: number;
   temperature?: number;
@@ -66,37 +114,26 @@ export interface EnergyForecast {
   wind_speed?: number;
   weather_condition?: string;
   confidence?: number;
-  source: string;
-  created_at: string;
+  created_at?: string;
 }
 
 export interface Tariff {
-  id: number;
+  id: string;
   timestamp: string;
   price_eur_kwh: number;
-  source?: string;
   type?: string;
+  source?: string;
 }
 
 export interface OptimizationResult {
-  id: number;
+  id: string;
   site_id?: string;
+  user_id?: string;
   timestamp_start?: string;
   timestamp_end?: string;
-  user_id?: string;
   schedule_json?: Record<string, any>;
   cost_estimate?: number;
   source_data_hash?: string;
-}
-
-export interface UserPreference {
-  id: string;
-  user_id?: string;
-  min_soc?: number;
-  max_soc?: number;
-  time_window_start?: string;
-  time_window_end?: string;
-  priority_device_ids?: string[];
 }
 
 export interface AIRecommendation {
@@ -108,67 +145,25 @@ export interface AIRecommendation {
   description: string;
   potential_savings?: string;
   confidence?: number;
-  applied: boolean;
+  applied?: boolean;
   applied_at?: string;
   applied_by?: string;
-  created_at: string;
-}
-
-export interface WeatherData {
-  id: string;
-  site_id: string;
-  timestamp: string;
-  temperature?: number;
-  humidity?: number;
-  wind_speed?: number;
-  wind_direction?: number;
-  cloud_cover?: number;
-  precipitation?: number;
-  forecast: boolean;
-  source?: string;
+  created_at?: string;
 }
 
 export interface Alert {
   id: string;
   device_id: string;
   type: string;
+  timestamp: string;
   severity?: string;
   message: string;
+  source?: string;
   acknowledged: boolean;
   acknowledged_by?: string;
   acknowledged_at?: string;
   resolved_at?: string;
-  timestamp: string;
-  source?: string;
-}
-
-export interface DeviceModel {
-  id: string;
-  name: string;
-  manufacturer: string;
-  model_number: string;
-  device_type: string;
-  category?: string;
-  description?: string;
-  power_rating?: number;
-  capacity?: number;
-  weight?: number;
-  dimensions?: string;
-  connectivity?: Record<string, any>;
-  specifications?: Record<string, any>;
-  release_date?: string;
-  warranty?: string;
-  support_level: "none" | "partial" | "full";
-  protocol?: string;
-  firmware_version?: string;
-  images?: string[];
-  manuals?: Record<string, any>;
-  datasheets?: Record<string, any>;
-  videos?: Record<string, any>;
-  certifications?: string[];
-  compatible_with?: string[];
-  created_at?: string;
-  updated_at?: string;
+  title?: string;
 }
 
 export interface ModbusDevice {
@@ -180,21 +175,10 @@ export interface ModbusDevice {
   protocol: "tcp" | "rtu";
   is_active: boolean;
   description?: string;
+  address?: string;
   inserted_at?: string;
   updated_at?: string;
-}
-
-export interface ModbusRegisterDefinition {
-  id: string;
-  device_id?: string;
-  name: string;
-  address: number;
-  registerType: "input" | "holding";
-  dataType: "int16" | "uint16" | "int32" | "uint32" | "float32";
-  access: "read" | "write" | "read-write";
-  scaleFactor?: number;
-  unit?: string;
-  description?: string;
+  created_at?: string;
 }
 
 export interface ModbusReadingResult {
@@ -203,45 +187,36 @@ export interface ModbusReadingResult {
   formattedValue: string;
   timestamp: string;
   success: boolean;
-  error?: string;
+  error?: string | Error;
 }
 
-// Energy Flow types
-export interface EnergyNode {
+export interface ConnectionStatusResult {
+  status: 'connected' | 'disconnected' | 'connecting' | 'error';
+  message?: string;
+  isOnline?: boolean;
+  isConnected?: boolean;
+  isConnecting?: boolean;
+  connect?: () => Promise<void>;
+  disconnect?: () => Promise<void>;
+  retryConnection?: () => Promise<void>;
+}
+
+export interface TelemetryData {
+  timestamp: string;
+  value: number;
+  unit?: string;
+  type?: string;
+  device_id?: string;
+}
+
+export interface SystemRecommendation {
   id: string;
-  label: string;
-  type: 'source' | 'storage' | 'consumption';
-  power: number; // kW, negative for consumption
-  status: 'active' | 'warning' | 'error' | 'inactive';
-  deviceType: string;
-  batteryLevel?: number; // % for storage
-}
-
-export interface EnergyConnection {
-  from: string;
-  to: string;
-  value: number; // kW
-  active: boolean;
-}
-
-export interface EnergyFlowState {
-  nodes: EnergyNode[];
-  connections: EnergyConnection[];
-  isLoading: boolean;
-}
-
-export interface EnergyFlowContextType extends EnergyFlowState {
-  totalGeneration: number;
-  totalConsumption: number;
-  batteryPercentage: number;
-  selfConsumptionRate: number;
-  gridDependencyRate: number;
-  refreshData: () => Promise<void>;
-  isLoading: boolean;
-}
-
-export interface EnergyNodeProps {
-  node: EnergyNode;
-  isSelected?: boolean;
-  onClick?: () => void;
+  title: string;
+  description: string;
+  potentialSavings?: number;
+  impact: 'low' | 'medium' | 'high';
+  type: 'energy' | 'cost' | 'maintenance' | 'carbon';
+  createdAt: string;
+  priority: 'low' | 'medium' | 'high';
+  status: 'pending' | 'applied' | 'dismissed';
 }

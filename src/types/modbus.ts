@@ -44,13 +44,28 @@ export interface ModbusReadingResult {
 export interface ConnectionStatusResult {
   status: 'connected' | 'disconnected' | 'connecting' | 'error';
   message?: string;
+  isOnline?: boolean;
+  isConnected?: boolean;
   isConnecting?: boolean;
   connect?: () => Promise<void>;
   disconnect?: () => Promise<void>;
+  retryConnection?: () => Promise<void>;
 }
 
 export interface ModbusWriteRequest {
   registerAddress: number;
   value: number | boolean;
   registerType: "holding_register" | "coil";
+}
+
+export interface ConnectionStatusOptions {
+  autoConnect?: boolean;
+  retryInterval?: number;
+  maxRetries?: number;
+}
+
+export type ModbusDevice = ModbusDeviceConfig;
+
+export interface ModbusRegister extends ModbusRegisterDefinition {
+  // Extend if needed
 }

@@ -1,78 +1,88 @@
 
 import React from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
-import { 
-  Home, BarChart2, Settings, Zap, Battery, 
-  Sun, PlusCircle, Package, Map, Layers,
-  Database, Grid, MonitorSmartphone 
-} from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import Logo from './Logo';
-import SidebarNavSection from './SidebarNavSection';
+import { useAppStore } from '@/store/appStore';
+import { 
+  Home, 
+  Settings, 
+  BarChart2, 
+  Zap, 
+  Battery, 
+  Wind, 
+  Sun, 
+  Building,
+  Server,
+  ChevronRight
+} from 'lucide-react';
 
 interface SidebarProps {
   expanded: boolean;
   toggleSidebar: () => void;
 }
 
-export const Sidebar = ({ expanded, toggleSidebar }: SidebarProps) => {
+const navItems = [
+  { path: '/', icon: <Home size={20} />, label: 'Dashboard' },
+  { path: '/energy', icon: <Zap size={20} />, label: 'Energy' },
+  { path: '/solar', icon: <Sun size={20} />, label: 'Solar' },
+  { path: '/devices', icon: <Server size={20} />, label: 'Devices' },
+  { path: '/sites', icon: <Building size={20} />, label: 'Sites' },
+  { path: '/settings', icon: <Settings size={20} />, label: 'Settings' },
+];
+
+export const Sidebar: React.FC<SidebarProps> = ({ expanded, toggleSidebar }) => {
   const location = useLocation();
-  
-  const NavItem = ({ to, icon: Icon, label }: { to: string; icon: React.ElementType; label: string }) => {
-    const isActive = location.pathname === to || 
-                    (to !== '/' && location.pathname.startsWith(to));
-                    
-    return (
-      <NavLink
-        to={to}
-        className={({ isActive }) => cn(
-          'flex items-center py-2 px-3 text-sm font-medium rounded-lg transition-colors',
-          isActive
-            ? 'bg-indigo-100 text-indigo-900 dark:bg-indigo-900/30 dark:text-indigo-100'
-            : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-slate-800/50'
-        )}
-      >
-        <Icon className="h-4 w-4 mr-3 shrink-0" />
-        {expanded && <span>{label}</span>}
-      </NavLink>
-    );
+  const { sidebarOpen, setSidebarOpen } = useAppStore();
+
+  const isActive = (path: string) => {
+    return location.pathname === path || 
+           (path !== '/' && location.pathname.startsWith(path));
   };
 
   return (
-    <aside className={cn(
-      "border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex flex-col h-full transition-all duration-300",
-      expanded ? "w-56" : "w-16"
-    )}>
-      <div className="h-16 flex items-center px-4 border-b border-slate-200 dark:border-slate-800 justify-center">
-        {expanded ? <Logo /> : <Zap className="h-6 w-6 text-primary" />}
-      </div>
-      
-      <div className="flex-1 overflow-auto py-2 px-3">
-        <SidebarNavSection heading="Main" collapsed={!expanded}>
-          <NavItem to="/" icon={Home} label="Dashboard" />
-          <NavItem to="/energy-flow" icon={Zap} label="Energy Flow" />
-          <NavItem to="/consumption" icon={BarChart2} label="Consumption" />
-          <NavItem to="/savings" icon={Battery} label="Savings" />
-        </SidebarNavSection>
+    <aside 
+      className={cn(
+        "bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 h-screen transition-all duration-300",
+        expanded ? "w-64" : "w-16"
+      )}
+    >
+      <div className="flex flex-col h-full">
+        <div className={cn(
+          "flex items-center h-16 px-4 border-b border-slate-200 dark:border-slate-800",
+          expanded ? "justify-between" : "justify-center"
+        )}>
+          {expanded ? (
+            <>
+              <div className="font-bold text-xl dark:text-white">EnergyEMS</div>
+              <button onClick={toggleSidebar}>
+                <ChevronRight className="h-5 w-5 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white" />
+              </button>
+            </>
+          ) : (
+            <button onClick={toggleSidebar}>
+              <ChevronRight className="h-5 w-5 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transform rotate-180" />
+            </button>
+          )}
+        </div>
         
-        <SidebarNavSection heading="Energy Assets" collapsed={!expanded}>
-          <NavItem to="/devices" icon={MonitorSmartphone} label="Devices" />
-          <NavItem to="/solar" icon={Sun} label="Solar" />
-          <NavItem to="/optimization" icon={Zap} label="Optimization" />
-        </SidebarNavSection>
-        
-        <SidebarNavSection heading="Organization" collapsed={!expanded}>
-          <NavItem to="/sites" icon={Map} label="Sites" />
-          <NavItem to="/projects" icon={Layers} label="Projects" />
-          <NavItem to="/integrations" icon={PlusCircle} label="Integrations" />
-          <NavItem to="/modbus" icon={Grid} label="Modbus" />
-        </SidebarNavSection>
-        
-        <SidebarNavSection heading="System" collapsed={!expanded}>
-          <NavItem to="/analytics" icon={BarChart2} label="Analytics" />
-          <NavItem to="/settings" icon={Settings} label="Settings" />
-          <NavItem to="/preferences" icon={Database} label="Preferences" />
-        </SidebarNavSection>
+        <nav className="flex-1 px-2 py-4 space-y-1">
+          {navItems.map((item) => (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={cn(
+                "flex items-center px-3 py-2.5 rounded-md transition-all",
+                isActive(item.path) ? 
+                  "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" : 
+                  "text-slate-600 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-800/60",
+                !expanded && "justify-center"
+              )}
+            >
+              <div className={expanded ? "mr-3" : ""}>{item.icon}</div>
+              {expanded && <span>{item.label}</span>}
+            </Link>
+          ))}
+        </nav>
       </div>
     </aside>
   );
