@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Main } from '@/components/ui/main';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Battery, Zap, Wind, Home, Sun, Maximize2, RefreshCw, Info, SunMedium, PlugZap, Activity, AreaChart } from 'lucide-react';
+import { Battery, Zap, Wind, Home, Sun, Maximize2, RefreshCw, Info, SunMedium, PlugZap, Activity, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useAppStore } from '@/store/appStore';
@@ -119,7 +119,7 @@ const EnergyFlow: React.FC = () => {
             Realtime Flow
           </TabsTrigger>
           <TabsTrigger value="historical" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
-            <AreaChart className="h-4 w-4 mr-2" />
+            <BarChart3 className="h-4 w-4 mr-2" />
             Historical Data
           </TabsTrigger>
           <TabsTrigger value="optimization" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
@@ -302,7 +302,7 @@ const EnergyFlow: React.FC = () => {
             <Card className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm md:col-span-2">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <AreaChart className="h-5 w-5 text-blue-500" />
+                  <BarChart3 className="h-5 w-5 text-blue-500" />
                   Historical Energy Flow
                 </CardTitle>
                 <CardDescription>
