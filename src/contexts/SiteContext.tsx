@@ -1,63 +1,71 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Site } from '@/types/site';
-import mockSites from '@/services/sites/mockSites';
-import { toast } from 'sonner';
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import { Site } from '@/types/energy';
+// Fix the import to use named import instead of default import
+import { mockSites } from '@/services/sites/mockSites';
 
 interface SiteContextType {
-  currentSite: Site | null;
   sites: Site[];
-  loading: boolean;
-  setCurrentSite: (site: Site) => void;
+  currentSite: Site | null;
+  setCurrentSite: (site: Site | null) => void;
+  isLoading: boolean;
+  error: Error | null;
 }
 
 const SiteContext = createContext<SiteContextType>({
-  currentSite: null,
   sites: [],
-  loading: true,
+  currentSite: null,
   setCurrentSite: () => {},
+  isLoading: false,
+  error: null
 });
 
 export const useSite = () => useContext(SiteContext);
 
 export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentSite, setCurrentSite] = useState<Site | null>(null);
   const [sites, setSites] = useState<Site[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [currentSite, setCurrentSite] = useState<Site | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<Error | null>(null);
 
-  // Load sites on mount
+  // Load sites on component mount
   useEffect(() => {
     const loadSites = async () => {
       try {
-        // In a real app, this would be a fetch from your API
-        const loadedSites = mockSites;
+        // In a real app, we would fetch sites from an API
+        // For now, use mock data
+        setIsLoading(true);
         
-        setSites(loadedSites);
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 500));
         
-        // Set default site if available
-        if (loadedSites.length > 0) {
-          setCurrentSite(loadedSites[0]);
+        setSites(mockSites);
+        
+        // Set the first site as the current site by default
+        if (mockSites.length > 0 && !currentSite) {
+          setCurrentSite(mockSites[0]);
         }
-      } catch (error) {
-        console.error('Error loading sites:', error);
-        toast.error('Failed to load sites');
+      } catch (err) {
+        console.error('Failed to load sites:', err);
+        setError(err instanceof Error ? err : new Error('Failed to load sites'));
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
     loadSites();
   }, []);
 
-  const contextValue: SiteContextType = {
-    currentSite,
-    sites,
-    loading,
-    setCurrentSite,
-  };
-
   return (
-    <SiteContext.Provider value={contextValue}>
+    <SiteContext.Provider 
+      value={{
+        sites,
+        currentSite,
+        setCurrentSite,
+        isLoading,
+        error
+      }}
+    >
       {children}
     </SiteContext.Provider>
   );

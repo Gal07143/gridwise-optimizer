@@ -69,7 +69,7 @@ const AddDevice = () => {
       firmware: data.firmware || '',
       description: data.description || '',
       site_id: data.site_id,
-      last_updated: new Date().toISOString()
+      updated_at: new Date().toISOString() // Add the required updated_at field
     };
     
     mutate(deviceData);

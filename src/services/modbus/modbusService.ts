@@ -1,89 +1,198 @@
 
-import { supabase } from '@/integrations/supabase/client';
-import { ModbusDevice, ModbusReadingResult, ModbusRegisterDefinition } from '@/types/modbus';
+import { ModbusDevice, ModbusDeviceConfig, ModbusReadingResult } from '@/types/modbus';
 import { toast } from 'sonner';
 
+// Mock data
+const mockModbusDevices: ModbusDevice[] = [
+  {
+    id: '1',
+    name: 'Inverter Gateway',
+    ip: '192.168.1.100',
+    port: 502,
+    unit_id: 1,
+    is_active: true,
+    protocol: 'TCP',
+    status: 'online',
+    description: 'Main inverter gateway'
+  },
+  {
+    id: '2',
+    name: 'Battery BMS',
+    ip: '192.168.1.101',
+    port: 502,
+    unit_id: 2,
+    is_active: true,
+    protocol: 'TCP',
+    status: 'online',
+    description: 'Battery management system'
+  },
+  {
+    id: '3',
+    name: 'Meter Gateway',
+    ip: '192.168.1.102',
+    port: 1502,
+    unit_id: 1,
+    is_active: false,
+    protocol: 'TCP',
+    status: 'offline',
+    description: 'Smart meter connection'
+  }
+];
+
 /**
- * Read a Modbus register from a device
+ * Get all Modbus devices
  */
-export const readModbusRegister = async (
-  deviceId: string,
-  register: ModbusRegisterDefinition
+export const getAllModbusDevices = async (): Promise<ModbusDevice[]> => {
+  // Simulate API latency
+  await new Promise(resolve => setTimeout(resolve, 500));
+  return [...mockModbusDevices];
+};
+
+/**
+ * Get a Modbus device by ID
+ */
+export const getModbusDeviceById = async (id: string): Promise<ModbusDevice | null> => {
+  // Simulate API latency
+  await new Promise(resolve => setTimeout(resolve, 300));
+  const device = mockModbusDevices.find(d => d.id === id) || null;
+  return device;
+};
+
+/**
+ * Create a new Modbus device
+ */
+export const createModbusDevice = async (deviceConfig: ModbusDeviceConfig): Promise<ModbusDevice> => {
+  // Simulate API latency
+  await new Promise(resolve => setTimeout(resolve, 800));
+  
+  const newDevice: ModbusDevice = {
+    ...deviceConfig,
+    id: `device-${Date.now()}`,
+    status: 'offline',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
+  
+  // In a real app, we would save to the backend
+  // For now, just console log
+  console.log('Created new Modbus device:', newDevice);
+  
+  return newDevice;
+};
+
+/**
+ * Update an existing Modbus device
+ */
+export const updateModbusDevice = async (id: string, updates: Partial<ModbusDeviceConfig>): Promise<ModbusDevice> => {
+  // Simulate API latency
+  await new Promise(resolve => setTimeout(resolve, 700));
+  
+  // In a real app, we would update in the backend
+  // For now, just log and return a mock response
+  console.log(`Updating device ${id} with:`, updates);
+  
+  const device = await getModbusDeviceById(id);
+  if (!device) {
+    throw new Error('Device not found');
+  }
+  
+  const updatedDevice: ModbusDevice = {
+    ...device,
+    ...updates,
+    updated_at: new Date().toISOString()
+  };
+  
+  return updatedDevice;
+};
+
+/**
+ * Delete a Modbus device
+ */
+export const deleteModbusDevice = async (id: string): Promise<boolean> => {
+  // Simulate API latency
+  await new Promise(resolve => setTimeout(resolve, 600));
+  
+  // In a real app, we would delete from the backend
+  console.log(`Deleting device ${id}`);
+  
+  return true;
+};
+
+/**
+ * Test connection to a Modbus device
+ */
+export const testModbusConnection = async (device: Partial<ModbusDevice>): Promise<boolean> => {
+  // Simulate API latency and connection test
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  // Simulate 80% success rate
+  const success = Math.random() < 0.8;
+  
+  if (!success) {
+    throw new Error(`Failed to connect to ${device.ip}:${device.port}`);
+  }
+  
+  return success;
+};
+
+/**
+ * Read a register from a Modbus device
+ */
+export const readRegister = async (
+  deviceId: string, 
+  address: number, 
+  length: number = 1
 ): Promise<ModbusReadingResult> => {
+  // Simulate API latency
+  await new Promise(resolve => setTimeout(resolve, 800));
+  
   try {
-    console.log(`Reading register ${register.name} from device ${deviceId}`);
-    
-    // First, get the device details to ensure it exists
-    const { data: device, error: deviceError } = await supabase
-      .from('modbus_devices')
-      .select('*')
-      .eq('id', deviceId)
-      .single();
-      
-    if (deviceError) {
-      console.error('Error fetching device:', deviceError);
-      throw new Error(`Device not found: ${deviceError.message}`);
-    }
-    
-    if (!device) {
-      throw new Error(`Device with ID ${deviceId} not found`);
-    }
-    
-    // Prepare the request to the Edge Function
-    const payload = {
-      deviceId,
-      ip: device.ip,
-      port: device.port,
-      unitId: device.unit_id,
-      register: {
-        address: register.address,
-        quantity: register.length || 1,
-        type: register.registerType || 'holding',
-        dataType: register.dataType || 'int16'
-      }
-    };
-    
-    // Call the Supabase Edge Function for Modbus communication
-    const { data, error } = await supabase.functions.invoke('modbus-read', {
-      body: JSON.stringify(payload)
-    });
-    
-    if (error) {
-      console.error('Error calling Modbus function:', error);
-      throw new Error(`Modbus read error: ${error.message}`);
-    }
-    
-    // Apply scaling if needed
-    let scaledValue = data.value;
-    if (register.scaleFactor !== undefined) {
-      scaledValue = data.value * register.scaleFactor;
-    } else if (register.scale !== undefined) {
-      scaledValue = data.value * register.scale;
-    }
-    
-    const result: ModbusReadingResult = {
-      value: scaledValue,
-      address: register.address,
-      buffer: data.buffer,
-      raw: data.raw,
-      success: true, // Adding for backward compatibility
-      timestamp: new Date().toISOString(), // Adding for backward compatibility
-    };
-    
-    return result;
-    
-  } catch (err) {
-    console.error('Error reading Modbus register:', err);
-    const errorMessage = err instanceof Error ? err.message : 'Unknown error reading Modbus register';
-    const errorObj = err instanceof Error ? err : new Error(errorMessage);
+    // For demo purposes, generate random values based on address
+    const value = Math.floor(Math.random() * 1000) / 10;
     
     return {
+      value,
+      address,
+      success: true,
+      timestamp: new Date().toISOString(),
+      error: undefined
+    };
+  } catch (error) {
+    console.error('Error reading Modbus register:', error);
+    return {
       value: 0,
-      address: register.address,
-      error: errorObj,
-      success: false, // Adding for backward compatibility
+      address,
+      success: false,
+      timestamp: new Date().toISOString(),
+      error: error instanceof Error ? error : new Error('Unknown error')
     };
   }
 };
 
-// More functions will be added here as needed
+/**
+ * Write a value to a Modbus register
+ */
+export const writeRegister = async (
+  deviceId: string, 
+  address: number, 
+  value: number, 
+  dataType: string = 'int16'
+): Promise<boolean> => {
+  // Simulate API latency
+  await new Promise(resolve => setTimeout(resolve, 800));
+  
+  try {
+    // Log the operation for demonstration
+    console.log(`Writing ${value} to device ${deviceId}, address ${address}, type ${dataType}`);
+    
+    // Simulate 90% success rate
+    if (Math.random() < 0.9) {
+      return true;
+    } else {
+      throw new Error('Simulated write failure');
+    }
+  } catch (error) {
+    console.error('Error writing to Modbus register:', error);
+    throw error;
+  }
+};

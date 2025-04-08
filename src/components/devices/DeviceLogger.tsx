@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { getDeviceReadings } from '@/services/devices/readingsService';
 import { Badge } from '@/components/ui/badge';
 import GlassPanel from '@/components/ui/GlassPanel';
+import { EnergyReading } from '@/types/energy';
 
 interface LogEntry {
   timestamp: string;
@@ -46,34 +47,39 @@ const DeviceLogger: React.FC<DeviceLoggerProps> = ({ deviceId }) => {
       
       // Create some simulated log entries based on the device readings
       deviceReadings.forEach(reading => {
+        // Ensure the reading has the properties we need
+        const powerValue = reading.power || reading.value;
+        const energyValue = reading.energy || 0;
+        const tempValue = reading.temperature;
+
         // Log power output
         newLogs.push({
           timestamp: reading.timestamp,
           level: 'info',
-          message: `Power output: ${reading.power.toFixed(2)} kW`
+          message: `Power output: ${powerValue.toFixed(2)} kW`
         });
         
         // Log energy production
         newLogs.push({
           timestamp: reading.timestamp,
           level: 'info',
-          message: `Energy production: ${reading.energy.toFixed(2)} kWh`
+          message: `Energy production: ${energyValue.toFixed(2)} kWh`
         });
         
         // Add some warning logs if values are outside normal ranges
-        if (reading.power > 50) {
+        if (powerValue > 50) {
           newLogs.push({
             timestamp: reading.timestamp,
             level: 'warning',
-            message: `High power output detected: ${reading.power.toFixed(2)} kW`
+            message: `High power output detected: ${powerValue.toFixed(2)} kW`
           });
         }
         
-        if (reading.temperature && reading.temperature > 40) {
+        if (tempValue && tempValue > 40) {
           newLogs.push({
             timestamp: reading.timestamp,
             level: 'warning',
-            message: `High temperature detected: ${reading.temperature.toFixed(1)} °C`
+            message: `High temperature detected: ${tempValue.toFixed(1)} °C`
           });
         }
         

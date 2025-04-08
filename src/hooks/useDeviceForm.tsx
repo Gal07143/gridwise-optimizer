@@ -41,7 +41,8 @@ export const useDeviceForm = () => {
         capacity: deviceData.capacity,
         firmware: deviceData.firmware || null,
         description: deviceData.description || null,
-        site_id: deviceData.site_id || null
+        site_id: deviceData.site_id || null,
+        updated_at: new Date().toISOString() // Add the required updated_at property
       });
       
       if (newDevice) {

@@ -30,9 +30,7 @@ const mapDbToEnergyReading = (dbReading: DbEnergyReading): EnergyReading => {
     device_id: dbReading.device_id,
     timestamp: dbReading.timestamp,
     value: dbReading.power, // Use power as the primary value
-    reading_type: 'power',
     unit: 'W',
-    quality: 100, // Assume good quality for now
     power: dbReading.power,
     energy: dbReading.energy,
     voltage: dbReading.voltage,
@@ -143,9 +141,7 @@ export const fetchRealtimeReadingsFromDevice = async (deviceId: string): Promise
       device_id: deviceId,
       timestamp: now.toISOString(),
       value: power,
-      reading_type: 'power',
       unit: 'W',
-      quality: 100,
       power,
       energy,
       voltage,
@@ -217,13 +213,13 @@ export const addDeviceReading = async (reading: Omit<EnergyReading, 'id' | 'crea
     const readingData = {
       device_id: reading.device_id,
       timestamp: reading.timestamp,
-      power: reading.power || reading.value,
-      energy: reading.energy || 0,
-      voltage: reading.voltage || 0,
-      current: reading.current || 0,
-      frequency: reading.frequency || 0,
-      temperature: reading.temperature || 0,
-      state_of_charge: reading.state_of_charge || null
+      power: reading.power !== undefined ? reading.power : reading.value,
+      energy: reading.energy !== undefined ? reading.energy : 0,
+      voltage: reading.voltage !== undefined ? reading.voltage : 0,
+      current: reading.current !== undefined ? reading.current : 0,
+      frequency: reading.frequency !== undefined ? reading.frequency : 0,
+      temperature: reading.temperature !== undefined ? reading.temperature : 0,
+      state_of_charge: reading.state_of_charge !== undefined ? reading.state_of_charge : null
     };
 
     const { data, error } = await supabase

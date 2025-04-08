@@ -1,32 +1,29 @@
 
 import { create } from 'zustand';
-import { Site } from '@/types/site';
-import mockSites from '@/services/sites/mockSites';
+import { Site } from '@/types/energy';
+// Fix the import to use named import
+import { mockSites } from '@/services/sites/mockSites';
 
 interface AppState {
-  activeSite: Site | null;
   sites: Site[];
-  setActiveSite: (site: Site) => void;
-  setSites: (sites: Site[]) => void;
-  loading: boolean;
-  setLoading: (loading: boolean) => void;
-  // Add missing sidebar state properties
-  sidebarExpanded: boolean;
-  setSidebarExpanded: (expanded: boolean) => void;
-  toggleSidebar: () => void;
+  currentSite: Site | null;
+  setCurrentSite: (site: Site) => void;
+  theme: 'light' | 'dark' | 'system';
+  setTheme: (theme: 'light' | 'dark' | 'system') => void;
+  menuCollapsed: boolean;
+  setMenuCollapsed: (collapsed: boolean) => void;
+  toggleMenu: () => void;
 }
 
-export const useAppStore = create<AppState>((set) => ({
-  activeSite: mockSites.length > 0 ? mockSites[0] : null,
+const useAppStore = create<AppState>((set) => ({
   sites: mockSites,
-  setActiveSite: (site) => set({ activeSite: site }),
-  setSites: (sites) => set({ sites }),
-  loading: false,
-  setLoading: (loading) => set({ loading }),
-  // Initialize sidebar state
-  sidebarExpanded: true,
-  setSidebarExpanded: (expanded) => set({ sidebarExpanded: expanded }),
-  toggleSidebar: () => set((state) => ({ sidebarExpanded: !state.sidebarExpanded })),
+  currentSite: mockSites.length > 0 ? mockSites[0] : null,
+  setCurrentSite: (site) => set({ currentSite: site }),
+  theme: 'system',
+  setTheme: (theme) => set({ theme }),
+  menuCollapsed: false,
+  setMenuCollapsed: (collapsed) => set({ menuCollapsed: collapsed }),
+  toggleMenu: () => set((state) => ({ menuCollapsed: !state.menuCollapsed })),
 }));
 
 export default useAppStore;

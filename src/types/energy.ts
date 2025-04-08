@@ -149,10 +149,20 @@ export interface EnergyReading {
   id?: string;
   device_id: string;
   timestamp: string;
-  metric: string;
+  metric?: string;
   value: number;
   unit?: string;
   created_at?: string;
+  // Adding the missing properties from the errors
+  power?: number;
+  energy?: number;
+  voltage?: number;
+  current?: number;
+  frequency?: number;
+  temperature?: number;
+  state_of_charge?: number;
+  quality?: number;
+  reading_type?: string;
 }
 
 export interface TelemetryData {
