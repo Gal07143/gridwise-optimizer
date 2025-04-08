@@ -1,197 +1,8 @@
 
-// This file contains all energy-related type definitions for the application
+export type DeviceType = 'inverter' | 'battery' | 'solar' | 'wind' | 'ev_charger' | 'meter' | 'grid' | 'load';
+export type DeviceStatus = 'online' | 'offline' | 'warning' | 'error' | 'maintenance';
+export type SupportLevel = 'none' | 'partial' | 'full' | 'beta';
 
-export interface Alert {
-  id: string;
-  title: string;
-  message: string;
-  severity: 'critical' | 'warning' | 'info';
-  source: string;
-  device_id?: string;
-  site_id?: string;
-  acknowledged: boolean;
-  timestamp: string;
-  alert_source?: string;
-  ack_by?: string;
-  ack_at?: string;
-  alert_type?: string;
-}
-
-export interface EnergyConsumption {
-  id: string;
-  site_id: string;
-  timestamp: string;
-  value: number;
-  unit: string;
-}
-
-export interface EnergyProduction {
-  id: string;
-  site_id: string;
-  timestamp: string;
-  value: number;
-  unit: string;
-  source: string;
-}
-
-export interface EnergyCost {
-  id: string;
-  site_id: string;
-  timestamp: string;
-  value: number;
-  currency: string;
-}
-
-export interface EnergyEmission {
-  id: string;
-  site_id: string;
-  timestamp: string;
-  value: number;
-  unit: string;
-}
-
-// Device-related types
-export type DeviceType = 'solar' | 'wind' | 'battery' | 'grid' | 'load' | 'ev_charger' | 'inverter' | 'meter' | 'light' | 'generator' | 'hydro' | string;
-
-export type DeviceStatus = 'online' | 'offline' | 'maintenance' | 'error' | 'warning' | 'idle' | 'active' | 'charging' | 'discharging' | string;
-
-export interface DeviceTypeInfo {
-  id: string;
-  name: string;
-  icon?: string;
-  category?: string;
-  description?: string;
-}
-
-export interface DeviceStatusInfo {
-  id: string;
-  name: string;
-  description?: string;
-  severity?: 'info' | 'warning' | 'error' | 'success';
-  icon?: string;
-}
-
-export interface EnergyDevice {
-  id: string;
-  name: string;
-  type: DeviceType;
-  status: DeviceStatus;
-  site_id?: string;
-  manufacturer?: string;
-  model?: string;
-  serial_number?: string;
-  install_date?: string;
-  last_maintenance?: string;
-  next_maintenance?: string;
-  firmware_version?: string;
-  ip_address?: string;
-  mac_address?: string;
-  location?: string;
-  description?: string;
-  tags?: string[];
-  created_at: string;
-  updated_at: string;
-  metadata?: Record<string, any>;
-  telemetry_prefix?: string;
-  capacity?: number;
-  firmware?: string;
-  installation_date?: string;
-  metrics?: Record<string, number> | null;
-  last_updated?: string;
-  enabled?: boolean;
-  config?: Record<string, any>;
-  protocol?: string;
-  lat?: number;
-  lng?: number;
-  created_by?: string;
-}
-
-export interface DeviceModel {
-  id: string;
-  name: string;
-  manufacturer: string;
-  type: string;
-  protocol?: string;
-  description?: string;
-  power_rating?: number;
-  voltage_rating?: number;
-  current_rating?: number;
-  dimensions?: string;
-  weight?: number;
-  efficiency?: number;
-  warranty_years?: number;
-  datasheet_url?: string;
-  manual_url?: string;
-  image_url?: string;
-  firmware_version?: string;
-  support_level: 'none' | 'partial' | 'full' | 'beta';
-  created_at?: string;
-  updated_at?: string;
-  features?: string[];
-  certifications?: string[];
-  images?: string[] | Record<string, any>;
-  has_manual?: boolean;
-  has_datasheet?: boolean;
-  model_number?: string;
-  device_type?: string;
-  warranty?: string;
-  release_date?: string;
-  specifications?: Record<string, any>;
-  connectivity?: Record<string, any>;
-  compatible_with?: string[];
-  videos?: Record<string, any>;
-  manuals?: Record<string, any>;
-  datasheets?: Record<string, any>;
-  category?: string;
-}
-
-export interface EnergyReading {
-  id?: string;
-  device_id: string;
-  timestamp: string;
-  metric?: string;
-  value: number;
-  unit?: string;
-  created_at?: string;
-  // Adding properties that were missing from the interface
-  power?: number;
-  energy?: number;
-  voltage?: number;
-  current?: number;
-  frequency?: number;
-  temperature?: number;
-  state_of_charge?: number;
-  quality?: number;
-  reading_type?: string;
-}
-
-export interface TelemetryData {
-  timestamp: string;
-  value: number;
-  deviceId: string;
-  metricId: string;
-}
-
-export interface EnergyForecast {
-  id?: string;
-  site_id: string;
-  forecast_type?: 'production' | 'consumption' | 'demand' | 'price';
-  forecast_time?: string;
-  timestamp: string;
-  value?: number;
-  confidence?: number;
-  unit?: string;
-  source?: string;
-  created_at?: string;
-  generation_forecast?: number;
-  consumption_forecast?: number;
-  weather_condition?: string;
-  temperature?: number;
-  cloud_cover?: number;
-  wind_speed?: number;
-}
-
-// Site types
 export interface Site {
   id: string;
   name: string;
@@ -199,80 +10,238 @@ export interface Site {
   timezone: string;
   lat?: number;
   lng?: number;
-  created_at: string;
-  updated_at: string;
-  // Required by some components
-  address?: string;
-  city?: string;
-  state?: string;
-  country?: string;
-  postal_code?: string;
-  type?: string;
-  status?: string;
-  description?: string;
-  contact_person?: string;
-  contact_email?: string;
+  status?: 'active' | 'inactive' | 'maintenance';
+  created_at?: string;
+  updated_at?: string;
 }
 
-// Modbus types
+export interface EnergyDevice {
+  id: string;
+  site_id?: string;
+  name: string;
+  type: DeviceType;
+  status: DeviceStatus;
+  description?: string;
+  firmware_version?: string;
+  location?: string;
+  capacity: number;
+  connection_info?: Record<string, any>;
+  protocol?: string;
+  config?: Record<string, any>;
+  metrics?: Record<string, number>;
+  lat?: number;
+  lng?: number;
+  installation_date?: string;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+  last_seen?: string;
+}
+
+export interface EnergyReading {
+  id: string;
+  device_id: string;
+  timestamp: string;
+  value: number;
+  unit: string;
+  power: number;
+  energy: number;
+  voltage?: number;
+  current?: number;
+  frequency?: number;
+  temperature?: number;
+  state_of_charge?: number;
+  created_at: string;
+}
+
+export interface EnergyForecast {
+  id: string;
+  site_id: string;
+  timestamp: string;
+  forecast_time: string;
+  generation_forecast: number;
+  consumption_forecast: number;
+  temperature?: number;
+  cloud_cover?: number;
+  wind_speed?: number;
+  weather_condition?: string;
+  confidence?: number;
+  source: string;
+  created_at: string;
+}
+
+export interface Tariff {
+  id: number;
+  timestamp: string;
+  price_eur_kwh: number;
+  source?: string;
+  type?: string;
+}
+
+export interface OptimizationResult {
+  id: number;
+  site_id?: string;
+  timestamp_start?: string;
+  timestamp_end?: string;
+  user_id?: string;
+  schedule_json?: Record<string, any>;
+  cost_estimate?: number;
+  source_data_hash?: string;
+}
+
+export interface UserPreference {
+  id: string;
+  user_id?: string;
+  min_soc?: number;
+  max_soc?: number;
+  time_window_start?: string;
+  time_window_end?: string;
+  priority_device_ids?: string[];
+}
+
+export interface AIRecommendation {
+  id: string;
+  site_id?: string;
+  type: string;
+  priority: string;
+  title: string;
+  description: string;
+  potential_savings?: string;
+  confidence?: number;
+  applied: boolean;
+  applied_at?: string;
+  applied_by?: string;
+  created_at: string;
+}
+
+export interface WeatherData {
+  id: string;
+  site_id: string;
+  timestamp: string;
+  temperature?: number;
+  humidity?: number;
+  wind_speed?: number;
+  wind_direction?: number;
+  cloud_cover?: number;
+  precipitation?: number;
+  forecast: boolean;
+  source?: string;
+}
+
+export interface Alert {
+  id: string;
+  device_id: string;
+  type: string;
+  severity?: string;
+  message: string;
+  acknowledged: boolean;
+  acknowledged_by?: string;
+  acknowledged_at?: string;
+  resolved_at?: string;
+  timestamp: string;
+  source?: string;
+}
+
+export interface DeviceModel {
+  id: string;
+  name: string;
+  manufacturer: string;
+  model_number: string;
+  device_type: string;
+  category?: string;
+  description?: string;
+  power_rating?: number;
+  capacity?: number;
+  weight?: number;
+  dimensions?: string;
+  connectivity?: Record<string, any>;
+  specifications?: Record<string, any>;
+  release_date?: string;
+  warranty?: string;
+  support_level: "none" | "partial" | "full";
+  protocol?: string;
+  firmware_version?: string;
+  images?: string[];
+  manuals?: Record<string, any>;
+  datasheets?: Record<string, any>;
+  videos?: Record<string, any>;
+  certifications?: string[];
+  compatible_with?: string[];
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface ModbusDevice {
   id: string;
   name: string;
-  address: string;
+  ip: string;
   port: number;
   unit_id: number;
-  protocol: 'tcp' | 'rtu';
+  protocol: "tcp" | "rtu";
+  is_active: boolean;
   description?: string;
-  site_id?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface ModbusDeviceConfig {
-  id: string;
-  name: string;
-  address: string;
-  port: number;
-  unit_id: number;
-  protocol: 'tcp' | 'rtu';
-  description?: string;
-  site_id?: string;
+  inserted_at?: string;
+  updated_at?: string;
 }
 
 export interface ModbusRegisterDefinition {
   id: string;
-  device_id: string;
-  register_address: number;
-  register_type: 'coil' | 'discrete_input' | 'input_register' | 'holding_register';
-  register_name: string;
-  register_length: number;
-  data_type: 'boolean' | 'int16' | 'uint16' | 'int32' | 'uint32' | 'float32' | 'float64' | 'string';
-  description?: string;
+  device_id?: string;
+  name: string;
+  address: number;
+  registerType: "input" | "holding";
+  dataType: "int16" | "uint16" | "int32" | "uint32" | "float32";
+  access: "read" | "write" | "read-write";
+  scaleFactor?: number;
   unit?: string;
-  scaling_factor?: number;
-  offset?: number;
-  byte_order?: 'big_endian' | 'little_endian';
+  description?: string;
 }
 
 export interface ModbusReadingResult {
+  address: number;
+  value: number;
+  formattedValue: string;
   timestamp: string;
-  register_address: number;
-  value: number | boolean | string;
-  raw_value?: number | boolean | string;
-  device_id: string;
-  register_id: string;
-  register_name?: string;
-  unit?: string;
+  success: boolean;
+  error?: string;
 }
 
-export interface ConnectionStatusResult {
-  isConnected: boolean;
-  lastConnected?: string;
-  errorMessage?: string;
-  isConnecting: boolean;
-  connect: () => Promise<boolean>;
-  disconnect: () => Promise<boolean>;
+// Energy Flow types
+export interface EnergyNode {
+  id: string;
+  label: string;
+  type: 'source' | 'storage' | 'consumption';
+  power: number; // kW, negative for consumption
+  status: 'active' | 'warning' | 'error' | 'inactive';
+  deviceType: string;
+  batteryLevel?: number; // % for storage
 }
 
-export type SupportLevel = 'none' | 'partial' | 'full' | 'beta';
+export interface EnergyConnection {
+  from: string;
+  to: string;
+  value: number; // kW
+  active: boolean;
+}
 
+export interface EnergyFlowState {
+  nodes: EnergyNode[];
+  connections: EnergyConnection[];
+  isLoading: boolean;
+}
+
+export interface EnergyFlowContextType extends EnergyFlowState {
+  totalGeneration: number;
+  totalConsumption: number;
+  batteryPercentage: number;
+  selfConsumptionRate: number;
+  gridDependencyRate: number;
+  refreshData: () => Promise<void>;
+  isLoading: boolean;
+}
+
+export interface EnergyNodeProps {
+  node: EnergyNode;
+  isSelected?: boolean;
+  onClick?: () => void;
+}

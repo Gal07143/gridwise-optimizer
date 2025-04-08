@@ -14,7 +14,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { DateRange } from '@/types/site';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { getDeviceEnergyData, getSystemAlerts } from '@/services/energyDataService';
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend, AreaChart, Area } from 'recharts';
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip as RechartsTooltip, CartesianGrid, Legend, AreaChart, Area } from 'recharts';
 import { addDays, format, subDays } from 'date-fns';
 
 const EnergyFlow: React.FC = () => {

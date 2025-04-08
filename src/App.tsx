@@ -1,65 +1,79 @@
 
-import { useState, useEffect } from 'react';
+import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Toaster } from 'sonner';
-import Routes from './Routes';
-import { AuthProvider } from '@/contexts/auth/AuthProvider';
-import { SiteProvider } from '@/contexts/SiteContext';
-import { ThemeProvider } from '@/components/theme/theme-provider';
+import { Toaster } from '@/components/ui/toaster';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { ThemeProvider } from '@/components/ThemeProvider';
+import Layout from '@/components/layout/Layout';
+import Dashboard from '@/pages/Dashboard';
+import Consumption from '@/pages/Consumption';
+import Analytics from '@/pages/Analytics';
+import Settings from '@/pages/Settings';
+import EnergyFlow from '@/pages/EnergyFlow';
+import Devices from '@/pages/Devices';
+import Solar from '@/pages/Solar';
+import Preferences from '@/pages/Preferences';
+import Sites from '@/pages/Sites';
+import SiteDetail from '@/pages/SiteDetail';
+import DeviceDetail from '@/pages/DeviceDetail';
+import Projects from '@/pages/Projects';
+import ProjectDetail from '@/pages/ProjectDetail';
+import Integrations from '@/pages/Integrations';
+import IntegrationCategoryPage from '@/pages/integrations/IntegrationCategoryPage';
+import IntegrationDetailPage from '@/pages/integrations/IntegrationDetailPage';
+import ModbusDevices from '@/pages/modbus/ModbusDevices';
+import ModbusDeviceDetails from '@/pages/modbus/ModbusDeviceDetails';
+import Savings from '@/pages/Savings';
+import Optimization from '@/pages/Optimization';
+import { AppStoreProvider } from '@/store/appStore';
 
-// Create a client for React Query
+// Create a client
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
       refetchOnWindowFocus: false,
-      retry: 1,
     },
   },
 });
 
 function App() {
-  // Add a setup check to make sure everything loads properly
-  const [isSetup, setIsSetup] = useState(false);
-
-  useEffect(() => {
-    // Simulate initialization process
-    const setupApp = async () => {
-      try {
-        // Give browser a moment to initialize everything
-        await new Promise(resolve => setTimeout(resolve, 100));
-        setIsSetup(true);
-      } catch (error) {
-        console.error("Error during app initialization:", error);
-        setIsSetup(true); // Continue anyway to avoid blocking the app
-      }
-    };
-
-    setupApp();
-  }, []);
-
-  if (!isSetup) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-background">
-        <div className="animate-pulse flex flex-col items-center">
-          <div className="h-12 w-12 rounded-md bg-primary/20 animate-spin"></div>
-          <p className="mt-4 text-muted-foreground">Initializing application...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <ThemeProvider defaultTheme="light" storageKey="energy-theme">
+    <ThemeProvider defaultTheme="dark" storageKey="ems-theme">
       <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <SiteProvider>
-            <Routes />
-            <Toaster position="top-right" closeButton richColors />
-          </SiteProvider>
-        </AuthProvider>
+        <AppStoreProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Layout />}>
+                <Route index element={<Dashboard />} />
+                <Route path="dashboard" element={<Dashboard />} />
+                <Route path="consumption" element={<Consumption />} />
+                <Route path="analytics" element={<Analytics />} />
+                <Route path="energy-flow" element={<EnergyFlow />} />
+                <Route path="optimization" element={<Optimization />} />
+                <Route path="savings" element={<Savings />} />
+                <Route path="devices" element={<Devices />} />
+                <Route path="devices/:id" element={<DeviceDetail />} />
+                <Route path="solar" element={<Solar />} />
+                <Route path="settings" element={<Settings />} />
+                <Route path="preferences" element={<Preferences />} />
+                <Route path="sites" element={<Sites />} />
+                <Route path="sites/:id" element={<SiteDetail />} />
+                <Route path="projects" element={<Projects />} />
+                <Route path="projects/:id" element={<ProjectDetail />} />
+                <Route path="integrations" element={<Integrations />} />
+                <Route path="integrations/:category" element={<IntegrationCategoryPage />} />
+                <Route path="integrations/:category/:id" element={<IntegrationDetailPage />} />
+                <Route path="modbus" element={<ModbusDevices />} />
+                <Route path="modbus/:id" element={<ModbusDeviceDetails />} />
+              </Route>
+            </Routes>
+          </BrowserRouter>
+          <Toaster />
+        </AppStoreProvider>
       </QueryClientProvider>
     </ThemeProvider>
-  );
+  )
 }
 
 export default App;

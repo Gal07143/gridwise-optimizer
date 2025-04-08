@@ -1,133 +1,205 @@
 
-import React from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
-import NavItem from './NavItem';
-import SidebarNavSection from './SidebarNavSection';
-import ThemeToggle from './ThemeToggle';
-import SiteSelector from '@/components/sites/SiteSelector';
-import Logo from './Logo';
-import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { mainNavItems, systemControlItems, adminItems, integrationItems, deviceManagementItems } from './sidebarNavData';
-import { motion } from 'framer-motion';
-import { useAppStore } from '@/store/appStore';
+import { cn } from '@/lib/utils';
+import { BarChart, CloudSun, Cpu, Home, LayoutGrid, LineChart, Settings, Settings2, Sun, Zap, FolderOpen, PanelLeft, DollarSign } from 'lucide-react';
+import { NavLink } from 'react-router-dom';
 
-export interface SidebarProps {
-  className?: string;
-}
+interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {}
 
-const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
-  const { sidebarExpanded, toggleSidebar } = useAppStore();
-  
-  // Sidebar animation variants
-  const sidebarVariants = {
-    expanded: { width: '16rem' },
-    collapsed: { width: '4rem' }
-  };
-  
+export function Sidebar({ className }: SidebarProps) {
   return (
-    <motion.div 
-      className={`${className} bg-background border-r h-screen flex flex-col z-30 fixed transition-shadow ${sidebarExpanded ? 'shadow-lg' : ''}`}
-      initial={sidebarExpanded ? 'expanded' : 'collapsed'}
-      animate={sidebarExpanded ? 'expanded' : 'collapsed'}
-      variants={sidebarVariants}
-      transition={{ duration: 0.3, ease: 'easeInOut' }}
-    >
-      <div className="flex items-center justify-between p-4">
-        {sidebarExpanded ? (
-          <Logo />
-        ) : (
-          <div className="h-8 w-8 rounded-md bg-primary/10 flex items-center justify-center">
-            <span className="text-primary text-xs font-bold">EMS</span>
+    <div className={cn("pb-12 w-full", className)}>
+      <div className="py-4">
+        <div className="px-3 py-2">
+          <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">
+            Overview
+          </h2>
+          <div className="space-y-1">
+            <NavLink
+              to="/dashboard"
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-slate-900 transition-all hover:text-slate-900 dark:text-slate-50 dark:hover:text-slate-50",
+                  isActive ? "bg-slate-100 dark:bg-slate-800" : "hover:bg-slate-100 dark:hover:bg-slate-800",
+                  "transition-all"
+                )
+              }
+            >
+              <Home className="h-4 w-4" />
+              Dashboard
+            </NavLink>
+            <NavLink
+              to="/energy-flow"
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-slate-900 transition-all hover:text-slate-900 dark:text-slate-50 dark:hover:text-slate-50",
+                  isActive ? "bg-slate-100 dark:bg-slate-800" : "hover:bg-slate-100 dark:hover:bg-slate-800",
+                  "transition-all"
+                )
+              }
+            >
+              <Zap className="h-4 w-4" />
+              Energy Flow
+            </NavLink>
+            <NavLink
+              to="/consumption"
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-slate-900 transition-all hover:text-slate-900 dark:text-slate-50 dark:hover:text-slate-50",
+                  isActive ? "bg-slate-100 dark:bg-slate-800" : "hover:bg-slate-100 dark:hover:bg-slate-800",
+                  "transition-all"
+                )
+              }
+            >
+              <LineChart className="h-4 w-4" />
+              Consumption
+            </NavLink>
+            <NavLink
+              to="/analytics"
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-slate-900 transition-all hover:text-slate-900 dark:text-slate-50 dark:hover:text-slate-50",
+                  isActive ? "bg-slate-100 dark:bg-slate-800" : "hover:bg-slate-100 dark:hover:bg-slate-800",
+                  "transition-all"
+                )
+              }
+            >
+              <BarChart className="h-4 w-4" />
+              Analytics
+            </NavLink>
+            <NavLink
+              to="/optimization"
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-slate-900 transition-all hover:text-slate-900 dark:text-slate-50 dark:hover:text-slate-50",
+                  isActive ? "bg-slate-100 dark:bg-slate-800" : "hover:bg-slate-100 dark:hover:bg-slate-800",
+                  "transition-all"
+                )
+              }
+            >
+              <Cpu className="h-4 w-4" />
+              Optimization
+            </NavLink>
+            <NavLink
+              to="/savings"
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-slate-900 transition-all hover:text-slate-900 dark:text-slate-50 dark:hover:text-slate-50",
+                  isActive ? "bg-slate-100 dark:bg-slate-800" : "hover:bg-slate-100 dark:hover:bg-slate-800",
+                  "transition-all"
+                )
+              }
+            >
+              <DollarSign className="h-4 w-4" />
+              Savings
+            </NavLink>
           </div>
-        )}
-        
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={toggleSidebar} 
-          className="h-6 w-6"
-          aria-label={sidebarExpanded ? "Collapse sidebar" : "Expand sidebar"}
-        >
-          {sidebarExpanded ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
-        </Button>
+        </div>
+        <div className="px-3 py-2">
+          <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">
+            Devices
+          </h2>
+          <div className="space-y-1">
+            <NavLink
+              to="/devices"
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-slate-900 transition-all hover:text-slate-900 dark:text-slate-50 dark:hover:text-slate-50",
+                  isActive ? "bg-slate-100 dark:bg-slate-800" : "hover:bg-slate-100 dark:hover:bg-slate-800",
+                  "transition-all"
+                )
+              }
+            >
+              <LayoutGrid className="h-4 w-4" />
+              All Devices
+            </NavLink>
+            <NavLink
+              to="/sites"
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-slate-900 transition-all hover:text-slate-900 dark:text-slate-50 dark:hover:text-slate-50",
+                  isActive ? "bg-slate-100 dark:bg-slate-800" : "hover:bg-slate-100 dark:hover:bg-slate-800",
+                  "transition-all"
+                )
+              }
+            >
+              <CloudSun className="h-4 w-4" />
+              Sites
+            </NavLink>
+            <NavLink
+              to="/solar"
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-slate-900 transition-all hover:text-slate-900 dark:text-slate-50 dark:hover:text-slate-50",
+                  isActive ? "bg-slate-100 dark:bg-slate-800" : "hover:bg-slate-100 dark:hover:bg-slate-800",
+                  "transition-all"
+                )
+              }
+            >
+              <Sun className="h-4 w-4" />
+              Solar
+            </NavLink>
+            <NavLink
+              to="/projects"
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-slate-900 transition-all hover:text-slate-900 dark:text-slate-50 dark:hover:text-slate-50",
+                  isActive ? "bg-slate-100 dark:bg-slate-800" : "hover:bg-slate-100 dark:hover:bg-slate-800",
+                  "transition-all"
+                )
+              }
+            >
+              <FolderOpen className="h-4 w-4" />
+              Projects
+            </NavLink>
+            <NavLink
+              to="/integrations"
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-slate-900 transition-all hover:text-slate-900 dark:text-slate-50 dark:hover:text-slate-50",
+                  isActive ? "bg-slate-100 dark:bg-slate-800" : "hover:bg-slate-100 dark:hover:bg-slate-800",
+                  "transition-all"
+                )
+              }
+            >
+              <PanelLeft className="h-4 w-4" />
+              Integrations
+            </NavLink>
+          </div>
+        </div>
+        <div className="px-3 py-2">
+          <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">
+            System
+          </h2>
+          <div className="space-y-1">
+            <NavLink
+              to="/preferences"
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-slate-900 transition-all hover:text-slate-900 dark:text-slate-50 dark:hover:text-slate-50",
+                  isActive ? "bg-slate-100 dark:bg-slate-800" : "hover:bg-slate-100 dark:hover:bg-slate-800",
+                  "transition-all"
+                )
+              }
+            >
+              <Settings className="h-4 w-4" />
+              Preferences
+            </NavLink>
+            <NavLink
+              to="/settings"
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-slate-900 transition-all hover:text-slate-900 dark:text-slate-50 dark:hover:text-slate-50",
+                  isActive ? "bg-slate-100 dark:bg-slate-800" : "hover:bg-slate-100 dark:hover:bg-slate-800",
+                  "transition-all"
+                )
+              }
+            >
+              <Settings2 className="h-4 w-4" />
+              Settings
+            </NavLink>
+          </div>
+        </div>
       </div>
-      
-      <div className="mt-2 px-2">
-        <SiteSelector />
-      </div>
-      
-      <div className="flex-1 overflow-y-auto py-4 px-2">
-        <SidebarNavSection 
-          key="main" 
-          heading="Main"
-          collapsed={!sidebarExpanded}
-        >
-          {mainNavItems.map((item) => (
-            <NavItem 
-              key={item.href} 
-              href={item.href} 
-              icon={item.icon} 
-              label={item.label}
-              collapsed={!sidebarExpanded}
-            />
-          ))}
-        </SidebarNavSection>
-
-        <SidebarNavSection 
-          key="device-management" 
-          heading="Device Management"
-          collapsed={!sidebarExpanded}
-        >
-          {deviceManagementItems.map((item) => (
-            <NavItem 
-              key={item.href} 
-              href={item.href} 
-              icon={item.icon} 
-              label={item.label}
-              collapsed={!sidebarExpanded}
-            />
-          ))}
-        </SidebarNavSection>
-
-        <SidebarNavSection 
-          key="control" 
-          heading="System Control"
-          collapsed={!sidebarExpanded}
-        >
-          {systemControlItems.map((item) => (
-            <NavItem 
-              key={item.href} 
-              href={item.href} 
-              icon={item.icon} 
-              label={item.label}
-              collapsed={!sidebarExpanded}
-            />
-          ))}
-        </SidebarNavSection>
-        
-        <SidebarNavSection 
-          key="admin" 
-          heading="Administration"
-          collapsed={!sidebarExpanded}
-        >
-          {adminItems.map((item) => (
-            <NavItem 
-              key={item.href} 
-              href={item.href} 
-              icon={item.icon} 
-              label={item.label}
-              collapsed={!sidebarExpanded}
-            />
-          ))}
-        </SidebarNavSection>
-      </div>
-      
-      <div className="p-4 border-t">
-        <ThemeToggle />
-      </div>
-    </motion.div>
-  );
-};
-
-export default Sidebar;
+    </div>
+  )
+}
