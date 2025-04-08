@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Main } from '@/components/ui/main';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,7 +13,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { DateRange } from '@/types/site';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { getDeviceEnergyData, getSystemAlerts } from '@/services/energyDataService';
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip as RechartsTooltip, CartesianGrid, Legend, AreaChart, Area } from 'recharts';
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Legend, AreaChart, Area } from 'recharts';
 import { addDays, format, subDays } from 'date-fns';
 
 const EnergyFlow: React.FC = () => {
@@ -59,7 +58,6 @@ const EnergyFlow: React.FC = () => {
     setDashboardView('energy');
   }, [currentSite, dateRange, toast, setDashboardView]);
 
-  // Handle fullscreen mode
   const toggleFullscreen = () => {
     if (!isFullscreen) {
       if (document.documentElement.requestFullscreen) {
@@ -74,7 +72,6 @@ const EnergyFlow: React.FC = () => {
     }
   };
 
-  // Effect to handle fullscreen change
   useEffect(() => {
     const handleFullscreenChange = () => {
       setIsFullscreen(!!document.fullscreenElement);

@@ -1,79 +1,56 @@
 
-export interface ModbusDevice {
+export interface ModbusDeviceConfig {
   id: string;
   name: string;
-  ip: string;         // Backward compatibility with ip_address
-  ip_address?: string; // New property name
+  ip: string;
   port: number;
   unit_id: number;
+  protocol: "tcp" | "rtu";
   is_active: boolean;
-  status?: string;
   description?: string;
-  protocol?: string;
-  created_at?: string;
+  inserted_at?: string;
   updated_at?: string;
 }
 
-export type ModbusDeviceConfig = Omit<ModbusDevice, 'id'>;
-
 export interface ModbusRegisterDefinition {
+  id: string;
+  device_id?: string;
   name: string;
   address: number;
-  registerType: 'input' | 'holding' | 'coil' | 'discrete';
-  dataType: 'int16' | 'uint16' | 'int32' | 'uint32' | 'float32' | 'float64' | 'bit';
-  access: 'read' | 'write' | 'read/write';
-  description?: string;
-  unit?: string;
+  registerType: "input" | "holding";
+  dataType: "int16" | "uint16" | "int32" | "uint32" | "float32";
+  access: "read" | "write" | "read/write";
   scaleFactor?: number;
-  // Legacy properties for compatibility
-  length?: number;
-  type?: string;
-  scale?: number;
+  unit?: string;
+  description?: string;
+  register_address?: number;
+  register_name?: string;
+  register_length?: number;
 }
 
 export interface ModbusRegisterMap {
-  id?: string;
-  name: string;
-  device_id: string;
   registers: ModbusRegisterDefinition[];
-  created_at?: string;
-  updated_at?: string;
 }
 
 export interface ModbusReadingResult {
-  value: number | boolean;
   address: number;
-  buffer?: Buffer;
-  raw?: any;
+  value: number;
+  formattedValue: string;
+  timestamp: string;
+  success: boolean;
   error?: Error;
-  success?: boolean; // Adding for backward compatibility
-  timestamp?: string; // Adding for backward compatibility
-}
-
-export interface ConnectionStatusOptions {
-  initialStatus?: boolean;
-  reconnectDelay?: number;
-  showToasts?: boolean;
-  deviceId?: string; // Adding for backward compatibility
-}
-
-export interface ConnectionStatus {
-  online: boolean;
-  lastOnline: Date | null;
-  lastOffline: Date | null;
 }
 
 export interface ConnectionStatusResult {
-  isOnline: boolean;
-  lastOnline: Date | null;
-  lastOffline: Date | null;
-  isConnected?: boolean;
+  status: 'connected' | 'disconnected' | 'connecting' | 'error';
+  message?: string;
   isConnecting?: boolean;
-  connect?: () => void;
-  disconnect?: () => void;
-  retryConnection?: () => void;
-  error?: Error; // Adding for backward compatibility
+  connect?: () => Promise<void>;
+  disconnect?: () => Promise<void>;
 }
 
-// Adding ModbusRegister for backward compatibility
-export type ModbusRegister = ModbusRegisterDefinition;
+export interface ModbusWriteRequest {
+  registerAddress: number;
+  value: number | boolean;
+  registerType: "holding_register" | "coil";
+}
