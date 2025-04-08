@@ -6,24 +6,24 @@ import { Progress } from '@/components/ui/progress';
 
 const RealtimeDispatchAdvice = () => {
   return (
-    <Card className="xl:col-span-2">
+    <Card className="xl:col-span-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
       <CardHeader className="pb-2">
         <CardTitle className="text-base font-medium flex items-center gap-2">
           <BrainCircuit className="h-4 w-4 text-purple-500" />
-          Real-time Energy Dispatch Recommendation
+          AI Energy Dispatch Recommendation
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="flex flex-col space-y-4">
-          <div className="p-4 bg-violet-50 dark:bg-violet-900/10 rounded-md">
-            <h3 className="text-sm font-medium mb-1">Current Advisory</h3>
-            <p className="text-base">
+          <div className="p-4 bg-violet-50 dark:bg-violet-900/10 rounded-md border border-violet-100 dark:border-violet-800/20">
+            <h3 className="text-sm font-medium mb-1 text-violet-800 dark:text-violet-300">Current Advisory</h3>
+            <p className="text-sm text-slate-700 dark:text-slate-300">
               Prioritize battery charging now while solar production is high. Recommended to store energy for peak evening rates (17:00-21:00).
             </p>
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-md">
+            <div className="p-3 bg-slate-100 dark:bg-slate-800/50 rounded-md">
               <div className="flex items-center mb-2">
                 <Activity className="h-4 w-4 text-blue-500 mr-2" />
                 <h4 className="text-sm font-medium">Current Generation</h4>
@@ -32,7 +32,7 @@ const RealtimeDispatchAdvice = () => {
               <div className="text-xs text-muted-foreground mt-1">Solar: 4.2 kW, Grid: 0 kW</div>
             </div>
             
-            <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-md">
+            <div className="p-3 bg-slate-100 dark:bg-slate-800/50 rounded-md">
               <div className="flex items-center mb-2">
                 <Zap className="h-4 w-4 text-green-500 mr-2" />
                 <h4 className="text-sm font-medium">Current Load</h4>
@@ -41,7 +41,7 @@ const RealtimeDispatchAdvice = () => {
               <div className="text-xs text-muted-foreground mt-1">Excess available: 2.4 kW</div>
             </div>
             
-            <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-md">
+            <div className="p-3 bg-slate-100 dark:bg-slate-800/50 rounded-md">
               <div className="flex items-center mb-2">
                 <BatteryFull className="h-4 w-4 text-amber-500 mr-2" />
                 <h4 className="text-sm font-medium">Battery Status</h4>

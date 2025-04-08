@@ -9,7 +9,6 @@ import {
   ArrowDownUp, 
   Battery, 
   Bolt, 
-  Cloud, 
   Home, 
   Zap, 
   RefreshCw,
@@ -66,10 +65,13 @@ const EnergyFlowChartContent: React.FC<EnergyFlowChartProps> = ({ className, ani
   const isEnergyPositive = energyBalance >= 0;
   
   return (
-    <div className={cn("w-full h-full", className)} style={animationDelay ? { animationDelay } : undefined}>
+    <div className={cn("w-full h-full animate-in fade-in", className)} style={animationDelay ? { animationDelay } : undefined}>
       <div className="flex justify-between items-center mb-4">
         <div>
-          <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">Energy Flow</h2>
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+            <Zap className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+            Energy Flow
+          </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400">
             Real-time visualization of energy distribution
           </p>
@@ -167,7 +169,7 @@ const EnergyFlowChartContent: React.FC<EnergyFlowChartProps> = ({ className, ani
             
             {/* Node details panel (when a node is selected) */}
             {selectedNode && (
-              <div className="absolute bottom-12 left-1/2 transform -translate-x-1/2 w-[280px] bg-black/60 backdrop-blur-lg p-3 rounded-lg border border-slate-700/50 shadow-lg z-20 animate-in">
+              <div className="absolute bottom-12 left-1/2 transform -translate-x-1/2 w-[280px] bg-black/60 backdrop-blur-lg p-3 rounded-lg border border-slate-700/50 shadow-lg z-20 animate-in fade-in">
                 <div className="flex justify-between items-start">
                   <h4 className="text-sm font-medium text-white">{selectedNode.label} Details</h4>
                   <Button 
@@ -275,9 +277,9 @@ const EnergyFlowChartContent: React.FC<EnergyFlowChartProps> = ({ className, ani
         {/* Sidebar with system insights */}
         <div className="w-full lg:w-1/3">
           <Card className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 border-slate-200/50 dark:border-slate-700/50 shadow-md h-full">
-            <CardHeader className="p-5 pb-0">
+            <CardHeader className="p-5 pb-2">
               <CardTitle className="text-lg flex items-center">
-                <Bolt className="mr-2 h-5 w-5 text-primary" />
+                <Bolt className="mr-2 h-5 w-5 text-indigo-500" />
                 System Insights
               </CardTitle>
               <CardDescription>Current energy system performance</CardDescription>
