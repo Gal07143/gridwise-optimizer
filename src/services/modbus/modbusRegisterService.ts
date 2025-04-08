@@ -1,228 +1,189 @@
 
-import { ModbusRegisterMap, ModbusRegisterDefinition } from '@/types/modbus';
+// Mock implementation of modbus register service
 
-// Mock data for Modbus register definitions
-const mockModbusRegisterMaps: Record<string, ModbusRegisterDefinition[]> = {
-  '1': [
-    {
-      id: 'reg-1',
-      name: 'Output Power',
-      address: 40001,
-      registerType: 'holding',
-      dataType: 'float32',
-      access: 'read',
-      description: 'Current output power in watts',
-      unit: 'W',
-      scaleFactor: 1,
-      register_address: 40001,
-      register_name: 'Output Power',
-      register_length: 2
-    },
-    {
-      id: 'reg-2',
-      name: 'DC Input Voltage',
-      address: 40003,
-      registerType: 'holding',
-      dataType: 'float32',
-      access: 'read',
-      description: 'Input DC voltage',
-      unit: 'V',
-      scaleFactor: 0.1,
-      register_address: 40003,
-      register_name: 'DC Input Voltage',
-      register_length: 2
-    },
-    {
-      id: 'reg-3',
-      name: 'AC Output Current',
-      address: 40005,
-      registerType: 'holding',
-      dataType: 'float32',
-      access: 'read',
-      description: 'Output current',
-      unit: 'A',
-      scaleFactor: 0.01,
-      register_address: 40005,
-      register_name: 'AC Output Current',
-      register_length: 2
-    },
-    {
-      id: 'reg-4',
-      name: 'Device Temperature',
-      address: 40007,
-      registerType: 'holding',
-      dataType: 'int16',
-      access: 'read',
-      description: 'Internal temperature',
-      unit: '°C',
-      scaleFactor: 0.1,
-      register_address: 40007,
-      register_name: 'Device Temperature',
-      register_length: 1
-    }
-  ],
-  '2': [
-    {
-      id: 'reg-5',
-      name: 'State of Charge',
-      address: 30001,
-      registerType: 'input',
-      dataType: 'uint16',
-      access: 'read',
-      description: 'Battery state of charge',
-      unit: '%',
-      scaleFactor: 1,
-      register_address: 30001,
-      register_name: 'State of Charge',
-      register_length: 1
-    },
-    {
-      id: 'reg-6',
-      name: 'Battery Voltage',
-      address: 30002,
-      registerType: 'input',
-      dataType: 'float32',
-      access: 'read',
-      description: 'Battery voltage',
-      unit: 'V',
-      scaleFactor: 0.1,
-      register_address: 30002,
-      register_name: 'Battery Voltage',
-      register_length: 2
-    },
-    {
-      id: 'reg-7',
-      name: 'Battery Current',
-      address: 30004,
-      registerType: 'input',
-      dataType: 'float32',
-      access: 'read',
-      description: 'Battery current',
-      unit: 'A',
-      scaleFactor: 0.1,
-      register_address: 30004,
-      register_name: 'Battery Current',
-      register_length: 2
-    }
-  ]
+import { ModbusRegisterDefinition } from '@/types/energy';
+
+// Mock registers for testing
+const mockRegisters: ModbusRegisterDefinition[] = [
+  {
+    id: '1',
+    device_id: 'device-1',
+    register_address: 1000,
+    register_type: 'holding_register',
+    register_name: 'Voltage',
+    register_length: 1,
+    data_type: 'uint16',
+    unit: 'V',
+    scaling_factor: 0.1,
+    description: 'Grid voltage'
+  },
+  {
+    id: '2',
+    device_id: 'device-1',
+    register_address: 1001,
+    register_type: 'holding_register',
+    register_name: 'Current',
+    register_length: 1,
+    data_type: 'uint16',
+    unit: 'A',
+    scaling_factor: 0.01,
+    description: 'Load current'
+  },
+  {
+    id: '3',
+    device_id: 'device-1',
+    register_address: 1002,
+    register_type: 'holding_register',
+    register_name: 'Power',
+    register_length: 2,
+    data_type: 'int32',
+    unit: 'W',
+    scaling_factor: 1,
+    description: 'Active power'
+  },
+  {
+    id: '4',
+    device_id: 'device-1',
+    register_address: 1004,
+    register_type: 'holding_register',
+    register_name: 'Energy',
+    register_length: 2,
+    data_type: 'uint32',
+    unit: 'kWh',
+    scaling_factor: 0.001,
+    description: 'Energy consumption'
+  },
+  {
+    id: '5',
+    device_id: 'device-1',
+    register_address: 1006,
+    register_type: 'holding_register',
+    register_name: 'Frequency',
+    register_length: 1,
+    data_type: 'uint16',
+    unit: 'Hz',
+    scaling_factor: 0.01,
+    description: 'Grid frequency'
+  },
+  {
+    id: '6',
+    device_id: 'device-1',
+    register_address: 1007,
+    register_type: 'holding_register',
+    register_name: 'Temperature',
+    register_length: 1,
+    data_type: 'int16',
+    unit: '°C',
+    scaling_factor: 0.1,
+    description: 'Device temperature'
+  },
+  {
+    id: '7',
+    device_id: 'device-1',
+    register_address: 1008,
+    register_type: 'coil',
+    register_name: 'Status',
+    register_length: 1,
+    data_type: 'boolean',
+    description: 'Device status'
+  },
+];
+
+/**
+ * Get modbus registers for a specific device
+ */
+export const getModbusRegistersByDeviceId = async (
+  deviceId: string
+): Promise<ModbusRegisterDefinition[]> => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const registers = mockRegisters.filter(reg => reg.device_id === deviceId);
+      resolve(registers);
+    }, 300);
+  });
 };
 
 /**
- * Get all register definitions for a specific Modbus device
+ * Get a specific register by ID
  */
-export const getModbusRegistersByDeviceId = async (deviceId: string): Promise<ModbusRegisterDefinition[]> => {
-  // Simulate API latency
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  // Return mock data for the device or empty array if not found
-  return mockModbusRegisterMaps[deviceId] || [];
+export const getRegisterById = async (
+  registerId: string
+): Promise<ModbusRegisterDefinition | null> => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const register = mockRegisters.find(reg => reg.id === registerId);
+      resolve(register || null);
+    }, 100);
+  });
 };
 
 /**
- * Add a new register definition to a device's register map
+ * Create a new modbus register definition
  */
-export const addModbusRegister = async (
-  deviceId: string, 
-  registerDefinition: Omit<ModbusRegisterDefinition, 'id'>
+export const createModbusRegister = async (
+  register: Omit<ModbusRegisterDefinition, 'id'>
 ): Promise<ModbusRegisterDefinition> => {
-  // Simulate API latency
-  await new Promise(resolve => setTimeout(resolve, 800));
-  
-  // Generate a new ID
-  const newRegister: ModbusRegisterDefinition = {
-    ...registerDefinition,
-    id: `reg-${Date.now()}`,
-    register_address: registerDefinition.address,
-    register_name: registerDefinition.name,
-    register_length: registerDefinition.dataType.includes('32') ? 2 : 1
-  };
-  
-  // In a real app, we would save to the backend
-  console.log(`Adding register to device ${deviceId}:`, newRegister);
-  
-  // Ensure the device exists in our mock data
-  if (!mockModbusRegisterMaps[deviceId]) {
-    mockModbusRegisterMaps[deviceId] = [];
-  }
-  
-  // Add the new register to our mock data
-  mockModbusRegisterMaps[deviceId].push(newRegister);
-  
-  return newRegister;
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const newRegister: ModbusRegisterDefinition = {
+        ...register,
+        id: `register-${Date.now()}`,
+      };
+      mockRegisters.push(newRegister);
+      resolve(newRegister);
+    }, 300);
+  });
 };
 
 /**
- * Update an existing register definition
+ * Update a modbus register definition
  */
 export const updateModbusRegister = async (
-  deviceId: string,
   registerId: string,
   updates: Partial<ModbusRegisterDefinition>
-): Promise<ModbusRegisterDefinition> => {
-  // Simulate API latency
-  await new Promise(resolve => setTimeout(resolve, 700));
-  
-  // In a real app, we would update in the backend
-  console.log(`Updating register ${registerId} for device ${deviceId}:`, updates);
-  
-  // Find the register in our mock data
-  const registerIndex = mockModbusRegisterMaps[deviceId]?.findIndex(r => r.id === registerId);
-  if (registerIndex === undefined || registerIndex === -1) {
-    throw new Error('Register not found');
-  }
-  
-  // Update the register
-  const updatedRegister: ModbusRegisterDefinition = {
-    ...mockModbusRegisterMaps[deviceId][registerIndex],
-    ...updates,
-    // Update the deprecated fields for compatibility
-    register_address: updates.address || mockModbusRegisterMaps[deviceId][registerIndex].address,
-    register_name: updates.name || mockModbusRegisterMaps[deviceId][registerIndex].name,
-    register_length: updates.dataType?.includes('32') ? 2 : 1
-  };
-  
-  mockModbusRegisterMaps[deviceId][registerIndex] = updatedRegister;
-  
-  return updatedRegister;
+): Promise<ModbusRegisterDefinition | null> => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const index = mockRegisters.findIndex(reg => reg.id === registerId);
+      if (index === -1) {
+        resolve(null);
+        return;
+      }
+      
+      mockRegisters[index] = { ...mockRegisters[index], ...updates };
+      resolve(mockRegisters[index]);
+    }, 300);
+  });
 };
 
 /**
- * Delete a register definition
+ * Delete a modbus register definition
  */
-export const deleteModbusRegister = async (deviceId: string, registerId: string): Promise<boolean> => {
-  // Simulate API latency
-  await new Promise(resolve => setTimeout(resolve, 600));
-  
-  // In a real app, we would delete from the backend
-  console.log(`Deleting register ${registerId} from device ${deviceId}`);
-  
-  // Find the register in our mock data
-  const registerIndex = mockModbusRegisterMaps[deviceId]?.findIndex(r => r.id === registerId);
-  if (registerIndex === undefined || registerIndex === -1) {
-    throw new Error('Register not found');
-  }
-  
-  // Remove the register
-  mockModbusRegisterMaps[deviceId].splice(registerIndex, 1);
-  
-  return true;
+export const deleteModbusRegister = async (registerId: string): Promise<boolean> => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const index = mockRegisters.findIndex(reg => reg.id === registerId);
+      if (index === -1) {
+        resolve(false);
+        return;
+      }
+      
+      mockRegisters.splice(index, 1);
+      resolve(true);
+    }, 300);
+  });
 };
 
 /**
- * Get a complete register map for a device
+ * Get default register map for a device type
  */
-export const getModbusRegisterMap = async (deviceId: string): Promise<ModbusRegisterMap> => {
-  // Simulate API latency
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  const registers = await getModbusRegistersByDeviceId(deviceId);
-  
-  return {
-    id: `map-${deviceId}`,
-    name: `Device ${deviceId} Register Map`,
-    device_id: deviceId,
-    registers: registers,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  };
+export const getDefaultRegisterMap = async (deviceType: string): Promise<ModbusRegisterDefinition[]> => {
+  // This would normally return different maps based on device type
+  // For now, just return our test registers
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(mockRegisters);
+    }, 300);
+  });
 };
+

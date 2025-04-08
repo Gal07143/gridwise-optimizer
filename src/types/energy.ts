@@ -153,7 +153,7 @@ export interface EnergyReading {
   value: number;
   unit?: string;
   created_at?: string;
-  // Adding the missing properties from the errors
+  // Adding properties that were missing from the interface
   power?: number;
   energy?: number;
   voltage?: number;
@@ -213,3 +213,66 @@ export interface Site {
   contact_person?: string;
   contact_email?: string;
 }
+
+// Modbus types
+export interface ModbusDevice {
+  id: string;
+  name: string;
+  address: string;
+  port: number;
+  unit_id: number;
+  protocol: 'tcp' | 'rtu';
+  description?: string;
+  site_id?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ModbusDeviceConfig {
+  id: string;
+  name: string;
+  address: string;
+  port: number;
+  unit_id: number;
+  protocol: 'tcp' | 'rtu';
+  description?: string;
+  site_id?: string;
+}
+
+export interface ModbusRegisterDefinition {
+  id: string;
+  device_id: string;
+  register_address: number;
+  register_type: 'coil' | 'discrete_input' | 'input_register' | 'holding_register';
+  register_name: string;
+  register_length: number;
+  data_type: 'boolean' | 'int16' | 'uint16' | 'int32' | 'uint32' | 'float32' | 'float64' | 'string';
+  description?: string;
+  unit?: string;
+  scaling_factor?: number;
+  offset?: number;
+  byte_order?: 'big_endian' | 'little_endian';
+}
+
+export interface ModbusReadingResult {
+  timestamp: string;
+  register_address: number;
+  value: number | boolean | string;
+  raw_value?: number | boolean | string;
+  device_id: string;
+  register_id: string;
+  register_name?: string;
+  unit?: string;
+}
+
+export interface ConnectionStatusResult {
+  isConnected: boolean;
+  lastConnected?: string;
+  errorMessage?: string;
+  isConnecting: boolean;
+  connect: () => Promise<boolean>;
+  disconnect: () => Promise<boolean>;
+}
+
+export type SupportLevel = 'none' | 'partial' | 'full' | 'beta';
+

@@ -62,3 +62,14 @@ export const formatNumber = (number: number, decimals = 2): string => {
   if (number === null || number === undefined) return '-';
   return number.toFixed(decimals);
 };
+
+/**
+ * Capitalize each word in a string
+ */
+export const capitalizeWords = (text: string): string => {
+  if (!text) return '';
+  return text
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+};

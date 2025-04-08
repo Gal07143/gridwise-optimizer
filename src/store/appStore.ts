@@ -1,7 +1,6 @@
 
 import { create } from 'zustand';
 import { Site } from '@/types/energy';
-// Fix the import to use named import
 import { mockSites } from '@/services/sites/mockSites';
 
 interface AppState {
@@ -13,17 +12,25 @@ interface AppState {
   menuCollapsed: boolean;
   setMenuCollapsed: (collapsed: boolean) => void;
   toggleMenu: () => void;
+  sidebarExpanded: boolean;
+  setSidebarExpanded: (expanded: boolean) => void;
+  toggleSidebar: () => void;
+  activeSite: Site | null;
 }
 
-const useAppStore = create<AppState>((set) => ({
+export const useAppStore = create<AppState>((set) => ({
   sites: mockSites,
   currentSite: mockSites.length > 0 ? mockSites[0] : null,
-  setCurrentSite: (site) => set({ currentSite: site }),
+  setCurrentSite: (site) => set({ currentSite: site, activeSite: site }),
   theme: 'system',
   setTheme: (theme) => set({ theme }),
   menuCollapsed: false,
   setMenuCollapsed: (collapsed) => set({ menuCollapsed: collapsed }),
   toggleMenu: () => set((state) => ({ menuCollapsed: !state.menuCollapsed })),
+  sidebarExpanded: true,
+  setSidebarExpanded: (expanded) => set({ sidebarExpanded: expanded }),
+  toggleSidebar: () => set((state) => ({ sidebarExpanded: !state.sidebarExpanded })),
+  activeSite: mockSites.length > 0 ? mockSites[0] : null,
 }));
 
 export default useAppStore;
