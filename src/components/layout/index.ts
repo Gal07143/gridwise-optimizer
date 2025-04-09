@@ -1,12 +1,13 @@
 
-import Layout from './Layout';
-import Header from './Header';
-import { Sidebar } from './Sidebar';
+// Import components directly
+import LayoutComponent from './Layout';
+import HeaderComponent from './Header';
+import { Sidebar as SidebarComponent } from './Sidebar';
 
-export {
-  Layout,
-  Header,
-  Sidebar
-};
+// Export components
+export const Layout = LayoutComponent;
+export const Header = HeaderComponent;
+export const Sidebar = SidebarComponent;
 
-export default Layout;
+// Default export
+export default LayoutComponent;

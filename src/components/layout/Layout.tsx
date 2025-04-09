@@ -1,7 +1,8 @@
 
 import React from 'react';
 import { Outlet } from 'react-router-dom';
-import { Header, Sidebar } from './index';
+import Header from './Header';
+import { Sidebar } from './Sidebar';
 import { useAppStore } from '@/store/appStore';
 
 const Layout = () => {
