@@ -25,7 +25,7 @@ const ModbusMonitor: React.FC<ModbusMonitorProps> = ({ deviceId }) => {
   const [error, setError] = useState<string | null>(null);
   
   const connectionStatus = useConnectionStatus({
-    deviceId: deviceId
+    deviceId
   });
   
   const modbusData = useModbusData({
@@ -104,7 +104,7 @@ const ModbusMonitor: React.FC<ModbusMonitorProps> = ({ deviceId }) => {
         <div className="flex justify-between items-center">
           <div>
             <CardTitle>Modbus Monitor: {device.name}</CardTitle>
-            <CardDescription>IP: {device.ip}:{device.port} - Unit ID: {device.unit_id}</CardDescription>
+            <CardDescription>IP: {device.ip_address || device.ip}:{device.port} - Unit ID: {device.unit_id}</CardDescription>
           </div>
           <div>
             <Badge variant={connectionStatus.isConnected ? "success" : "destructive"}>
@@ -168,7 +168,7 @@ const ModbusMonitor: React.FC<ModbusMonitorProps> = ({ deviceId }) => {
                       </div>
                       <div>
                         <p className="text-muted-foreground text-sm">Scaling Factor</p>
-                        <p className="font-mono">{selectedRegister.scaling_factor}</p>
+                        <p className="font-mono">{selectedRegister.scaleFactor}</p>
                       </div>
                       <div>
                         <p className="text-muted-foreground text-sm">Current Value</p>
@@ -216,7 +216,7 @@ const ModbusMonitor: React.FC<ModbusMonitorProps> = ({ deviceId }) => {
                   </div>
                   <div className="space-y-1">
                     <p className="text-muted-foreground text-sm">IP Address</p>
-                    <p>{device.ip}</p>
+                    <p>{device.ip_address || device.ip}</p>
                   </div>
                   <div className="space-y-1">
                     <p className="text-muted-foreground text-sm">Port</p>

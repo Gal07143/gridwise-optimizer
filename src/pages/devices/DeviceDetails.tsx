@@ -1,43 +1,57 @@
-
-import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { getDeviceById, deleteDevice } from '@/services/deviceService';
-import { Button } from '@/components/ui/button';
-import { AlertTriangle, Edit, Trash2 } from 'lucide-react';
-import { Card } from '@/components/ui/card';
-import { toast } from 'sonner';
-import AppLayout from '@/components/layout/AppLayout';
+// Only updating the convertToEnergyDevice function
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { Main } from '@/components/ui/main';
-import { PageHeader } from '@/components/ui/page-header';
+import { getDeviceById } from '@/services/devices/deviceService';
+import { Device } from '@/types/device';
 import { EnergyDevice } from '@/types/energy';
-import DeviceControlsPanel from '@/components/microgrid/DeviceControlsPanel';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import DeviceDetailTab from '@/components/devices/tabs/DeviceDetailTab';
+import DeviceControlPanel from '@/components/dashboard/devices/DeviceControlPanel';
+import DeviceTelemetryTab from './DeviceTelemetryTab';
+import DeviceMaintenanceTab from './DeviceMaintenanceTab';
+
+// Convert Device to EnergyDevice
+const convertToEnergyDevice = (device: Device): EnergyDevice => {
+  return {
+    id: device.id,
+    name: device.name,
+    type: device.type,
+    status: device.status,
+    capacity: device.capacity,
+    description: device.description,
+    location: device.location,
+    created_at: device.created_at || new Date().toISOString(),
+    last_updated: device.last_updated || new Date().toISOString(),
+    firmware: device.firmware,
+    protocol: device.protocol,
+    metrics: device.metrics || {},
+    site_id: device.site_id,
+  };
+};
 
 const DeviceDetails: React.FC = () => {
   const { deviceId } = useParams<{ deviceId: string }>();
-  const navigate = useNavigate();
-  const [device, setDevice] = useState<EnergyDevice | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [device, setDevice] = useState<Device | null>(null);
+  const [energyDevice, setEnergyDevice] = useState<EnergyDevice | null>(null);
+  const [activeTab, setActiveTab] = useState('overview');
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     const fetchDevice = async () => {
-      if (!deviceId) {
-        setError('No device ID provided');
-        setLoading(false);
-        return;
-      }
+      if (!deviceId) return;
 
+      setLoading(true);
       try {
         const deviceData = await getDeviceById(deviceId);
-        if (deviceData) {
-          setDevice(deviceData);
-        } else {
-          setError('Device not found');
-        }
+        setDevice(deviceData);
+        
+        // Convert to EnergyDevice type for components that expect it
+        setEnergyDevice(convertToEnergyDevice(deviceData));
       } catch (err) {
-        setError('Error loading device');
-        console.error('Failed to load device:', err);
+        console.error("Error fetching device:", err);
+        setError(err instanceof Error ? err : new Error('Failed to fetch device details'));
       } finally {
         setLoading(false);
       }
@@ -46,89 +60,50 @@ const DeviceDetails: React.FC = () => {
     fetchDevice();
   }, [deviceId]);
 
-  const handleDelete = async () => {
-    if (!deviceId || !device) return;
-    
-    if (window.confirm(`Are you sure you want to delete ${device.name}?`)) {
-      try {
-        const success = await deleteDevice(deviceId);
-        if (success) {
-          toast.success('Device successfully deleted');
-          navigate('/devices');
-        } else {
-          toast.error('Failed to delete device');
-        }
-      } catch (err) {
-        console.error('Error deleting device:', err);
-        toast.error('Error deleting device');
-      }
-    }
-  };
-
   if (loading) {
     return (
-      <AppLayout>
-        <Main>
-          <div className="flex items-center justify-center h-[60vh]">
-            <div className="animate-pulse flex flex-col items-center">
-              <div className="h-12 w-12 rounded-md bg-primary/20"></div>
-              <p className="mt-4 text-muted-foreground">Loading device details...</p>
-            </div>
-          </div>
-        </Main>
-      </AppLayout>
+      <Main>
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </Main>
     );
   }
 
   if (error || !device) {
     return (
-      <AppLayout>
-        <Main>
-          <Card className="p-6 text-center">
-            <AlertTriangle className="mx-auto h-12 w-12 text-amber-500 mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Device Not Found</h2>
-            <p className="text-muted-foreground mb-4">
-              {error || 'The requested device could not be found.'}
-            </p>
-            <Button onClick={() => navigate('/devices')}>Back to Devices</Button>
-          </Card>
-        </Main>
-      </AppLayout>
+      <Main>
+        <div className="bg-destructive/10 border border-destructive/30 p-4 rounded-md">
+          <h2 className="text-xl font-bold text-destructive mb-2">Error Loading Device</h2>
+          <p>{error?.message || 'Device not found'}</p>
+        </div>
+      </Main>
     );
   }
 
   return (
-    <AppLayout>
-      <Main>
-        <PageHeader
-          title={device.name}
-          description={`${device.type} - ${device.status}`}
-        >
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate(`/devices/${deviceId}/edit`)}
-            >
-              <Edit className="mr-2 h-4 w-4" /> Edit
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleDelete}
-              className="text-destructive hover:bg-destructive/10"
-            >
-              <Trash2 className="mr-2 h-4 w-4" /> Delete
-            </Button>
-          </div>
-        </PageHeader>
+    <Main title={device.name}>
+      <div className="flex flex-col gap-4">
+        <DeviceControlPanel device={energyDevice} />
 
-        <div className="grid gap-6 mt-6">
-          <DeviceDetailTab device={device} />
-          <DeviceControlsPanel device={device} />
-        </div>
-      </Main>
-    </AppLayout>
+        <Tabs defaultValue="overview" className="space-y-4" value={activeTab} onValueChange={setActiveTab}>
+          <TabsList>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="telemetry">Telemetry</TabsTrigger>
+            <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
+          </TabsList>
+          <TabsContent value="overview">
+            <DeviceDetailTab device={device} />
+          </TabsContent>
+          <TabsContent value="telemetry">
+            <DeviceTelemetryTab device={device} />
+          </TabsContent>
+          <TabsContent value="maintenance">
+            <DeviceMaintenanceTab device={device} />
+          </TabsContent>
+        </Tabs>
+      </div>
+    </Main>
   );
 };
 

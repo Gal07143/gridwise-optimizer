@@ -1,118 +1,75 @@
 
-import React from 'react';
-import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Slider } from '@/components/ui/slider';
-import { Lightbulb } from 'lucide-react';
-import usePredictions from '@/hooks/usePredictions';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { usePredictions } from '@/hooks/usePredictions';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
-interface PredictionsCardProps {
-  timeframe: 'day' | 'week' | 'month' | 'year';
-  customData?: any[];
-}
+const PredictionsCard: React.FC = () => {
+  const [activeTab, setActiveTab] = useState('consumption');
+  const { predictions, isLoading, error, fetchPredictions } = usePredictions();
 
-const PredictionsCard = ({ timeframe, customData }: PredictionsCardProps) => {
-  const { 
-    predictions, 
-    isLoading, 
-    error, 
-    predictionDays, 
-    setPredictionDays 
-  } = usePredictions(timeframe);
+  useEffect(() => {
+    fetchPredictions();
+  }, []);
 
-  const handlePredictionDaysChange = (value: number[]) => {
-    setPredictionDays(value[0]);
+  const renderChart = (dataKey: string) => {
+    return (
+      <ResponsiveContainer width="100%" height={300}>
+        <LineChart data={predictions} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="time" />
+          <YAxis />
+          <Tooltip />
+          <Legend />
+          <Line type="monotone" dataKey={dataKey} stroke="#8884d8" activeDot={{ r: 8 }} />
+          <Line type="monotone" dataKey={`${dataKey}Predicted`} stroke="#82ca9d" strokeDasharray="5 5" />
+        </LineChart>
+      </ResponsiveContainer>
+    );
   };
 
-  // The predictions are now properly typed with day, value and confidence properties
-  const chartData = predictions;
-
-  // Calculate average confidence if we have predictions
-  const avgConfidence = predictions.length 
-    ? Math.round((predictions.reduce((sum, p) => sum + (p.confidence || 0), 0) / predictions.length) * 100) 
-    : 0;
-
   return (
-    <Card className="shadow-md">
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Lightbulb className="h-5 w-5 text-amber-500" />
-              Energy Consumption Forecast
-            </CardTitle>
-            <CardDescription>ML-powered energy usage predictions</CardDescription>
-          </div>
-          {!isLoading && !error && predictions.length > 0 && (
-            <div className="bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 text-xs font-medium px-2.5 py-0.5 rounded-full">
-              {avgConfidence}% confidence
-            </div>
-          )}
-        </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Energy Predictions</CardTitle>
+        <CardDescription>AI-powered forecasts for your energy usage patterns</CardDescription>
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <div className="space-y-3">
-            <Skeleton className="h-[200px] w-full" />
-            <Skeleton className="h-10 w-full" />
+          <div className="flex justify-center items-center h-64">
+            <LoadingSpinner />
           </div>
         ) : error ? (
-          <div className="h-[240px] flex items-center justify-center text-muted-foreground">
-            Unable to generate predictions. Please try again.
-          </div>
-        ) : predictions.length === 0 ? (
-          <div className="h-[240px] flex items-center justify-center text-muted-foreground">
-            Insufficient data for prediction
+          <div className="text-center p-4 bg-destructive/10 rounded-md">
+            <p className="text-destructive font-medium">Failed to load predictions</p>
+            <Button size="sm" variant="outline" className="mt-2" onClick={fetchPredictions}>
+              Try Again
+            </Button>
           </div>
         ) : (
           <>
-            <div className="h-[200px] mt-4">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
-                  <defs>
-                    <linearGradient id="colorPrediction" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="rgba(245, 158, 11, 0.8)" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="rgba(245, 158, 11, 0.1)" stopOpacity={0.1}/>
-                    </linearGradient>
-                  </defs>
-                  <XAxis 
-                    dataKey="day" 
-                    tick={{ fontSize: 10 }} 
-                    tickLine={false}
-                  />
-                  <YAxis 
-                    tick={{ fontSize: 10 }} 
-                    tickLine={false}
-                    label={{ value: 'kWh', angle: -90, position: 'insideLeft', fontSize: 10, dy: 50 }}
-                  />
-                  <Tooltip 
-                    formatter={(value: number) => [`${value} kWh`, 'Predicted']}
-                    labelFormatter={(label) => `Forecast: ${label}`}
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="value" 
-                    stroke="rgba(245, 158, 11, 1)" 
-                    fillOpacity={1} 
-                    fill="url(#colorPrediction)" 
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="mt-4">
-              <div className="flex justify-between text-sm text-muted-foreground mb-2">
-                <span>Prediction period</span>
-                <span>{predictionDays} days</span>
-              </div>
-              <Slider
-                defaultValue={[predictionDays]}
-                max={14}
-                min={3}
-                step={1}
-                onValueChange={handlePredictionDaysChange}
-              />
-            </div>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="consumption">Consumption</TabsTrigger>
+                <TabsTrigger value="production">Production</TabsTrigger>
+                <TabsTrigger value="savings">Cost Savings</TabsTrigger>
+              </TabsList>
+              <TabsContent value="consumption" className="space-y-4">
+                <h3 className="font-medium">Consumption Forecast (kWh)</h3>
+                {renderChart('consumption')}
+              </TabsContent>
+              <TabsContent value="production" className="space-y-4">
+                <h3 className="font-medium">Production Forecast (kWh)</h3>
+                {renderChart('production')}
+              </TabsContent>
+              <TabsContent value="savings" className="space-y-4">
+                <h3 className="font-medium">Cost Savings Forecast ($)</h3>
+                {renderChart('savings')}
+              </TabsContent>
+            </Tabs>
           </>
         )}
       </CardContent>

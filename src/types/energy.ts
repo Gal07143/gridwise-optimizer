@@ -1,3 +1,4 @@
+
 // Energy Data Types
 export type DeviceType = 
   | 'solar' 
@@ -28,6 +29,7 @@ export interface Site {
   id: string;
   name: string;
   location: string;
+  description?: string;
   timezone: string;
   lat?: number;
   lng?: number;

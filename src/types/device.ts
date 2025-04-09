@@ -47,9 +47,16 @@ export interface DeviceModel {
   firmware_version?: string;
   protocol?: string;
   support_level?: string;
-  images?: string[];
+  images?: string[] | Record<string, any>;
   has_manual?: boolean;
   created_at?: string;
+  has_datasheet?: boolean;
+  has_video?: boolean;
+  datasheets?: Record<string, any>;
+  videos?: Record<string, any>;
+  firmware_versions?: string[];
+  model_name?: string;
+  certifications?: string[];
 }
 
 export interface DeviceModelReference {

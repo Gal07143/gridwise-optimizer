@@ -37,16 +37,16 @@ const ModbusReadRegister: React.FC<ModbusReadRegisterProps> = ({ deviceId, onRea
       setReadResult(result);
       if (onRead) onRead(result);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error : new Error(String(error));
-      
-      setReadResult({
+      const errorResult: ModbusReadingResult = {
         address: registerAddress,
         value: 0,
         formattedValue: "",
         timestamp: new Date().toISOString(),
         success: false,
-        error: errorMessage
-      });
+        error: error instanceof Error ? error : new Error(String(error))
+      };
+      
+      setReadResult(errorResult);
     } finally {
       setIsReading(false);
     }

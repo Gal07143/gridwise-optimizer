@@ -1,61 +1,41 @@
 
-import { DateRange as RDPDateRange } from 'react-day-picker';
-
 export interface Site {
   id: string;
   name: string;
-  address: string;
-  city: string;
-  state: string;
-  country: string;
-  postal_code: string;
-  timezone: string;
-  lat: number;
-  lng: number;
-  created_at: string;
-  updated_at: string;
-  status?: 'active' | 'inactive' | 'maintenance'; // Add status property
+  location: string;
   description?: string;
-  site_type?: string;
-  tags?: string[];
-  main_image_url?: string;
-  organization_id?: string;
-  
-  // Legacy/compatibility properties
-  location: string; // Maps to address
-  type?: string;     // Maps to site_type
-  building_type?: string;
-  area?: number;
-  contact_person?: string;
-  contact_email?: string;
-  contact_phone?: string;
+  timezone: string;
+  created_at?: string;
+  updated_at?: string;
+  lat?: number;
+  lng?: number;
+  type?: string;
+  status?: 'active' | 'inactive' | 'maintenance';
 }
 
-export interface SiteFormData {
+export interface SiteConfig {
+  id?: string;
   name: string;
-  address: string;
-  city: string;
-  state: string;
-  country: string;
-  postal_code: string;
+  location: string;
+  description?: string;
   timezone: string;
   lat?: number;
   lng?: number;
-  status?: 'active' | 'inactive' | 'maintenance'; // Add status property
-  description?: string;
-  site_type?: string;
-  tags?: string[];
-  main_image_url?: string;
-  organization_id?: string;
-  
-  // Legacy/compatibility properties
-  location?: string;
   type?: string;
-  building_type?: string;
-  area?: number;
-  contact_person?: string;
-  contact_email?: string;
-  contact_phone?: string;
+  status?: 'active' | 'inactive' | 'maintenance';
 }
 
-export type DateRange = RDPDateRange;
+export interface SiteMetrics {
+  totalConsumption: number;
+  totalProduction: number;
+  totalSavings: number;
+  peakDemand: number;
+  co2Saved: number;
+  devices: number;
+}
+
+export interface SiteSummary extends Site {
+  metrics?: SiteMetrics;
+  deviceCount?: number;
+  alertCount?: number;
+}

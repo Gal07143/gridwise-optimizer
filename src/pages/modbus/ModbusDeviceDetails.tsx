@@ -27,7 +27,7 @@ const ModbusDeviceDetails: React.FC = () => {
     disconnect,
     loading, 
     error 
-  } = useModbusConnection(deviceId);
+  } = useModbusConnection(deviceId || '');
   
   useEffect(() => {
     if (device) {
@@ -42,11 +42,11 @@ const ModbusDeviceDetails: React.FC = () => {
   
   const toggleConnection = async () => {
     if (isConnected) {
-      await disconnect();
+      await disconnect?.();
       toast.success("Disconnected from device");
     } else {
       try {
-        await connect();
+        await connect?.();
         toast.success("Connected to device successfully");
       } catch (err) {
         toast.error("Failed to connect to device");
@@ -126,7 +126,7 @@ const ModbusDeviceDetails: React.FC = () => {
           <div className="mb-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center">
             <div>
               <div className="flex flex-wrap gap-2 mb-2">
-                <Badge variant="outline">{`IP: ${device.ip}:${device.port}`}</Badge>
+                <Badge variant="outline">{`IP: ${device.ip_address || device.ip}:${device.port}`}</Badge>
                 <Badge variant="outline">{`Unit ID: ${device.unit_id}`}</Badge>
                 <Badge>{device.protocol}</Badge>
                 <Badge variant={device.is_active ? "default" : "secondary"}>

@@ -6,7 +6,7 @@ export interface ModbusDevice {
   port: number;
   unit_id: number;
   status?: 'online' | 'offline' | 'error';
-  protocol?: 'tcp' | 'rtu'; 
+  protocol: 'tcp' | 'rtu'; 
   description?: string;
   last_connected?: string;
   created_at?: string;
@@ -86,7 +86,7 @@ export interface ConnectionStatusResult {
   connect?: () => Promise<void>;
   disconnect?: () => Promise<void>;
   retryConnection?: () => Promise<void>;
-  status?: 'connected' | 'disconnected' | 'connecting' | 'error';
+  status: 'connected' | 'connecting' | 'disconnected' | 'error' | 'ready';
   message?: string;
 }
 

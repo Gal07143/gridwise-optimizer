@@ -1,103 +1,134 @@
 
 import { useState } from 'react';
-import { toast } from 'sonner';
+import { useToast } from './useToast';
 
-export interface SystemRecommendation {
+interface Prediction {
+  time: string;
+  consumption: number;
+  consumptionPredicted: number;
+  production: number;
+  productionPredicted: number;
+  savings: number;
+  savingsPredicted: number;
+  confidence?: number;
+}
+
+interface Recommendation {
   id: string;
   title: string;
   description: string;
-  potentialSavings?: number;
-  potential_savings?: string; // For backward compatibility
-  implementation_effort?: string;
-  impact: 'low' | 'medium' | 'high';
-  type: 'energy' | 'cost' | 'maintenance' | 'carbon';
-  createdAt: string;
+  potentialSavings: number;
+  confidence: number;
   priority: 'low' | 'medium' | 'high';
-  status: 'pending' | 'applied' | 'dismissed';
-  confidence: number; // Required confidence field
+  implemented: boolean;
 }
-
-export interface Prediction {
-  date: string;
-  production: number;
-  consumption: number;
-  difference: number;
-  confidence?: number; // Add confidence field for predictions
-}
-
-// Export the applyRecommendation function
-export const applyRecommendation = async (recommendationId: string): Promise<boolean> => {
-  try {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    toast.success('Recommendation applied successfully');
-    return true;
-  } catch (error) {
-    console.error('Error applying recommendation:', error);
-    toast.error('Failed to apply recommendation');
-    return false;
-  }
-};
 
 export const usePredictions = () => {
   const [predictions, setPredictions] = useState<Prediction[]>([]);
-  const [predictionDays, setPredictionDays] = useState<number>(7);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const toast = useToast();
 
-  const generatePredictions = async (): Promise<boolean> => {
+  const fetchPredictions = async () => {
     setIsLoading(true);
     setError(null);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Simulate API call with mock data
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Generate mock predictions
-      const mockPredictions: Prediction[] = [];
-      const today = new Date();
+      // Generate mock prediction data
+      const mockPredictions: Prediction[] = Array.from({ length: 24 }).map((_, i) => {
+        const hour = i.toString().padStart(2, '0');
+        const baseConsumption = 2 + Math.sin(i / 3) * 1.5;
+        const baseProduction = i > 6 && i < 20 ? 3 + Math.sin((i - 6) / 4) * 2 : 0.2;
+        
+        return {
+          time: `${hour}:00`,
+          consumption: baseConsumption + Math.random() * 0.5,
+          consumptionPredicted: baseConsumption,
+          production: baseProduction + Math.random() * 1,
+          productionPredicted: baseProduction,
+          savings: (baseProduction * 0.15) + Math.random() * 0.2,
+          savingsPredicted: baseProduction * 0.15,
+          confidence: 0.7 + Math.random() * 0.2
+        };
+      });
       
-      for (let i = 0; i < predictionDays; i++) {
-        const date = new Date(today);
-        date.setDate(date.getDate() + i);
-        
-        const production = Math.round(Math.random() * 50) + 20;
-        const consumption = Math.round(Math.random() * 40) + 15;
-        
-        mockPredictions.push({
-          date: date.toISOString().split('T')[0],
-          production,
-          consumption,
-          difference: production - consumption,
-          confidence: Math.round(70 + Math.random() * 25) // Add confidence between 70-95%
-        });
-      }
+      // Mock recommendations
+      const mockRecommendations: Recommendation[] = [
+        {
+          id: '1',
+          title: 'Shift EV charging to off-peak hours',
+          description: 'Charging your EV during off-peak hours (10PM-6AM) could save up to 30% on charging costs.',
+          potentialSavings: 42.50,
+          confidence: 0.87,
+          priority: 'high',
+          implemented: false
+        },
+        {
+          id: '2',
+          title: 'Optimize battery usage during peak hours',
+          description: 'Using stored battery energy during peak demand periods (5PM-8PM) can reduce grid usage.',
+          potentialSavings: 28.75,
+          confidence: 0.92,
+          priority: 'medium',
+          implemented: false
+        },
+        {
+          id: '3',
+          title: 'Reduce HVAC usage during solar production dips',
+          description: 'Temporarily reducing HVAC intensity during cloudy periods can better match your solar production.',
+          potentialSavings: 15.20,
+          confidence: 0.76,
+          priority: 'low',
+          implemented: false
+        }
+      ];
       
       setPredictions(mockPredictions);
-      toast.success('Predictions generated successfully');
+      setRecommendations(mockRecommendations);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to fetch predictions'));
+      toast.error('Failed to load predictions');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const applyRecommendation = async (recommendationId: string) => {
+    setIsLoading(true);
+    
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      // Update recommendations list with implemented flag
+      setRecommendations(prev => 
+        prev.map(rec => 
+          rec.id === recommendationId ? { ...rec, implemented: true } : rec
+        )
+      );
+      
+      toast.success('Recommendation applied successfully');
       return true;
-    } catch (e) {
-      const err = e instanceof Error ? e : new Error('Unknown error occurred');
-      setError(err);
-      toast.error('Failed to generate predictions');
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Failed to apply recommendation');
+      setError(error);
+      toast.error(error.message);
       return false;
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Adding refetch as an alias for generatePredictions for consistency with other hooks
-  const refetch = generatePredictions;
-
   return {
     predictions,
-    error,
-    predictionDays,
-    setPredictionDays,
-    generatePredictions,
+    recommendations,
     isLoading,
-    refetch
+    error,
+    fetchPredictions,
+    applyRecommendation
   };
 };
-
-export default usePredictions;
