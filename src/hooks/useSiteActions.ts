@@ -75,7 +75,7 @@ export const useSiteActions = () => {
     
     try {
       await deleteSiteService(siteId);
-      // Since deleteSiteService returns void, we just check if there was no error
+      // Since deleteSiteService returns void, we explicitly return a success object
       return { success: true };
     } catch (err: any) {
       setError(err.message);

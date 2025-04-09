@@ -1,41 +1,26 @@
-import { ModbusDevice, ModbusRegister, ModbusRegisterMap } from '@/types/modbus';
+
+import { ModbusDevice, ModbusReadResult, ModbusRegister, ModbusDeviceConfig } from '@/types/modbus';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
-export const createModbusDevice = async (device: Partial<ModbusDevice>) => {
-  try {
-    const { data, error } = await supabase
-      .from('modbus_devices')
-      .insert([device])
-      .select()
-      .single();
-      
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error('Error creating modbus device:', error);
-    throw error;
-  }
-};
-
-export const getModbusDevices = async () => {
+// Get all Modbus devices
+export const getAllModbusDevices = async (): Promise<ModbusDevice[]> => {
   try {
     const { data, error } = await supabase
       .from('modbus_devices')
       .select('*');
       
     if (error) throw error;
-    return data;
+    return data as ModbusDevice[];
   } catch (error) {
-    console.error('Error getting modbus devices:', error);
-    throw error;
+    console.error('Error fetching Modbus devices:', error);
+    toast.error('Failed to fetch Modbus devices');
+    return [];
   }
 };
 
-export const getAllModbusDevices = async () => {
-  return getModbusDevices();
-};
-
-export const getDeviceById = async (id: string) => {
+// Get a Modbus device by ID
+export const getModbusDevice = async (id: string): Promise<ModbusDevice | null> => {
   try {
     const { data, error } = await supabase
       .from('modbus_devices')
@@ -44,14 +29,35 @@ export const getDeviceById = async (id: string) => {
       .single();
       
     if (error) throw error;
-    return data;
+    return data as ModbusDevice;
   } catch (error) {
-    console.error('Error getting modbus device:', error);
-    throw error;
+    console.error('Error fetching Modbus device:', error);
+    toast.error('Failed to fetch Modbus device');
+    return null;
   }
 };
 
-export const updateModbusDevice = async (id: string, device: Partial<ModbusDevice>) => {
+// Create a new Modbus device
+export const createModbusDevice = async (device: ModbusDeviceConfig): Promise<ModbusDevice | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('modbus_devices')
+      .insert(device)
+      .select()
+      .single();
+      
+    if (error) throw error;
+    toast.success('Modbus device created successfully');
+    return data as ModbusDevice;
+  } catch (error) {
+    console.error('Error creating Modbus device:', error);
+    toast.error('Failed to create Modbus device');
+    return null;
+  }
+};
+
+// Update a Modbus device
+export const updateModbusDevice = async (id: string, device: Partial<ModbusDevice>): Promise<ModbusDevice | null> => {
   try {
     const { data, error } = await supabase
       .from('modbus_devices')
@@ -61,14 +67,17 @@ export const updateModbusDevice = async (id: string, device: Partial<ModbusDevic
       .single();
       
     if (error) throw error;
-    return data;
+    toast.success('Modbus device updated successfully');
+    return data as ModbusDevice;
   } catch (error) {
-    console.error('Error updating modbus device:', error);
-    throw error;
+    console.error('Error updating Modbus device:', error);
+    toast.error('Failed to update Modbus device');
+    return null;
   }
 };
 
-export const deleteModbusDevice = async (id: string) => {
+// Delete a Modbus device
+export const deleteModbusDevice = async (id: string): Promise<boolean> => {
   try {
     const { error } = await supabase
       .from('modbus_devices')
@@ -76,48 +85,91 @@ export const deleteModbusDevice = async (id: string) => {
       .eq('id', id);
       
     if (error) throw error;
+    toast.success('Modbus device deleted successfully');
     return true;
   } catch (error) {
-    console.error('Error deleting modbus device:', error);
-    throw error;
+    console.error('Error deleting Modbus device:', error);
+    toast.error('Failed to delete Modbus device');
+    return false;
   }
 };
 
-export const getRegisterMap = async () => {
+// Read a Modbus register
+export const readRegister = async (
+  deviceId: string, 
+  register: ModbusRegister
+): Promise<ModbusReadResult | null> => {
+  try {
+    // In a real implementation, this would call the backend API
+    // For now, we'll simulate a response
+    const { data, error } = await supabase.functions.invoke('read-modbus-register', {
+      body: { 
+        deviceId, 
+        registerAddress: register.register_address,
+        registerType: register.register_type,
+        dataType: register.data_type,
+        length: register.register_length
+      }
+    });
+
+    if (error) throw error;
+    
+    return {
+      address: register.register_address,
+      value: data.value,
+      timestamp: new Date().toISOString()
+    };
+  } catch (error) {
+    console.error('Error reading Modbus register:', error);
+    toast.error('Failed to read Modbus register');
+    return null;
+  }
+};
+
+// Write to a Modbus register
+export const writeRegister = async (
+  deviceId: string, 
+  register: ModbusRegister,
+  value: number | boolean
+): Promise<boolean> => {
+  try {
+    // In a real implementation, this would call the backend API
+    // For now, we'll simulate a response
+    const { error } = await supabase.functions.invoke('write-modbus-register', {
+      body: { 
+        deviceId, 
+        registerAddress: register.register_address,
+        registerType: register.register_type,
+        dataType: register.data_type,
+        value
+      }
+    });
+
+    if (error) throw error;
+    
+    toast.success(`Value ${value} written to register ${register.register_name}`);
+    return true;
+  } catch (error) {
+    console.error('Error writing to Modbus register:', error);
+    toast.error('Failed to write to Modbus register');
+    return false;
+  }
+};
+
+// Get all registers for a device
+export const getDeviceRegisters = async (deviceId: string): Promise<ModbusRegister[]> => {
   try {
     const { data, error } = await supabase
       .from('modbus_register_maps')
-      .select('*');
-      
-    if (error) throw error;
-    return data as ModbusRegisterMap[];
-  } catch (error) {
-    console.error('Error getting register map:', error);
-    throw error;
-  }
-};
-
-export const writeRegister = async (deviceId: string, address: number, value: number) => {
-  try {
-    // In a real system, this would communicate with the device directly
-    // For now, we'll just log it and simulate success
-    console.log(`Writing value ${value} to register ${address} on device ${deviceId}`);
-    
-    // Simulate an API call or modbus communication
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    // Update the reading in the database if needed
-    const { data, error } = await supabase
-      .from('modbus_readings')
-      .update({ value })
+      .select('registers')
       .eq('device_id', deviceId)
-      .eq('register_address', address)
-      .select();
+      .single();
       
     if (error) throw error;
-    return { success: true, data };
+    return data?.registers || [];
   } catch (error) {
-    console.error('Error writing to modbus register:', error);
-    throw error;
+    console.error('Error fetching device registers:', error);
+    toast.error('Failed to fetch device registers');
+    return [];
   }
 };

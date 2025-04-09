@@ -59,8 +59,26 @@ export const usePredictions = () => {
     predictions: recommendations,
     isLoading: loading,
     fetchPredictions: fetchRecommendations,
-    refetch: () => fetchRecommendations('default')
+    refetch: (siteId: string = 'default') => fetchRecommendations(siteId)
   };
 
   return compatibilityProps;
+};
+
+// Export applyRecommendation as a standalone function for backward compatibility
+export const applyRecommendation = async (recommendationId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('ai_recommendations')
+      .update({ applied: true, applied_at: new Date().toISOString() })
+      .eq('id', recommendationId)
+      .select();
+    
+    if (error) throw error;
+    
+    return data;
+  } catch (error: any) {
+    console.error('Error applying recommendation:', error);
+    throw error;
+  }
 };

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { AuthContext } from './AuthContext';
@@ -13,6 +14,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
     // Set up auth state listener FIRST to prevent missing auth events
@@ -21,7 +23,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.log('Auth state changed:', event);
         setSession(currentSession);
         setUser(currentSession?.user ? mapUserData(currentSession.user) : null);
-        setLoading(false);
+        
+        if (!initialized) {
+          setLoading(false);
+          setInitialized(true);
+        }
 
         // Fetch additional user data if needed (using setTimeout to prevent auth deadlocks)
         if (currentSession?.user) {
@@ -33,15 +39,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
-      setSession(currentSession);
-      setUser(currentSession?.user ? mapUserData(currentSession.user) : null);
-      setLoading(false);
-      
-      if (currentSession?.user) {
-        fetchUserProfile(currentSession.user.id);
+    const initializeAuth = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error getting session:', error);
+          throw error;
+        }
+        
+        const { session: currentSession } = data;
+        setSession(currentSession);
+        setUser(currentSession?.user ? mapUserData(currentSession.user) : null);
+        
+        if (currentSession?.user) {
+          fetchUserProfile(currentSession.user.id);
+        }
+      } catch (err) {
+        console.error('Auth initialization error:', err);
+      } finally {
+        setLoading(false);
+        setInitialized(true);
       }
-    });
+    };
+
+    initializeAuth();
 
     return () => {
       subscription.unsubscribe();
@@ -81,6 +103,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const signIn = async (email: string, password: string) => {
     try {
+      console.log('Signing in with:', email);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -100,6 +123,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       return data;
     } catch (error: unknown) {
       const authError = error as AuthError | Error;
+      console.error('Sign in error:', authError);
       toast.error(authError.message || 'Failed to sign in');
       throw error;
     }

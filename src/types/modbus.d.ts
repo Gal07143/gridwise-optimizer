@@ -2,112 +2,58 @@
 export interface ModbusDevice {
   id: string;
   name: string;
-  ip: string;
-  ip_address?: string; // Alias for ip for backwards compatibility
+  device_id: string;
+  ip_address: string;
   port: number;
-  unit_id: number;
-  is_active: boolean;
+  slave_id: number;
+  status: 'online' | 'offline' | 'error';
+  created_at: string;
+  updated_at?: string;
+  site_id: string;
+  protocol: 'TCP' | 'RTU';
   description?: string;
-  protocol: "tcp" | "rtu";
-  inserted_at?: string;
-  updated_at: string;
-  site_id?: string;
-  status?: string;
+  manufacturer?: string;
+  model?: string;
 }
 
 export interface ModbusDeviceConfig {
-  id?: string;
   name: string;
-  ip: string;
-  ip_address?: string; // Alias for compatibility
+  ip_address: string;
   port: number;
-  unit_id: number;
-  protocol: "tcp" | "rtu";
-  is_active: boolean;
+  slave_id: number;
+  protocol: 'TCP' | 'RTU';
   description?: string;
-  site_id?: string;
-}
-
-export interface ModbusRegister {
-  id?: string;
-  name: string;
-  address: number;
-  device_id: string;
-  register_type: "holding" | "input" | "coil" | "discrete_input";
-  data_type: "int16" | "uint16" | "int32" | "uint32" | "float" | "boolean" | "string";
-  scaleFactor?: number;
-  scaling_factor?: number; // Alias for scaleFactor for backwards compatibility
-  unit?: string;
-  description?: string;
-  access?: "read" | "write" | "read_write";
-  is_active?: boolean;
-  update_frequency?: number;
-  high_alarm?: number;
-  low_alarm?: number;
-  last_value?: any;
-  last_read?: string;
-  register_address?: number;
-  register_name?: string;
-  register_length?: number;
-}
-
-export interface ModbusRegisterDefinition extends ModbusRegister {
-  device_name?: string;
+  site_id: string;
 }
 
 export interface ModbusRegisterMap {
-  id?: string;
-  name: string;
+  id: string;
+  device_id: string;
   registers: ModbusRegister[];
-  description?: string;
-  device_id?: string;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface ModbusRegister {
+  name: string;
+  address: number;
+  register_type: 'coil' | 'discrete_input' | 'holding' | 'input';
+  data_type: 'int16' | 'uint16' | 'int32' | 'uint32' | 'float' | 'boolean';
+  register_address: number;
+  register_name: string;
+  register_length: number;
+  scaleFactor?: number;
+}
+
+export interface ModbusRegisterDefinition {
+  register_address: number;
+  register_name: string;
+  register_length: number;
+  scaleFactor?: number;
 }
 
 export interface ModbusReadResult {
-  value: number | boolean | string;
-  raw_value?: number | boolean;
-  timestamp: string;
-  register?: ModbusRegister;
-  error?: string;
-  success: boolean;
-}
-
-export interface ConnectionStatusOptions {
-  initialStatus?: boolean;
-  reconnectDelay?: number;
-  showToasts?: boolean;
-  deviceId?: string;
-  autoConnect?: boolean;
-  retryInterval?: number;
-  maxRetries?: number;
-}
-
-export interface ConnectionStatusResult {
-  isOnline: boolean;
-  isConnecting?: boolean;
-  isConnected: boolean;
-  lastConnected?: Date;
-  lastOnline: Date | null;
-  lastOffline: Date | null;
-  error: Error | null;
-  status: "connected" | "connecting" | "disconnected" | "error" | "ready";
-  message?: string;
-  connect?: () => Promise<void>;
-  disconnect?: () => Promise<void>;
-  retryConnection?: () => Promise<void>;
-}
-
-export interface ModbusReadingResult {
   address: number;
-  value: number;
-  formattedValue: string;
-  timestamp: string;
-  success: boolean;
-  error?: Error;
-}
-
-export interface ModbusWriteRequest {
-  registerAddress: number;
   value: number | boolean;
-  registerType: "holding_register" | "coil";
+  timestamp: string;
 }

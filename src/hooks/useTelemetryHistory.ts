@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
-// Add the missing 'value' property to the TelemetryData interface
+// Define the interface with required properties
 interface TelemetryData {
   timestamp: string;
   metric: string;
@@ -32,7 +32,7 @@ export const useTelemetryHistory = (deviceId: string, metric: string) => {
       }
 
       // Transform the data to match the TelemetryData interface
-      const telemetryData = data.map(item => ({
+      const telemetryData: TelemetryData[] = data.map(item => ({
         timestamp: item.timestamp,
         metric: 'power',
         device_id: deviceId,
