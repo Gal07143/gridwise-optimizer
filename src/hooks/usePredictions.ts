@@ -1,6 +1,9 @@
+
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { SystemRecommendation } from '@/types/energy';
+
+export type { SystemRecommendation };
 
 export const usePredictions = () => {
   const [recommendations, setRecommendations] = useState<SystemRecommendation[]>([]);
@@ -29,27 +32,35 @@ export const usePredictions = () => {
   };
 
   const applyRecommendation = async (recommendationId: string) => {
-  try {
-    const { data, error } = await supabase
-      .from('ai_recommendations')
-      .update({ applied: true, applied_at: new Date().toISOString() })
-      .eq('id', recommendationId)
-      .select();
-    
-    if (error) throw error;
-    
-    return data;
-  } catch (error) {
-    console.error('Error applying recommendation:', error);
-    throw error;
-  }
-};
+    try {
+      const { data, error } = await supabase
+        .from('ai_recommendations')
+        .update({ applied: true, applied_at: new Date().toISOString() })
+        .eq('id', recommendationId)
+        .select();
+      
+      if (error) throw error;
+      
+      return data;
+    } catch (error: any) {
+      console.error('Error applying recommendation:', error);
+      throw error;
+    }
+  };
 
-  return {
+  // For compatibility with components that expect predictions
+  const compatibilityProps = {
     recommendations,
     loading,
     error,
     fetchRecommendations,
-    applyRecommendation
+    applyRecommendation,
+    // Compatibility aliases
+    predictions: recommendations,
+    isLoading: loading,
+    fetchPredictions: fetchRecommendations,
+    refetch: () => fetchRecommendations('default')
   };
+
+  return compatibilityProps;
 };

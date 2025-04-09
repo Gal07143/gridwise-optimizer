@@ -254,3 +254,34 @@
 .animate-energy-pulse {
   animation: energy-pulse 3s ease-in-out infinite;
 }
+
+/* New modern UI styles */
+.bg-gradient-primary {
+  @apply bg-gradient-to-r from-blue-600 to-indigo-600;
+}
+
+.text-gradient-primary {
+  @apply bg-gradient-to-r from-blue-400 to-indigo-300 bg-clip-text text-transparent;
+}
+
+.bg-glass-dark {
+  @apply bg-slate-800/50 backdrop-blur-md border-slate-700;
+}
+
+.input-dark {
+  @apply bg-slate-800/50 border-slate-700 text-slate-200 placeholder:text-slate-500 focus:ring-blue-500 focus:border-blue-500;
+}
+
+.btn-primary {
+  @apply bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 text-white font-medium py-2 shadow-lg shadow-blue-700/30;
+}
+
+/* Card styles */
+.card-modern {
+  @apply backdrop-blur-md bg-slate-800/50 border-slate-700 shadow-xl;
+}
+
+/* Link styles */
+.link-primary {
+  @apply text-blue-400 hover:text-blue-300 hover:underline transition;
+}

@@ -7,7 +7,7 @@ interface TelemetryData {
   timestamp: string;
   metric: string;
   device_id: string;
-  value: number; // Ensure this is defined and required
+  value: number;
 }
 
 export const useTelemetryHistory = (deviceId: string, metric: string) => {

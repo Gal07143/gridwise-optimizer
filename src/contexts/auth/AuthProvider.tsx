@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { AuthContext } from './AuthContext';
@@ -16,7 +15,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Set up auth state listener FIRST
+    // Set up auth state listener FIRST to prevent missing auth events
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
         console.log('Auth state changed:', event);
@@ -87,10 +86,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        // More specific error handling for common auth issues
+        if (error.message.includes('Invalid login')) {
+          throw new Error('Invalid email or password. Please try again.');
+        } else if (error.message.includes('API key')) {
+          throw new Error('Authentication system error. Please contact support.');
+        } else {
+          throw error;
+        }
+      }
+      
       return data;
     } catch (error: unknown) {
-      const authError = error as AuthError;
+      const authError = error as AuthError | Error;
       toast.error(authError.message || 'Failed to sign in');
       throw error;
     }

@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import {
   createSite as createSiteService,
@@ -73,8 +74,8 @@ export const useSiteActions = () => {
     setError(null);
     
     try {
-      const result = await deleteSiteService(siteId);
-      // Check if the operation was successful without checking the void return
+      await deleteSiteService(siteId);
+      // Since deleteSiteService returns void, we just check if there was no error
       return { success: true };
     } catch (err: any) {
       setError(err.message);
