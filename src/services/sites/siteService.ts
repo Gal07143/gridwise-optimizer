@@ -1,6 +1,7 @@
+
 import { Site, SiteFormData } from '@/types/site';
 import { supabase } from '@/integrations/supabase/client';
-// Fix crypto import if needed
+// Fix crypto import - not needed
 // import { scrypt } from 'crypto';
 
 export async function getSites(): Promise<Site[]> {
@@ -19,6 +20,10 @@ export async function getSites(): Promise<Site[]> {
     console.error('Error fetching sites:', error);
     throw error;
   }
+}
+
+export async function getAllSites(): Promise<Site[]> {
+  return getSites(); // Alias for compatibility
 }
 
 export async function getSiteById(id: string): Promise<Site> {
@@ -42,9 +47,12 @@ export async function getSiteById(id: string): Promise<Site> {
 
 export async function createSite(siteData: SiteFormData): Promise<Site> {
   try {
+    // Ensure location is set if not provided directly
+    const location = siteData.location || `${siteData.city}, ${siteData.state}`;
+
     const { data, error } = await supabase.from('sites').insert({
       name: siteData.name,
-      location: siteData.location || `${siteData.city}, ${siteData.state}`,
+      location: location,
       address: siteData.address,
       city: siteData.city,
       state: siteData.state,
@@ -55,7 +63,12 @@ export async function createSite(siteData: SiteFormData): Promise<Site> {
       lng: siteData.lng,
       status: siteData.status || "active",
       description: siteData.description || "",
-      site_type: siteData.site_type || "residential"
+      site_type: siteData.site_type || "residential",
+      contact_person: siteData.contact_person,
+      contact_email: siteData.contact_email,
+      contact_phone: siteData.contact_phone,
+      organization_id: siteData.organization_id,
+      main_image_url: siteData.main_image_url
     }).select().single();
 
     if (error) {
@@ -163,6 +176,48 @@ export async function updateSiteImage(siteId: string, imageUrl: string): Promise
   }
 }
 
+// Helper function to get or create a default site
+export async function getOrCreateDummySite(): Promise<Site> {
+  try {
+    // First try to get any existing site
+    const { data: sites } = await supabase
+      .from('sites')
+      .select('*')
+      .limit(1);
+    
+    if (sites && sites.length > 0) {
+      return sites[0] as Site;
+    }
+    
+    // If no site exists, create a default one
+    const defaultSite: SiteFormData = {
+      name: 'Default Site',
+      location: 'Main Location',
+      description: 'Default site created automatically',
+      timezone: 'UTC',
+      status: 'active',
+      site_type: 'residential'
+    };
+    
+    return await createSite(defaultSite);
+  } catch (error) {
+    console.error('Error in getOrCreateDummySite:', error);
+    
+    // Return a mock site if everything fails
+    return {
+      id: 'site-default',
+      name: 'Default Site',
+      location: 'Main Location',
+      description: 'Default site created automatically',
+      timezone: 'UTC',
+      status: 'active',
+      site_type: 'residential',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+  }
+}
+
 // Mock data for development
 export const mockSites: Site[] = [
   {
@@ -262,7 +317,7 @@ export function generateMockSite(): Site {
     created_at: createdDate.toISOString(),
     updated_at: updatedDate.toISOString(),
     type: types[typeIndex],
-    status: statuses[statusIndex],
+    status: statuses[statusIndex] as 'active' | 'inactive' | 'maintenance',
     city: cities[cityIndex],
     state: states[cityIndex],
     country: 'USA',
@@ -297,7 +352,12 @@ export async function mockCreateSite(formData: SiteFormData): Promise<Site> {
         description: formData.description || "",
         site_type: formData.site_type || "residential",
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        organization_id: formData.organization_id,
+        contact_person: formData.contact_person,
+        contact_email: formData.contact_email,
+        contact_phone: formData.contact_phone,
+        main_image_url: formData.main_image_url
       };
       resolve(newSite);
     }, 500);

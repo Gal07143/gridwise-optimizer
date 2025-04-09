@@ -1,115 +1,163 @@
 
 import React, { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
-import { DeviceModel, DeviceModelReference } from '@/types/device';
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { DeviceModel } from '@/types/device';
 
-// Mock function for getting device models
-const getAllDeviceModels = async (): Promise<DeviceModel[]> => {
-  // Simulating API call
-  return [
-    {
-      id: '1',
-      name: 'SolarEdge SE5000H',
-      manufacturer: 'SolarEdge',
-      model_number: 'SE5000H',
-      device_type: 'inverter',
-      category: 'inverter',
-      power_rating: 5000,
-      has_manual: true
-    },
-    {
-      id: '2',
-      name: 'Tesla Powerwall 2',
-      manufacturer: 'Tesla',
-      model_number: 'PW2',
-      device_type: 'battery',
-      category: 'battery',
-      capacity: 13.5,
-      has_manual: true
-    }
-  ];
-};
+// Sample device models for demonstration
+const sampleModels: DeviceModel[] = [
+  {
+    id: "1",
+    name: "SolarEdge SE10000H",
+    manufacturer: "SolarEdge",
+    model: "SE10000H",
+    model_number: "SE10000H-US",
+    device_type: "inverter",
+    category: "Solar Inverters",
+    supported: true,
+    power_rating: 10000,
+    has_manual: true,
+    has_datasheet: true
+  },
+  {
+    id: "2",
+    name: "Tesla Powerwall 2",
+    manufacturer: "Tesla",
+    model: "Powerwall 2",
+    model_number: "1123982-00-D",
+    device_type: "battery",
+    category: "Battery Systems",
+    supported: true,
+    capacity: 13.5,
+    has_manual: true,
+    has_datasheet: false
+  },
+  // Add more sample models as needed
+];
 
 interface DeviceModelSelectorProps {
-  deviceType?: string;
   value?: string;
-  onChange: (model: DeviceModelReference) => void;
-  required?: boolean;
+  onChange: (value: string | undefined, model?: DeviceModel) => void;
+  deviceType?: string;
 }
 
 const DeviceModelSelector: React.FC<DeviceModelSelectorProps> = ({
-  deviceType,
   value,
   onChange,
-  required = false,
+  deviceType
 }) => {
-  const { data: deviceModels = [], isLoading } = useQuery({
-    queryKey: ['device-models'],
-    queryFn: getAllDeviceModels,
-  });
+  const [open, setOpen] = useState(false);
+  const [models, setModels] = useState<DeviceModel[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredModels = deviceType
-    ? deviceModels.filter((model) => model.device_type === deviceType)
-    : deviceModels;
+  // Fetch device models from API
+  useEffect(() => {
+    const fetchDeviceModels = async () => {
+      try {
+        setLoading(true);
+        // In a real app, this would be an API call
+        // const response = await fetch('/api/device-models');
+        // const data = await response.json();
+        
+        // For now, use sample data
+        let filteredModels = [...sampleModels];
+        
+        if (deviceType) {
+          filteredModels = filteredModels.filter(
+            model => model.device_type?.toLowerCase() === deviceType.toLowerCase()
+          );
+        }
+        
+        setModels(filteredModels);
+      } catch (error) {
+        console.error('Failed to fetch device models:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const selectedModel = filteredModels.find((model) => model.id === value);
+    fetchDeviceModels();
+  }, [deviceType]);
 
-  const handleModelChange = (modelId: string) => {
-    const model = filteredModels.find((m) => m.id === modelId);
-    if (model) {
-      // Convert to DeviceModelReference
-      const modelReference: DeviceModelReference = {
-        id: model.id,
-        name: model.name,
-        manufacturer: model.manufacturer,
-        model_number: model.model_number,
-        device_type: model.device_type,
-        category: model.category || 'unknown',
-        has_manual: model.has_manual || false
-      };
-      onChange(modelReference);
-    }
+  // Find the currently selected model
+  const selectedModel = models.find(model => model.id === value);
+
+  const handleChange = (modelId: string) => {
+    const model = models.find(m => m.id === modelId);
+    onChange(modelId, model);
+    setOpen(false);
   };
 
   return (
-    <div className="space-y-2">
-      <Label htmlFor="device-model">Device Model {required && <span className="text-red-500">*</span>}</Label>
-      <Select
-        value={value}
-        onValueChange={handleModelChange}
-        disabled={isLoading || filteredModels.length === 0}
-      >
-        <SelectTrigger id="device-model" className="w-full">
-          <SelectValue 
-            placeholder="Select a device model" 
-            className="text-muted-foreground"
-          >
-            {selectedModel ? `${selectedModel.manufacturer} - ${selectedModel.model_number}` : 'Select a device model'}
-          </SelectValue>
-        </SelectTrigger>
-        <SelectContent>
-          {filteredModels.length === 0 ? (
-            <SelectItem value="none" disabled>
-              No models available
-            </SelectItem>
-          ) : (
-            filteredModels.map((model) => (
-              <SelectItem key={model.id} value={model.id}>
-                {model.manufacturer} - {model.model_number}
-              </SelectItem>
-            ))
-          )}
-        </SelectContent>
-      </Select>
-    </div>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-full justify-between"
+          disabled={loading}
+        >
+          {value && selectedModel 
+            ? (
+              <div className="flex flex-col items-start text-left">
+                <span>{selectedModel.name}</span>
+                <span className="text-xs text-muted-foreground">
+                  {selectedModel.model_number} · {selectedModel.manufacturer}
+                </span>
+              </div>
+            ) 
+            : "Select Device Model..."}
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="p-0" align="start" alignOffset={0} style={{ width: 'var(--radix-popover-trigger-width)' }}>
+        <Command>
+          <CommandInput placeholder="Search device models..." />
+          <CommandEmpty>No device models found.</CommandEmpty>
+          <CommandGroup>
+            {models.map((model) => (
+              <CommandItem
+                key={model.id}
+                value={model.id}
+                onSelect={handleChange}
+              >
+                <Check
+                  className={cn(
+                    "mr-2 h-4 w-4",
+                    value === model.id ? "opacity-100" : "opacity-0"
+                  )}
+                />
+                <div className="flex flex-col">
+                  <span>{model.name}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {model.model_number} · {model.manufacturer}
+                  </span>
+                </div>
+                {model.has_manual && (
+                  <span className="ml-auto bg-primary/20 text-primary text-xs px-1.5 py-0.5 rounded">
+                    Manual
+                  </span>
+                )}
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 };
 

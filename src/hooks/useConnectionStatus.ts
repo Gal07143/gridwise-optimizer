@@ -3,141 +3,144 @@ import { useState, useEffect } from 'react';
 import { ConnectionStatusOptions, ConnectionStatusResult } from '@/types/modbus';
 import { toast } from 'sonner';
 
-const useConnectionStatus = (options: ConnectionStatusOptions = {}): ConnectionStatusResult => {
-  const {
-    initialStatus = false,
-    reconnectDelay = 5000,
-    showToasts = false,
-    deviceId = '',
-    autoConnect = false,
-    retryInterval = 30000,
-    maxRetries = 3
-  } = options;
+export const useConnectionStatus = (options: ConnectionStatusOptions = {}): ConnectionStatusResult => {
+  const autoConnect = options.autoConnect ?? false;
+  const retryInterval = options.retryInterval ?? 5000;
+  const maxRetries = options.maxRetries ?? 3;
+  const initialStatus = options.initialStatus ?? false;
+  const reconnectDelay = options.reconnectDelay ?? 3000;
+  const showToasts = options.showToasts ?? true;
+  const deviceId = options.deviceId;
 
-  const [isOnline, setIsOnline] = useState<boolean>(initialStatus);
-  const [isConnecting, setIsConnecting] = useState<boolean>(false);
-  const [isConnected, setIsConnected] = useState<boolean>(false);
-  const [lastConnected, setLastConnected] = useState<Date | undefined>(undefined);
+  const [status, setStatus] = useState<'connected' | 'connecting' | 'disconnected' | 'error' | 'ready'>('disconnected');
+  const [error, setError] = useState<Error | null>(null);
   const [lastOnline, setLastOnline] = useState<Date | null>(null);
   const [lastOffline, setLastOffline] = useState<Date | null>(null);
-  const [connectionAttempts, setConnectionAttempts] = useState<number>(0);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const [isConnected, setIsConnected] = useState(initialStatus);
+  const [message, setMessage] = useState<string>('');
+  const [lastConnected, setLastConnected] = useState<Date | undefined>(undefined);
 
-  // Connection handling
-  const connect = async () => {
-    if (isConnecting || isConnected) return;
-    
+  // Simulate connection process
+  const connect = async (): Promise<void> => {
     try {
-      setIsConnecting(true);
-      setErrorMessage(null);
+      if (isConnected) {
+        setMessage('Already connected');
+        return;
+      }
+
+      setStatus('connecting');
+      setMessage('Connecting...');
+
+      // Simulate API call or connection attempt
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      // Randomly succeed or fail based on parameter (80% success rate by default)
+      const success = Math.random() < 0.8;
+
+      if (!success) {
+        throw new Error('Failed to connect to device');
+      }
       
-      // Simulate connection request with deviceId
-      await new Promise<void>((resolve, reject) => {
-        setTimeout(() => {
-          if (Math.random() > 0.3) { // 70% success rate
-            resolve();
-          } else {
-            reject(new Error('Connection failed'));
-          }
-        }, 800);
-      });
-      
-      // Connection successful
+      setStatus('connected');
       setIsConnected(true);
-      setIsOnline(true);
-      setLastConnected(new Date());
+      setRetryCount(0);
       setLastOnline(new Date());
-      setConnectionAttempts(0);
+      setLastConnected(new Date());
+      setError(null);
+      setMessage('Connected successfully');
       
       if (showToasts) {
-        toast.success('Device connected successfully');
+        toast.success(`Successfully connected to device${deviceId ? ` ${deviceId}` : ''}`);
       }
     } catch (err) {
-      const error = err instanceof Error ? err : new Error('Unknown connection error');
-      setErrorMessage(error.message);
-      setConnectionAttempts((prev) => prev + 1);
-      setLastOffline(new Date());
+      const errorMessage = err instanceof Error ? err.message : 'Connection failed';
       
-      if (showToasts) {
-        toast.error(`Connection failed: ${error.message}`);
-      }
-    } finally {
-      setIsConnecting(false);
-    }
-  };
-  
-  const disconnect = async () => {
-    if (!isConnected) return;
-    
-    try {
-      // Simulate disconnection
-      await new Promise<void>((resolve) => {
-        setTimeout(() => resolve(), 300);
-      });
-      
+      setStatus('error');
+      setError(err instanceof Error ? err : new Error(errorMessage));
+      setMessage(errorMessage);
       setIsConnected(false);
-      setIsOnline(false);
       setLastOffline(new Date());
       
       if (showToasts) {
-        toast.info('Device disconnected');
+        toast.error(`Connection failed: ${errorMessage}`);
       }
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error('Failed to disconnect');
-      setErrorMessage(error.message);
       
-      if (showToasts) {
-        toast.error(`Disconnect failed: ${error.message}`);
+      // Try to reconnect if within retry limits
+      if (retryCount < maxRetries) {
+        setRetryCount(prevCount => prevCount + 1);
+        setTimeout(retryConnection, retryInterval);
       }
     }
-  };
-  
-  const retryConnection = async () => {
-    if (connectionAttempts >= maxRetries) {
-      if (showToasts) {
-        toast.error(`Maximum retry attempts (${maxRetries}) reached`);
-      }
-      return;
-    }
-    
-    await connect();
   };
 
-  // Auto connect on mount if requested
-  useEffect(() => {
-    let reconnectTimer: NodeJS.Timeout;
+  const disconnect = async (): Promise<void> => {
+    try {
+      if (!isConnected) {
+        setMessage('Already disconnected');
+        return;
+      }
+
+      // Simulate disconnect call
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      setStatus('disconnected');
+      setIsConnected(false);
+      setLastOffline(new Date());
+      setMessage('Disconnected successfully');
+      
+      if (showToasts) {
+        toast.info(`Disconnected from device${deviceId ? ` ${deviceId}` : ''}`);
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Disconnect failed';
+      
+      setStatus('error');
+      setError(err instanceof Error ? err : new Error(errorMessage));
+      setMessage(errorMessage);
+      
+      if (showToasts) {
+        toast.error(`Disconnect failed: ${errorMessage}`);
+      }
+    }
+  };
+
+  const retryConnection = async (): Promise<void> => {
+    setMessage(`Retrying connection (${retryCount + 1}/${maxRetries})...`);
     
-    if (autoConnect && !isConnected && !isConnecting) {
+    // Add a delay before retry to avoid hammering the service
+    await new Promise(resolve => setTimeout(resolve, reconnectDelay));
+    
+    connect();
+  };
+
+  // Auto-connect on initialization if requested
+  useEffect(() => {
+    if (autoConnect) {
       connect();
+    } else {
+      setStatus('ready');
     }
     
+    // Clean up on unmount
     return () => {
-      clearTimeout(reconnectTimer);
+      // If needed, perform cleanup operations here
     };
   }, [autoConnect]);
 
-  // Get status string based on current state
-  const getStatusString = (): "connected" | "connecting" | "disconnected" | "error" | "ready" => {
-    if (isConnecting) return 'connecting';
-    if (isConnected) return 'connected';
-    if (errorMessage) return 'error';
-    if (isOnline && !isConnected) return 'ready';
-    return 'disconnected';
-  };
-
   return {
-    isOnline,
-    isConnecting,
+    status,
+    message,
+    isOnline: isConnected,
     isConnected,
-    lastConnected,
+    isConnecting: status === 'connecting',
     lastOnline,
     lastOffline,
-    error: errorMessage ? new Error(errorMessage) : null,
     connect,
     disconnect,
     retryConnection,
-    status: getStatusString(),
-    message: errorMessage || undefined
+    error,
+    lastConnected
   };
 };
 

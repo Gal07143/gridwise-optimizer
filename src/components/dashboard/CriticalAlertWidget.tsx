@@ -1,146 +1,152 @@
 
-import React, { useEffect, useState } from 'react';
-import { AlertTriangle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Alert } from '@/types/energy';
-import { supabase } from '@/integrations/supabase/client';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { AlertCircle, CheckCircle, BellRing } from 'lucide-react';
 import { subscribeToTable } from '@/services/supabaseRealtimeService';
-import { formatDistanceToNow } from 'date-fns';
+import { supabase } from '@/integrations/supabase/client';
 
-interface CriticalAlertWidgetProps {
-  onAcknowledge?: (alertId: string) => Promise<void>;
-  onViewAll?: () => void;
+interface Alert {
+  id: string;
+  message: string;
+  severity: string;
+  device_id: string;
+  timestamp: string;
+  acknowledged: boolean;
+  source?: string;
 }
 
-const CriticalAlertWidget: React.FC<CriticalAlertWidgetProps> = ({ onAcknowledge, onViewAll }) => {
+const CriticalAlertWidget = () => {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
-
+  
+  const fetchAlerts = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('alerts')
+        .select('*')
+        .eq('acknowledged', false)
+        .in('severity', ['high', 'critical'])
+        .order('timestamp', { ascending: false })
+        .limit(5);
+        
+      if (error) throw error;
+      
+      setAlerts(data || []);
+    } catch (error) {
+      console.error('Failed to load alerts:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
   useEffect(() => {
-    const fetchAlerts = async () => {
-      try {
-        // Build a query in steps
-        const query = supabase
-          .from('alerts')
-          .select('*');
-          
-        const criticalResult = await query
-          .filter('severity', 'eq', 'critical')
-          .filter('acknowledged', 'eq', false)
-          .order('timestamp', { ascending: false })
-          .limit(3);
-          
-        setAlerts(criticalResult.data as Alert[] || []);
-      } catch (error) {
-        console.error('Error fetching critical alerts:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchAlerts();
-  }, []);
-
-  useEffect(() => {
-    // Fix for the argument count issue - pass required parameters
-    const unsubscribe = subscribeToTable(
-      'alerts', 
-      'INSERT',
-      (payload) => {
-        const newAlert = payload.new as Alert;
-        if (newAlert.severity === 'critical' && !newAlert.acknowledged) {
-          setAlerts(prev => [newAlert, ...prev]);
+    
+    // Subscribe to realtime updates
+    const channel = subscribeToTable('alerts', '*', (payload: any) => {
+      const newAlert = payload.new;
+      
+      if (newAlert && (newAlert.severity === 'high' || newAlert.severity === 'critical')) {
+        if (payload.eventType === 'INSERT') {
+          setAlerts(prev => [newAlert, ...prev].slice(0, 5));
+        } else if (payload.eventType === 'UPDATE') {
+          setAlerts(prev => prev.map(alert => 
+            alert.id === newAlert.id ? newAlert : alert
+          ));
+        } else if (payload.eventType === 'DELETE') {
+          setAlerts(prev => prev.filter(alert => alert.id !== newAlert.id));
         }
       }
-    );
-
-    return () => { 
-      if (typeof unsubscribe === 'function') {
-        unsubscribe();
-      } else if (typeof unsubscribe === 'string') {
-        // Handle string subscription ID
-        void subscribeToTable(unsubscribe, undefined, undefined);
-      }
+    });
+    
+    return () => {
+      // Unsubscribe when component unmounts
+      supabase.removeChannel(channel as any);
     };
   }, []);
-
-  const handleAcknowledge = async (alertId: string) => {
-    if (onAcknowledge) {
-      await onAcknowledge(alertId);
-      setAlerts(prev => prev.filter(alert => alert.id !== alertId));
-    } else {
-      try {
-        const query = supabase
-          .from('alerts')
-          .update({ acknowledged: true });
-          
-        await query.filter('id', 'eq', alertId);
+  
+  const acknowledgeAlert = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('alerts')
+        .update({ 
+          acknowledged: true,
+          acknowledged_at: new Date().toISOString(),
+          acknowledged_by: (await supabase.auth.getUser()).data?.user?.id
+        })
+        .eq('id', id);
         
-        setAlerts(prev => prev.filter(alert => alert.id !== alertId));
-      } catch (error) {
-        console.error('Error acknowledging alert:', error);
-      }
+      if (error) throw error;
+      
+      // Update local state
+      setAlerts(prev => prev.filter(alert => alert.id !== id));
+    } catch (error) {
+      console.error('Failed to acknowledge alert:', error);
+    }
+  };
+  
+  const getSeverityColor = (severity: string) => {
+    switch (severity.toLowerCase()) {
+      case 'critical':
+        return 'bg-destructive hover:bg-destructive/90';
+      case 'high':
+        return 'bg-amber-500 hover:bg-amber-600';
+      default:
+        return 'bg-blue-500 hover:bg-blue-600';
     }
   };
 
-  if (loading) {
-    return (
-      <div className="animate-pulse h-full w-full border rounded-lg p-4 bg-background">
-        <div className="h-5 w-1/3 bg-muted rounded mb-4"></div>
-        <div className="space-y-3">
-          <div className="h-16 bg-muted rounded"></div>
-          <div className="h-16 bg-muted rounded"></div>
-        </div>
-      </div>
-    );
-  }
-
-  if (alerts.length === 0) {
-    return null;
-  }
-
   return (
-    <div className="w-full border border-red-200 bg-red-50 dark:bg-red-950/20 rounded-lg p-4 mb-4">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-red-700 flex items-center font-semibold">
-          <AlertTriangle className="mr-2 h-4 w-4" />
-          Critical Alerts Requiring Attention
-        </h3>
-        <span className="px-2 py-1 bg-red-100 text-red-700 text-xs rounded-full font-medium">
-          {alerts.length} alerts
-        </span>
-      </div>
-      <div className="divide-y divide-red-200">
-        {alerts.map(alert => (
-          <div key={alert.id} className="py-3 first:pt-0 last:pb-0">
-            <div className="flex justify-between">
-              <h4 className="text-sm font-medium text-red-700">{alert.title}</h4>
-              <span className="text-xs text-red-600">
-                {formatDistanceToNow(new Date(alert.timestamp), { addSuffix: true })}
-              </span>
-            </div>
-            <p className="text-xs mt-1 text-red-700">{alert.message}</p>
-            <div className="mt-2 flex justify-end">
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-xs bg-white hover:bg-red-50 border-red-200 text-red-700 hover:text-red-800"
-                onClick={() => handleAcknowledge(alert.id)}
-              >
-                Acknowledge
-              </Button>
-            </div>
+    <Card className="overflow-hidden">
+      <CardHeader className="bg-muted/50">
+        <CardTitle className="flex items-center gap-2">
+          <AlertCircle className="h-5 w-5 text-destructive" />
+          Critical Alerts
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-0">
+        {loading ? (
+          <div className="flex justify-center items-center h-[200px]">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
-        ))}
-      </div>
-      {alerts.length > 1 && onViewAll && (
-        <div className="mt-3 text-center border-t border-red-200 pt-3">
-          <Button variant="ghost" className="text-red-700 hover:text-red-800 hover:bg-red-100 text-xs" onClick={onViewAll}>
-            View all critical alerts
-          </Button>
-        </div>
-      )}
-    </div>
+        ) : alerts.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <CheckCircle className="h-12 w-12 text-green-500 mb-2" />
+            <p className="text-muted-foreground">No critical alerts</p>
+          </div>
+        ) : (
+          <div>
+            {alerts.map(alert => (
+              <div key={alert.id} className="border-b p-4 last:border-0">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className={getSeverityColor(alert.severity)}>
+                      {alert.severity}
+                    </Badge>
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(alert.timestamp).toLocaleString()}
+                    </span>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => acknowledgeAlert(alert.id)}
+                    className="h-7 px-2"
+                  >
+                    <CheckCircle className="h-4 w-4 mr-1" />
+                    <span className="text-xs">Ack</span>
+                  </Button>
+                </div>
+                <p className="text-sm">{alert.message}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 

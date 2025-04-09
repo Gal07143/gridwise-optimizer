@@ -10,6 +10,8 @@ export interface ModbusDeviceConfig {
   is_active: boolean;
   description?: string;
   site_id?: string;
+  updated_at?: string;
+  created_at?: string;
 }
 
 export interface ModbusRegisterDefinition {
@@ -32,6 +34,7 @@ export interface ModbusRegisterMap {
   registers: ModbusRegisterDefinition[];
   id?: string;
   name?: string;
+  device_id?: string;
 }
 
 export interface ModbusReadingResult {
@@ -53,12 +56,6 @@ export interface ConnectionStatusOptions {
   reconnectDelay?: number;
   showToasts?: boolean;
   deviceId?: string;
-}
-
-export interface ModbusWriteRequest {
-  registerAddress: number;
-  value: number | boolean;
-  registerType: "holding_register" | "coil";
 }
 
 export interface ConnectionStatusResult {

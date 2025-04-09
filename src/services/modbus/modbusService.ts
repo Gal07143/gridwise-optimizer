@@ -1,140 +1,187 @@
 
-import { ModbusDevice, ModbusDeviceConfig, ModbusReadResult } from '@/types/modbus';
+import { supabase } from '@/integrations/supabase/client';
+import { ModbusDeviceConfig, ModbusRegisterDefinition, ModbusReadingResult } from '@/types/modbus';
+import { toast } from 'sonner';
 
-// Mock data store
-let modbusDevices: ModbusDevice[] = [
-  {
-    id: "device-1",
-    name: "Inverter ABB",
-    ip_address: "192.168.1.100",
-    ip: "192.168.1.100", // Add both formats for compatibility
-    port: 502,
-    unit_id: 1,
-    protocol: 'tcp', // Fix lowercase protocol
-    is_active: true,
-    description: "Main solar inverter",
-    updated_at: new Date().toISOString(),
-    site_id: "site-1"
-  },
-  {
-    id: "device-2",
-    name: "Battery BMS",
-    ip_address: "192.168.1.101",
-    ip: "192.168.1.101", // Add both formats for compatibility
-    port: 502,
-    unit_id: 1,
-    protocol: 'tcp', // Fix lowercase protocol
-    is_active: true,
-    description: "Battery management system",
-    updated_at: new Date().toISOString(),
-    site_id: "site-1"
+export const getAllModbusDevices = async (): Promise<ModbusDeviceConfig[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('modbus_devices')
+      .select('*');
+
+    if (error) throw error;
+    
+    // Map database results to our app model, ensuring all required properties exist
+    return (data || []).map(device => ({
+      id: device.id,
+      name: device.name,
+      ip: device.ip,
+      ip_address: device.ip_address || device.ip, // For compatibility
+      port: device.port,
+      unit_id: device.unit_id,
+      protocol: device.protocol as "tcp" | "rtu",
+      is_active: device.is_active,
+      description: device.description,
+      site_id: device.site_id,
+      updated_at: device.updated_at
+    }));
+
+  } catch (error) {
+    console.error('Error fetching Modbus devices:', error);
+    toast.error('Failed to fetch Modbus devices');
+    return [];
   }
-];
-
-// Get all Modbus devices
-export const getModbusDevices = async (): Promise<ModbusDevice[]> => {
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 500));
-  return modbusDevices;
 };
 
-// Aliased function to match error
-export const getAllModbusDevices = getModbusDevices;
+export const getModbusDeviceById = async (id: string): Promise<ModbusDeviceConfig | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('modbus_devices')
+      .select('*')
+      .eq('id', id)
+      .single();
 
-// Get a specific Modbus device by ID
-export const getModbusDevice = async (id: string): Promise<ModbusDevice | null> => {
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 300));
-  const device = modbusDevices.find(d => d.id === id);
-  return device || null;
-};
+    if (error) throw error;
+    
+    // Map database result to our app model
+    return {
+      id: data.id,
+      name: data.name,
+      ip: data.ip,
+      ip_address: data.ip_address || data.ip, // For compatibility
+      port: data.port,
+      unit_id: data.unit_id,
+      protocol: data.protocol as "tcp" | "rtu",
+      is_active: data.is_active,
+      description: data.description,
+      site_id: data.site_id,
+      updated_at: data.updated_at
+    };
 
-// Create a new Modbus device
-export const createModbusDevice = async (deviceData: ModbusDeviceConfig): Promise<ModbusDevice> => {
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 800));
-  
-  const newDevice: ModbusDevice = {
-    id: `device-${Date.now()}`,
-    name: deviceData.name,
-    ip_address: deviceData.ip || deviceData.ip_address || '',
-    ip: deviceData.ip || deviceData.ip_address || '',
-    port: deviceData.port,
-    unit_id: deviceData.unit_id,
-    protocol: deviceData.protocol,
-    is_active: deviceData.is_active || true,
-    description: deviceData.description,
-    updated_at: new Date().toISOString(),
-    site_id: deviceData.site_id
-  };
-  
-  modbusDevices.push(newDevice);
-  return newDevice;
-};
-
-// Update a Modbus device
-export const updateModbusDevice = async (id: string, deviceData: Partial<ModbusDeviceConfig>): Promise<ModbusDevice | null> => {
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 600));
-  
-  const deviceIndex = modbusDevices.findIndex(d => d.id === id);
-  if (deviceIndex === -1) return null;
-  
-  const updatedDevice = {
-    ...modbusDevices[deviceIndex],
-    ...deviceData,
-    updated_at: new Date().toISOString()
-  } as ModbusDevice;
-  
-  // Ensure both formats are updated
-  if (deviceData.ip) {
-    updatedDevice.ip_address = deviceData.ip;
-    updatedDevice.ip = deviceData.ip;
+  } catch (error) {
+    console.error(`Error fetching Modbus device with ID ${id}:`, error);
+    toast.error('Failed to fetch Modbus device');
+    return null;
   }
-  if (deviceData.ip_address) {
-    updatedDevice.ip = deviceData.ip_address;
-    updatedDevice.ip_address = deviceData.ip_address;
-  }
-  
-  modbusDevices[deviceIndex] = updatedDevice;
-  return updatedDevice;
 };
 
-// Delete a Modbus device
+export const createModbusDevice = async (deviceData: Partial<ModbusDeviceConfig>): Promise<ModbusDeviceConfig | null> => {
+  try {
+    // Clone device data and ensure proper naming
+    let insertData = { ...deviceData };
+    
+    // Default ip_address to ip if not provided
+    if (!insertData.ip_address && insertData.ip) {
+      insertData.ip_address = insertData.ip;
+    }
+    
+    const { data, error } = await supabase
+      .from('modbus_devices')
+      .insert({
+        name: insertData.name,
+        ip: insertData.ip,
+        port: insertData.port,
+        unit_id: insertData.unit_id,
+        protocol: insertData.protocol,
+        is_active: insertData.is_active !== undefined ? insertData.is_active : true,
+        description: insertData.description,
+        site_id: insertData.site_id,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    
+    // Add ip_address alias for compatibility
+    return {
+      ...data,
+      ip_address: data.ip
+    };
+
+  } catch (error) {
+    console.error('Error creating Modbus device:', error);
+    toast.error('Failed to create Modbus device');
+    return null;
+  }
+};
+
+export const updateModbusDevice = async (id: string, deviceData: Partial<ModbusDeviceConfig>): Promise<ModbusDeviceConfig | null> => {
+  try {
+    // Clone device data and ensure proper naming
+    const updateData = { ...deviceData };
+    
+    // Handle ip_address to ip conversion if needed
+    if (updateData.ip_address && !updateData.ip) {
+      updateData.ip = updateData.ip_address;
+    } else if (updateData.ip && !updateData.ip_address) {
+      updateData.ip_address = updateData.ip;
+    }
+    
+    const { data, error } = await supabase
+      .from('modbus_devices')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    
+    // Add ip_address alias for compatibility
+    return {
+      ...data,
+      ip_address: data.ip
+    };
+
+  } catch (error) {
+    console.error(`Error updating Modbus device with ID ${id}:`, error);
+    toast.error('Failed to update Modbus device');
+    return null;
+  }
+};
+
+export const readModbusRegister = async (device: ModbusDeviceConfig, register: ModbusRegisterDefinition): Promise<ModbusReadingResult> => {
+  try {
+    // This is a mock implementation since we can't actually connect to Modbus devices in this web app
+    // In a real implementation, this would make an API call to a backend service
+    
+    // Simulate a successful read with random data
+    const value = Math.floor(Math.random() * 100);
+    
+    return {
+      address: register.address,
+      value: value,
+      formattedValue: `${value} ${register.unit || ''}`,
+      timestamp: new Date().toISOString(),
+      success: true
+    };
+  } catch (error) {
+    console.error(`Error reading Modbus register ${register.address} from device ${device.name}:`, error);
+    
+    return {
+      address: register.address,
+      value: 0,
+      formattedValue: 'Error',
+      timestamp: new Date().toISOString(),
+      success: false,
+      error: error instanceof Error ? error : new Error('Failed to read register')
+    };
+  }
+};
+
 export const deleteModbusDevice = async (id: string): Promise<boolean> => {
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 700));
-  
-  const deviceIndex = modbusDevices.findIndex(d => d.id === id);
-  if (deviceIndex === -1) return false;
-  
-  modbusDevices.splice(deviceIndex, 1);
-  return true;
-};
+  try {
+    const { error } = await supabase
+      .from('modbus_devices')
+      .delete()
+      .eq('id', id);
 
-// Read from a Modbus register
-export const readRegister = async (deviceId: string, address: number, length: number = 1): Promise<ModbusReadResult> => {
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  // Mock reading
-  const value = Math.random() * 100;
-  
-  return {
-    address,
-    value,
-    timestamp: new Date().toISOString(),
-    success: true
-  };
-};
-
-// Write to a Modbus register
-export const writeRegister = async (deviceId: string, address: number, value: number | boolean, dataType: string): Promise<boolean> => {
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 600));
-  
-  console.log(`Writing ${value} to device ${deviceId}, address ${address}, type ${dataType}`);
-  
-  // Always return success in mock
-  return true;
+    if (error) throw error;
+    
+    toast.success('Modbus device deleted successfully');
+    return true;
+  } catch (error) {
+    console.error(`Error deleting Modbus device with ID ${id}:`, error);
+    toast.error('Failed to delete Modbus device');
+    return false;
+  }
 };

@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { RealtimeChannel } from '@supabase/supabase-js';
 
 // Subscription types
 export type SubscriptionCallback<T = any> = (payload: T) => void;
@@ -12,13 +13,13 @@ export interface SubscriptionOptions {
   filter?: string;
 }
 
-let activeChannels = new Map();
+let activeChannels = new Map<string, RealtimeChannel>();
 
 export const subscribeToTable = (
   tableName: string,
   eventType: 'INSERT' | 'UPDATE' | 'DELETE' | '*' = '*',
   callback: SubscriptionCallback
-) => {
+): string | null => {
   try {
     const channelName = `realtime-${tableName}-${eventType}`;
     const channel = supabase.channel(channelName);
@@ -29,7 +30,7 @@ export const subscribeToTable = (
           event: eventType, 
           schema: 'public', 
           table: tableName 
-        }, 
+        } as any, 
         (payload) => {
           callback(payload);
         }
@@ -53,7 +54,7 @@ export const subscribeToTable = (
 export const subscribeToChanges = <T>(
   options: SubscriptionOptions,
   callback: SubscriptionCallback<T>
-) => {
+): (() => void) => {
   const { table, schema = 'public', event = '*', filter } = options;
   
   try {
@@ -71,7 +72,7 @@ export const subscribeToChanges = <T>(
           schema: schema, 
           table: table,
           filter: filter
-        }, 
+        } as any, 
         (payload) => {
           callback(payload);
         }

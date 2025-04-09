@@ -1,135 +1,76 @@
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { Prediction, SystemRecommendation } from '@/types/energy';
 import { toast } from 'sonner';
-
-export interface Prediction {
-  time: string;
-  consumption: number;
-  consumptionPredicted: number;
-  production: number;
-  productionPredicted: number;
-  savings: number;
-  savingsPredicted: number;
-}
-
-export interface Recommendation {
-  id: string;
-  title: string;
-  description: string;
-  impact: 'high' | 'medium' | 'low';
-  category: 'energy' | 'cost' | 'maintenance';
-  applied: boolean;
-  appliedAt?: string;
-  priority: number;
-}
-
-export interface SystemRecommendation {
-  id: string;
-  title: string;
-  description: string;
-  potentialSavings?: number;
-  potential_savings?: string;
-  implementation_effort?: string;
-  impact: 'low' | 'medium' | 'high';
-  type: 'energy' | 'cost' | 'maintenance' | 'carbon' | 'efficiency' | 'operational';
-  createdAt: string;
-  priority: 'low' | 'medium' | 'high';
-  status: 'pending' | 'applied' | 'dismissed';
-  confidence: number;
-}
 
 export function usePredictions() {
   const [predictions, setPredictions] = useState<Prediction[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [recommendations, setRecommendations] = useState<SystemRecommendation[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
 
   const fetchPredictions = async () => {
-    setIsLoading(true);
-    setError(null);
-    
     try {
-      // Mock data
-      const now = new Date();
-      const mockData: Prediction[] = Array.from({ length: 24 }, (_, i) => {
-        const time = new Date(now);
-        time.setHours(time.getHours() + i);
-        
-        return {
-          time: time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          consumption: Math.random() * 10 + 5,
-          consumptionPredicted: Math.random() * 10 + 5,
-          production: Math.random() * 8 + (i > 6 && i < 18 ? 5 : 0), // Higher during daylight
-          productionPredicted: Math.random() * 8 + (i > 6 && i < 18 ? 5 : 0),
-          savings: Math.random() * 5 + 1,
-          savingsPredicted: Math.random() * 5 + 2,
-        };
-      });
+      setIsLoading(true);
       
-      setPredictions(mockData);
+      // Fetch predictions
+      const { data: predictionsData, error: predictionsError } = await supabase
+        .from('energy_predictions')
+        .select('*')
+        .order('prediction_time', { ascending: false })
+        .limit(10);
       
-      // Mock recommendations
-      const mockRecommendations: Recommendation[] = [
-        {
-          id: 'rec-1',
-          title: 'Shift EV charging to solar peak hours',
-          description: 'Moving EV charging to 10am-2pm would save approximately $45 per month',
-          impact: 'high',
-          category: 'cost',
-          applied: false,
-          priority: 1
-        },
-        {
-          id: 'rec-2',
-          title: 'Battery optimization settings',
-          description: 'Update battery settings to prioritize self-consumption',
-          impact: 'medium',
-          category: 'energy',
-          applied: false,
-          priority: 2
-        },
-        {
-          id: 'rec-3',
-          title: 'Solar panel maintenance',
-          description: 'Schedule cleaning for improved efficiency',
-          impact: 'medium',
-          category: 'maintenance',
-          applied: false,
-          priority: 3
-        }
-      ];
+      if (predictionsError) throw predictionsError;
       
-      setRecommendations(mockRecommendations);
+      // Fetch recommendations
+      const { data: recommendationsData, error: recommendationsError } = await supabase
+        .from('ai_recommendations')
+        .select('*')
+        .order('created_at', { ascending: false });
       
+      if (recommendationsError) throw recommendationsError;
+      
+      setPredictions(predictionsData as Prediction[]);
+      setRecommendations(recommendationsData as SystemRecommendation[]);
     } catch (err) {
-      console.error('Error fetching predictions:', err);
-      setError(err instanceof Error ? err : new Error('Failed to fetch predictions'));
+      console.error('Error fetching predictions and recommendations:', err);
+      setError(err instanceof Error ? err : new Error('Failed to fetch data'));
     } finally {
       setIsLoading(false);
     }
   };
-  
-  const applyRecommendation = async (id: string): Promise<boolean> => {
+
+  const applyRecommendation = async (id: string) => {
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 800));
+      const { error } = await supabase
+        .from('ai_recommendations')
+        .update({
+          applied: true,
+          applied_at: new Date().toISOString(),
+          applied_by: (await supabase.auth.getUser()).data?.user?.id
+        })
+        .eq('id', id);
       
-      setRecommendations(prev => 
-        prev.map(rec => 
-          rec.id === id 
-            ? { ...rec, applied: true, appliedAt: new Date().toISOString() } 
-            : rec
-        )
-      );
+      if (error) throw error;
       
-      toast.success('Recommendation applied successfully');
+      // Update local state
+      setRecommendations(prev => prev.map(rec => 
+        rec.id === id ? { ...rec, applied: true, applied_at: new Date().toISOString() } : rec
+      ));
+      
+      toast.success("Recommendation applied successfully");
       return true;
-    } catch (error) {
-      console.error('Failed to apply recommendation:', error);
+    } catch (err) {
+      console.error('Error applying recommendation:', err);
       toast.error('Failed to apply recommendation');
       return false;
     }
   };
+
+  useEffect(() => {
+    fetchPredictions();
+  }, []);
 
   return {
     predictions,
@@ -142,18 +83,5 @@ export function usePredictions() {
   };
 }
 
-export const applyRecommendation = async (id: string): Promise<boolean> => {
-  try {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    toast.success('Recommendation applied successfully');
-    return true;
-  } catch (error) {
-    console.error('Failed to apply recommendation:', error);
-    toast.error('Failed to apply recommendation');
-    return false;
-  }
-};
-
 export default usePredictions;
+export type { SystemRecommendation };
