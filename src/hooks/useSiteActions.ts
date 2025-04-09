@@ -1,74 +1,84 @@
-
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
+import {
+  createSite as createSiteService,
+  getSites as getSitesService,
+  getSiteById as getSiteByIdService,
+  updateSite as updateSiteService,
+  deleteSite as deleteSiteService,
+} from '@/services/sites/siteService';
 import { Site } from '@/types/site';
-import { createSite, updateSite, deleteSite } from '@/services/sites/siteService';
 
-export function useSiteActions() {
+export const useSiteActions = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
+  const [error, setError] = useState<string | null>(null);
 
-  const handleCreateSite = async (siteData: Omit<Site, 'id'>) => {
+  const createSite = async (siteData: Omit<Site, 'id'>) => {
     setIsLoading(true);
+    setError(null);
     try {
-      const newSite = await createSite(siteData);
-      if (newSite) {
-        toast.success('Site created successfully');
-        navigate(`/sites/${newSite.id}`);
-        return newSite;
-      } else {
-        toast.error('Failed to create site');
-        return null;
-      }
-    } catch (error) {
-      console.error('Error creating site:', error);
-      toast.error('An error occurred while creating the site');
-      return null;
+      const newSite = await createSiteService(siteData);
+      return { success: true, data: newSite };
+    } catch (err: any) {
+      setError(err.message);
+      return { success: false, error: err.message };
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleUpdateSite = async (id: string, siteData: Partial<Site>) => {
+  const getSites = async () => {
     setIsLoading(true);
+    setError(null);
     try {
-      const updatedSite = await updateSite(id, siteData);
-      if (updatedSite) {
-        toast.success('Site updated successfully');
-        return updatedSite;
-      } else {
-        toast.error('Failed to update site');
-        return null;
-      }
-    } catch (error) {
-      console.error('Error updating site:', error);
-      toast.error('An error occurred while updating the site');
-      return null;
+      const sites = await getSitesService();
+      return { success: true, data: sites };
+    } catch (err: any) {
+      setError(err.message);
+      return { success: false, error: err.message };
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleDeleteSite = async (id: string) => {
+  const getSiteById = async (siteId: string) => {
     setIsLoading(true);
+    setError(null);
     try {
-      // Fix the void return check
-      const result = await deleteSite(id);
-      
-      // Properly check boolean result
-      if (result === true) {
-        toast.success('Site deleted successfully');
-        navigate('/sites');
-        return true;
-      } else {
-        toast.error('Failed to delete site');
-        return false;
-      }
-    } catch (error) {
-      console.error('Error deleting site:', error);
-      toast.error('An error occurred while deleting the site');
-      return false;
+      const site = await getSiteByIdService(siteId);
+      return { success: true, data: site };
+    } catch (err: any) {
+      setError(err.message);
+      return { success: false, error: err.message };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updateSite = async (siteId: string, siteData: Partial<Site>) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const updatedSite = await updateSiteService(siteId, siteData);
+      return { success: true, data: updatedSite };
+    } catch (err: any) {
+      setError(err.message);
+      return { success: false, error: err.message };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const deleteSite = async (siteId: string) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const result = await deleteSiteService(siteId);
+      // Check if the operation was successful without checking the void return
+      return { success: true };
+    } catch (err: any) {
+      setError(err.message);
+      return { success: false, error: err.message };
     } finally {
       setIsLoading(false);
     }
@@ -76,8 +86,11 @@ export function useSiteActions() {
 
   return {
     isLoading,
-    handleCreateSite,
-    handleUpdateSite,
-    handleDeleteSite
+    error,
+    createSite,
+    getSites,
+    getSiteById,
+    updateSite,
+    deleteSite,
   };
-}
+};

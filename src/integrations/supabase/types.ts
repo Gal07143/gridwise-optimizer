@@ -1584,6 +1584,7 @@ export type Database = {
       report_results: {
         Row: {
           created_at: string
+          created_by: string
           file_url: string | null
           id: string
           report_id: string
@@ -1591,6 +1592,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          created_by?: string
           file_url?: string | null
           id?: string
           report_id: string
@@ -1598,6 +1600,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          created_by?: string
           file_url?: string | null
           id?: string
           report_id?: string

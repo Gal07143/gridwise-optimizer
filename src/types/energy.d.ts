@@ -73,3 +73,19 @@ export interface EnergyReading {
   state_of_charge?: number;
   created_at?: string;
 }
+
+export interface Alert {
+  id: string;
+  site_id: string;
+  device_id?: string;
+  timestamp: string;
+  message: string;
+  severity: 'info' | 'warning' | 'critical';
+  category: 'system' | 'device' | 'security' | 'performance';
+  acknowledged: boolean;
+  resolved: boolean;
+  title: string;
+  resolution_steps?: string;
+  created_at?: string;
+  updated_at?: string;
+}

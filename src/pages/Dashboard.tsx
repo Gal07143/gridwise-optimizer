@@ -1,7 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import { PageHeader } from "@/components/ui/page-header";
-import { MetricsCard } from "@/components/ui/dashboard/MetricsCard";
+import { MetricsCard, MetricData } from "@/components/ui/dashboard";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Card, CardContent } from '@/components/ui/card';
 import { Gauge, Calendar, BarChart3, Activity, Zap } from 'lucide-react';
 import DashboardSummary from '@/components/dashboard/DashboardSummary';
 import DashboardLoading from '@/components/dashboard/DashboardLoading';
@@ -141,26 +143,36 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricsCard 
           title="Online Devices"
-          value={`${onlineDevices}/${devices.length}`}
-          trend={null}
+          metrics={[{
+            value: onlineDevices,
+            label: `of ${devices.length} devices`
+          }]}
           icon={<Gauge className="w-5 h-5" />}
         />
         <MetricsCard 
           title="Total Capacity"
-          value={`${totalCapacity.toFixed(1)} kW`}
-          trend={null}
+          metrics={[{
+            value: totalCapacity,
+            label: "kW"
+          }]}
           icon={<Zap className="w-5 h-5" />}
         />
         <MetricsCard 
           title="Critical Alerts"
-          value={criticalAlerts.toString()}
-          trend={criticalAlerts > 0 ? { value: criticalAlerts, isPositive: false } : null}
+          metrics={[{
+            value: criticalAlerts,
+            label: "unresolved alerts",
+            positive: criticalAlerts === 0
+          }]}
           icon={<Activity className="w-5 h-5" />}
         />
         <MetricsCard 
           title="Energy Savings"
-          value="23.5 kWh"
-          trend={{ value: 12, isPositive: true }}
+          metrics={[{
+            value: 23.5,
+            label: "kWh today",
+            positive: true
+          }]}
           icon={<BarChart3 className="w-5 h-5" />}
         />
       </div>

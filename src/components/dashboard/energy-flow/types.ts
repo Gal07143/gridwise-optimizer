@@ -7,7 +7,7 @@ export interface EnergyNode {
   status: 'active' | 'inactive' | 'warning' | 'error';
   deviceType: string;
   batteryLevel?: number;
-  // Add position for compatibility with existing EnergyNode type
+  // Position data
   name?: string;
   position?: { x: number; y: number };
   data?: { 

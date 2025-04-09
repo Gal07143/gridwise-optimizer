@@ -1,89 +1,55 @@
-
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Prediction, SystemRecommendation } from '@/types/energy';
-import { toast } from 'sonner';
+import { SystemRecommendation } from '@/types/energy';
 
-export function usePredictions() {
-  const [predictions, setPredictions] = useState<Prediction[]>([]);
+export const usePredictions = () => {
   const [recommendations, setRecommendations] = useState<SystemRecommendation[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const fetchPredictions = async () => {
+  const fetchRecommendations = async (siteId: string) => {
+    setLoading(true);
+    setError(null);
     try {
-      setIsLoading(true);
-      
-      // Fetch predictions
-      const { data: predictionsData, error: predictionsError } = await supabase
-        .from('energy_predictions')
-        .select('*')
-        .order('prediction_time', { ascending: false })
-        .limit(10);
-      
-      if (predictionsError) throw predictionsError;
-      
-      // Fetch recommendations
-      const { data: recommendationsData, error: recommendationsError } = await supabase
+      const { data, error } = await supabase
         .from('ai_recommendations')
         .select('*')
+        .eq('site_id', siteId)
         .order('created_at', { ascending: false });
-      
-      if (recommendationsError) throw recommendationsError;
-      
-      setPredictions(predictionsData as Prediction[]);
-      setRecommendations(recommendationsData as SystemRecommendation[]);
-    } catch (err) {
-      console.error('Error fetching predictions and recommendations:', err);
-      setError(err instanceof Error ? err : new Error('Failed to fetch data'));
+
+      if (error) {
+        throw new Error(error.message);
+      }
+      setRecommendations(data as SystemRecommendation[]);
+    } catch (err: any) {
+      setError(err.message);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
-  const applyRecommendation = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from('ai_recommendations')
-        .update({
-          applied: true,
-          applied_at: new Date().toISOString(),
-          applied_by: (await supabase.auth.getUser()).data?.user?.id
-        })
-        .eq('id', id);
-      
-      if (error) throw error;
-      
-      // Update local state
-      setRecommendations(prev => prev.map(rec => 
-        rec.id === id ? { ...rec, applied: true, applied_at: new Date().toISOString() } : rec
-      ));
-      
-      toast.success("Recommendation applied successfully");
-      return true;
-    } catch (err) {
-      console.error('Error applying recommendation:', err);
-      toast.error('Failed to apply recommendation');
-      return false;
-    }
-  };
-
-  useEffect(() => {
-    fetchPredictions();
-  }, []);
+  const applyRecommendation = async (recommendationId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('ai_recommendations')
+      .update({ applied: true, applied_at: new Date().toISOString() })
+      .eq('id', recommendationId)
+      .select();
+    
+    if (error) throw error;
+    
+    return data;
+  } catch (error) {
+    console.error('Error applying recommendation:', error);
+    throw error;
+  }
+};
 
   return {
-    predictions,
     recommendations,
-    isLoading,
+    loading,
     error,
-    fetchPredictions,
-    applyRecommendation,
-    refetch: fetchPredictions
+    fetchRecommendations,
+    applyRecommendation
   };
-}
-
-export default usePredictions;
-export type { SystemRecommendation };
-// Export the function to resolve missing reference
-export { applyRecommendation };
+};
