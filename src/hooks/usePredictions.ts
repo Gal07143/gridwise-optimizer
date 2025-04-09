@@ -85,4 +85,5 @@ export function usePredictions() {
 
 export default usePredictions;
 export type { SystemRecommendation };
+// Export the function to resolve missing reference
 export { applyRecommendation };

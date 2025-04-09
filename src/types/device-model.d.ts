@@ -1,4 +1,3 @@
-
 export interface DeviceModel {
   id: string;
   name: string;
@@ -22,6 +21,8 @@ export interface DeviceModel {
   firmware_versions?: string[];
   model_name?: string; // Add model_name property
   certifications?: string[];
+  model?: string; // Add for compatibility
+  supported?: boolean; // Add for compatibility
 }
 
 export interface DeviceModelWithRequiredName {

@@ -1,4 +1,3 @@
-
 export interface EnergyDataPoint {
   timestamp: string;
   value: number;
@@ -59,4 +58,18 @@ export interface EnergyDevice {
   description?: string;
   protocol?: string;
   metrics?: Record<string, any>;
+}
+
+export interface EnergyReading {
+  id: string;
+  device_id: string;
+  timestamp: string;
+  power: number;
+  energy: number;
+  voltage?: number;
+  current?: number;
+  frequency?: number;
+  temperature?: number;
+  state_of_charge?: number;
+  created_at?: string;
 }

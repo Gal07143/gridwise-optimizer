@@ -1,10 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
-import PageHeader from '@/components/ui/page-header';
-import { Card, CardContent } from '@/components/ui/card';
+import { PageHeader } from "@/components/ui/page-header";
+import { MetricsCard } from "@/components/ui/dashboard/MetricsCard";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Gauge, Calendar, BarChart3, Activity, Zap } from 'lucide-react';
-import MetricsCard from '@/components/ui/dashboard/MetricsCard';
 import DashboardSummary from '@/components/dashboard/DashboardSummary';
 import DashboardLoading from '@/components/dashboard/DashboardLoading';
 import { supabase } from '@/integrations/supabase/client';

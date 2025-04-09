@@ -1,130 +1,91 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Input } from '@/components/ui/input';
+import { DeviceModel } from '@/types/device-model';
+import { getAllDeviceModels } from '@/services/deviceCatalogService';
+import { Main } from '@/components/ui/main';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, Plus, FileText, Database } from 'lucide-react';
-import { deviceCategories } from '@/types/device-catalog';
-import { getAllDeviceModels, getDeviceModelsByCategory } from '@/services/deviceCatalogService';
-import DeviceModelsCard from '@/components/devices/DeviceModelsCard';
-import DeviceCategoryGrid from '@/components/devices/DeviceCategoryGrid';
-import AppLayout from '@/components/layout/AppLayout';
-import { useNavigate } from 'react-router-dom';
+import { Input } from '@/components/ui/input';
+import { Search } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 
-const DeviceCatalog = () => {
-  const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState('categories');
-  const [sortField, setSortField] = useState('manufacturer');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
-  
-  // Fetch all device models
-  const { data: allDeviceModels, isLoading, error } = useQuery({
+const DeviceCatalogPage = () => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const { data: devices, isLoading, error } = useQuery({
     queryKey: ['deviceModels'],
-    queryFn: getAllDeviceModels
+    queryFn: getAllDeviceModels,
   });
-  
-  // Filter device models based on search query
-  const filteredDeviceModels = allDeviceModels?.filter(device => {
-    if (!searchQuery) return true;
-    
-    const query = searchQuery.toLowerCase();
-    return (
-      device.manufacturer.toLowerCase().includes(query) ||
-      device.model_name.toLowerCase().includes(query) ||
-      device.model_number.toLowerCase().includes(query) ||
-      device.description?.toLowerCase().includes(query) ||
-      device.device_type.toLowerCase().includes(query)
-    );
-  }) || [];
-  
-  const handleSort = (field: string) => {
-    if (field === sortField) {
-      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
-    }
-  };
+
+  const filteredDevices = devices
+    ? devices.filter(device =>
+        device.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        device.manufacturer.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        device.model_number.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : [];
 
   return (
-    <AppLayout>
-      <div className="container mx-auto p-4">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-          <div>
-            <h1 className="text-2xl font-bold">Device Catalog</h1>
-            <p className="text-muted-foreground">Browse and manage compatible devices</p>
-          </div>
-          
-          <div className="flex gap-2">
-            <Button 
-              variant="outline"
-              onClick={() => navigate('/devices')}
-              className="flex items-center gap-2"
-            >
-              <Database className="h-4 w-4" />
-              My Devices
-            </Button>
-            <Button
-              variant="default"
-              onClick={() => navigate('/devices/add-model')}
-              className="flex items-center gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Add Device Model
-            </Button>
-          </div>
+    <Main title="Device Catalog">
+      <div className="container mx-auto py-6">
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-2xl font-bold">Device Catalog</h1>
+          <Button asChild>
+            <Link to="/devices/models/new">Add New Device Model</Link>
+          </Button>
         </div>
-        
-        <div className="mb-6">
-          <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search devices by name, manufacturer or type..."
-              className="pl-8"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
+
+        <div className="relative mb-4">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+          <Input
+            type="text"
+            placeholder="Search device models..."
+            className="pl-10"
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+          />
         </div>
-        
-        <Tabs defaultValue="categories" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="categories">Categories</TabsTrigger>
-            <TabsTrigger value="all">All Devices</TabsTrigger>
-            <TabsTrigger value="manufacturers">Manufacturers</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="categories" className="space-y-4">
-            <DeviceCategoryGrid categories={deviceCategories} />
-          </TabsContent>
-          
-          <TabsContent value="all" className="space-y-4">
-            <DeviceModelsCard
-              deviceModels={filteredDeviceModels}
-              sortField={sortField}
-              sortDirection={sortDirection}
-              onSort={handleSort}
-              isLoading={isLoading}
-            />
-          </TabsContent>
-          
-          <TabsContent value="manufacturers" className="space-y-4">
-            <Card>
-              <CardContent className="p-6">
-                <p className="text-center text-muted-foreground">
-                  Manufacturer directory coming soon
-                </p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <Card key={index}>
+                <CardHeader>
+                  <CardTitle><Skeleton className="h-5 w-3/4" /></CardTitle>
+                  <CardDescription><Skeleton className="h-4 w-1/2" /></CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-4 w-full mb-2" />
+                  <Skeleton className="h-4 w-3/4" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : error ? (
+          <div className="text-red-500">Error: {error.message}</div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredDevices.map(device => (
+              <Card key={device.id}>
+                <CardHeader>
+                  <CardTitle>
+                    <Link to={`/devices/models/${device.id}`} className="hover:underline font-medium">
+                      {device.name} {device.model_number}
+                    </Link>
+                  </CardTitle>
+                  <CardDescription>{device.manufacturer}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p>Type: {device.device_type}</p>
+                  <p>Category: {device.category}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
-    </AppLayout>
+    </Main>
   );
 };
 
-export default DeviceCatalog;
+export default DeviceCatalogPage;

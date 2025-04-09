@@ -1,10 +1,9 @@
-
 export interface ValidationError {
   field: string;
   message: string;
 }
 
-export const validateDevice = (deviceData: any): ValidationError[] => {
+export const validateDeviceData = (deviceData: any): ValidationError[] => {
   const errors: ValidationError[] = [];
 
   // Required fields
@@ -42,6 +41,8 @@ export const validateDevice = (deviceData: any): ValidationError[] => {
 
   return errors;
 };
+
+export const validateDevice = validateDeviceData;
 
 export const formatValidationErrors = (errors: ValidationError[]): Record<string, string> => {
   return errors.reduce((acc, error) => {

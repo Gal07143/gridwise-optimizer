@@ -73,4 +73,21 @@ export interface ConnectionStatusResult {
   lastConnected?: Date;
 }
 
-export type ModbusDevice = ModbusDeviceConfig;
+export interface ModbusDevice extends ModbusDeviceConfig {
+  // Ensure ModbusDevice has all the properties that ModbusDeviceConfig has
+  protocol: "tcp" | "rtu";
+  description?: string;  
+  ip_address?: string;
+}
+
+export interface ModbusRegister {
+  id?: string;
+  name: string;
+  address: number;
+  register_type: "holding" | "input" | "coil" | "discrete_input";
+  data_type: "int16" | "uint16" | "int32" | "uint32" | "float" | "boolean" | "string";
+  device_id: string;
+  scaling_factor?: number;
+  unit?: string;
+  description?: string;
+}

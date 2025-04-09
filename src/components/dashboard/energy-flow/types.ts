@@ -7,6 +7,15 @@ export interface EnergyNode {
   status: 'active' | 'inactive' | 'warning' | 'error';
   deviceType: string;
   batteryLevel?: number;
+  // Add position for compatibility with existing EnergyNode type
+  name?: string;
+  position?: { x: number; y: number };
+  data?: { 
+    power?: number; 
+    energy?: number; 
+    status?: string; 
+    capacity?: number; 
+  };
 }
 
 export interface EnergyConnection {

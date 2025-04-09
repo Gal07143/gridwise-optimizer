@@ -1,3 +1,3 @@
 
 export * from './siteService';
-export * from './mockSites';
+// Remove the duplicate export to fix the ambiguity error

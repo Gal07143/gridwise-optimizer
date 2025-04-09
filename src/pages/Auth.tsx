@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { CustomInput } from '@/components/ui/custom-input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -29,7 +28,6 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 
-  // If there's a token in the URL, handle magic link sign-in or email verification
   useEffect(() => {
     const token = searchParams.get('token');
     const type = searchParams.get('type');
@@ -39,13 +37,11 @@ const Auth = () => {
     }
   }, [searchParams]);
 
-  // Handle token authentication (magic link or email verification)
   const handleTokenAuthentication = async (token: string, type: string) => {
     try {
       setIsSubmitting(true);
       
       if (type === 'signup') {
-        // Handle email verification
         const { error } = await supabase.auth.verifyOtp({
           token_hash: token,
           type: 'signup'
@@ -55,9 +51,7 @@ const Auth = () => {
         toast.success('Email verified successfully! You can now log in.');
         setAuthMode('login');
       } else if (type === 'recovery') {
-        // Handle password reset
         setAuthMode('reset');
-        // Store token for password reset
         sessionStorage.setItem('resetToken', token);
       }
     } catch (error) {
@@ -68,7 +62,6 @@ const Auth = () => {
     }
   };
 
-  // If already authenticated, redirect to home
   if (isAuthenticated && !loading) {
     return <Navigate to="/" />;
   }
@@ -81,7 +74,6 @@ const Auth = () => {
     try {
       await signIn(email, password);
       
-      // Store email if remember me is checked
       if (rememberMe) {
         localStorage.setItem('rememberedEmail', email);
       } else {
@@ -183,10 +175,9 @@ const Auth = () => {
     setIsSubmitting(true);
 
     try {
-      // Format phone number with country code if not present
       let formattedPhone = phoneNumber;
       if (!phoneNumber.startsWith('+')) {
-        formattedPhone = `+1${phoneNumber}`; // Default to US
+        formattedPhone = `+1${phoneNumber}`;
       }
       
       const { error } = await supabase.auth.signInWithOtp({
@@ -259,7 +250,7 @@ const Auth = () => {
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input
+                <CustomInput
                   id="email"
                   type="email"
                   placeholder="your@email.com"
@@ -283,7 +274,7 @@ const Auth = () => {
                   </button>
                 </div>
                 <div className="relative">
-                  <Input
+                  <CustomInput
                     id="password"
                     type={showPassword ? "text" : "password"}
                     value={password}
@@ -353,7 +344,7 @@ const Auth = () => {
             <form onSubmit={handleRegister} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Full Name</Label>
-                <Input
+                <CustomInput
                   id="name"
                   type="text"
                   placeholder="John Doe"
@@ -365,7 +356,7 @@ const Auth = () => {
               
               <div className="space-y-2">
                 <Label htmlFor="email">Email Address</Label>
-                <Input
+                <CustomInput
                   id="email"
                   type="email"
                   placeholder="your@email.com"
@@ -380,7 +371,7 @@ const Auth = () => {
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
                 <div className="relative">
-                  <Input
+                  <CustomInput
                     id="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="Create a strong password"
@@ -404,7 +395,7 @@ const Auth = () => {
               <div className="space-y-2">
                 <Label htmlFor="confirm-password">Confirm Password</Label>
                 <div className="relative">
-                  <Input
+                  <CustomInput
                     id="confirm-password"
                     type={showPassword ? "text" : "password"}
                     placeholder="Confirm your password"
@@ -456,7 +447,7 @@ const Auth = () => {
             <form onSubmit={handlePasswordReset} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email Address</Label>
-                <Input
+                <CustomInput
                   id="email"
                   type="email"
                   placeholder="your@email.com"
@@ -492,7 +483,7 @@ const Auth = () => {
             <form onSubmit={handleSendOtp} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone Number</Label>
-                <Input
+                <CustomInput
                   id="phone"
                   type="tel"
                   placeholder="+1 (555) 123-4567"
@@ -528,7 +519,7 @@ const Auth = () => {
             <form onSubmit={handleVerifyOtp} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="otp">Verification Code</Label>
-                <Input
+                <CustomInput
                   id="otp"
                   type="text"
                   placeholder="Enter 6-digit code"

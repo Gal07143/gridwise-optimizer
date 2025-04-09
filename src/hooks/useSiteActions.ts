@@ -1,88 +1,83 @@
-import { useState, useCallback } from 'react';
-import { Site } from '@/types/site';
+
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { updateSite, deleteSite } from '@/services/sites/siteService';
-import useConnectionStatus from '@/hooks/useConnectionStatus';
+import { Site } from '@/types/site';
+import { createSite, updateSite, deleteSite } from '@/services/sites/siteService';
 
-export const useSiteActions = (site: Site | null) => {
-  const [isSaving, setIsSaving] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  
-  const connection = useConnectionStatus({
-    autoConnect: false,
-    retryInterval: 5000
-  });
-  
-  const saveSite = useCallback(async (data: Partial<Site>) => {
-    if (!site) {
-      setError('No site available to update.');
-      return false;
-    }
-    
-    setIsSaving(true);
-    setError(null);
-    
+export function useSiteActions() {
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+
+  const handleCreateSite = async (siteData: Omit<Site, 'id'>) => {
+    setIsLoading(true);
     try {
-      const updatedSite = await updateSite(site.id, data);
-      if (updatedSite) {
-        toast.success("Site updated successfully");
-        return true;
+      const newSite = await createSite(siteData);
+      if (newSite) {
+        toast.success('Site created successfully');
+        navigate(`/sites/${newSite.id}`);
+        return newSite;
       } else {
-        setError('Failed to update site.');
-        toast.error("Failed to update site");
-        return false;
+        toast.error('Failed to create site');
+        return null;
       }
-    } catch (err: any) {
-      const message = err?.message || 'An unexpected error occurred.';
-      setError(message);
-      toast.error(`Error updating site: ${message}`);
-      return false;
+    } catch (error) {
+      console.error('Error creating site:', error);
+      toast.error('An error occurred while creating the site');
+      return null;
     } finally {
-      setIsSaving(false);
+      setIsLoading(false);
     }
-  }, [site]);
-  
-  const removeSite = useCallback(async () => {
-    if (!site) {
-      setError('No site available to delete.');
-      return false;
-    }
-    
-    setIsDeleting(true);
-    setError(null);
-    
-    try {
-      const success = await deleteSite(site.id);
-      if (success) {
-        toast.success("Site deleted successfully");
-        return true;
-      } else {
-        setError('Failed to delete site.');
-        toast.error("Failed to delete site");
-        return false;
-      }
-    } catch (err: any) {
-      const message = err?.message || 'An unexpected error occurred.';
-      setError(message);
-      toast.error(`Error deleting site: ${message}`);
-      return false;
-    } finally {
-      setIsDeleting(false);
-    }
-  }, [site]);
-  
-  return {
-    isSaving,
-    isDeleting,
-    error,
-    saveSite,
-    removeSite,
-    isOnline: connection.isOnline,
-    connect: connection.connect,
-    disconnect: connection.disconnect,
-    retryConnection: connection.retryConnection
   };
-};
 
-export default useSiteActions;
+  const handleUpdateSite = async (id: string, siteData: Partial<Site>) => {
+    setIsLoading(true);
+    try {
+      const updatedSite = await updateSite(id, siteData);
+      if (updatedSite) {
+        toast.success('Site updated successfully');
+        return updatedSite;
+      } else {
+        toast.error('Failed to update site');
+        return null;
+      }
+    } catch (error) {
+      console.error('Error updating site:', error);
+      toast.error('An error occurred while updating the site');
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteSite = async (id: string) => {
+    setIsLoading(true);
+    try {
+      // Fix the void return check
+      const result = await deleteSite(id);
+      
+      // Properly check boolean result
+      if (result === true) {
+        toast.success('Site deleted successfully');
+        navigate('/sites');
+        return true;
+      } else {
+        toast.error('Failed to delete site');
+        return false;
+      }
+    } catch (error) {
+      console.error('Error deleting site:', error);
+      toast.error('An error occurred while deleting the site');
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return {
+    isLoading,
+    handleCreateSite,
+    handleUpdateSite,
+    handleDeleteSite
+  };
+}

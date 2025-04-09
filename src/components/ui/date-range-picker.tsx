@@ -17,16 +17,21 @@ interface DateRangePickerProps {
   className?: string;
   dateRange: DateRange;
   onChange: (dateRange: DateRange) => void;
+  // Add onUpdate for backward compatibility
+  onUpdate?: (dateRange: DateRange) => void;
 }
 
 export function DateRangePicker({
   className,
   dateRange,
   onChange,
+  onUpdate,
 }: DateRangePickerProps) {
   const handleDateRangeChange = (range: DateRange | undefined) => {
     if (range) {
+      // Call both onChange and onUpdate if provided
       onChange(range);
+      if (onUpdate) onUpdate(range);
     }
   };
 
