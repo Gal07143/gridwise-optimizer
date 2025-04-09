@@ -1,3 +1,4 @@
+
 // Energy Data Types
 export type DeviceType = 
   | 'solar' 
@@ -34,6 +35,7 @@ export interface Site {
   created_at?: string;
   updated_at?: string;
   type?: string;
+  status?: 'active' | 'inactive' | 'maintenance'; // Add status
 }
 
 export interface EnergyDevice {
@@ -55,6 +57,7 @@ export interface EnergyDevice {
   firmware?: string;
   firmware_version?: string;
   tags?: string[] | Record<string, any>;
+  protocol?: string; // Add protocol
 }
 
 export interface EnergyReading {
@@ -81,7 +84,7 @@ export interface DeviceModel {
   device_type: DeviceType;
   power_rating?: number;
   capacity?: number;
-  support_level: "none" | "partial" | "full";
+  support_level: "none" | "partial" | "full" | "beta" | "community";
   category: string;
   description?: string;
   protocol?: string;
@@ -100,6 +103,7 @@ export interface DeviceModel {
   certifications?: string[];
   has_manual?: boolean;
   has_datasheet?: boolean;
+  model_name?: string; // Add model_name
 }
 
 export interface EnergyForecast {
@@ -115,6 +119,7 @@ export interface EnergyForecast {
   weather_condition?: string;
   confidence?: number;
   created_at?: string;
+  source?: string; // Add source property
 }
 
 export interface Tariff {
@@ -187,7 +192,7 @@ export interface ModbusReadingResult {
   formattedValue: string;
   timestamp: string;
   success: boolean;
-  error?: string | Error;
+  error?: Error;
 }
 
 export interface ConnectionStatusResult {
@@ -196,6 +201,8 @@ export interface ConnectionStatusResult {
   isOnline?: boolean;
   isConnected?: boolean;
   isConnecting?: boolean;
+  lastOnline?: Date | null;
+  lastOffline?: Date | null;
   connect?: () => Promise<void>;
   disconnect?: () => Promise<void>;
   retryConnection?: () => Promise<void>;
@@ -296,9 +303,23 @@ export interface EnergyConnection {
 export interface UserPreference {
   id: string;
   user_id?: string;
-  max_soc: number;
   min_soc: number;
+  max_soc: number;
   priority_device_ids: string[];
   time_window_start: string;
   time_window_end: string;
+}
+
+// Define optimization settings
+export interface OptimizationSettings {
+  min_soc?: number;
+  max_soc?: number;
+  minBatterySoc?: number;
+  maxBatterySoc?: number;
+  priority_device_ids?: string[];
+  time_window_start?: string;
+  time_window_end?: string;
+  evTargetSoc?: number;
+  evDepartureTime?: string;
+  objective?: string;
 }

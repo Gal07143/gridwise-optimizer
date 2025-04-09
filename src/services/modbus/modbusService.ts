@@ -1,49 +1,47 @@
 
-import { ModbusDevice, ModbusDeviceConfig, ModbusReadingResult } from '@/types/energy';
+import { toast } from 'sonner';
+import { ModbusDevice, ModbusDeviceConfig, ModbusReadingResult } from '@/types/modbus';
 
-// Mock modbus devices
 const mockModbusDevices: ModbusDevice[] = [
   {
-    id: 'device-1',
-    name: 'Inverter 1',
-    address: '192.168.1.100',
+    id: 'md-001',
+    name: 'Inverter Gateway',
+    ip_address: '192.168.1.100',
     port: 502,
     unit_id: 1,
-    protocol: 'tcp',
-    description: 'Main solar inverter',
-    site_id: 'site-1',
-    created_at: '2023-01-15T12:00:00Z',
-    updated_at: '2023-01-15T12:00:00Z'
+    status: 'online',
+    protocol: 'TCP',
+    description: 'Main solar inverter connection',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    is_active: true
   },
   {
-    id: 'device-2',
-    name: 'Battery Controller',
-    address: '192.168.1.101',
+    id: 'md-002',
+    name: 'Battery System',
+    ip_address: '192.168.1.101',
     port: 502,
     unit_id: 2,
-    protocol: 'tcp',
-    description: 'Battery management system',
-    site_id: 'site-1',
-    created_at: '2023-01-16T10:30:00Z',
-    updated_at: '2023-01-16T10:30:00Z'
+    status: 'online',
+    protocol: 'TCP',
+    description: 'Energy storage system',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    is_active: true
   }
 ];
 
-/**
- * Get all modbus devices
- */
-export const getAllModbusDevices = async (): Promise<ModbusDevice[]> => {
+export const getModbusDevices = async (): Promise<ModbusDevice[]> => {
+  // In a real app, this would be an API call
   return new Promise((resolve) => {
     setTimeout(() => {
-      resolve([...mockModbusDevices]);
+      resolve(mockModbusDevices);
     }, 500);
   });
 };
 
-/**
- * Get a specific modbus device by ID
- */
 export const getModbusDeviceById = async (deviceId: string): Promise<ModbusDevice | null> => {
+  // In a real app, this would be an API call
   return new Promise((resolve) => {
     setTimeout(() => {
       const device = mockModbusDevices.find(d => d.id === deviceId);
@@ -52,129 +50,132 @@ export const getModbusDeviceById = async (deviceId: string): Promise<ModbusDevic
   });
 };
 
-/**
- * Create a new modbus device
- */
-export const createModbusDevice = async (deviceConfig: Omit<ModbusDeviceConfig, 'id'>): Promise<ModbusDevice> => {
+export const createModbusDevice = async (device: ModbusDeviceConfig): Promise<ModbusDevice> => {
+  // In a real app, this would be an API call
   return new Promise((resolve) => {
     setTimeout(() => {
       const newDevice: ModbusDevice = {
-        ...deviceConfig,
-        id: `device-${Date.now()}`,
+        id: `md-${Math.floor(Math.random() * 1000)}`,
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        status: 'offline',
+        is_active: true,
+        ...device
       };
-      mockModbusDevices.push(newDevice);
       resolve(newDevice);
     }, 500);
   });
 };
 
-/**
- * Update a modbus device
- */
-export const updateModbusDevice = async (
-  deviceId: string,
-  updates: Partial<ModbusDeviceConfig>
-): Promise<ModbusDevice | null> => {
-  return new Promise((resolve) => {
+export const updateModbusDevice = async (deviceId: string, updates: Partial<ModbusDeviceConfig>): Promise<ModbusDevice> => {
+  // In a real app, this would be an API call
+  return new Promise((resolve, reject) => {
     setTimeout(() => {
-      const index = mockModbusDevices.findIndex(d => d.id === deviceId);
-      if (index === -1) {
-        resolve(null);
+      const deviceIndex = mockModbusDevices.findIndex(d => d.id === deviceId);
+      if (deviceIndex === -1) {
+        reject(new Error('Device not found'));
         return;
       }
       
       const updatedDevice = {
-        ...mockModbusDevices[index],
+        ...mockModbusDevices[deviceIndex],
         ...updates,
         updated_at: new Date().toISOString()
       };
       
-      mockModbusDevices[index] = updatedDevice;
       resolve(updatedDevice);
     }, 500);
   });
 };
 
-/**
- * Delete a modbus device
- */
 export const deleteModbusDevice = async (deviceId: string): Promise<boolean> => {
+  // In a real app, this would be an API call
   return new Promise((resolve) => {
     setTimeout(() => {
-      const index = mockModbusDevices.findIndex(d => d.id === deviceId);
-      if (index === -1) {
-        resolve(false);
-        return;
-      }
-      
-      mockModbusDevices.splice(index, 1);
       resolve(true);
     }, 500);
   });
 };
 
-/**
- * Read a register from a modbus device
- */
-export const readRegister = async (
-  deviceId: string,
-  registerAddress: number,
-  length = 1,
-  registerType: 'coil' | 'discrete_input' | 'input_register' | 'holding_register' = 'holding_register'
-): Promise<ModbusReadingResult> => {
-  return new Promise((resolve, reject) => {
+export const testModbusConnection = async (device: ModbusDeviceConfig): Promise<{success: boolean, message: string}> => {
+  // In a real app, this would actually try to connect to the device
+  return new Promise((resolve) => {
     setTimeout(() => {
-      // Simulate a 10% chance of error
-      if (Math.random() < 0.1) {
-        reject(new Error('Communication error with modbus device'));
-        return;
-      }
-      
-      // Generate a random value based on register type
-      let value: number | boolean | string;
-      if (registerType === 'coil' || registerType === 'discrete_input') {
-        value = Math.random() > 0.5;
+      // Simulate success most of the time, but occasional failures
+      const success = Math.random() > 0.2;
+      if (success) {
+        resolve({
+          success: true,
+          message: `Successfully connected to ${device.name} at ${device.ip_address}:${device.port}`
+        });
       } else {
-        value = Math.floor(Math.random() * 1000);
+        resolve({
+          success: false,
+          message: `Failed to connect to ${device.ip_address}:${device.port}. Check your settings and try again.`
+        });
       }
-      
-      resolve({
-        timestamp: new Date().toISOString(),
-        register_address: registerAddress,
-        value,
-        raw_value: value,
-        device_id: deviceId,
-        register_id: `reg-${registerAddress}`,
-        register_name: `Register ${registerAddress}`,
-        unit: 'unit'
-      });
-    }, 500);
+    }, 1500);
   });
 };
 
-/**
- * Write to a register on a modbus device
- */
-export const writeRegister = async (
-  deviceId: string,
-  registerAddress: number,
-  value: number | boolean,
-  registerType: 'coil' | 'holding_register' = 'holding_register'
-): Promise<boolean> => {
-  return new Promise((resolve, reject) => {
+export const readRegister = async (deviceId: string, address: number, length: number = 1): Promise<ModbusReadingResult> => {
+  // In a real app, this would connect to the device and read the register
+  return new Promise((resolve) => {
     setTimeout(() => {
-      // Simulate a 15% chance of error
-      if (Math.random() < 0.15) {
-        reject(new Error('Communication error while writing to modbus device'));
-        return;
-      }
+      // Simulate successful reading most of the time
+      const success = Math.random() > 0.1;
       
-      // In a real implementation, this would actually write to the device
-      console.log(`Writing ${value} to ${registerType} ${registerAddress} on device ${deviceId}`);
-      resolve(true);
-    }, 700);
+      if (success) {
+        // Generate a random value based on the register address for consistency
+        const baseValue = (address % 100) * 2.5;
+        const value = Number((baseValue + Math.random() * 10).toFixed(2));
+        
+        resolve({
+          address,
+          value,
+          formattedValue: `${value}`,
+          timestamp: new Date().toISOString(),
+          success: true
+        });
+      } else {
+        resolve({
+          address,
+          value: 0,
+          formattedValue: '',
+          timestamp: new Date().toISOString(),
+          success: false,
+          error: new Error('Failed to read register')
+        });
+      }
+    }, 1000);
   });
 };
 
+export const writeRegister = async (
+  deviceId: string, 
+  address: number, 
+  value: number, 
+  type: 'coil' | 'holding_register' = 'holding_register'
+): Promise<{success: boolean, error?: string}> => {
+  // In a real app, this would connect to the device and write to the register
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      // Simulate successful writing most of the time
+      const success = Math.random() > 0.15;
+      
+      if (success) {
+        toast.success(`Successfully wrote ${value} to register ${address}`);
+        resolve({
+          success: true
+        });
+      } else {
+        const error = 'Failed to write to register. Check device connectivity.';
+        toast.error(error);
+        resolve({
+          success: false,
+          error
+        });
+      }
+    }, 1200);
+  });
+};

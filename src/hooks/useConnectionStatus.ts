@@ -8,7 +8,7 @@ const useConnectionStatus = (options?: ConnectionStatusOptions): ConnectionStatu
     initialStatus = true,
     reconnectDelay = 5000,
     showToasts = true,
-    deviceId
+    deviceId = undefined
   } = options || {};
   
   const [isOnline, setIsOnline] = useState<boolean>(initialStatus);
@@ -17,6 +17,9 @@ const useConnectionStatus = (options?: ConnectionStatusOptions): ConnectionStatu
   const [lastOnline, setLastOnline] = useState<Date | null>(initialStatus ? new Date() : null);
   const [lastOffline, setLastOffline] = useState<Date | null>(initialStatus ? null : new Date());
   const [error, setError] = useState<Error | null>(null);
+  const [status, setStatus] = useState<'connected' | 'disconnected' | 'connecting' | 'error'>(
+    isConnected ? 'connected' : (isConnecting ? 'connecting' : 'disconnected')
+  );
   
   // Handle online/offline status changes
   useEffect(() => {
@@ -94,21 +97,17 @@ const useConnectionStatus = (options?: ConnectionStatusOptions): ConnectionStatu
     await connect();
   }, [isConnecting, disconnect, connect]);
 
-  const [status, setStatus] = useState<'connected' | 'disconnected' | 'connecting' | 'error'>(
-    isConnected ? 'connected' : (isConnecting ? 'connecting' : 'disconnected')
-  );
-
   return {
     isOnline,
-    lastOnline,
-    lastOffline,
     isConnected,
     isConnecting,
+    lastOnline,
+    lastOffline,
+    error,
     connect,
     disconnect,
     retryConnection,
     status,
-    error
   };
 };
 

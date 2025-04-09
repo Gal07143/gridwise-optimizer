@@ -6,6 +6,7 @@ interface UseTelemetryHistoryOptions {
   deviceId?: string;
   parameter?: string;
   timeframe?: 'hour' | 'day' | 'week' | 'month';
+  metricId?: string; // Add this field
 }
 
 // Mock telemetry data
@@ -51,7 +52,7 @@ const generateMockData = (deviceId: string, timeframe: string): TelemetryData[] 
   return data.reverse();
 };
 
-export default function useTelemetryHistory(options: UseTelemetryHistoryOptions = {}) {
+export const useTelemetryHistory = (options: UseTelemetryHistoryOptions = {}) => {
   const { deviceId = 'default-device', parameter = 'energy', timeframe = 'day' } = options;
   
   const [data, setData] = useState<TelemetryData[]>([]);
@@ -80,5 +81,8 @@ export default function useTelemetryHistory(options: UseTelemetryHistoryOptions 
     fetchData();
   }, [deviceId, parameter, timeframe]);
   
-  return { data, isLoading, error };
-}
+  return { data, isLoading, error, refetch: () => {} };
+};
+
+// Default export for compatibility
+export default useTelemetryHistory;

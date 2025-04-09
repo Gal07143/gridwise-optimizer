@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useTelemetryHistory } from '@/hooks/useTelemetryHistory';
 import TelemetryChart from './TelemetryChart';
@@ -22,7 +23,7 @@ const LiveTelemetryChart: React.FC<LiveTelemetryChartProps> = ({
 }) => {
   const { data: telemetry, isLoading, error, refetch } = useTelemetryHistory({
     deviceId,
-    metricId: metric
+    parameter: metric
   });
   
   // Format the data for the chart

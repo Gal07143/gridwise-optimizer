@@ -64,7 +64,12 @@ const OptimizationControls = () => {
       </CardHeader>
       
       <CardContent>
-        <Tabs defaultValue="self_consumption" onValueChange={(value: any) => updateSettings({ objective: value })}>
+        <Tabs defaultValue="self_consumption" onValueChange={(value) => {
+          // Handle objective change safely
+          if (typeof value === 'string') {
+            updateSettings({ objective: value });
+          }
+        }}>
           <TabsList className="grid w-full grid-cols-4 mb-4">
             <TabsTrigger value="self_consumption" className="flex flex-col py-2 h-auto">
               <Leaf className="h-4 w-4 mb-1" />
@@ -115,20 +120,20 @@ const OptimizationControls = () => {
               <div className="flex items-center justify-between">
                 <Label>Battery SoC Limits</Label>
                 <div className="text-sm text-slate-500">
-                  {currentSettings.minBatterySoc}% - {currentSettings.maxBatterySoc}%
+                  {currentSettings.min_soc || 20}% - {currentSettings.max_soc || 85}%
                 </div>
               </div>
               
               <div className="pt-4 px-2">
                 <Slider
-                  defaultValue={[currentSettings.minBatterySoc, currentSettings.maxBatterySoc]}
+                  defaultValue={[currentSettings.min_soc || 20, currentSettings.max_soc || 85]}
                   min={0}
                   max={100}
                   step={5}
                   onValueChange={(value) => {
                     updateSettings({
-                      minBatterySoc: value[0],
-                      maxBatterySoc: value[1]
+                      min_soc: value[0],
+                      max_soc: value[1]
                     });
                   }}
                 />
@@ -166,8 +171,8 @@ const OptimizationControls = () => {
                     <Label>Departure Time</Label>
                     <Input 
                       type="time" 
-                      value={currentSettings.evDepartureTime}
-                      onChange={(e) => updateSettings({ evDepartureTime: e.target.value })}
+                      value={currentSettings.time_window_end || "08:00"}
+                      onChange={(e) => updateSettings({ time_window_end: e.target.value })}
                     />
                   </div>
                   
@@ -175,15 +180,15 @@ const OptimizationControls = () => {
                     <div className="flex items-center justify-between">
                       <Label>Target SoC</Label>
                       <div className="text-sm text-slate-500">
-                        {currentSettings.evTargetSoc}%
+                        {currentSettings.max_soc || 80}%
                       </div>
                     </div>
                     <Slider
-                      defaultValue={[currentSettings.evTargetSoc]}
+                      defaultValue={[currentSettings.max_soc || 80]}
                       min={20}
                       max={100}
                       step={5}
-                      onValueChange={(value) => updateSettings({ evTargetSoc: value[0] })}
+                      onValueChange={(value) => updateSettings({ max_soc: value[0] })}
                     />
                   </div>
                 </div>

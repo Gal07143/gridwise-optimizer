@@ -13,14 +13,14 @@ export interface DeviceModel {
   release_date?: string;
   firmware_version?: string;
   protocol?: string;
-  support_level: 'none' | 'full' | 'partial' | 'beta' | 'community';
+  support_level: 'none' | 'full' | 'partial' | 'beta' | 'community'; // Update support_level to include 'beta' and 'community'
   images?: string[] | Record<string, any>;
   has_manual?: boolean;
   has_datasheet?: boolean;
   has_video?: boolean;
   datasheets?: string[];
   firmware_versions?: string[];
-  model_name?: string;
+  model_name?: string; // Add model_name property
   certifications?: string[];
 }
 

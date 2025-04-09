@@ -6,11 +6,13 @@ export interface ModbusDevice {
   port: number;
   unit_id: number;
   status: 'online' | 'offline' | 'error';
+  protocol: string; // Add protocol property
+  description?: string; // Add description property
   last_connected?: string;
   created_at: string;
   updated_at: string;
-  protocol?: string;
-  description?: string;
+  is_active: boolean; // Make is_active non-optional
+  site_id?: string; // Add site_id property
 }
 
 export interface ModbusDeviceConfig {
@@ -20,6 +22,7 @@ export interface ModbusDeviceConfig {
   port: number;
   unit_id: number;
   protocol: string;
+  site_id?: string; // Add site_id property
 }
 
 export interface ModbusRegisterDefinition {
@@ -44,7 +47,7 @@ export interface ModbusRegisterMap {
 }
 
 export interface ConnectionStatusOptions {
-  showToasts?: boolean;
+  showToasts?: boolean; // Add missing properties
   autoConnect?: boolean;
   deviceId?: string;
   initialStatus?: boolean;
@@ -65,7 +68,7 @@ export interface ConnectionStatusResult {
   isConnecting?: boolean;
   isConnected?: boolean;
   lastConnected?: Date;
-  lastOnline?: Date | null;
+  lastOnline?: Date | null; // Add missing properties
   lastOffline?: Date | null;
   error?: Error | null;
   connect?: () => Promise<void>;

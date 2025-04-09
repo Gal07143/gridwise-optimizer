@@ -4,7 +4,7 @@ import { EnergyFlowContextType, EnergyFlowState, EnergyNode, EnergyConnection } 
 import { useAppStore } from '@/store/appStore';
 import { supabase } from '@/integrations/supabase/client';
 import { fetchDevices } from '@/services/supabase/supabaseService';
-import { useSubscription } from '@/hooks/useSubscription';
+import { useSubscription } from '@/hooks/use-realtime-updates';
 import { toast } from 'sonner';
 
 // Create context
@@ -43,14 +43,18 @@ export const EnergyFlowProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         power = device.metrics.power;
       }
       
+      // Ensure status is a valid value for EnergyNode
+      let nodeStatus: 'active' | 'inactive' | 'warning' | 'error' = 'inactive';
+      if (device.status === 'online') nodeStatus = 'active';
+      else if (device.status === 'warning') nodeStatus = 'warning';
+      else if (device.status === 'error') nodeStatus = 'error';
+      
       return {
         id: device.id,
         label: device.name,
         type: nodeType,
         power,
-        status: device.status === 'online' ? 'active' : 
-               device.status === 'warning' ? 'warning' :
-               device.status === 'error' ? 'error' : 'inactive',
+        status: nodeStatus,
         deviceType: device.type,
         // Add batteryLevel for storage nodes
         ...(device.type === 'battery' && { batteryLevel: device.metrics?.state_of_charge || 50 })
@@ -172,14 +176,19 @@ export const EnergyFlowProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     table: 'energy_readings',
     on: (payload) => {
       // Update the state with the new reading
+      if (!payload.new) return;
+      
       setState(prev => {
         const updatedNodes = prev.nodes.map(node => {
           // If this reading is for this node's device, update the node
           if (node.id === payload.new.device_id) {
+            // Ensure status is a valid value for EnergyNode
+            let nodeStatus: 'active' | 'inactive' | 'warning' | 'error' = 'active';
+            
             return {
               ...node,
               power: payload.new.power || node.power,
-              status: 'active', // New reading means device is active
+              status: nodeStatus,
               batteryLevel: payload.new.state_of_charge !== undefined 
                 ? payload.new.state_of_charge 
                 : node.batteryLevel
@@ -188,14 +197,15 @@ export const EnergyFlowProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           return node;
         });
         
-        // Recalculate connections based on updated nodes
-        const { connections } = transformDeviceData(
-          updatedNodes.map(node => ({
-            id: node.id,
-            type: node.deviceType,
-            metrics: { power: node.power, state_of_charge: node.batteryLevel }
-          }))
-        );
+        // Extract updatedDevices from nodes
+        const updatedDevices = updatedNodes.map(node => ({
+          id: node.id,
+          type: node.deviceType,
+          metrics: { power: node.power, state_of_charge: node.batteryLevel }
+        }));
+        
+        // Get connections based on updated nodes
+        const { connections } = transformDeviceData(updatedDevices);
         
         return {
           ...prev,

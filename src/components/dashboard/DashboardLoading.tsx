@@ -3,7 +3,7 @@ import React from 'react';
 import { Zap } from 'lucide-react';
 import AppLayout from '@/components/layout/AppLayout';
 
-const DashboardLoading = () => {
+const DashboardLoading: React.FC = () => {
   return (
     <AppLayout>
       <div className="flex items-center justify-center h-[calc(100vh-64px)]">

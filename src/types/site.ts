@@ -14,7 +14,7 @@ export interface Site {
   lng: number;
   created_at: string;
   updated_at: string;
-  status?: 'active' | 'inactive' | 'maintenance';
+  status?: 'active' | 'inactive' | 'maintenance'; // Add status property
   description?: string;
   site_type?: string;
   tags?: string[];
@@ -41,7 +41,7 @@ export interface SiteFormData {
   timezone: string;
   lat?: number;
   lng?: number;
-  status?: 'active' | 'inactive' | 'maintenance';
+  status?: 'active' | 'inactive' | 'maintenance'; // Add status property
   description?: string;
   site_type?: string;
   tags?: string[];

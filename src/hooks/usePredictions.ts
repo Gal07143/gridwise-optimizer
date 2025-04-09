@@ -1,6 +1,21 @@
 
 import { useState, useEffect } from 'react';
-import { SystemRecommendation } from '@/types/energy';
+
+// Define SystemRecommendation interface and export it
+export interface SystemRecommendation {
+  id: string;
+  title: string;
+  description: string;
+  potentialSavings?: number;
+  potential_savings?: string;
+  implementation_effort?: string;
+  impact: 'low' | 'medium' | 'high';
+  type: 'energy' | 'cost' | 'maintenance' | 'carbon';
+  createdAt: string;
+  priority: 'low' | 'medium' | 'high';
+  status: 'pending' | 'applied' | 'dismissed';
+  confidence: number;
+}
 
 // Sample prediction data for demo
 const samplePredictions = [
@@ -20,7 +35,7 @@ const sampleRecommendations: SystemRecommendation[] = [
     title: 'Optimize battery charging cycle',
     description: 'Your battery is charging during peak hours. Shifting to off-peak could save you money.',
     potentialSavings: 42,
-    potential_savings: '42€ per month', // For backward compatibility
+    potential_savings: '42€ per month',
     implementation_effort: 'Easy',
     impact: 'high',
     type: 'cost',
