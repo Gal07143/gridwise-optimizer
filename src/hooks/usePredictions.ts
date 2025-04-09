@@ -1,8 +1,9 @@
 
 import { useState } from 'react';
-import { useToast } from './useToast';
+import { toast } from 'sonner';
 
-interface Prediction {
+// Define types
+export interface Prediction {
   time: string;
   consumption: number;
   consumptionPredicted: number;
@@ -13,22 +14,43 @@ interface Prediction {
   confidence?: number;
 }
 
-interface Recommendation {
+export interface SystemRecommendation {
   id: string;
   title: string;
   description: string;
   potentialSavings: number;
-  confidence: number;
+  impact?: 'low' | 'medium' | 'high';
+  type?: 'energy' | 'cost' | 'maintenance' | 'carbon';
   priority: 'low' | 'medium' | 'high';
-  implemented: boolean;
+  confidence: number;
+  implemented?: boolean;
+  category?: string;
+  estimated_roi?: number;
+  potential_savings?: number;
+  implementation_effort?: string;
+  applied?: boolean;
+  status?: 'applied' | 'pending';
+  createdAt?: string;
 }
+
+export const applyRecommendation = async (recommendationId: string): Promise<boolean> => {
+  try {
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 800));
+    toast.success('Recommendation applied successfully');
+    return true;
+  } catch (err) {
+    const error = err instanceof Error ? err : new Error('Failed to apply recommendation');
+    toast.error(error.message);
+    return false;
+  }
+};
 
 export const usePredictions = () => {
   const [predictions, setPredictions] = useState<Prediction[]>([]);
-  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [recommendations, setRecommendations] = useState<SystemRecommendation[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const toast = useToast();
 
   const fetchPredictions = async () => {
     setIsLoading(true);
@@ -57,7 +79,7 @@ export const usePredictions = () => {
       });
       
       // Mock recommendations
-      const mockRecommendations: Recommendation[] = [
+      const mockRecommendations: SystemRecommendation[] = [
         {
           id: '1',
           title: 'Shift EV charging to off-peak hours',
@@ -97,38 +119,14 @@ export const usePredictions = () => {
     }
   };
 
-  const applyRecommendation = async (recommendationId: string) => {
-    setIsLoading(true);
-    
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      // Update recommendations list with implemented flag
-      setRecommendations(prev => 
-        prev.map(rec => 
-          rec.id === recommendationId ? { ...rec, implemented: true } : rec
-        )
-      );
-      
-      toast.success('Recommendation applied successfully');
-      return true;
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error('Failed to apply recommendation');
-      setError(error);
-      toast.error(error.message);
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return {
     predictions,
     recommendations,
     isLoading,
     error,
     fetchPredictions,
-    applyRecommendation
+    refetch: fetchPredictions
   };
 };
+
+export default usePredictions;

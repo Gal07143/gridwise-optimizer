@@ -11,6 +11,20 @@ export interface Site {
   lng?: number;
   type?: string;
   status?: 'active' | 'inactive' | 'maintenance';
+  city?: string;
+  state?: string;
+  country?: string;
+  address?: string;
+  postal_code?: string;
+  site_type?: string;
+  building_type?: string;
+  area?: number;
+  tags?: string[] | Record<string, any>;
+  main_image_url?: string;
+  organization_id?: string;
+  contact_person?: string;
+  contact_email?: string;
+  contact_phone?: string;
 }
 
 export interface SiteConfig {
@@ -38,4 +52,29 @@ export interface SiteSummary extends Site {
   metrics?: SiteMetrics;
   deviceCount?: number;
   alertCount?: number;
+}
+
+export interface SiteFormData {
+  name: string;
+  location: string;
+  description?: string;
+  timezone: string;
+  lat?: number;
+  lng?: number;
+  type?: string;
+  status?: 'active' | 'inactive' | 'maintenance';
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  postal_code?: string;
+  site_type?: string;
+  contact_person?: string;
+  contact_email?: string;
+  contact_phone?: string;
+}
+
+export interface DateRange {
+  from: Date;
+  to: Date;
 }

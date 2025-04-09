@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Brain, RefreshCw } from 'lucide-react';
 import { formatDistance } from 'date-fns';
 import { toast } from 'sonner';
-import usePredictions from '@/hooks/usePredictions';
+import { usePredictions } from '@/hooks/usePredictions';
 
 // Mock services for model status and training
 const getModelStatus = async () => {
