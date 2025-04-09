@@ -1,29 +1,23 @@
 
 import React from 'react';
 import { Outlet } from 'react-router-dom';
-import { Sidebar } from './Sidebar';
-import Header from './Header';
-import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { Header, Sidebar } from './index';
+import { useAppStore } from '@/store/appStore';
 
 const Layout = () => {
-  const [sidebarExpanded, setSidebarExpanded] = useLocalStorage('sidebar-expanded', true);
-
-  const toggleSidebar = () => {
-    setSidebarExpanded(!sidebarExpanded);
-  };
-
+  const { sidebarExpanded, toggleSidebar } = useAppStore();
+  
   return (
-    <div className="flex h-screen overflow-hidden bg-white dark:bg-slate-950">
-      <Sidebar expanded={sidebarExpanded} toggleSidebar={toggleSidebar} />
+    <div className="flex h-screen overflow-hidden">
+      {/* Sidebar */}
+      <Sidebar />
       
-      <div className="flex flex-col flex-1 w-full overflow-hidden">
-        <Header sidebarExpanded={sidebarExpanded} toggleSidebar={toggleSidebar} />
-        
-        <div className="flex flex-1 overflow-auto">
-          <main className="flex-1 overflow-y-auto px-4 sm:px-6 py-8">
-            <Outlet />
-          </main>
-        </div>
+      {/* Main Content */}
+      <div className="flex flex-col flex-1 overflow-hidden">
+        <Header />
+        <main className="flex-1 overflow-y-auto p-6 bg-background">
+          <Outlet />
+        </main>
       </div>
     </div>
   );

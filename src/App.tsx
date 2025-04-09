@@ -3,7 +3,7 @@ import React from 'react';
 import { Route, Routes } from 'react-router-dom';
 import { ThemeProvider } from '@/providers/ThemeProvider';
 import { AuthProvider } from '@/contexts/auth/AuthProvider';
-import { AppStoreProvider } from '@/store/appStore';
+import { AppStoreProvider } from '@/store';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
 import Layout from '@/components/layout/Layout';
@@ -15,6 +15,7 @@ import Solar from '@/pages/Solar';
 import Projects from '@/pages/Projects';
 import ProjectDetail from '@/pages/ProjectDetail';
 import PrivateRoute from '@/components/auth/PrivateRoute';
+import Sites from '@/pages/Sites';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -42,6 +43,7 @@ function App() {
                     <Route path="solar" element={<PrivateRoute><Solar /></PrivateRoute>} />
                     <Route path="projects" element={<PrivateRoute><Projects /></PrivateRoute>} />
                     <Route path="projects/:id" element={<PrivateRoute><ProjectDetail /></PrivateRoute>} />
+                    <Route path="sites" element={<PrivateRoute><Sites /></PrivateRoute>} />
                     {/* Add other routes here */}
                   </Route>
                 </Routes>
