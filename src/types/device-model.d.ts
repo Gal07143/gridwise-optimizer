@@ -14,13 +14,14 @@ export interface DeviceModel {
   firmware_version?: string;
   protocol?: string;
   support_level: 'none' | 'full' | 'partial' | 'beta' | 'community';
-  images?: string[];
+  images?: string[] | Record<string, any>;
   has_manual?: boolean;
   has_datasheet?: boolean;
   has_video?: boolean;
   datasheets?: string[];
   firmware_versions?: string[];
   model_name?: string;
+  certifications?: string[];
 }
 
 export interface DeviceModelWithRequiredName {

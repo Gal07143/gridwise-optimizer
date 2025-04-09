@@ -1,120 +1,109 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
-import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { RealtimeChannel } from '@supabase/supabase-js';
 
-interface RealtimeOptions {
-  table: string;
+type EventCallback = (payload: any) => void;
+type SubscriptionStatus = 'SUBSCRIBED' | 'TIMED_OUT' | 'CLOSED' | 'CHANNEL_ERROR';
+
+interface RealtimeSubscriptionOptions {
   schema?: string;
+  table: string;
   event?: 'INSERT' | 'UPDATE' | 'DELETE' | '*';
   filter?: string;
-  showToasts?: boolean;
 }
 
-interface RealtimeResult<T> {
-  data: T[];
-  loading: boolean;
-  error: Error | null;
+interface UseRealtimeOptions {
+  enabled?: boolean;
 }
 
-/**
- * Hook for subscribing to real-time updates from Supabase
- */
-export function useRealtimeUpdates<T = any>({
-  table,
-  schema = 'public',
-  event = '*',
-  filter,
-  showToasts = false,
-}: RealtimeOptions): RealtimeResult<T> {
-  const [data, setData] = useState<T[]>([]);
-  const [loading, setLoading] = useState(true);
+function useSubscription(options: {
+  schema?: string;
+  table: string;
+  event?: 'INSERT' | 'UPDATE' | 'DELETE' | '*';
+  filter?: string;
+  on: EventCallback;
+}) {
+  const { schema = 'public', table, event = '*', filter, on } = options;
+  const [status, setStatus] = useState<SubscriptionStatus | null>(null);
   const [error, setError] = useState<Error | null>(null);
+  const [channel, setChannel] = useState<RealtimeChannel | null>(null);
 
   useEffect(() => {
-    // Fetch initial data
-    const fetchInitialData = async () => {
+    let subscription: RealtimeChannel;
+
+    const setupSubscription = async () => {
       try {
-        let query = supabase.from(table).select('*');
+        let channelName = `realtime:${schema}:${table}:${event}`;
 
-        if (filter) {
-          // Example filter: 'status=eq.active'
-          const [column, operation] = filter.split('=');
-          const [op, value] = operation.split('.');
-          
-          if (op === 'eq') {
-            query = query.eq(column, value);
-          } else if (op === 'gt') {
-            query = query.gt(column, value);
-          } else if (op === 'lt') {
-            query = query.lt(column, value);
-          }
-        }
+        // Using .on('postgres_changes') since this is the correct method according to Supabase docs
+        subscription = supabase.channel(channelName)
+          .on('postgres_changes' as any, { // Type assertion to avoid type error
+            event,
+            schema,
+            table,
+            ...(filter && { filter })
+          }, (payload) => {
+            on(payload);
+          })
+          .subscribe((status) => setStatus(status));
 
-        const { data: initialData, error: initialError } = await query;
-
-        if (initialError) {
-          throw initialError;
-        }
-
-        setData(initialData as T[]);
-        setError(null);
+        setChannel(subscription);
       } catch (err) {
-        console.error(`Error fetching ${table} data:`, err);
-        setError(err instanceof Error ? err : new Error(`Failed to fetch ${table} data`));
-        if (showToasts) {
-          toast.error(`Failed to fetch data from ${table}`);
-        }
-      } finally {
-        setLoading(false);
+        console.error('Error setting up realtime subscription:', err);
+        setError(err instanceof Error ? err : new Error('Subscription error'));
       }
     };
 
-    fetchInitialData();
+    setupSubscription();
 
-    // Subscribe to real-time updates
-    const channel = supabase
-      .channel(`${table}-changes`)
-      .on(
-        'postgres_changes',
-        {
-          event,
-          schema,
-          table,
-          filter: filter ? `${filter}` : undefined,
-        },
-        (payload) => {
-          if (payload.eventType === 'INSERT') {
-            setData((prevData) => [...prevData, payload.new as T]);
-            if (showToasts) {
-              toast.success(`New record added to ${table}`);
-            }
-          } else if (payload.eventType === 'UPDATE') {
-            setData((prevData) =>
-              prevData.map((item: any) =>
-                item.id === (payload.new as any).id ? payload.new as T : item
-              )
-            );
-            if (showToasts) {
-              toast.info(`Record updated in ${table}`);
-            }
-          } else if (payload.eventType === 'DELETE') {
-            setData((prevData) =>
-              prevData.filter((item: any) => item.id !== (payload.old as any).id)
-            );
-            if (showToasts) {
-              toast.info(`Record deleted from ${table}`);
-            }
-          }
-        }
-      )
-      .subscribe();
-
-    // Cleanup on unmount
     return () => {
-      supabase.removeChannel(channel);
+      if (subscription) {
+        supabase.removeChannel(subscription);
+      }
     };
-  }, [table, schema, event, filter, showToasts]);
+  }, [schema, table, event, filter, on]);
 
-  return { data, loading, error };
+  return {
+    status,
+    error,
+    channel,
+  };
 }
+
+// This hook handles subscribing to realtime updates from a Supabase table
+function useRealtimeUpdates<T>(
+  options: RealtimeSubscriptionOptions,
+  callback: (item: T) => void,
+  realtimeOptions: UseRealtimeOptions = {}
+) {
+  const { enabled = true } = realtimeOptions;
+  const [status, setStatus] = useState<SubscriptionStatus | null>(null);
+  const [error, setError] = useState<Error | null>(null);
+
+  const { status: subscriptionStatus, error: subscriptionError } = useSubscription({
+    ...options,
+    on: (payload) => {
+      if (payload.new) {
+        callback(payload.new as T);
+      }
+    }
+  });
+
+  useEffect(() => {
+    if (subscriptionStatus) {
+      setStatus(subscriptionStatus);
+    }
+    if (subscriptionError) {
+      setError(subscriptionError);
+    }
+  }, [subscriptionStatus, subscriptionError]);
+
+  return {
+    status,
+    error,
+    isSubscribed: status === 'SUBSCRIBED'
+  };
+}
+
+export { useRealtimeUpdates, useSubscription };

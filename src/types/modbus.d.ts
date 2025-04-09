@@ -1,3 +1,4 @@
+
 export interface ModbusDevice {
   id: string;
   name: string;
@@ -46,6 +47,10 @@ export interface ConnectionStatusOptions {
   showToasts?: boolean;
   autoConnect?: boolean;
   deviceId?: string;
+  initialStatus?: boolean;
+  reconnectDelay?: number;
+  retryInterval?: number;
+  maxRetries?: number;
 }
 
 export interface ConnectionStatus {
@@ -58,8 +63,14 @@ export interface ConnectionStatus {
 export interface ConnectionStatusResult {
   isOnline: boolean;
   isConnecting?: boolean;
+  isConnected?: boolean;
   lastConnected?: Date;
-  error: Error | null;
+  lastOnline?: Date | null;
+  lastOffline?: Date | null;
+  error?: Error | null;
   connect?: () => Promise<void>;
-  disconnect?: () => void;
+  disconnect?: () => Promise<void>;
+  retryConnection?: () => Promise<void>;
+  status?: 'connected' | 'disconnected' | 'connecting' | 'error';
+  message?: string;
 }

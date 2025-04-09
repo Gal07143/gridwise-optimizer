@@ -1,150 +1,84 @@
+
 import { useState, useEffect } from 'react';
 import { TelemetryData } from '@/types/energy';
-import { supabase } from '@/lib/supabase';
 
-interface TelemetryHistoryParams {
-  deviceId: string;
-  metricId: string;
-  limit?: number;
-  timeRange?: 'hour' | 'day' | 'week' | 'month';
+interface UseTelemetryHistoryOptions {
+  deviceId?: string;
+  parameter?: string;
+  timeframe?: 'hour' | 'day' | 'week' | 'month';
 }
 
-const useTelemetryHistory = ({
-  deviceId,
-  metricId,
-  limit = 100,
-  timeRange = 'day'
-}: TelemetryHistoryParams) => {
+// Mock telemetry data
+const generateMockData = (deviceId: string, timeframe: string): TelemetryData[] => {
+  const now = new Date();
+  const data: TelemetryData[] = [];
+  let points = 24;
+  let interval = 60 * 60 * 1000; // 1 hour in ms
+  
+  switch(timeframe) {
+    case 'week':
+      points = 7;
+      interval = 24 * 60 * 60 * 1000; // 1 day in ms
+      break;
+    case 'month':
+      points = 30;
+      interval = 24 * 60 * 60 * 1000; // 1 day in ms
+      break;
+    case 'hour':
+      points = 60;
+      interval = 60 * 1000; // 1 minute in ms
+      break;
+    default: // day
+      points = 24;
+      interval = 60 * 60 * 1000; // 1 hour in ms
+  }
+  
+  for (let i = 0; i < points; i++) {
+    const timestamp = new Date(now.getTime() - (i * interval));
+    const baseValue = timeframe === 'hour' ? 5 : 50;
+    const randomFactor = timeframe === 'hour' ? 3 : 15;
+    const value = baseValue + (Math.random() * randomFactor);
+    
+    data.push({
+      timestamp: timestamp.toISOString(),
+      value: +value.toFixed(2),
+      unit: "kWh", // A default unit
+      type: "energy",
+      device_id: deviceId // Important: use device_id, not deviceId
+    });
+  }
+  
+  return data.reverse();
+};
+
+export default function useTelemetryHistory(options: UseTelemetryHistoryOptions = {}) {
+  const { deviceId = 'default-device', parameter = 'energy', timeframe = 'day' } = options;
+  
   const [data, setData] = useState<TelemetryData[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-
+  
   useEffect(() => {
-    const fetchTelemetry = async () => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      setError(null);
+      
       try {
-        setIsLoading(true);
-        setError(null);
-
-        // Calculate the time range filter
-        const now = new Date();
-        let startTime = new Date();
-        
-        switch (timeRange) {
-          case 'hour':
-            startTime.setHours(now.getHours() - 1);
-            break;
-          case 'day':
-            startTime.setDate(now.getDate() - 1);
-            break;
-          case 'week':
-            startTime.setDate(now.getDate() - 7);
-            break;
-          case 'month':
-            startTime.setMonth(now.getMonth() - 1);
-            break;
-        }
-
-        // Format to ISO string for Supabase query
-        const startTimeStr = startTime.toISOString();
-
-        const { data, error } = await supabase
-          .from('energy_readings')
-          .select('*')
-          .eq('device_id', deviceId)
-          .eq('metric', metricId)
-          .gte('timestamp', startTimeStr)
-          .order('timestamp', { ascending: true })
-          .limit(limit);
-
-        if (error) throw error;
-
-        // Format the data to match TelemetryData
-        const formattedData: TelemetryData[] = (data || []).map(item => ({
-          timestamp: item.timestamp,
-          value: item.value,
-          deviceId: item.device_id,
-          metricId: item.metric
-        }));
-
-        setData(formattedData);
+        // In a real implementation, this would be an API call
+        // For now, we'll simulate a delay and return mock data
+        await new Promise(resolve => setTimeout(resolve, 800));
+        const mockData = generateMockData(deviceId, timeframe);
+        setData(mockData);
       } catch (err) {
-        console.error('Error fetching telemetry data:', err);
+        console.error("Error fetching telemetry data:", err);
         setError(err instanceof Error ? err : new Error('Failed to fetch telemetry data'));
       } finally {
         setIsLoading(false);
       }
     };
-
-    fetchTelemetry();
     
-    // Set up subscription for real-time updates
-    const channel = supabase
-      .channel('energy_readings_changes')
-      .on('postgres_changes', 
-        { 
-          event: 'INSERT', 
-          schema: 'public', 
-          table: 'energy_readings',
-          filter: `device_id=eq.${deviceId}` 
-        }, 
-        (payload) => {
-          if (payload.new && payload.new.metric === metricId) {
-            const newReading: TelemetryData = {
-              timestamp: payload.new.timestamp,
-              value: payload.new.value,
-              deviceId: payload.new.device_id,
-              metricId: payload.new.metric
-            };
-            
-            setData(prevData => [...prevData, newReading]);
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [deviceId, metricId, limit, timeRange]);
-
-  const refetch = async () => {
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('energy_readings')
-        .select('*')
-        .eq('device_id', deviceId)
-        .eq('metric', metricId)
-        .order('timestamp', { ascending: true })
-        .limit(limit);
-
-      if (error) throw error;
-
-      const formattedData: TelemetryData[] = (data || []).map(item => ({
-        timestamp: item.timestamp,
-        value: item.value,
-        deviceId: item.device_id,
-        metricId: item.metric
-      }));
-
-      setData(formattedData);
-      setError(null);
-    } catch (err) {
-      console.error('Error refetching telemetry data:', err);
-      setError(err instanceof Error ? err : new Error('Failed to refetch telemetry data'));
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return {
-    data,
-    isLoading,
-    error,
-    refetch
-  };
-};
-
-// Make sure to export both as named export and default
-export { useTelemetryHistory };
-export default useTelemetryHistory;
+    fetchData();
+  }, [deviceId, parameter, timeframe]);
+  
+  return { data, isLoading, error };
+}

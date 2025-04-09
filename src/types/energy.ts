@@ -1,4 +1,3 @@
-
 // Energy Data Types
 export type DeviceType = 
   | 'solar' 
@@ -11,7 +10,8 @@ export type DeviceType =
   | 'wind' 
   | 'hydro'
   | 'generator'
-  | 'light';
+  | 'light'
+  | 'sensor'; // Added 'sensor' to fix comparison errors
 
 export type DeviceStatus = 
   | 'online' 
@@ -214,9 +214,91 @@ export interface SystemRecommendation {
   title: string;
   description: string;
   potentialSavings?: number;
+  potential_savings?: string; // For backward compatibility
+  implementation_effort?: string;
   impact: 'low' | 'medium' | 'high';
   type: 'energy' | 'cost' | 'maintenance' | 'carbon';
   createdAt: string;
   priority: 'low' | 'medium' | 'high';
   status: 'pending' | 'applied' | 'dismissed';
+  confidence: number;
+}
+
+export interface ModbusRegisterDefinition {
+  id: string;
+  device_id?: string;
+  name: string;
+  address: number;
+  registerType: "input" | "holding";
+  dataType: "int16" | "uint16" | "int32" | "uint32" | "float32";
+  access: "read" | "write" | "read/write";
+  scaleFactor?: number;
+  scaling_factor?: number; // For backward compatibility
+  unit?: string;
+  description?: string;
+  register_address?: number;
+  register_name?: string;
+  register_length?: number;
+}
+
+export interface ModbusRegisterMap {
+  registers: ModbusRegisterDefinition[];
+}
+
+export interface ModbusDeviceConfig {
+  id?: string;
+  name: string;
+  ip: string;
+  port: number;
+  unit_id: number;
+  protocol: "tcp" | "rtu";
+  is_active?: boolean;
+  description?: string;
+  site_id?: string;
+}
+
+export interface EnergyFlowContextType {
+  nodes: EnergyNode[];
+  connections: EnergyConnection[];
+  totalGeneration: number;
+  totalConsumption: number;
+  batteryPercentage: number;
+  selfConsumptionRate: number;
+  gridDependencyRate: number;
+  refreshData: () => void;
+  isLoading: boolean;
+}
+
+export interface EnergyFlowState {
+  nodes: EnergyNode[];
+  connections: EnergyConnection[];
+  isLoading: boolean;
+}
+
+export interface EnergyNode {
+  id: string;
+  label: string;
+  type: 'source' | 'storage' | 'consumption';
+  power: number;
+  status: 'active' | 'inactive' | 'warning' | 'error';
+  deviceType: string;
+  batteryLevel?: number;
+}
+
+export interface EnergyConnection {
+  from: string;
+  to: string;
+  value: number;
+  active: boolean;
+  color?: string;
+}
+
+export interface UserPreference {
+  id: string;
+  user_id?: string;
+  max_soc: number;
+  min_soc: number;
+  priority_device_ids: string[];
+  time_window_start: string;
+  time_window_end: string;
 }

@@ -1,79 +1,138 @@
 
-import { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { useState, useEffect } from 'react';
+import { SystemRecommendation } from '@/types/energy';
 
-export interface SystemRecommendation {
-  id: string;
-  title: string;
-  description: string;
-  potentialSavings?: number;
-  impact: 'low' | 'medium' | 'high';
-  type: string;
-  createdAt: string;
-  priority: 'low' | 'medium' | 'high';
-  status: 'pending' | 'applied' | 'dismissed';
+// Sample prediction data for demo
+const samplePredictions = [
+  { day: 'Mon', value: 42.3, confidence: 0.91 },
+  { day: 'Tue', value: 45.7, confidence: 0.89 },
+  { day: 'Wed', value: 51.2, confidence: 0.87 },
+  { day: 'Thu', value: 48.9, confidence: 0.85 },
+  { day: 'Fri', value: 53.8, confidence: 0.82 },
+  { day: 'Sat', value: 46.5, confidence: 0.79 },
+  { day: 'Sun', value: 42.1, confidence: 0.81 }
+];
+
+// Sample recommendations for demo
+const sampleRecommendations: SystemRecommendation[] = [
+  {
+    id: '1',
+    title: 'Optimize battery charging cycle',
+    description: 'Your battery is charging during peak hours. Shifting to off-peak could save you money.',
+    potentialSavings: 42,
+    potential_savings: '42€ per month', // For backward compatibility
+    implementation_effort: 'Easy',
+    impact: 'high',
+    type: 'cost',
+    createdAt: new Date().toISOString(),
+    priority: 'high',
+    status: 'pending',
+    confidence: 89
+  },
+  {
+    id: '2',
+    title: 'Reduce solar panel shadowing',
+    description: 'Tree shadows are reducing your solar panel efficiency by approximately 15%.',
+    potentialSavings: 28,
+    potential_savings: '28€ per month',
+    implementation_effort: 'Medium',
+    impact: 'medium',
+    type: 'energy',
+    createdAt: new Date().toISOString(),
+    priority: 'medium',
+    status: 'pending',
+    confidence: 75
+  }
+];
+
+// Function to apply a recommendation
+export async function applyRecommendation(recommendationId: string) {
+  // Simulate API call
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  return { success: true };
 }
 
-export const applyRecommendation = async (recommendationId: string) => {
-  try {
-    // Get the current user
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      throw new Error('You must be logged in to apply recommendations');
-    }
+interface UsePredictionsOptions {
+  siteId?: string;
+  initialDays?: number;
+}
 
-    // Update the recommendation status in the database
-    const { data, error } = await supabase
-      .from('ai_recommendations')
-      .update({ 
-        applied: true,
-        applied_at: new Date().toISOString(),
-        applied_by: user.id
-      })
-      .eq('id', recommendationId);
-
-    if (error) throw error;
-    return true;
-  } catch (error) {
-    console.error('Error applying recommendation:', error);
-    toast.error('Failed to apply recommendation');
-    return false;
-  }
-};
-
-export const useEnergyPredictions = (siteId?: string) => {
-  const [isLoading, setIsLoading] = useState(false);
-
-  const generatePredictions = async () => {
-    if (!siteId) {
-      toast.error('No site selected');
-      return;
-    }
-
+export default function usePredictions(timeframe: 'day' | 'week' | 'month' | 'year' = 'week', options?: UsePredictionsOptions) {
+  const [predictions, setPredictions] = useState<Array<{day: string, value: number, confidence: number}>>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<Error | null>(null);
+  const [recommendations, setRecommendations] = useState<SystemRecommendation[]>([]);
+  const [isLoadingRecommendations, setIsLoadingRecommendations] = useState<boolean>(false);
+  const [isApplyingRecommendation, setIsApplyingRecommendation] = useState<boolean>(false);
+  const [predictionDays, setPredictionDays] = useState<number>(options?.initialDays || 7);
+  
+  const generatePredictions = async (): Promise<boolean> => {
     setIsLoading(true);
+    setError(null);
     
     try {
-      // In a real implementation, this would call a machine learning service
-      // For now, we'll simulate this with a timer
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      toast.success('Energy predictions generated successfully');
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      setPredictions(samplePredictions.slice(0, predictionDays));
       return true;
-    } catch (error) {
-      console.error('Error generating predictions:', error);
-      toast.error('Failed to generate predictions');
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to generate predictions'));
       return false;
     } finally {
       setIsLoading(false);
     }
   };
 
-  return {
-    generatePredictions,
-    isLoading
+  const applyRecommendationHandler = async (id: string) => {
+    setIsApplyingRecommendation(true);
+    try {
+      await applyRecommendation(id);
+      setRecommendations(prev => 
+        prev.map(rec => rec.id === id ? { ...rec, status: 'applied' as const } : rec)
+      );
+      return true;
+    } catch (err) {
+      console.error('Failed to apply recommendation:', err);
+      return false;
+    } finally {
+      setIsApplyingRecommendation(false);
+    }
   };
-};
 
-export default useEnergyPredictions;
+  const loadRecommendations = async () => {
+    setIsLoadingRecommendations(true);
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setRecommendations(sampleRecommendations);
+    } catch (err) {
+      console.error('Failed to load recommendations:', err);
+    } finally {
+      setIsLoadingRecommendations(false);
+    }
+  };
+
+  useEffect(() => {
+    generatePredictions();
+    loadRecommendations();
+  }, [timeframe, predictionDays]);
+
+  const refetch = () => {
+    generatePredictions();
+    loadRecommendations();
+  };
+
+  return { 
+    predictions, 
+    isLoading, 
+    error, 
+    predictionDays,
+    setPredictionDays,
+    generatePredictions,
+    recommendations,
+    isLoadingRecommendations,
+    applyRecommendation: applyRecommendationHandler,
+    isApplyingRecommendation,
+    refetch
+  };
+}

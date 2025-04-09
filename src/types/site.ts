@@ -22,7 +22,7 @@ export interface Site {
   organization_id?: string;
   
   // Legacy/compatibility properties
-  location?: string; // Maps to address
+  location: string; // Maps to address
   type?: string;     // Maps to site_type
   building_type?: string;
   area?: number;

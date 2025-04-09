@@ -1,58 +1,66 @@
 
-import React, { ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React from 'react';
+import { Link } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import GlassPanel from '@/components/ui/GlassPanel';
-import AppLayout from '@/components/layout/AppLayout';
-import { SettingsPageTemplateProps } from './SettingsPageTemplateProps';
+import { cn } from '@/lib/utils';
 
-const SettingsPageTemplate = ({ 
-  title, 
-  description, 
-  children, 
-  backLink = '/settings',
+export interface SettingsPageTemplateProps {
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+  actions?: React.ReactNode;
+  headerIcon?: React.ReactNode;
+  backLink?: string;
+}
+
+const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
+  title,
+  description,
+  children,
+  actions,
   headerIcon,
-  actions
-}: SettingsPageTemplateProps) => {
-  const navigate = useNavigate();
-
+  backLink
+}) => {
   return (
-    <AppLayout>
-      <div>
-        <div className="mb-6 flex justify-between items-start">
-          <div>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="flex items-center gap-1 mb-2"
-              onClick={() => navigate(backLink)}
-            >
-              <ChevronLeft size={16} />
-              <span>Back to Settings</span>
-            </Button>
-            <div className="flex items-center gap-3 mb-1">
-              {headerIcon && (
-                <div className="rounded-full p-2 bg-primary/10 text-primary">
-                  {headerIcon}
-                </div>
+    <div className="container max-w-5xl p-6 mx-auto">
+      <div className="mb-8">
+        {backLink && (
+          <Link 
+            to={backLink} 
+            className="flex items-center text-sm text-muted-foreground hover:text-foreground mb-4"
+          >
+            <ChevronLeft className="h-4 w-4 mr-1" />
+            Back
+          </Link>
+        )}
+        
+        <div className="flex justify-between items-start">
+          <div className="flex items-center gap-3">
+            {headerIcon && (
+              <div className="p-2 bg-primary/10 text-primary rounded-full">
+                {headerIcon}
+              </div>
+            )}
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+              {description && (
+                <p className="text-muted-foreground">{description}</p>
               )}
-              <h1 className="text-2xl font-semibold">{title}</h1>
             </div>
-            {description && <p className="text-muted-foreground">{description}</p>}
           </div>
+          
           {actions && (
-            <div className="flex items-center gap-2">
+            <div className="flex gap-2">
               {actions}
             </div>
           )}
         </div>
-        
-        <GlassPanel className="p-6">
-          {children}
-        </GlassPanel>
       </div>
-    </AppLayout>
+      
+      <div className={cn("space-y-6", backLink && "ml-4")}>
+        {children}
+      </div>
+    </div>
   );
 };
 

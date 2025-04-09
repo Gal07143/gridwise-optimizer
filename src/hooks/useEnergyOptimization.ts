@@ -1,91 +1,151 @@
 
-import { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
-import { useAppStore } from '@/store/appStore';
+import { AIRecommendation } from '@/types/energy';
 
-interface OptimizationSettings {
-  objective: 'self_consumption' | 'cost' | 'carbon' | 'peak_shaving';
-  minBatterySoc: number;
-  maxBatterySoc: number;
-  evDepartureTime: string;
-  evTargetSoc: number;
+export interface OptimizationSettings {
+  enableTimeShifting: boolean;
+  enablePeakShaving: boolean;
+  enableBatteryOptimization: boolean;
+  enableDynamicCharging: boolean;
+  maxDischargeRate: number;
+  selfConsumptionTarget: number;
+  economyMode: boolean;
 }
 
 const defaultSettings: OptimizationSettings = {
-  objective: 'self_consumption',
-  minBatterySoc: 20,
-  maxBatterySoc: 90,
-  evDepartureTime: '08:00',
-  evTargetSoc: 80
+  enableTimeShifting: true,
+  enablePeakShaving: true,
+  enableBatteryOptimization: true,
+  enableDynamicCharging: true,
+  maxDischargeRate: 80,
+  selfConsumptionTarget: 90,
+  economyMode: false
 };
+
+// Sample recommendations
+const mockRecommendations: AIRecommendation[] = [
+  {
+    id: '1',
+    site_id: 'site-1',
+    type: 'battery_optimization',
+    priority: 'high',
+    title: 'Optimize battery charging schedule',
+    description: 'Shifting battery charging to off-peak hours can reduce your electricity costs by up to 15%.',
+    potential_savings: '€45 per month',
+    confidence: 0.92,
+    applied: false
+  },
+  {
+    id: '2',
+    site_id: 'site-1',
+    type: 'load_shifting',
+    priority: 'medium',
+    title: 'Shift EV charging to midday',
+    description: 'Charging your EV during peak solar production hours increases self-consumption by 25%.',
+    potential_savings: '€30 per month',
+    confidence: 0.85,
+    applied: false
+  }
+];
 
 export function useEnergyOptimization(siteId: string) {
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [currentSettings, setCurrentSettings] = useState<OptimizationSettings>(defaultSettings);
   const [optimizationResult, setOptimizationResult] = useState<any>(null);
-  const { currentSite } = useAppStore();
+  const [recommendations, setRecommendations] = useState<AIRecommendation[]>(mockRecommendations);
+  const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(false);
+  const [isApplyingRecommendation, setIsApplyingRecommendation] = useState(false);
+  const [isControlling, setIsControlling] = useState(false);
 
-  const updateSettings = (settings: Partial<OptimizationSettings>) => {
-    setCurrentSettings(prev => ({
-      ...prev,
-      ...settings
-    }));
-  };
-
-  const runOptimization = async (deviceIds: string[]) => {
-    if (!siteId) {
-      toast.error('No site selected');
-      return;
-    }
-
+  const runOptimization = useCallback(async (deviceIds: string[]) => {
     setIsOptimizing(true);
-    
     try {
-      const payload = {
-        siteId,
-        deviceIds,
-        objective: currentSettings.objective,
-        constraints: {
-          minBatterySoc: currentSettings.minBatterySoc,
-          maxBatterySoc: currentSettings.maxBatterySoc,
-          evDepartureTime: currentSettings.evDepartureTime,
-          evTargetSoc: currentSettings.evTargetSoc
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      const result = {
+        success: true,
+        optimizedSchedule: [
+          { time: '00:00', action: 'charge_battery', value: 2.1 },
+          { time: '04:00', action: 'charge_battery', value: 2.5 },
+          { time: '08:00', action: 'discharge_battery', value: 1.2 },
+          { time: '12:00', action: 'charge_ev', value: 7.4 },
+          { time: '16:00', action: 'discharge_battery', value: 3.5 },
+          { time: '20:00', action: 'idle', value: 0 }
+        ],
+        projectedSavings: {
+          cost: 42.5,
+          co2: 15.3
         }
       };
-
-      // Call the Supabase Edge Function for optimization
-      const { data, error } = await supabase.functions.invoke('optimize-energy', {
-        body: payload
-      });
-
-      if (error) throw error;
-
-      console.log('Optimization result:', data);
-      setOptimizationResult(data);
-      toast.success('Energy optimization completed successfully');
       
-      // If recommendations were created, notify the user
-      if (data.recommendations > 0) {
-        toast.info(`${data.recommendations} new recommendations available`);
-      }
-      
-      return data;
+      setOptimizationResult(result);
+      toast.success('Optimization completed successfully');
+      return result;
     } catch (error) {
-      console.error('Error running optimization:', error);
-      toast.error('Failed to run energy optimization');
+      console.error('Optimization failed:', error);
+      toast.error('Failed to run optimization');
+      throw error;
     } finally {
       setIsOptimizing(false);
     }
-  };
+  }, []);
+
+  const updateSettings = useCallback((settings: Partial<OptimizationSettings>) => {
+    setCurrentSettings(prev => ({ ...prev, ...settings }));
+  }, []);
+
+  const applyRecommendation = useCallback(async (recommendationId: string) => {
+    setIsApplyingRecommendation(true);
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1200));
+      
+      setRecommendations(prev => 
+        prev.map(rec => 
+          rec.id === recommendationId ? { ...rec, applied: true, applied_at: new Date().toISOString() } : rec
+        )
+      );
+      
+      toast.success('Recommendation applied successfully');
+      return true;
+    } catch (error) {
+      console.error('Failed to apply recommendation:', error);
+      toast.error('Could not apply recommendation');
+      return false;
+    } finally {
+      setIsApplyingRecommendation(false);
+    }
+  }, []);
+
+  const controlDevice = useCallback(async (params: { deviceId: string, command: string, parameters?: Record<string, any> }) => {
+    setIsControlling(true);
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 800));
+      toast.success(`Command '${params.command}' sent successfully`);
+      return true;
+    } catch (error) {
+      console.error('Device control failed:', error);
+      toast.error('Failed to send command to device');
+      return false;
+    } finally {
+      setIsControlling(false);
+    }
+  }, []);
 
   return {
     runOptimization,
     updateSettings,
     currentSettings,
     isOptimizing,
-    optimizationResult
+    optimizationResult,
+    recommendations,
+    isLoadingRecommendations,
+    applyRecommendation,
+    isApplyingRecommendation,
+    controlDevice,
+    isControlling
   };
 }
-
-export default useEnergyOptimization;
