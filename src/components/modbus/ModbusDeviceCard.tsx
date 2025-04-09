@@ -13,7 +13,7 @@ interface ModbusDeviceCardProps {
 
 const ModbusDeviceCard: React.FC<ModbusDeviceCardProps> = ({ device, onClick }) => {
   const { isOnline, isConnected } = useConnectionStatus({
-    initialStatus: device.is_active, // This is now properly defined in ConnectionStatusOptions
+    initialStatus: device.is_active || false, // Provide a default value if is_active is undefined
     deviceId: device.id
   });
 

@@ -2,15 +2,15 @@
 export interface ModbusDevice {
   id: string;
   name: string;
-  ip_address: string;
+  ip_address?: string;
   port: number;
   unit_id: number;
-  status: 'online' | 'offline' | 'error';
-  protocol: 'tcp' | 'rtu'; 
+  status?: 'online' | 'offline' | 'error';
+  protocol?: 'tcp' | 'rtu'; 
   description?: string;
   last_connected?: string;
-  created_at: string;
-  updated_at: string;
+  created_at?: string;
+  updated_at?: string;
   is_active: boolean;
   site_id?: string;
   ip?: string; // Add compatibility with both naming conventions

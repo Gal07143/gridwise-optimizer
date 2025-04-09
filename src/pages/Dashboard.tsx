@@ -129,7 +129,8 @@ const Dashboard = () => {
               type: rec.type as 'energy' | 'cost' | 'maintenance' | 'carbon',
               createdAt: rec.created_at || new Date().toISOString(),
               priority: rec.priority as 'low' | 'medium' | 'high',
-              status: rec.applied ? 'applied' : 'pending'
+              status: rec.applied ? 'applied' : 'pending',
+              confidence: rec.confidence || 85 // Add default confidence if not provided
             }))}
             isLoading={isLoadingRecommendations}
           />

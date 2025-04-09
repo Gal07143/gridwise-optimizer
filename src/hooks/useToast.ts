@@ -42,7 +42,8 @@ export const useToast = () => {
     info,
     warning,
     custom,
-    dismiss
+    dismiss,
+    toast // Export the raw toast object as well
   };
 };
 

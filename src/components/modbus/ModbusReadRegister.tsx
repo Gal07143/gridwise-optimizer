@@ -1,100 +1,104 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { readRegister } from '@/services/modbus/modbusService';
 import { toast } from 'sonner';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
+import { readRegister } from '@/services/modbus/modbusService';
 import { ModbusReadingResult } from '@/types/modbus';
+import { AlertCircle } from 'lucide-react';
 
-interface ModbusReadRegisterProps {
+interface Props {
   deviceId: string;
 }
 
-interface ExtendedModbusReadingResult extends ModbusReadingResult {
-  error?: Error | string; // Allow both Error and string types
-}
-
-const ModbusReadRegister: React.FC<ModbusReadRegisterProps> = ({ deviceId }) => {
-  const [address, setAddress] = useState<number>(0);
-  const [length, setLength] = useState<number>(1);
-  const [result, setResult] = useState<ExtendedModbusReadingResult | null>(null);
-  const [loading, setLoading] = useState(false);
+const ModbusReadRegister: React.FC<Props> = ({ deviceId }) => {
+  const [address, setAddress] = useState<string>('');
+  const [reading, setReading] = useState<ModbusReadingResult | null>(null);
+  const [isReading, setIsReading] = useState<boolean>(false);
 
   const handleRead = async () => {
-    setLoading(true);
+    if (!address || isNaN(parseInt(address))) {
+      toast.error('Please enter a valid register address');
+      return;
+    }
+
+    setIsReading(true);
     try {
-      // In a real app this would call an actual API
-      const readResult = await readRegister(deviceId, address, length);
-      setResult(readResult);
+      const result = await readRegister(deviceId, parseInt(address));
+      setReading(result as ModbusReadingResult);
     } catch (error) {
-      console.error('Error reading register:', error);
-      toast.error('Failed to read register');
-      setResult({
-        address,
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      setReading({
+        address: parseInt(address),
         value: 0,
-        formattedValue: '',
+        formattedValue: 'Error',
         timestamp: new Date().toISOString(),
         success: false,
-        error: error instanceof Error ? error : 'Unknown error'
+        error: errorMessage
       });
+      toast.error(`Failed to read register: ${errorMessage}`);
     } finally {
-      setLoading(false);
+      setIsReading(false);
     }
+  };
+
+  const renderErrorMessage = () => {
+    if (!reading?.error) return null;
+    
+    const errorMessage = typeof reading.error === 'string' 
+      ? reading.error 
+      : reading.error.message;
+      
+    return (
+      <div className="mt-2 text-sm text-destructive flex items-center gap-1">
+        <AlertCircle className="h-4 w-4" />
+        <span>{errorMessage}</span>
+      </div>
+    );
   };
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Read Modbus Register</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="flex flex-col md:flex-row gap-4 mb-4">
-          <div className="flex-1">
-            <label htmlFor="register-address" className="block text-sm font-medium mb-1">Register Address</label>
-            <Input 
-              id="register-address"
-              type="number"
-              value={address}
-              onChange={(e) => setAddress(parseInt(e.target.value, 10))}
-              min={0}
-            />
+      <CardContent className="pt-6">
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="address">Register Address</Label>
+              <Input 
+                id="address" 
+                value={address} 
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder="e.g. 40001"
+                type="number"
+              />
+            </div>
+            <div className="flex items-end">
+              <Button onClick={handleRead} disabled={isReading}>
+                {isReading ? 'Reading...' : 'Read Value'}
+              </Button>
+            </div>
           </div>
-          <div className="flex-1">
-            <label htmlFor="register-length" className="block text-sm font-medium mb-1">Length</label>
-            <Input 
-              id="register-length"
-              type="number"
-              value={length}
-              onChange={(e) => setLength(parseInt(e.target.value, 10))}
-              min={1}
-              max={125}
-            />
-          </div>
-          <div className="flex items-end">
-            <Button 
-              onClick={handleRead}
-              disabled={loading}
-              className="w-full md:w-auto"
-            >
-              {loading ? 'Reading...' : 'Read Register'}
-            </Button>
-          </div>
-        </div>
-
-        {result && (
-          <div className={`mt-4 p-4 rounded-md ${result.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
-            <h3 className="font-medium">Result</h3>
-            {result.success ? (
-              <div className="mt-2">
-                <p>Value: <span className="font-medium">{result.value}</span></p>
-                <p className="text-sm text-muted-foreground mt-1">Timestamp: {new Date(result.timestamp || '').toLocaleString()}</p>
+          
+          {reading && (
+            <div className="mt-4 space-y-2">
+              <div className="text-sm">
+                <span className="font-medium">Address:</span> {reading.address}
               </div>
-            ) : (
-              <p className="text-red-600 mt-2">{result.error ? (result.error instanceof Error ? result.error.message : result.error) : 'Unknown error'}</p>
-            )}
-          </div>
-        )}
+              {reading.success ? (
+                <>
+                  <div className="text-sm">
+                    <span className="font-medium">Value:</span> {reading.formattedValue}
+                  </div>
+                  <div className="text-sm">
+                    <span className="font-medium">Timestamp:</span> {new Date(reading.timestamp).toLocaleString()}
+                  </div>
+                </>
+              ) : renderErrorMessage()}
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

@@ -14,7 +14,7 @@ export interface SystemRecommendation {
   createdAt: string;
   priority: 'low' | 'medium' | 'high';
   status: 'pending' | 'applied' | 'dismissed';
-  confidence: number; // Add missing confidence field
+  confidence: number; // Required confidence field
 }
 
 export interface Prediction {
@@ -22,7 +22,22 @@ export interface Prediction {
   production: number;
   consumption: number;
   difference: number;
+  confidence?: number; // Add confidence field for predictions
 }
+
+// Export the applyRecommendation function
+export const applyRecommendation = async (recommendationId: string): Promise<boolean> => {
+  try {
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    toast.success('Recommendation applied successfully');
+    return true;
+  } catch (error) {
+    console.error('Error applying recommendation:', error);
+    toast.error('Failed to apply recommendation');
+    return false;
+  }
+};
 
 export const usePredictions = () => {
   const [predictions, setPredictions] = useState<Prediction[]>([]);
@@ -53,7 +68,8 @@ export const usePredictions = () => {
           date: date.toISOString().split('T')[0],
           production,
           consumption,
-          difference: production - consumption
+          difference: production - consumption,
+          confidence: Math.round(70 + Math.random() * 25) // Add confidence between 70-95%
         });
       }
       
@@ -70,13 +86,17 @@ export const usePredictions = () => {
     }
   };
 
+  // Adding refetch as an alias for generatePredictions for consistency with other hooks
+  const refetch = generatePredictions;
+
   return {
     predictions,
     error,
     predictionDays,
     setPredictionDays,
     generatePredictions,
-    isLoading
+    isLoading,
+    refetch
   };
 };
 

@@ -1,192 +1,119 @@
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import React from 'react';
+import { Main } from '@/components/ui/main';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Label } from '@/components/ui/label';
-import { Slider } from '@/components/ui/slider';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Slider } from '@/components/ui/slider';
+import { saveUserPreferences } from '@/services/energyOptimizationService';
+import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
-import { UserPreference } from '@/types/energy';
 
-const UserPreferencesPage = () => {
+const Preferences = () => {
+  const { user } = useAuth();
   const { toast } = useToast();
-  const [preferences, setPreferences] = useState({
-    min_soc: 20,
-    max_soc: 85,
-    time_window_start: '22:00',
-    time_window_end: '07:00',
-    priority_device_ids: []
-  });
-
-  const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    // Fetch user preferences
-    const fetchPreferences = async () => {
-      setIsLoading(true);
-      try {
-        // Mock API call
-        await new Promise(resolve => setTimeout(resolve, 800));
-        
-        // Mock data
-        const mockPreferences = {
-          min_soc: 20,
-          max_soc: 85,
-          time_window_start: '22:00',
-          time_window_end: '07:00',
-          priority_device_ids: ['device-1', 'device-2']
-        };
-        
-        setPreferences(mockPreferences);
-      } catch (error) {
-        console.error('Error fetching preferences:', error);
-        toast({
-          title: 'Failed to load preferences',
-          description: 'Please try again later',
-          variant: 'destructive'
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    fetchPreferences();
-  }, [toast]);
+  const [minSoc, setMinSoc] = React.useState(20);
+  const [maxSoc, setMaxSoc] = React.useState(90);
+  const [startTime, setStartTime] = React.useState('22:00');
+  const [endTime, setEndTime] = React.useState('06:00');
 
   const handleSavePreferences = async () => {
-    setIsLoading(true);
+    if (!user || !user.id) {
+      toast.error('You must be logged in to save preferences');
+      return;
+    }
+    
     try {
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await saveUserPreferences(user.id, {
+        min_soc: minSoc,
+        max_soc: maxSoc,
+        time_window_start: startTime,
+        time_window_end: endTime,
+        priority_device_ids: [] // Add required empty array for priority devices
+      });
       
-      toast({
-        title: 'Preferences saved',
-        description: 'Your energy preferences have been updated',
-      });
+      toast.success('Preferences saved successfully');
     } catch (error) {
+      toast.error('Failed to save preferences');
       console.error('Error saving preferences:', error);
-      toast({
-        title: 'Failed to save preferences',
-        description: 'Please try again later',
-        variant: 'destructive'
-      });
-    } finally {
-      setIsLoading(false);
     }
   };
 
   return (
-    <div className="container max-w-4xl mx-auto py-8">
-      <h1 className="text-3xl font-bold mb-6">Energy Preferences</h1>
-      <p className="text-muted-foreground mb-8">
-        Customize how your energy system operates based on your preferences.
-      </p>
-
+    <Main title="User Preferences">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold">Energy Preferences</h1>
+        <p className="text-muted-foreground">
+          Customize your energy optimization settings
+        </p>
+      </div>
+      
       <Card>
         <CardHeader>
-          <CardTitle>Battery Preferences</CardTitle>
-          <CardDescription>
-            Control how your battery charges and discharges
-          </CardDescription>
+          <CardTitle>Battery Settings</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-8">
-            <div>
-              <div className="flex justify-between mb-2">
-                <Label>Battery State of Charge Limits</Label>
-                <span className="text-sm text-muted-foreground">
-                  {preferences.min_soc}% - {preferences.max_soc}%
-                </span>
-              </div>
-              <Slider
-                value={[preferences.min_soc, preferences.max_soc]}
-                min={0}
-                max={100}
-                step={5}
-                className="my-4"
-                onValueChange={(values) => {
-                  setPreferences({
-                    ...preferences,
-                    min_soc: values[0],
-                    max_soc: values[1]
-                  });
-                }}
-              />
-              <p className="text-sm text-muted-foreground">
-                Set the minimum and maximum charge levels for your battery
-              </p>
-            </div>
-
-            <Separator />
-
-            <div>
-              <Label className="mb-2 block">Preferred Charge/Discharge Window</Label>
-              <div className="grid grid-cols-2 gap-4 mt-2">
-                <div className="space-y-2">
-                  <Label htmlFor="time-start" className="text-sm">Start Time</Label>
-                  <Input
-                    id="time-start"
-                    type="time"
-                    value={preferences.time_window_start}
-                    onChange={(e) => setPreferences({
-                      ...preferences,
-                      time_window_start: e.target.value
-                    })}
-                  />
+        <CardContent className="space-y-6">
+          <div>
+            <h3 className="text-sm font-medium mb-2">Battery State of Charge Limits</h3>
+            <div className="space-y-6">
+              <div>
+                <div className="flex justify-between mb-2">
+                  <span className="text-sm">Minimum SOC: {minSoc}%</span>
+                  <span className="text-sm">Maximum SOC: {maxSoc}%</span>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="time-end" className="text-sm">End Time</Label>
-                  <Input
-                    id="time-end"
-                    type="time"
-                    value={preferences.time_window_end}
-                    onChange={(e) => setPreferences({
-                      ...preferences,
-                      time_window_end: e.target.value
-                    })}
+                <div className="px-2">
+                  <Slider
+                    value={[minSoc, maxSoc]}
+                    min={5}
+                    max={100}
+                    step={5}
+                    onValueChange={([min, max]) => {
+                      setMinSoc(min);
+                      setMaxSoc(max);
+                    }}
                   />
                 </div>
               </div>
-              <p className="text-sm text-muted-foreground mt-2">
-                Set your preferred times for charging (typically during low-cost periods)
-              </p>
-            </div>
-
-            <Separator />
-
-            <div>
-              <Label className="mb-2 block">Energy Priority</Label>
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select priority" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="cost">Cost Saving</SelectItem>
-                  <SelectItem value="self_consumption">Self Consumption</SelectItem>
-                  <SelectItem value="backup">Backup Readiness</SelectItem>
-                  <SelectItem value="grid_support">Grid Support</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-sm text-muted-foreground mt-2">
-                Choose what's most important to you
-              </p>
             </div>
           </div>
+          
+          <Separator />
+          
+          <div>
+            <h3 className="text-sm font-medium mb-2">Preferred Charging Window</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs text-muted-foreground">Start Time</label>
+                <input
+                  type="time"
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
+                  className="w-full mt-1 bg-background border rounded p-2"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">End Time</label>
+                <input
+                  type="time"
+                  value={endTime}
+                  onChange={(e) => setEndTime(e.target.value)}
+                  className="w-full mt-1 bg-background border rounded p-2"
+                />
+              </div>
+            </div>
+          </div>
+          
+          <Separator />
+          
+          <div className="flex justify-end">
+            <Button onClick={handleSavePreferences}>
+              Save Preferences
+            </Button>
+          </div>
         </CardContent>
-        <CardFooter>
-          <Button
-            onClick={handleSavePreferences}
-            disabled={isLoading}
-            className="ml-auto"
-          >
-            {isLoading ? 'Saving...' : 'Save Preferences'}
-          </Button>
-        </CardFooter>
       </Card>
-    </div>
+    </Main>
   );
 };
 
-export default UserPreferencesPage;
+export default Preferences;
