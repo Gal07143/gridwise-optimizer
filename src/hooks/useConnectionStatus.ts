@@ -8,18 +8,23 @@ const useConnectionStatus = (options?: ConnectionStatusOptions): ConnectionStatu
     initialStatus = true,
     reconnectDelay = 5000,
     showToasts = true,
-    deviceId = undefined
+    deviceId = undefined,
+    autoConnect = false,
+    retryInterval = 5000,
+    maxRetries = 3
   } = options || {};
   
   const [isOnline, setIsOnline] = useState<boolean>(initialStatus);
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [isConnecting, setIsConnecting] = useState<boolean>(false);
+  const [lastConnected, setLastConnected] = useState<Date | undefined>(undefined);
   const [lastOnline, setLastOnline] = useState<Date | null>(initialStatus ? new Date() : null);
   const [lastOffline, setLastOffline] = useState<Date | null>(initialStatus ? null : new Date());
   const [error, setError] = useState<Error | null>(null);
   const [status, setStatus] = useState<'connected' | 'disconnected' | 'connecting' | 'error'>(
     isConnected ? 'connected' : (isConnecting ? 'connecting' : 'disconnected')
   );
+  const [message, setMessage] = useState<string>('');
   
   // Handle online/offline status changes
   useEffect(() => {
@@ -57,18 +62,23 @@ const useConnectionStatus = (options?: ConnectionStatusOptions): ConnectionStatu
     if (isConnecting || isConnected) return;
     
     setIsConnecting(true);
+    setStatus('connecting');
+    setMessage('Connecting to device...');
     
     try {
       // Simulate connection process
       await new Promise(resolve => setTimeout(resolve, 1000));
       setIsConnected(true);
+      setLastConnected(new Date());
       if (showToasts) toast.success('Connected successfully');
       setStatus('connected');
+      setMessage('Connected successfully');
     } catch (err) {
       console.error('Connection failed:', err);
       if (showToasts) toast.error('Failed to connect');
       setError(err instanceof Error ? err : new Error('Connection failed'));
       setStatus('error');
+      setMessage('Connection failed');
     } finally {
       setIsConnecting(false);
     }
@@ -83,10 +93,12 @@ const useConnectionStatus = (options?: ConnectionStatusOptions): ConnectionStatu
       setIsConnected(false);
       if (showToasts) toast.info('Disconnected');
       setStatus('disconnected');
+      setMessage('Disconnected from device');
     } catch (err) {
       console.error('Disconnect error:', err);
       if (showToasts) toast.error('Failed to disconnect');
       setError(err instanceof Error ? err : new Error('Disconnect failed'));
+      setMessage('Disconnect failed');
     }
   }, [isConnected, showToasts]);
   
@@ -108,6 +120,8 @@ const useConnectionStatus = (options?: ConnectionStatusOptions): ConnectionStatu
     disconnect,
     retryConnection,
     status,
+    message,
+    lastConnected
   };
 };
 

@@ -1,4 +1,3 @@
-
 // Energy Data Types
 export type DeviceType = 
   | 'solar' 
@@ -57,7 +56,8 @@ export interface EnergyDevice {
   firmware?: string;
   firmware_version?: string;
   tags?: string[] | Record<string, any>;
-  protocol?: string; // Add protocol
+  protocol?: string;
+  updated_at?: string; // Add for compatibility
 }
 
 export interface EnergyReading {

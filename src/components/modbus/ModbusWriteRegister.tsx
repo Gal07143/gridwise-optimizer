@@ -22,7 +22,9 @@ const ModbusWriteRegister: React.FC<ModbusWriteRegisterProps> = ({ deviceId }) =
     setLoading(true);
     try {
       // In a real app this would call an actual API
-      await writeRegister(deviceId, address, value, dataType);
+      // Convert dataType to supported modbus register type
+      const regType = dataType === 'boolean' ? 'coil' : 'holding_register';
+      await writeRegister(deviceId, address, value, regType);
       setResult({ success: true, message: 'Value written successfully' });
       toast.success('Value written successfully');
     } catch (error) {

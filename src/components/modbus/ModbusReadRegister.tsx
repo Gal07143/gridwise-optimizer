@@ -11,10 +11,14 @@ interface ModbusReadRegisterProps {
   deviceId: string;
 }
 
+interface ExtendedModbusReadingResult extends ModbusReadingResult {
+  error?: Error | string; // Allow both Error and string types
+}
+
 const ModbusReadRegister: React.FC<ModbusReadRegisterProps> = ({ deviceId }) => {
   const [address, setAddress] = useState<number>(0);
   const [length, setLength] = useState<number>(1);
-  const [result, setResult] = useState<ModbusReadingResult | null>(null);
+  const [result, setResult] = useState<ExtendedModbusReadingResult | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleRead = async () => {
@@ -27,9 +31,12 @@ const ModbusReadRegister: React.FC<ModbusReadRegisterProps> = ({ deviceId }) => 
       console.error('Error reading register:', error);
       toast.error('Failed to read register');
       setResult({
+        address,
+        value: 0,
+        formattedValue: '',
+        timestamp: new Date().toISOString(),
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-        timestamp: new Date().toISOString()
+        error: error instanceof Error ? error : 'Unknown error'
       });
     } finally {
       setLoading(false);
@@ -84,7 +91,7 @@ const ModbusReadRegister: React.FC<ModbusReadRegisterProps> = ({ deviceId }) => 
                 <p className="text-sm text-muted-foreground mt-1">Timestamp: {new Date(result.timestamp || '').toLocaleString()}</p>
               </div>
             ) : (
-              <p className="text-red-600 mt-2">{result.error}</p>
+              <p className="text-red-600 mt-2">{result.error ? (result.error instanceof Error ? result.error.message : result.error) : 'Unknown error'}</p>
             )}
           </div>
         )}

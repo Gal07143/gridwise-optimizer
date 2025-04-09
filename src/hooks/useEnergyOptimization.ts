@@ -1,150 +1,154 @@
-
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
-import { OptimizationSettings, SystemRecommendation } from '@/types/energy';
+import { OptimizationSettings } from '@/types/energy';
 
-// Default optimization settings
-const defaultSettings: OptimizationSettings = {
-  minBatterySoc: 20,
-  maxBatterySoc: 90,
-  evTargetSoc: 80,
-  evDepartureTime: '08:00',
-  objective: 'self_consumption',
-};
+// Define device control command interfaces
+interface DeviceControlCommand {
+  deviceId: string;
+  command: string;
+  parameters?: Record<string, any>;
+}
+
+interface OptimizationResult {
+  success: boolean;
+  schedule: {
+    battery: {
+      charge: { start: string; end: string; power: number }[];
+      discharge: { start: string; end: string; power: number }[];
+    };
+    ev_charging: {
+      start: string;
+      end: string;
+      power: number;
+      vehicle_id: string;
+    }[];
+  };
+  savings: {
+    cost: number;
+    co2: number;
+  };
+}
 
 export const useEnergyOptimization = (siteId: string) => {
-  const [currentSettings, setCurrentSettings] = useState<OptimizationSettings>(defaultSettings);
   const [isOptimizing, setIsOptimizing] = useState(false);
+  const [isControlling, setIsControlling] = useState(false);
   const [optimizationResult, setOptimizationResult] = useState<any>(null);
-  const [recommendations, setRecommendations] = useState<SystemRecommendation[]>([]);
+  const [currentSettings, setCurrentSettings] = useState<OptimizationSettings>({
+    min_soc: 20,
+    max_soc: 90,
+    minBatterySoc: 20, // Alias for min_soc
+    maxBatterySoc: 90, // Alias for max_soc
+    priority_device_ids: [],
+    time_window_start: '00:00',
+    time_window_end: '23:59',
+    evTargetSoc: 80,
+    evDepartureTime: '08:00',
+    objective: 'cost'
+  });
+
+  // Recommendation management
+  const [recommendations, setRecommendations] = useState<any[]>([]);
   const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(false);
   const [isApplyingRecommendation, setIsApplyingRecommendation] = useState(false);
 
-  // Update optimization settings
   const updateSettings = useCallback((settings: Partial<OptimizationSettings>) => {
-    setCurrentSettings(prev => ({
-      ...prev,
-      ...settings
-    }));
+    setCurrentSettings(prev => {
+      const updated = { ...prev, ...settings };
+      
+      // Keep aliases in sync
+      if (settings.min_soc !== undefined) updated.minBatterySoc = settings.min_soc;
+      if (settings.max_soc !== undefined) updated.maxBatterySoc = settings.max_soc;
+      if (settings.minBatterySoc !== undefined) updated.min_soc = settings.minBatterySoc;
+      if (settings.maxBatterySoc !== undefined) updated.max_soc = settings.maxBatterySoc;
+      
+      return updated;
+    });
+    toast.success('Optimization settings updated');
   }, []);
 
-  // Run optimization algorithm
-  const runOptimization = useCallback(async (deviceIds: string[]) => {
-    if (!siteId) return;
+  const runOptimization = useCallback(async (deviceIds: string[]): Promise<OptimizationResult> => {
     setIsOptimizing(true);
-
+    
     try {
-      // Simulate optimization API call
+      // Mock API call with a timeout
       await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // Mock optimization result
+      
+      // Mock result
       const result = {
         success: true,
         schedule: {
           battery: {
-            'charge': [
-              { start: '02:00', end: '06:00', power: 3.5 },
-              { start: '12:00', end: '15:00', power: 2.0 },
+            charge: [
+              { start: '01:00', end: '05:00', power: 3.5 },
+              { start: '13:00', end: '16:00', power: 2.5 }
             ],
-            'discharge': [
-              { start: '17:00', end: '21:00', power: 2.5 },
+            discharge: [
+              { start: '07:00', end: '09:00', power: 2.0 },
+              { start: '17:00', end: '21:00', power: 3.0 }
             ]
           },
           ev_charging: [
-            { start: '13:30', end: '16:30', power: 7.0 }
+            { start: '02:00', end: '06:00', power: 7.0, vehicle_id: 'ev1' }
           ]
         },
         savings: {
-          cost: 3.42,
-          co2: 2.1
+          cost: 4.32,
+          co2: 12.5
         }
       };
       
+      toast.success('Optimization completed successfully');
       setOptimizationResult(result);
-      toast.success('Optimization completed successfully!');
-      
-      // Load mock recommendations after optimization
-      loadRecommendations();
-
       return result;
     } catch (error) {
-      console.error('Optimization failed:', error);
-      toast.error('Optimization failed. Please try again.');
-      return null;
+      toast.error('Optimization failed');
+      console.error('Optimization error:', error);
+      throw error;
     } finally {
       setIsOptimizing(false);
     }
-  }, [siteId]);
+  }, []);
 
-  // Load recommendations
-  const loadRecommendations = useCallback(async () => {
-    if (!siteId) return;
-    setIsLoadingRecommendations(true);
-
+  // Device control function
+  const controlDevice = useCallback(async (command: DeviceControlCommand) => {
+    setIsControlling(true);
+    
     try {
-      // Simulate API call for recommendations
-      await new Promise(resolve => setTimeout(resolve, 1200));
-
-      // Mock recommendations data
-      const mockRecommendations: SystemRecommendation[] = [
-        {
-          id: '1',
-          title: 'Adjust battery to match solar peak',
-          description: 'Your battery is charging too early. Adjust to charge during peak solar production.',
-          potential_savings: '€32/month',
-          potentialSavings: 32,
-          impact: 'high',
-          type: 'energy',
-          createdAt: new Date().toISOString(),
-          priority: 'high',
-          status: 'pending',
-          confidence: 87,
-          implementation_effort: 'Easy'
-        },
-        {
-          id: '2',
-          title: 'EV charging optimization',
-          description: 'Schedule EV charging during off-peak hours to reduce costs.',
-          potential_savings: '€18/month',
-          potentialSavings: 18,
-          impact: 'medium',
-          type: 'cost',
-          createdAt: new Date().toISOString(),
-          priority: 'medium',
-          status: 'pending',
-          confidence: 92,
-          implementation_effort: 'Easy'
-        }
-      ];
-
-      setRecommendations(mockRecommendations);
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      console.log(`Control command sent to device ${command.deviceId}:`, command);
+      toast.success(`Command '${command.command}' sent to device`);
+      
+      // Return mock response
+      return { success: true, message: 'Command executed successfully' };
     } catch (error) {
-      console.error('Failed to load recommendations:', error);
+      console.error('Error controlling device:', error);
+      toast.error('Failed to control device');
+      throw error;
     } finally {
-      setIsLoadingRecommendations(false);
+      setIsControlling(false);
     }
-  }, [siteId]);
+  }, []);
 
   // Apply recommendation
   const applyRecommendation = useCallback(async (recommendationId: string) => {
     setIsApplyingRecommendation(true);
     try {
-      // Simulate API call
+      // Mock API call
       await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // Update the recommendation status
+      
+      // Update recommendations list - mark as applied
       setRecommendations(prev => 
-        prev.map(rec => rec.id === recommendationId 
-          ? { ...rec, status: 'applied' as const } 
-          : rec
+        prev.map(rec => 
+          rec.id === recommendationId ? { ...rec, status: 'applied' } : rec
         )
       );
-
+      
       toast.success('Recommendation applied successfully');
       return true;
     } catch (error) {
-      console.error('Failed to apply recommendation:', error);
+      console.error('Error applying recommendation:', error);
       toast.error('Failed to apply recommendation');
       return false;
     } finally {
@@ -158,9 +162,13 @@ export const useEnergyOptimization = (siteId: string) => {
     currentSettings,
     isOptimizing,
     optimizationResult,
+    controlDevice,
+    isControlling,
     recommendations,
     isLoadingRecommendations,
     applyRecommendation,
     isApplyingRecommendation
   };
 };
+
+export default useEnergyOptimization;

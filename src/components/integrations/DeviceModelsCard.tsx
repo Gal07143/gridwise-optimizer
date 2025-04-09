@@ -13,8 +13,29 @@ import {
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import DeviceModelsTable from './DeviceModelsTable';
-import { DeviceModel } from '@/types/device-model';
+import { DeviceModel, SupportLevel } from '@/types/device-model';
 import { toast } from 'sonner';
+
+// Internal interface that matches what DeviceModelsTable expects
+interface MappedDeviceModel {
+  id: string;
+  name: string;
+  manufacturer: string;
+  model_number: string;
+  device_type: string;
+  protocol?: string;
+  support_level?: 'none' | 'partial' | 'full' | 'beta' | 'community';
+  has_manual?: boolean;
+  has_datasheet?: boolean;
+  has_video?: boolean;
+  category?: string;
+  power_rating?: number;
+  capacity?: number;
+  release_date?: string;
+  description?: string;
+  warranty?: string;
+  certifications?: string[];
+}
 
 interface DeviceModelsCardProps {
   deviceModels: DeviceModel[];
@@ -104,14 +125,14 @@ const DeviceModelsCard: React.FC<DeviceModelsCardProps> = ({
   };
 
   // Map to DeviceModelsTable's expected DeviceModel type
-  const mappedDevices = deviceModels.map(device => ({
+  const mappedDevices: MappedDeviceModel[] = deviceModels.map(device => ({
     id: device.id,
-    name: device.name || `${device.manufacturer} ${device.model_name}`,
+    name: device.name || `${device.manufacturer} ${device.model_name || device.model_number}`,
     manufacturer: device.manufacturer,
     model_number: device.model_number,
     device_type: device.device_type,
     protocol: device.protocol,
-    support_level: device.support_level,
+    support_level: device.support_level as any, // Type assertion to fix compatibility
     has_manual: device.has_manual,
     has_datasheet: device.has_datasheet,
     has_video: device.has_video,
@@ -148,7 +169,7 @@ const DeviceModelsCard: React.FC<DeviceModelsCardProps> = ({
       </CardHeader>
       <CardContent>
         <DeviceModelsTable 
-          devices={mappedDevices}
+          devices={mappedDevices as any}
           sortField={sortField}
           sortDirection={sortDirection}
           onSort={onSort}

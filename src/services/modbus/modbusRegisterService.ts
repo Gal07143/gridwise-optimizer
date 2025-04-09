@@ -4,6 +4,7 @@ import { ModbusRegisterDefinition, ModbusRegisterMap } from '@/types/modbus';
 // Sample register definitions
 const sampleRegisterDefinitions: ModbusRegisterDefinition[] = [
   {
+    id: 'reg-1',
     address: 40001,
     name: 'Battery Voltage',
     description: 'Current battery voltage',
@@ -14,6 +15,7 @@ const sampleRegisterDefinitions: ModbusRegisterDefinition[] = [
     registerType: 'holding'
   },
   {
+    id: 'reg-2',
     address: 40003,
     name: 'Battery Current',
     description: 'Current flowing in/out of battery',
@@ -24,6 +26,7 @@ const sampleRegisterDefinitions: ModbusRegisterDefinition[] = [
     registerType: 'holding'
   },
   {
+    id: 'reg-3',
     address: 40005,
     name: 'State of Charge',
     description: 'Battery percentage level',
@@ -34,14 +37,16 @@ const sampleRegisterDefinitions: ModbusRegisterDefinition[] = [
     registerType: 'holding'
   },
   {
+    id: 'reg-4',
     address: 40007,
     name: 'Operating Mode',
     description: 'Current operating mode',
     dataType: 'uint16',
-    access: 'read-write',
+    access: 'read/write', // Fixed access type
     registerType: 'holding'
   },
   {
+    id: 'reg-5',
     address: 40009,
     name: 'Grid Power',
     description: 'Power from/to grid',
@@ -52,6 +57,7 @@ const sampleRegisterDefinitions: ModbusRegisterDefinition[] = [
     registerType: 'holding'
   },
   {
+    id: 'reg-6',
     address: 40011,
     name: 'Load Power',
     description: 'Current consumption',
@@ -62,6 +68,7 @@ const sampleRegisterDefinitions: ModbusRegisterDefinition[] = [
     registerType: 'holding'
   },
   {
+    id: 'reg-7',
     address: 40013,
     name: 'PV Power',
     description: 'Solar generation',
@@ -85,6 +92,7 @@ export const getModbusRegistersByDeviceId = async (deviceId: string): Promise<Mo
 
 export const getDefaultRegisterMap = (deviceId: string): ModbusRegisterMap => {
   return {
+    id: `map-${deviceId}`,
     name: 'Default Register Map',
     device_id: deviceId,
     registers: []

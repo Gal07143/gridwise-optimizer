@@ -5,7 +5,6 @@ import { Badge } from '@/components/ui/badge';
 import { ModbusDevice } from '@/types/modbus';
 import useConnectionStatus from '@/hooks/useConnectionStatus';
 import { HardDrive, AlertCircle, Check, Clock } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
 interface ModbusDeviceCardProps {
   device: ModbusDevice;
@@ -14,7 +13,7 @@ interface ModbusDeviceCardProps {
 
 const ModbusDeviceCard: React.FC<ModbusDeviceCardProps> = ({ device, onClick }) => {
   const { isOnline, isConnected } = useConnectionStatus({
-    initialStatus: device.is_active,
+    initialStatus: device.is_active, // This is now properly defined in ConnectionStatusOptions
     deviceId: device.id
   });
 
@@ -43,7 +42,7 @@ const ModbusDeviceCard: React.FC<ModbusDeviceCardProps> = ({ device, onClick }) 
   };
 
   return (
-    <Card className={`cursor-pointer hover:shadow-md transition-shadow ${onClick ? 'cursor-pointer' : ''}`} onClick={onClick}>
+    <Card className={`hover:shadow-md transition-shadow ${onClick ? 'cursor-pointer' : ''}`} onClick={onClick}>
       <CardHeader className="pb-2">
         <CardTitle className="text-base font-medium flex items-center justify-between">
           <div className="flex items-center">
@@ -61,7 +60,7 @@ const ModbusDeviceCard: React.FC<ModbusDeviceCardProps> = ({ device, onClick }) 
       </CardHeader>
       <CardContent>
         <div className="text-xs text-muted-foreground grid grid-cols-2 gap-1">
-          <div>IP: <span className="font-mono">{device.ip}</span></div>
+          <div>IP: <span className="font-mono">{device.ip_address || device.ip}</span></div>
           <div>Port: <span className="font-mono">{device.port}</span></div>
           <div>Unit ID: <span className="font-mono">{device.unit_id}</span></div>
           {device.protocol && <div>Protocol: <span className="font-mono">{device.protocol}</span></div>}
