@@ -1,10 +1,10 @@
-// Only updating the convertToEnergyDevice function
+
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Main } from '@/components/ui/main';
 import { getDeviceById } from '@/services/devices/deviceService';
 import { Device } from '@/types/device';
-import { EnergyDevice } from '@/types/energy';
+import { EnergyDevice, DeviceType, DeviceStatus } from '@/types/energy';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import DeviceDetailTab from '@/components/devices/tabs/DeviceDetailTab';
 import DeviceControlPanel from '@/components/dashboard/devices/DeviceControlPanel';
@@ -16,8 +16,10 @@ const convertToEnergyDevice = (device: Device): EnergyDevice => {
   return {
     id: device.id,
     name: device.name,
-    type: device.type,
-    status: device.status,
+    // Cast string type to DeviceType enum
+    type: device.type as DeviceType,
+    // Cast string status to DeviceStatus enum
+    status: device.status as DeviceStatus,
     capacity: device.capacity,
     description: device.description,
     location: device.location,

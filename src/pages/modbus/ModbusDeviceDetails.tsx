@@ -1,5 +1,4 @@
 
-// Update to handle Error as ReactNode and ensure device has description property
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Main } from '@/components/ui/main';
@@ -13,6 +12,7 @@ import ModbusWriteRegister from '@/components/modbus/ModbusWriteRegister';
 import ModbusDeviceSettings from '@/components/modbus/ModbusDeviceSettings';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import useConnectionStatus from '@/hooks/useConnectionStatus';
 
 const ModbusDeviceDetails: React.FC = () => {
   const { deviceId } = useParams<{ deviceId: string }>();
@@ -21,13 +21,19 @@ const ModbusDeviceDetails: React.FC = () => {
   
   const { 
     device, 
-    isConnected,
-    isConnecting,
-    connect,
-    disconnect,
     loading, 
     error 
   } = useModbusConnection(deviceId || '');
+  
+  const {
+    isConnected,
+    isConnecting,
+    connect,
+    disconnect
+  } = useConnectionStatus({
+    deviceId: deviceId || '',
+    autoConnect: false
+  });
   
   useEffect(() => {
     if (device) {
@@ -128,7 +134,7 @@ const ModbusDeviceDetails: React.FC = () => {
               <div className="flex flex-wrap gap-2 mb-2">
                 <Badge variant="outline">{`IP: ${device.ip_address || device.ip}:${device.port}`}</Badge>
                 <Badge variant="outline">{`Unit ID: ${device.unit_id}`}</Badge>
-                <Badge>{device.protocol}</Badge>
+                {device.protocol && <Badge>{device.protocol}</Badge>}
                 <Badge variant={device.is_active ? "default" : "secondary"}>
                   {device.is_active ? "Active" : "Inactive"}
                 </Badge>

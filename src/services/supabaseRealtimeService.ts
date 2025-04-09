@@ -1,67 +1,63 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { RealtimePostgresInsertPayload, RealtimePostgresUpdatePayload, RealtimePostgresDeletePayload } from '@supabase/supabase-js';
+import { toast } from 'sonner';
 
-type ChangeEvent = 'INSERT' | 'UPDATE' | 'DELETE' | '*';
-type PayloadHandler = (payload: RealtimePostgresInsertPayload<any> | RealtimePostgresUpdatePayload<any> | RealtimePostgresDeletePayload<any>) => void;
+// Subscription types
+export type SubscriptionCallback<T = any> = (payload: T) => void;
 
-/**
- * Subscribe to real-time changes for a specific table
- * @param table The table to subscribe to
- * @param event The event to subscribe to (INSERT, UPDATE, DELETE, or * for all)
- * @param callback The callback function to execute when an event occurs
- * @returns A function to unsubscribe from the channel
- */
-export const subscribeToTable = (
-  table: string,
-  event: ChangeEvent = '*',
-  callback?: PayloadHandler
-): (() => void) | string => {
-  if (typeof table === 'string' && table.startsWith('SUPABASE_SUB_')) {
-    // This is an unsubscribe call with a subscription ID
-    const channels = supabase.getChannels();
-    const channel = channels.find(ch => ch.id === table);
-    if (channel) {
-      supabase.removeChannel(channel);
-    }
+export interface SubscriptionOptions {
+  table: string;
+  schema?: string;
+  event?: 'INSERT' | 'UPDATE' | 'DELETE' | '*';
+  filter?: string;
+}
+
+let activeChannels = new Map();
+
+export const subscribeToChanges = <T>(
+  options: SubscriptionOptions,
+  callback: SubscriptionCallback<T>
+) => {
+  const { table, schema = 'public', event = '*', filter } = options;
+  
+  try {
+    const channel = supabase.channel('realtime-changes');
+    
+    // Store channel reference for later cleanup
+    const channelKey = `${schema}-${table}-${event}-${filter || 'all'}`;
+    activeChannels.set(channelKey, channel);
+    
+    // Configure channel
+    channel
+      .on('presence', { event: 'sync' }, () => {
+        console.log('Presence synced');
+      })
+      .on('broadcast', { event: 'cursor-pos' }, (payload) => {
+        console.log('Broadcast received:', payload);
+      })
+      .subscribe((status) => {
+        if (status !== 'SUBSCRIBED') {
+          console.error('Subscription error:', status);
+        }
+      });
+    
+    return () => {
+      // Unsubscribe and clean up
+      if (activeChannels.has(channelKey)) {
+        supabase.removeChannel(channel);
+        activeChannels.delete(channelKey);
+      }
+    };
+  } catch (error) {
+    console.error('Error setting up realtime subscription:', error);
+    toast.error('Failed to subscribe to real-time updates');
     return () => {};
   }
-
-  const channel = supabase
-    .channel(`table-changes-${table}-${event}`)
-    .on(
-      'postgres_changes',
-      {
-        event: event,
-        schema: 'public',
-        table: table
-      },
-      (payload) => {
-        if (callback) {
-          callback(payload);
-        }
-      }
-    )
-    .subscribe();
-
-  // Return a function to unsubscribe
-  return () => {
-    supabase.removeChannel(channel);
-  };
 };
 
-/**
- * Unsubscribe from a real-time subscription
- * @param subscriptionId The subscription ID to unsubscribe from
- */
-export const unsubscribeFromTable = (
-  subscriptionId: string
-): void => {
-  if (subscriptionId.startsWith('SUPABASE_SUB_')) {
-    const channels = supabase.getChannels();
-    const channel = channels.find(ch => ch.id === subscriptionId);
-    if (channel) {
-      supabase.removeChannel(channel);
-    }
-  }
+export const unsubscribeAll = () => {
+  activeChannels.forEach((channel) => {
+    supabase.removeChannel(channel);
+  });
+  activeChannels.clear();
 };

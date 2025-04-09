@@ -116,7 +116,7 @@ const useConnectionStatus = (options: ConnectionStatusOptions = {}): ConnectionS
     };
   }, [autoConnect]);
 
-  // Status string getter
+  // Get status string based on current state
   const getStatusString = (): "connected" | "connecting" | "disconnected" | "error" | "ready" => {
     if (isConnecting) return 'connecting';
     if (isConnected) return 'connected';

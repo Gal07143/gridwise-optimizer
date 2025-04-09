@@ -1,5 +1,5 @@
 
-import { ModbusDevice, ModbusDeviceConfig, ModbusReadingResult, ModbusWriteRequest } from '@/types/modbus';
+import { ModbusDevice, ModbusDeviceConfig, ModbusReadResult } from '@/types/modbus';
 
 // Mock data store
 let modbusDevices: ModbusDevice[] = [
@@ -11,10 +11,8 @@ let modbusDevices: ModbusDevice[] = [
     port: 502,
     unit_id: 1,
     protocol: 'tcp', // Fix lowercase protocol
-    status: 'online',
     is_active: true,
     description: "Main solar inverter",
-    created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     site_id: "site-1"
   },
@@ -26,10 +24,8 @@ let modbusDevices: ModbusDevice[] = [
     port: 502,
     unit_id: 1,
     protocol: 'tcp', // Fix lowercase protocol
-    status: 'online',
     is_active: true,
     description: "Battery management system",
-    created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     site_id: "site-1"
   }
@@ -66,10 +62,8 @@ export const createModbusDevice = async (deviceData: ModbusDeviceConfig): Promis
     port: deviceData.port,
     unit_id: deviceData.unit_id,
     protocol: deviceData.protocol,
-    status: 'offline',
     is_active: deviceData.is_active || true,
     description: deviceData.description,
-    created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     site_id: deviceData.site_id
   };
@@ -90,7 +84,7 @@ export const updateModbusDevice = async (id: string, deviceData: Partial<ModbusD
     ...modbusDevices[deviceIndex],
     ...deviceData,
     updated_at: new Date().toISOString()
-  };
+  } as ModbusDevice;
   
   // Ensure both formats are updated
   if (deviceData.ip) {
@@ -102,8 +96,8 @@ export const updateModbusDevice = async (id: string, deviceData: Partial<ModbusD
     updatedDevice.ip_address = deviceData.ip_address;
   }
   
-  modbusDevices[deviceIndex] = updatedDevice as ModbusDevice;
-  return updatedDevice as ModbusDevice;
+  modbusDevices[deviceIndex] = updatedDevice;
+  return updatedDevice;
 };
 
 // Delete a Modbus device
@@ -119,7 +113,7 @@ export const deleteModbusDevice = async (id: string): Promise<boolean> => {
 };
 
 // Read from a Modbus register
-export const readRegister = async (deviceId: string, address: number, length: number = 1): Promise<ModbusReadingResult> => {
+export const readRegister = async (deviceId: string, address: number, length: number = 1): Promise<ModbusReadResult> => {
   // Simulate API call delay
   await new Promise(resolve => setTimeout(resolve, 500));
   
@@ -129,7 +123,6 @@ export const readRegister = async (deviceId: string, address: number, length: nu
   return {
     address,
     value,
-    formattedValue: `${value.toFixed(2)}`,
     timestamp: new Date().toISOString(),
     success: true
   };

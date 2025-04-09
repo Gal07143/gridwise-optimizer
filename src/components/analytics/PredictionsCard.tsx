@@ -12,7 +12,6 @@ const PredictionsCard: React.FC = () => {
   const { predictions, isLoading, error, fetchPredictions } = usePredictions();
 
   useEffect(() => {
-    // Invoke fetchPredictions without arguments
     fetchPredictions();
   }, []);
 
@@ -46,7 +45,7 @@ const PredictionsCard: React.FC = () => {
         ) : error ? (
           <div className="text-center p-4 bg-destructive/10 rounded-md">
             <p className="text-destructive font-medium">Failed to load predictions</p>
-            <Button size="sm" variant="outline" className="mt-2" onClick={fetchPredictions}>
+            <Button size="sm" variant="outline" className="mt-2" onClick={() => fetchPredictions()}>
               Try Again
             </Button>
           </div>

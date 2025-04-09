@@ -7,7 +7,7 @@ import { ArrowLeft, ServerIcon } from 'lucide-react';
 import { useModbusConnection } from '@/hooks/useModbusConnection';
 import ModbusDeviceForm from '@/components/modbus/ModbusDeviceForm';
 import { toast } from 'sonner';
-import { ModbusDeviceConfig } from '@/types/modbus';
+import { ModbusDevice } from '@/types/modbus';
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -35,7 +35,7 @@ const ModbusDeviceFormPage: React.FC = () => {
     navigate('/modbus/devices');
   };
   
-  const handleSuccess = (device: ModbusDeviceConfig & { id: string }) => {
+  const handleSuccess = (device: ModbusDevice) => {
     navigate(`/modbus/devices/${device.id}`);
     toast.success(
       isNew 

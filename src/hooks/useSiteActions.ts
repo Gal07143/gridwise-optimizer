@@ -1,140 +1,88 @@
-
-import { useMutation } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { Site } from '@/types/site';
 import { toast } from 'sonner';
-import { createSite, deleteSite, updateSite } from '@/services/sites/siteService';
-import { Site, SiteFormData } from '@/types/site';
+import { updateSite, deleteSite } from '@/services/sites/siteService';
 import useConnectionStatus from '@/hooks/useConnectionStatus';
 
-interface PendingAction {
-  type: 'create' | 'update' | 'delete';
-  data?: SiteFormData;
-  id?: string;
-}
-
-export const useSiteActions = () => {
-  const [pendingActions, setPendingActions] = useState<PendingAction[]>([]);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const { isOnline } = useConnectionStatus({ showToasts: false });
-
-  // Create site mutation
-  const createSiteMutation = useMutation({
-    mutationFn: async (siteData: SiteFormData) => {
-      if (!isOnline) {
-        // Store for later when online
-        setPendingActions(prev => [...prev, { type: 'create', data: siteData }]);
-        return null;
-      }
-      
-      return createSite(siteData);
-    },
+export const useSiteActions = (site: Site | null) => {
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  const connection = useConnectionStatus({
+    autoConnect: false,
+    retryInterval: 5000
   });
-
-  // Update site mutation
-  const updateSiteMutation = useMutation({
-    mutationFn: async (params: { id: string; data: Partial<Site> }) => {
-      if (!isOnline) {
-        // Store for later when online
-        setPendingActions(prev => [...prev, { 
-          type: 'update', 
-          id: params.id, 
-          data: params.data as SiteFormData 
-        }]);
-        return null;
-      }
-      
-      return updateSite(params.id, params.data);
-    },
-  });
-
-  // Delete site mutation
-  const deleteSiteMutation = useMutation({
-    mutationFn: async (siteId: string) => {
-      if (!isOnline) {
-        // Store for later when online
-        setPendingActions(prev => [...prev, { type: 'delete', id: siteId }]);
-        return true;
-      }
-      
-      const result = await deleteSite(siteId);
-      return result;
-    },
-  });
-
-  // Process pending operations when back online
-  const processPendingOperations = async () => {
-    if (!isOnline || pendingActions.length === 0 || isProcessing) {
-      return { processed: 0, failed: 0 };
+  
+  const saveSite = useCallback(async (data: Partial<Site>) => {
+    if (!site) {
+      setError('No site available to update.');
+      return false;
     }
     
-    setIsProcessing(true);
-    let processed = 0;
-    let failed = 0;
-    
-    const actionsToProcess = [...pendingActions];
-    setPendingActions([]);
+    setIsSaving(true);
+    setError(null);
     
     try {
-      for (const action of actionsToProcess) {
-        try {
-          switch (action.type) {
-            case 'create':
-              if (action.data) {
-                await createSite(action.data);
-                processed++;
-              }
-              break;
-            case 'update':
-              if (action.id && action.data) {
-                await updateSite(action.id, action.data);
-                processed++;
-              }
-              break;
-            case 'delete':
-              if (action.id) {
-                await deleteSite(action.id);
-                processed++;
-              }
-              break;
-          }
-        } catch (error) {
-          console.error(`Failed to process ${action.type} action:`, error);
-          failed++;
-          // Re-add failed action back to the queue
-          setPendingActions(prev => [...prev, action]);
-        }
+      const updatedSite = await updateSite(site.id, data);
+      if (updatedSite) {
+        toast.success("Site updated successfully");
+        return true;
+      } else {
+        setError('Failed to update site.');
+        toast.error("Failed to update site");
+        return false;
       }
-      
-      if (processed > 0) {
-        toast.success(`Processed ${processed} pending site operation(s)`);
-      }
-      if (failed > 0) {
-        toast.error(`Failed to process ${failed} operation(s)`);
-      }
-      
-      return { processed, failed };
+    } catch (err: any) {
+      const message = err?.message || 'An unexpected error occurred.';
+      setError(message);
+      toast.error(`Error updating site: ${message}`);
+      return false;
     } finally {
-      setIsProcessing(false);
+      setIsSaving(false);
     }
-  };
-
+  }, [site]);
+  
+  const removeSite = useCallback(async () => {
+    if (!site) {
+      setError('No site available to delete.');
+      return false;
+    }
+    
+    setIsDeleting(true);
+    setError(null);
+    
+    try {
+      const success = await deleteSite(site.id);
+      if (success) {
+        toast.success("Site deleted successfully");
+        return true;
+      } else {
+        setError('Failed to delete site.');
+        toast.error("Failed to delete site");
+        return false;
+      }
+    } catch (err: any) {
+      const message = err?.message || 'An unexpected error occurred.';
+      setError(message);
+      toast.error(`Error deleting site: ${message}`);
+      return false;
+    } finally {
+      setIsDeleting(false);
+    }
+  }, [site]);
+  
   return {
-    // Mutations
-    createSite: createSiteMutation.mutate,
-    updateSite: updateSiteMutation.mutate,
-    deleteSite: deleteSiteMutation.mutate,
-    
-    // Pending actions
-    isProcessing,
-    processPendingOperations,
-    pendingActionsCount: pendingActions.length,
-    
-    // Loading states for display
-    isLoading: createSiteMutation.isPending || updateSiteMutation.isPending || deleteSiteMutation.isPending,
-    
-    // Error states
-    createError: createSiteMutation.error,
-    updateError: updateSiteMutation.error,
-    deleteError: deleteSiteMutation.error
+    isSaving,
+    isDeleting,
+    error,
+    saveSite,
+    removeSite,
+    isOnline: connection.isOnline,
+    connect: connection.connect,
+    disconnect: connection.disconnect,
+    retryConnection: connection.retryConnection
   };
 };
+
+export default useSiteActions;

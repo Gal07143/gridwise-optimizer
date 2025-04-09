@@ -12,6 +12,7 @@ export interface ModbusDevice {
   inserted_at?: string;
   updated_at: string;
   site_id?: string;
+  status?: string;
 }
 
 export interface ModbusDeviceConfig {
@@ -45,6 +46,9 @@ export interface ModbusRegister {
   low_alarm?: number;
   last_value?: any;
   last_read?: string;
+  register_address?: number;
+  register_name?: string;
+  register_length?: number;
 }
 
 export interface ModbusRegisterDefinition extends ModbusRegister {
@@ -91,4 +95,19 @@ export interface ConnectionStatusResult {
   connect?: () => Promise<void>;
   disconnect?: () => Promise<void>;
   retryConnection?: () => Promise<void>;
+}
+
+export interface ModbusReadingResult {
+  address: number;
+  value: number;
+  formattedValue: string;
+  timestamp: string;
+  success: boolean;
+  error?: Error;
+}
+
+export interface ModbusWriteRequest {
+  registerAddress: number;
+  value: number | boolean;
+  registerType: "holding_register" | "coil";
 }

@@ -1,3 +1,4 @@
+
 export interface Site {
   id: string;
   name: string;
@@ -72,6 +73,7 @@ export interface SiteFormData {
   contact_email?: string;
   contact_phone?: string;
   tags?: string[] | Record<string, any>;
+  main_image_url?: string;
 }
 
 export interface DateRange {

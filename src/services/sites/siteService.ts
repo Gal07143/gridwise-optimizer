@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Site, SiteFormData } from '@/types/site';
 import { toast } from 'sonner';
+import { crypto } from 'crypto';
 
 /**
  * Get all sites from the database
@@ -100,6 +101,36 @@ export const createSite = async (siteData: SiteFormData): Promise<Site | null> =
     console.error('Error creating site:', error);
     throw error;
   }
+};
+
+/**
+ * Create a new site from form data
+ */
+export const createSiteFromFormData = (data: SiteFormData): Site => {
+  return {
+    id: crypto.randomUUID(),
+    name: data.name,
+    location: data.location,
+    timezone: data.timezone,
+    lat: data.lat,
+    lng: data.lng,
+    status: data.status || 'active',
+    type: data.type,
+    description: data.description,
+    city: data.city,
+    state: data.state,
+    country: data.country,
+    address: data.address,
+    postal_code: data.postal_code,
+    site_type: data.site_type,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    contact_person: data.contact_person,
+    contact_email: data.contact_email,
+    contact_phone: data.contact_phone,
+    main_image_url: data.main_image_url,
+    tags: data.tags || []
+  };
 };
 
 /**

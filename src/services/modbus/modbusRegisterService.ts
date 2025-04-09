@@ -1,4 +1,3 @@
-
 import { ModbusRegisterDefinition, ModbusRegisterMap } from '@/types/modbus';
 
 // Sample register definitions
@@ -42,7 +41,7 @@ const sampleRegisterDefinitions: ModbusRegisterDefinition[] = [
     name: 'Operating Mode',
     description: 'Current operating mode',
     dataType: 'uint16',
-    access: 'read/write', // Fixed access type
+    access: 'read/write',
     registerType: 'holding'
   },
   {
@@ -92,7 +91,6 @@ export const getModbusRegistersByDeviceId = async (deviceId: string): Promise<Mo
 
 export const getDefaultRegisterMap = (deviceId: string): ModbusRegisterMap => {
   return {
-    id: `map-${deviceId}`,
     name: 'Default Register Map',
     device_id: deviceId,
     registers: []

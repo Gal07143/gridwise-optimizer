@@ -2,8 +2,7 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-// Define types
-export interface Prediction {
+interface Prediction {
   time: string;
   consumption: number;
   consumptionPredicted: number;
@@ -11,124 +10,109 @@ export interface Prediction {
   productionPredicted: number;
   savings: number;
   savingsPredicted: number;
-  confidence?: number;
 }
 
-export interface SystemRecommendation {
+interface Recommendation {
   id: string;
   title: string;
   description: string;
-  potentialSavings: number;
-  impact?: 'low' | 'medium' | 'high';
-  type?: 'energy' | 'cost' | 'maintenance' | 'carbon' | 'efficiency' | 'operational';
-  priority: 'low' | 'medium' | 'high';
-  confidence: number;
-  implemented?: boolean;
-  category?: string;
-  estimated_roi?: number;
-  potential_savings?: number;
-  implementation_effort?: string;
-  applied?: boolean;
-  status?: 'applied' | 'pending';
-  createdAt?: string;
+  impact: 'high' | 'medium' | 'low';
+  category: 'energy' | 'cost' | 'maintenance';
+  applied: boolean;
+  appliedAt?: string;
+  priority: number;
 }
 
-// Make sure this function is exported properly
-export const applyRecommendation = async (recommendationId: string): Promise<boolean> => {
-  try {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 800));
-    toast.success('Recommendation applied successfully');
-    return true;
-  } catch (err) {
-    const error = err instanceof Error ? err : new Error('Failed to apply recommendation');
-    toast.error(error.message);
-    return false;
-  }
-};
-
-export const usePredictions = () => {
+export function usePredictions() {
   const [predictions, setPredictions] = useState<Prediction[]>([]);
-  const [recommendations, setRecommendations] = useState<SystemRecommendation[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
 
   const fetchPredictions = async () => {
     setIsLoading(true);
     setError(null);
     
     try {
-      // Simulate API call with mock data
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Generate mock prediction data
-      const mockPredictions: Prediction[] = Array.from({ length: 24 }).map((_, i) => {
-        const hour = i.toString().padStart(2, '0');
-        const baseConsumption = 2 + Math.sin(i / 3) * 1.5;
-        const baseProduction = i > 6 && i < 20 ? 3 + Math.sin((i - 6) / 4) * 2 : 0.2;
+      // Mock data
+      const now = new Date();
+      const mockData: Prediction[] = Array.from({ length: 24 }, (_, i) => {
+        const time = new Date(now);
+        time.setHours(time.getHours() + i);
         
         return {
-          time: `${hour}:00`,
-          consumption: baseConsumption + Math.random() * 0.5,
-          consumptionPredicted: baseConsumption,
-          production: baseProduction + Math.random() * 1,
-          productionPredicted: baseProduction,
-          savings: (baseProduction * 0.15) + Math.random() * 0.2,
-          savingsPredicted: baseProduction * 0.15,
-          confidence: 0.7 + Math.random() * 0.2
+          time: time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          consumption: Math.random() * 10 + 5,
+          consumptionPredicted: Math.random() * 10 + 5,
+          production: Math.random() * 8 + (i > 6 && i < 18 ? 5 : 0), // Higher during daylight
+          productionPredicted: Math.random() * 8 + (i > 6 && i < 18 ? 5 : 0),
+          savings: Math.random() * 5 + 1,
+          savingsPredicted: Math.random() * 5 + 2,
         };
       });
       
+      setPredictions(mockData);
+      
       // Mock recommendations
-      const mockRecommendations: SystemRecommendation[] = [
+      const mockRecommendations: Recommendation[] = [
         {
-          id: '1',
-          title: 'Shift EV charging to off-peak hours',
-          description: 'Charging your EV during off-peak hours (10PM-6AM) could save up to 30% on charging costs.',
-          potentialSavings: 42.50,
-          confidence: 0.87,
-          priority: 'high',
-          implemented: false,
-          type: 'cost',
-          implementation_effort: 'low',
-          potential_savings: 42.50,
-          estimated_roi: 210,
+          id: 'rec-1',
+          title: 'Shift EV charging to solar peak hours',
+          description: 'Moving EV charging to 10am-2pm would save approximately $45 per month',
+          impact: 'high',
+          category: 'cost',
+          applied: false,
+          priority: 1
         },
         {
-          id: '2',
-          title: 'Optimize battery usage during peak hours',
-          description: 'Using stored battery energy during peak demand periods (5PM-8PM) can reduce grid usage.',
-          potentialSavings: 28.75,
-          confidence: 0.92,
-          priority: 'medium',
-          implemented: false,
-          type: 'efficiency',
-          implementation_effort: 'medium',
-          potential_savings: 28.75,
-          estimated_roi: 175,
+          id: 'rec-2',
+          title: 'Battery optimization settings',
+          description: 'Update battery settings to prioritize self-consumption',
+          impact: 'medium',
+          category: 'energy',
+          applied: false,
+          priority: 2
         },
         {
-          id: '3',
-          title: 'Reduce HVAC usage during solar production dips',
-          description: 'Temporarily reducing HVAC intensity during cloudy periods can better match your solar production.',
-          potentialSavings: 15.20,
-          confidence: 0.76,
-          priority: 'low',
-          implemented: false,
-          type: 'operational',
-          implementation_effort: 'low',
-          potential_savings: 15.20,
-          estimated_roi: 90,
+          id: 'rec-3',
+          title: 'Solar panel maintenance',
+          description: 'Schedule cleaning for improved efficiency',
+          impact: 'medium',
+          category: 'maintenance',
+          applied: false,
+          priority: 3
         }
       ];
       
-      setPredictions(mockPredictions);
       setRecommendations(mockRecommendations);
+      
     } catch (err) {
+      console.error('Error fetching predictions:', err);
       setError(err instanceof Error ? err : new Error('Failed to fetch predictions'));
-      toast.error('Failed to load predictions');
     } finally {
       setIsLoading(false);
+    }
+  };
+  
+  const applyRecommendation = async (id: string): Promise<boolean> => {
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      setRecommendations(prev => 
+        prev.map(rec => 
+          rec.id === id 
+            ? { ...rec, applied: true, appliedAt: new Date().toISOString() } 
+            : rec
+        )
+      );
+      
+      toast.success('Recommendation applied successfully');
+      return true;
+    } catch (error) {
+      console.error('Failed to apply recommendation:', error);
+      toast.error('Failed to apply recommendation');
+      return false;
     }
   };
 
@@ -138,8 +122,22 @@ export const usePredictions = () => {
     isLoading,
     error,
     fetchPredictions,
-    refetch: fetchPredictions
+    applyRecommendation
   };
+}
+
+export const applyRecommendation = async (id: string): Promise<boolean> => {
+  try {
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    toast.success('Recommendation applied successfully');
+    return true;
+  } catch (error) {
+    console.error('Failed to apply recommendation:', error);
+    toast.error('Failed to apply recommendation');
+    return false;
+  }
 };
 
 export default usePredictions;

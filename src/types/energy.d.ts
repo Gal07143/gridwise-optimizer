@@ -57,4 +57,6 @@ export interface EnergyDevice {
   location?: string;
   site_id: string;
   description?: string;
+  protocol?: string;
+  metrics?: Record<string, any>;
 }
