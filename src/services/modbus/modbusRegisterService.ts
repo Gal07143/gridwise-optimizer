@@ -1,238 +1,131 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { ModbusRegisterDefinition, ModbusRegisterMap } from '@/types/modbus';
-import { toast } from 'sonner';
+import { ModbusRegisterMap, ModbusRegisterDefinition } from '@/types/modbus';
 
-export const getModbusRegisterMap = async (deviceId: string): Promise<ModbusRegisterMap | null> => {
+// Get modbus registers by device ID
+export const getModbusRegistersByDeviceId = async (deviceId: string): Promise<ModbusRegisterDefinition[]> => {
   try {
-    // Query for the device's register map
     const { data, error } = await supabase
       .from('modbus_register_maps')
       .select('*')
       .eq('device_id', deviceId)
-      .maybeSingle();
+      .single();
 
-    if (error) throw error;
-    
-    if (!data) {
-      return {
-        registers: [],
-        device_id: deviceId
-      };
+    if (error) {
+      console.error('Error fetching modbus registers:', error);
+      return [];
     }
     
-    // Parse register map JSON
-    const registerMap = data.register_map || {};
-    const registers: ModbusRegisterDefinition[] = [];
-    
-    // Convert register map object to array
-    for (const key in registerMap) {
-      const register = registerMap[key];
-      registers.push({
-        id: key,
+    const registerMap = data?.register_map as { registers: ModbusRegisterDefinition[] };
+    return registerMap?.registers || [];
+  } catch (error) {
+    console.error('Error in getModbusRegistersByDeviceId:', error);
+    return [];
+  }
+};
+
+// Get default register map
+export const getDefaultRegisterMap = (): ModbusRegisterMap => {
+  return {
+    registers: [
+      {
+        id: crypto.randomUUID(),
+        name: 'Voltage',
+        address: 100,
+        registerType: 'holding',
+        dataType: 'float32',
+        access: 'read',
+        scaleFactor: 1,
+        unit: 'V',
+        description: 'Output voltage'
+      },
+      {
+        id: crypto.randomUUID(),
+        name: 'Current',
+        address: 102,
+        registerType: 'holding',
+        dataType: 'float32',
+        access: 'read',
+        scaleFactor: 1,
+        unit: 'A',
+        description: 'Output current'
+      },
+      {
+        id: crypto.randomUUID(),
+        name: 'Power',
+        address: 104,
+        registerType: 'holding',
+        dataType: 'float32',
+        access: 'read',
+        scaleFactor: 1,
+        unit: 'W',
+        description: 'Active power'
+      },
+      {
+        id: crypto.randomUUID(),
+        name: 'Energy',
+        address: 106,
+        registerType: 'holding',
+        dataType: 'float32',
+        access: 'read',
+        scaleFactor: 1,
+        unit: 'kWh',
+        description: 'Energy counter'
+      },
+      {
+        id: crypto.randomUUID(),
+        name: 'Status',
+        address: 108,
+        registerType: 'holding',
+        dataType: 'uint16',
+        access: 'read',
+        scaleFactor: 1,
+        description: 'Device status'
+      }
+    ],
+    name: 'Default Register Map'
+  };
+};
+
+// Save register map
+export const saveRegisterMap = async (deviceId: string, registerMap: ModbusRegisterMap): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('modbus_register_maps')
+      .upsert({
         device_id: deviceId,
-        name: register.name || key,
-        address: register.address || parseInt(key),
-        registerType: register.registerType || 'holding',
-        dataType: register.dataType || 'uint16',
-        access: register.access || 'read',
-        scaleFactor: register.scaleFactor || 1,
-        unit: register.unit || '',
-        description: register.description || '',
+        register_map: registerMap,
+        name: registerMap.name || 'Custom Register Map'
       });
-    }
-    
-    return {
-      id: data.id,
-      name: data.name,
-      device_id: deviceId,
-      registers
-    };
-    
-  } catch (error) {
-    console.error(`Error fetching register map for device ${deviceId}:`, error);
-    toast.error('Failed to fetch register map');
-    return null;
-  }
-};
 
-export const createRegisterDefinition = async (deviceId: string, registerDef: ModbusRegisterDefinition): Promise<ModbusRegisterDefinition | null> => {
-  try {
-    // Get existing register map
-    const existingMap = await getModbusRegisterMap(deviceId);
-    
-    // Create a new register definition
-    const newRegister: ModbusRegisterDefinition = {
-      ...registerDef,
-      id: `reg_${Date.now().toString(36)}`
-    };
-    
-    // Add to existing registers or create new array
-    const updatedRegisters = existingMap?.registers 
-      ? [...existingMap.registers, newRegister] 
-      : [newRegister];
-    
-    // Convert registers array to object for storage
-    const registerMapObject: Record<string, any> = {};
-    updatedRegisters.forEach(reg => {
-      registerMapObject[reg.id] = {
-        name: reg.name,
-        address: reg.address,
-        registerType: reg.registerType,
-        dataType: reg.dataType,
-        access: reg.access,
-        scaleFactor: reg.scaleFactor,
-        unit: reg.unit,
-        description: reg.description
-      };
-    });
-    
-    // Update or insert register map
-    let result;
-    if (existingMap?.id) {
-      const { data, error } = await supabase
-        .from('modbus_register_maps')
-        .update({ 
-          register_map: registerMapObject,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', existingMap.id)
-        .select()
-        .single();
-        
-      if (error) throw error;
-      result = data;
-    } else {
-      const { data, error } = await supabase
-        .from('modbus_register_maps')
-        .insert({
-          device_id: deviceId,
-          register_map: registerMapObject,
-          name: 'Default Register Map',
-        })
-        .select()
-        .single();
-        
-      if (error) throw error;
-      result = data;
+    if (error) {
+      console.error('Error saving register map:', error);
+      return false;
     }
-    
-    toast.success('Register definition added successfully');
-    return newRegister;
-    
-  } catch (error) {
-    console.error('Error creating register definition:', error);
-    toast.error('Failed to create register definition');
-    return null;
-  }
-};
 
-export const updateRegisterDefinition = async (deviceId: string, registerId: string, registerDef: Partial<ModbusRegisterDefinition>): Promise<ModbusRegisterDefinition | null> => {
-  try {
-    // Get existing register map
-    const existingMap = await getModbusRegisterMap(deviceId);
-    
-    if (!existingMap || !existingMap.registers) {
-      throw new Error('Register map not found');
-    }
-    
-    // Find register to update
-    const registerIndex = existingMap.registers.findIndex(reg => reg.id === registerId);
-    
-    if (registerIndex === -1) {
-      throw new Error('Register not found');
-    }
-    
-    // Update register
-    const updatedRegister = {
-      ...existingMap.registers[registerIndex],
-      ...registerDef
-    };
-    
-    // Replace in array
-    const updatedRegisters = [...existingMap.registers];
-    updatedRegisters[registerIndex] = updatedRegister;
-    
-    // Convert registers array to object for storage
-    const registerMapObject: Record<string, any> = {};
-    updatedRegisters.forEach(reg => {
-      registerMapObject[reg.id] = {
-        name: reg.name,
-        address: reg.address,
-        registerType: reg.registerType,
-        dataType: reg.dataType,
-        access: reg.access,
-        scaleFactor: reg.scaleFactor,
-        unit: reg.unit,
-        description: reg.description
-      };
-    });
-    
-    // Update register map
-    const { error } = await supabase
-      .from('modbus_register_maps')
-      .update({ 
-        register_map: registerMapObject,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', existingMap.id);
-      
-    if (error) throw error;
-    
-    toast.success('Register definition updated successfully');
-    return updatedRegister;
-    
-  } catch (error) {
-    console.error('Error updating register definition:', error);
-    toast.error('Failed to update register definition');
-    return null;
-  }
-};
-
-export const deleteRegisterDefinition = async (deviceId: string, registerId: string): Promise<boolean> => {
-  try {
-    // Get existing register map
-    const existingMap = await getModbusRegisterMap(deviceId);
-    
-    if (!existingMap || !existingMap.registers) {
-      throw new Error('Register map not found');
-    }
-    
-    // Filter out register to delete
-    const updatedRegisters = existingMap.registers.filter(reg => reg.id !== registerId);
-    
-    // Convert registers array to object for storage
-    const registerMapObject: Record<string, any> = {};
-    updatedRegisters.forEach(reg => {
-      registerMapObject[reg.id] = {
-        name: reg.name,
-        address: reg.address,
-        registerType: reg.registerType,
-        dataType: reg.dataType,
-        access: reg.access,
-        scaleFactor: reg.scaleFactor,
-        unit: reg.unit,
-        description: reg.description
-      };
-    });
-    
-    // Update register map
-    const { error } = await supabase
-      .from('modbus_register_maps')
-      .update({ 
-        register_map: registerMapObject,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', existingMap.id);
-      
-    if (error) throw error;
-    
-    toast.success('Register definition deleted successfully');
     return true;
-    
   } catch (error) {
-    console.error('Error deleting register definition:', error);
-    toast.error('Failed to delete register definition');
+    console.error('Error in saveRegisterMap:', error);
+    return false;
+  }
+};
+
+// Delete register map
+export const deleteRegisterMap = async (id: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('modbus_register_maps')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error deleting register map:', error);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error in deleteRegisterMap:', error);
     return false;
   }
 };

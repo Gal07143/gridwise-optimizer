@@ -1,0 +1,61 @@
+
+version: '3.8'
+
+services:
+  # Frontend application
+  app:
+    build: .
+    container_name: energy-ems-app
+    ports:
+      - "80:80"
+    restart: always
+    depends_on:
+      - modbus-agent
+      - mqtt-agent
+    networks:
+      - energy-network
+
+  # Modbus Agent for device communication
+  modbus-agent:
+    build:
+      context: ./modbus-agent
+    container_name: modbus-agent
+    env_file:
+      - .env
+    ports:
+      - "502:502"
+    restart: always
+    networks:
+      - energy-network
+
+  # MQTT Agent for real-time messaging
+  mqtt-agent:
+    build:
+      context: ./mqtt-agent
+    container_name: mqtt-agent
+    env_file:
+      - .env
+    depends_on:
+      - mqtt-broker
+    restart: always
+    networks:
+      - energy-network
+
+  # MQTT Broker (Mosquitto)
+  mqtt-broker:
+    image: eclipse-mosquitto:latest
+    container_name: mqtt-broker
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mqtt-broker/config:/mosquitto/config
+      - ./mqtt-broker/data:/mosquitto/data
+      - ./mqtt-broker/log:/mosquitto/log
+    restart: always
+    networks:
+      - energy-network
+
+networks:
+  energy-network:
+    driver: bridge

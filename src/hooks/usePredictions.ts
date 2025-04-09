@@ -85,3 +85,4 @@ export function usePredictions() {
 
 export default usePredictions;
 export type { SystemRecommendation };
+export { applyRecommendation };
