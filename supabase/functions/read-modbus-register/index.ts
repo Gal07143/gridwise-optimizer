@@ -1,123 +1,104 @@
 
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// Define CORS headers
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
 
-// Create a Supabase client
-const supabaseUrl = Deno.env.get('SUPABASE_URL') || 'https://xullgeycueouyxeirrqs.supabase.co'
-const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
-const supabase = createClient(supabaseUrl, supabaseKey)
-
-// Simulated read function
-async function readModbusRegister(deviceId: string, address: number, registerType: string, dataType: string) {
-  try {
-    // In a real implementation, this would communicate with a Modbus device
-    // For now, we're simulating a successful read with random data
-    
-    // Get device information from the database
-    const { data: device, error: deviceError } = await supabase
-      .from('modbus_devices')
-      .select('*')
-      .eq('id', deviceId)
-      .single()
-      
-    if (deviceError) throw deviceError
-    
-    // Simulate reading the register
-    // In a real implementation, you would use a library like modbus-serial
-    // to connect to the device and read the register
-    
-    // Generate a realistic looking value based on the data type
-    let value: number | boolean
-    
-    switch (dataType) {
-      case 'boolean':
-        value = Math.random() > 0.5
-        break
-      case 'int16':
-        value = Math.floor(Math.random() * 65536) - 32768
-        break
-      case 'uint16':
-        value = Math.floor(Math.random() * 65536)
-        break
-      case 'int32':
-        value = Math.floor(Math.random() * 4294967296) - 2147483648
-        break
-      case 'uint32':
-        value = Math.floor(Math.random() * 4294967296)
-        break
-      case 'float':
-        value = parseFloat((Math.random() * 100).toFixed(2))
-        break
-      default:
-        value = Math.floor(Math.random() * 100)
-    }
-    
-    // Log the read operation
-    await supabase
-      .from('modbus_read_logs')
-      .insert({
-        device_id: deviceId,
-        register_address: address,
-        register_type: registerType,
-        value: String(value),
-        timestamp: new Date().toISOString()
-      })
-    
-    return { success: true, value, timestamp: new Date().toISOString() }
-  } catch (error) {
-    console.error('Error reading Modbus register:', error)
-    return { success: false, error: error.message }
-  }
+interface ModbusRegisterRequest {
+  deviceId: string;
+  register: {
+    address: number;
+    type: 'coil' | 'discrete_input' | 'holding' | 'input';
+    dataType: 'int16' | 'uint16' | 'int32' | 'uint32' | 'float' | 'boolean';
+    length: number;
+  };
 }
 
 serve(async (req) => {
   // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
   }
-  
+
   try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
     // Parse request body
-    const { deviceId, registerAddress, registerType, dataType } = await req.json()
-    
-    // Validate required fields
-    if (!deviceId || registerAddress === undefined || !registerType || !dataType) {
+    const { deviceId, register } = await req.json() as ModbusRegisterRequest;
+
+    // Validate request
+    if (!deviceId || !register) {
       return new Response(
-        JSON.stringify({ 
-          error: 'Missing required fields: deviceId, registerAddress, registerType, dataType' 
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400 
-        }
-      )
+        JSON.stringify({ success: false, message: "Missing deviceId or register" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+      );
     }
+
+    // Get device information from database
+    const { data: device, error: deviceError } = await supabase
+      .from("modbus_devices")
+      .select("*")
+      .eq("id", deviceId)
+      .single();
+
+    if (deviceError || !device) {
+      return new Response(
+        JSON.stringify({ success: false, message: "Device not found" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 404 }
+      );
+    }
+
+    console.log(`Reading register ${register.address} from device ${device.name}`);
+
+    // In a real implementation, we would connect to the Modbus device and read the register
+    // For now, we'll simulate a read with random values
+
+    // Sleep for a short time to simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 100 + Math.random() * 400));
+
+    // Generate appropriate mock value based on register type
+    let value: number | boolean;
     
-    // Read the Modbus register
-    const result = await readModbusRegister(deviceId, registerAddress, registerType, dataType)
-    
-    // Return the result
-    return new Response(
-      JSON.stringify(result),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: result.success ? 200 : 500
+    if (register.dataType === 'boolean') {
+      value = Math.random() > 0.5;
+    } else if (register.dataType === 'float') {
+      value = parseFloat((Math.random() * 100).toFixed(2));
+    } else if (['int16', 'uint16'].includes(register.dataType)) {
+      value = Math.floor(Math.random() * 65535);
+      if (register.dataType === 'int16') {
+        value = value > 32767 ? value - 65536 : value;
       }
-    )
+    } else {
+      // int32, uint32
+      value = Math.floor(Math.random() * 10000);
+    }
+
+    // Log the read and store in history
+    await supabase
+      .from("modbus_readings")
+      .insert({
+        device_id: deviceId,
+        register_address: register.address,
+        value: typeof value === 'boolean' ? (value ? 1 : 0) : value,
+        timestamp: new Date().toISOString(),
+      });
+
+    // Return the value
+    return new Response(
+      JSON.stringify({ success: true, value }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   } catch (error) {
-    // Handle any other errors
+    console.error("Error reading Modbus register:", error);
+    
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500
-      }
-    )
+      JSON.stringify({ success: false, message: error.message }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+    );
   }
-})
+});

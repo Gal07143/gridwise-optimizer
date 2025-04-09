@@ -9,11 +9,17 @@ import {
 } from '@/services/sites/siteService';
 import { Site } from '@/types/site';
 
+interface ActionResult<T = any> {
+  success: boolean;
+  data?: T;
+  error?: string;
+}
+
 export const useSiteActions = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const createSite = async (siteData: Omit<Site, 'id'>) => {
+  const createSite = async (siteData: Omit<Site, 'id'>): Promise<ActionResult<Site>> => {
     setIsLoading(true);
     setError(null);
     try {
@@ -27,7 +33,7 @@ export const useSiteActions = () => {
     }
   };
 
-  const getSites = async () => {
+  const getSites = async (): Promise<ActionResult<Site[]>> => {
     setIsLoading(true);
     setError(null);
     try {
@@ -41,7 +47,7 @@ export const useSiteActions = () => {
     }
   };
 
-  const getSiteById = async (siteId: string) => {
+  const getSiteById = async (siteId: string): Promise<ActionResult<Site>> => {
     setIsLoading(true);
     setError(null);
     try {
@@ -55,7 +61,7 @@ export const useSiteActions = () => {
     }
   };
 
-  const updateSite = async (siteId: string, siteData: Partial<Site>) => {
+  const updateSite = async (siteId: string, siteData: Partial<Site>): Promise<ActionResult<Site>> => {
     setIsLoading(true);
     setError(null);
     try {
@@ -69,7 +75,7 @@ export const useSiteActions = () => {
     }
   };
 
-  const deleteSite = async (siteId: string) => {
+  const deleteSite = async (siteId: string): Promise<ActionResult> => {
     setIsLoading(true);
     setError(null);
     

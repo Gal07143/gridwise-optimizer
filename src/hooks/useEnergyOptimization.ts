@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { OptimizationSettings } from '@/types/energy';
@@ -34,15 +35,21 @@ export const useEnergyOptimization = (siteId: string) => {
   const [isControlling, setIsControlling] = useState(false);
   const [optimizationResult, setOptimizationResult] = useState<any>(null);
   const [currentSettings, setCurrentSettings] = useState<OptimizationSettings>({
+    priority: 'cost',
+    battery_strategy: 'time_of_use',
+    ev_charging_time: '01:00',
+    ev_departure_time: '08:00',
+    peak_shaving_enabled: true,
+    
+    // Backward compatibility fields
     min_soc: 20,
     max_soc: 90,
-    minBatterySoc: 20, // Alias for min_soc
-    maxBatterySoc: 90, // Alias for max_soc
+    minBatterySoc: 20,
+    maxBatterySoc: 90,
     priority_device_ids: [],
     time_window_start: '00:00',
     time_window_end: '23:59',
     evTargetSoc: 80,
-    evDepartureTime: '08:00',
     objective: 'cost'
   });
 
@@ -60,6 +67,7 @@ export const useEnergyOptimization = (siteId: string) => {
       if (settings.max_soc !== undefined) updated.maxBatterySoc = settings.max_soc;
       if (settings.minBatterySoc !== undefined) updated.min_soc = settings.minBatterySoc;
       if (settings.maxBatterySoc !== undefined) updated.max_soc = settings.maxBatterySoc;
+      if (settings.objective !== undefined) updated.priority = settings.objective as any;
       
       return updated;
     });

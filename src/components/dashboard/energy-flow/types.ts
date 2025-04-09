@@ -1,34 +1,50 @@
 
+export type DeviceType = 'solar' | 'battery' | 'grid' | 'ev' | 'home' | 'heatpump' | 'generator' | 'wind';
+export type DeviceStatus = 'active' | 'inactive' | 'warning' | 'error';
+
 export interface EnergyNode {
   id: string;
-  label: string;
+  name: string;
   type: 'source' | 'storage' | 'consumption';
-  power: number;
-  status: 'active' | 'inactive' | 'warning' | 'error';
-  deviceType: string;
-  batteryLevel?: number;
-  // Position data
-  name?: string;
-  position?: { x: number; y: number };
-  data?: { 
-    power?: number; 
-    energy?: number; 
-    status?: string; 
-    capacity?: number; 
+  position: {
+    x: number;
+    y: number;
   };
+  data?: {
+    power?: number;
+    energy?: number;
+    status?: DeviceStatus;
+    capacity?: number;
+  };
+  deviceType?: DeviceType;
+  power?: number;
+  status?: DeviceStatus;
+  batteryLevel?: number;
 }
 
 export interface EnergyConnection {
-  from: string;
-  to: string;
+  id: string;
+  source: string;
+  target: string;
+  animated: boolean;
   value: number;
-  active: boolean;
-  color?: string;
+  from?: string;
+  to?: string;
+  active?: boolean;
 }
 
-export interface EnergyFlowChartProps {
-  className?: string;
-  animationDelay?: string;
+export interface EnergyFlowData {
+  nodes: EnergyNode[];
+  connections: EnergyConnection[];
+  totalGeneration: number;
+  totalConsumption: number;
+  batteryPercentage: number;
+  selfConsumptionRate: number;
+  gridDependencyRate: number;
+}
+
+export interface EnergyFlowState extends EnergyFlowData {
+  isLoading: boolean;
 }
 
 export interface EnergyFlowContextType {
@@ -39,18 +55,6 @@ export interface EnergyFlowContextType {
   batteryPercentage: number;
   selfConsumptionRate: number;
   gridDependencyRate: number;
+  isLoading: boolean;
   refreshData: () => void;
-  isLoading: boolean;
-}
-
-export interface EnergyFlowState {
-  nodes: EnergyNode[];
-  connections: EnergyConnection[];
-  isLoading: boolean;
-}
-
-export interface EnergyNodeProps {
-  node: EnergyNode;
-  isSelected: boolean;
-  onClick: () => void;
 }

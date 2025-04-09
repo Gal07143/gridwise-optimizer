@@ -1,353 +1,196 @@
 
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { useAuth } from '@/contexts/auth/useAuth';
+import { Loader2, Lock, Mail, User, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { CustomInputWithIcon } from '@/components/ui/custom-input-with-icon';
-import { Mail, Lock, User, Phone, ArrowLeft, Check, AlertCircle, Fingerprint } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
-// Add animation and modern styling
 const Auth = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { signIn, signUp, isAuthenticated, loading: authLoading } = useAuth();
-  const [activeTab, setActiveTab] = useState('signin');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  
-  // Auth form states
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [passwordVisible, setPasswordVisible] = useState(false);
-  
-  // Recover password states
-  const [recoverEmail, setRecoverEmail] = useState('');
-  
-  useEffect(() => {
-    // If user is already authenticated, redirect to dashboard
-    if (isAuthenticated) {
-      const from = location.state?.from?.pathname || '/dashboard';
-      navigate(from, { replace: true });
-    }
-  }, [isAuthenticated, navigate, location.state]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
+  const navigate = useNavigate();
 
-  const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
+  const validateInputs = () => {
+    if (!email.trim()) {
+      setError('Email is required');
+      return false;
+    }
+    if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(email)) {
+      setError('Invalid email address');
+      return false;
+    }
+    if (!password) {
+      setError('Password is required');
+      return false;
+    }
+    if (mode === 'signup' && password.length < 6) {
+      setError('Password must be at least 6 characters');
+      return false;
+    }
     setError(null);
+    return true;
+  };
+
+  const handleAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateInputs()) return;
+    
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
     
     try {
-      const result = await signIn(email, password);
-      if (result) {
-        toast.success('Signed in successfully');
-        navigate('/dashboard');
+      if (mode === 'signin') {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password
+        });
+        
+        if (error) throw error;
+        
+        if (data.user) {
+          setSuccess('Signed in successfully!');
+          toast.success('Signed in successfully!');
+          
+          // Give the success message time to display before redirecting
+          setTimeout(() => {
+            navigate('/dashboard');
+          }, 1000);
+        }
+      } else {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/auth/callback`
+          }
+        });
+        
+        if (error) throw error;
+        
+        setSuccess('Signup successful! Please check your email to confirm your account.');
+        toast.success('Signup successful!', {
+          description: 'Please check your email to confirm your account.'
+        });
       }
     } catch (err: any) {
-      console.error('Sign in error:', err);
-      setError(err.message || 'Failed to sign in');
-      toast.error(err.message || 'Failed to sign in');
+      console.error('Authentication error:', err);
+      setError(err.message || 'An unknown error occurred');
+      toast.error('Authentication failed', {
+        description: err.message
+      });
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Validate passwords match
-    if (password !== confirmPassword) {
-      setError("Passwords don't match");
-      toast.error("Passwords don't match");
-      return;
-    }
-    
-    setIsLoading(true);
+  const toggleMode = () => {
+    setMode(mode === 'signin' ? 'signup' : 'signin');
     setError(null);
-    
-    try {
-      await signUp(email, password, name);
-      toast.success('Account created! Please check your email to confirm your registration.');
-      setActiveTab('signin');
-    } catch (err: any) {
-      console.error('Sign up error:', err);
-      setError(err.message || 'Failed to create account');
-      toast.error(err.message || 'Failed to create account');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handlePasswordRecovery = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    
-    try {
-      // Password recovery logic here
-      toast.success('Password recovery email sent. Please check your inbox.');
-      setActiveTab('signin');
-    } catch (err: any) {
-      console.error('Password recovery error:', err);
-      toast.error(err.message || 'Failed to send recovery email');
-    } finally {
-      setIsLoading(false);
-    }
+    setSuccess(null);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4">
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 p-4">
       <div className="w-full max-w-md">
-        {/* Go back button */}
-        <Button 
-          variant="ghost" 
-          onClick={() => navigate('/')}
-          className="mb-6 text-white/70 hover:text-white hover:bg-white/10"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Home
-        </Button>
-        
-        {/* Main card with glass effect */}
-        <Card className="border-slate-700/50 bg-slate-800/40 backdrop-blur-xl shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-700">
-          <CardHeader className="space-y-1 text-center">
-            <div className="mx-auto bg-gradient-to-r from-blue-400 to-indigo-500 w-12 h-12 rounded-full flex items-center justify-center mb-2">
-              <Fingerprint className="h-6 w-6 text-white" />
-            </div>
-            <CardTitle className="text-2xl font-bold tracking-tight text-white">
-              Energy Management System
+        <Card className="border-slate-700 bg-slate-900/60 backdrop-blur-sm shadow-xl">
+          <CardHeader className="space-y-1 pb-2">
+            <CardTitle className="text-2xl font-bold text-center text-white">
+              {mode === 'signin' ? 'Welcome Back' : 'Create Account'}
             </CardTitle>
-            <CardDescription className="text-slate-400">
-              Access your energy optimization dashboard
+            <CardDescription className="text-center text-slate-400">
+              {mode === 'signin' 
+                ? 'Sign in to access your energy management system' 
+                : 'Sign up to create your energy management account'}
             </CardDescription>
           </CardHeader>
-          
-          <CardContent>
+          <CardContent className="space-y-4">
             {error && (
-              <div className="bg-red-900/30 border border-red-700 text-white rounded-lg p-3 mb-4 flex items-center gap-2 animate-in slide-in-from-top duration-300">
-                <AlertCircle className="h-5 w-5 text-red-400" />
-                <p className="text-sm">{error}</p>
+              <div className="p-3 rounded-md bg-red-500/10 border border-red-500/50 text-red-500 flex items-start">
+                <AlertCircle className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0" />
+                <span className="text-sm">{error}</span>
               </div>
             )}
             
-            <Tabs defaultValue="signin" value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid grid-cols-2 mb-6 bg-slate-700/30">
-                <TabsTrigger value="signin">Sign In</TabsTrigger>
-                <TabsTrigger value="signup">Create Account</TabsTrigger>
-              </TabsList>
+            {success && (
+              <div className="p-3 rounded-md bg-green-500/10 border border-green-500/50 text-green-500 flex items-start">
+                <CheckCircle2 className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0" />
+                <span className="text-sm">{success}</span>
+              </div>
+            )}
+            
+            <form onSubmit={handleAuth} className="space-y-4">
+              <div className="space-y-2">
+                <CustomInputWithIcon
+                  type="email"
+                  id="email"
+                  placeholder="Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  icon={<Mail className="h-5 w-5" />}
+                  disabled={loading}
+                  className={cn(
+                    "bg-slate-800/75 border-slate-700 text-white placeholder:text-slate-500",
+                    error && error.toLowerCase().includes('email') && "border-red-500"
+                  )}
+                />
+                
+                <CustomInputWithIcon
+                  type="password"
+                  id="password"
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  icon={<Lock className="h-5 w-5" />}
+                  disabled={loading}
+                  className={cn(
+                    "bg-slate-800/75 border-slate-700 text-white placeholder:text-slate-500",
+                    error && error.toLowerCase().includes('password') && "border-red-500"
+                  )}
+                />
+              </div>
               
-              {/* Sign In Form */}
-              <TabsContent value="signin">
-                <form onSubmit={handleSignIn} className="space-y-4">
-                  <CustomInputWithIcon
-                    id="email"
-                    type="email"
-                    placeholder="Email address"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    autoComplete="email"
-                    required
-                    icon={<Mail className="h-4 w-4" />}
-                  />
-                  
-                  <CustomInputWithIcon
-                    id="password"
-                    type={passwordVisible ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    autoComplete="current-password"
-                    required
-                    placeholder="Password"
-                    icon={<Lock className="h-4 w-4" />}
-                    rightIcon={
-                      <button 
-                        type="button" 
-                        onClick={() => setPasswordVisible(!passwordVisible)}
-                        className="text-slate-400 hover:text-slate-300 focus:outline-none"
-                      >
-                        {passwordVisible ? "Hide" : "Show"}
-                      </button>
-                    }
-                  />
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <input 
-                        type="checkbox" 
-                        id="remember" 
-                        className="rounded border-slate-600 bg-slate-700 text-indigo-500 focus:ring-indigo-500"
-                      />
-                      <label htmlFor="remember" className="text-sm text-slate-300">
-                        Remember me
-                      </label>
-                    </div>
-                    
-                    <button 
-                      type="button" 
-                      onClick={() => setActiveTab('recover')}
-                      className="text-sm text-indigo-400 hover:text-indigo-300 hover:underline"
-                    >
-                      Forgot password?
-                    </button>
-                  </div>
-                  
-                  <Button 
-                    type="submit" 
-                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-                    disabled={isLoading || authLoading}
-                  >
-                    {isLoading ? (
-                      <span className="flex items-center gap-2">
-                        <span className="h-4 w-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></span>
-                        Signing in...
-                      </span>
-                    ) : (
-                      <>Sign In</>
-                    )}
-                  </Button>
-                </form>
-              </TabsContent>
-              
-              {/* Sign Up Form */}
-              <TabsContent value="signup">
-                <form onSubmit={handleSignUp} className="space-y-4">
-                  <CustomInputWithIcon
-                    id="signup-email"
-                    type="email"
-                    placeholder="Email address"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    autoComplete="email"
-                    required
-                    icon={<Mail className="h-4 w-4" />}
-                  />
-                  
-                  <CustomInputWithIcon
-                    id="full-name"
-                    type="text"
-                    placeholder="Full name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    required
-                    icon={<User className="h-4 w-4" />}
-                  />
-                  
-                  <CustomInputWithIcon
-                    id="signup-password"
-                    type={passwordVisible ? "text" : "password"}
-                    placeholder="Create password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    autoComplete="new-password"
-                    required
-                    icon={<Lock className="h-4 w-4" />}
-                  />
-                  
-                  <CustomInputWithIcon
-                    id="confirm-password"
-                    type={passwordVisible ? "text" : "password"}
-                    placeholder="Confirm password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    autoComplete="new-password"
-                    required
-                    icon={<Lock className="h-4 w-4" />}
-                  />
-                  
-                  <div className="text-xs text-slate-400">
-                    <p>Password must contain:</p>
-                    <ul className="pl-5 mt-1 space-y-1">
-                      <li className="flex items-center gap-1">
-                        <Check className={`h-3 w-3 ${password.length >= 8 ? 'text-green-500' : 'text-slate-500'}`} />
-                        <span>At least 8 characters</span>
-                      </li>
-                      <li className="flex items-center gap-1">
-                        <Check className={`h-3 w-3 ${/[A-Z]/.test(password) ? 'text-green-500' : 'text-slate-500'}`} />
-                        <span>One uppercase letter</span>
-                      </li>
-                      <li className="flex items-center gap-1">
-                        <Check className={`h-3 w-3 ${/[0-9]/.test(password) ? 'text-green-500' : 'text-slate-500'}`} />
-                        <span>One number</span>
-                      </li>
-                    </ul>
-                  </div>
-                  
-                  <Button 
-                    type="submit" 
-                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <span className="flex items-center gap-2">
-                        <span className="h-4 w-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></span>
-                        Creating Account...
-                      </span>
-                    ) : (
-                      <>Create Account</>
-                    )}
-                  </Button>
-                </form>
-              </TabsContent>
-              
-              {/* Password Recovery Form */}
-              <TabsContent value="recover">
-                <form onSubmit={handlePasswordRecovery} className="space-y-4">
-                  <div className="text-center mb-4">
-                    <h3 className="text-lg font-medium text-white">Reset Your Password</h3>
-                    <p className="text-sm text-slate-400">
-                      Enter your email and we'll send you instructions to reset your password.
-                    </p>
-                  </div>
-                  
-                  <CustomInputWithIcon
-                    id="recover-email"
-                    type="email"
-                    placeholder="Email address"
-                    value={recoverEmail}
-                    onChange={(e) => setRecoverEmail(e.target.value)}
-                    autoComplete="email"
-                    required
-                    icon={<Mail className="h-4 w-4" />}
-                  />
-                  
-                  <div className="pt-2">
-                    <Button 
-                      type="submit" 
-                      className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-                      disabled={isLoading}
-                    >
-                      {isLoading ? 'Sending...' : 'Send Reset Link'}
-                    </Button>
-                    
-                    <button 
-                      type="button"
-                      onClick={() => setActiveTab('signin')}
-                      className="w-full mt-3 py-2 text-sm text-slate-400 hover:text-white"
-                    >
-                      Back to Sign In
-                    </button>
-                  </div>
-                </form>
-              </TabsContent>
-            </Tabs>
+              <Button 
+                type="submit" 
+                disabled={loading}
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white"
+              >
+                {loading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : mode === 'signin' ? (
+                  'Sign In'
+                ) : (
+                  'Sign Up'
+                )}
+              </Button>
+            </form>
           </CardContent>
-          
-          <CardFooter className="border-t border-slate-700/50 pt-4">
-            <p className="text-xs text-center text-slate-500 w-full">
-              By using this service, you agree to our 
-              <a href="/terms" className="text-indigo-400 hover:text-indigo-300 hover:underline ml-1">Terms of Service</a> and 
-              <a href="/privacy" className="text-indigo-400 hover:text-indigo-300 hover:underline ml-1">Privacy Policy</a>
-            </p>
+          <CardFooter>
+            <Button 
+              variant="link" 
+              onClick={toggleMode}
+              className="w-full text-slate-400 hover:text-white"
+              disabled={loading}
+            >
+              {mode === 'signin' ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
+            </Button>
           </CardFooter>
         </Card>
         
-        <p className="text-center text-xs text-slate-400 mt-4">
-          Powered by Advanced Energy Management System
-        </p>
+        <div className="mt-6 text-center text-sm text-slate-500">
+          <p>
+            Energy Management System powered by advanced hybrid edge-cloud architecture
+          </p>
+        </div>
       </div>
     </div>
   );

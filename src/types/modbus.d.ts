@@ -57,3 +57,17 @@ export interface ModbusReadResult {
   value: number | boolean;
   timestamp: string;
 }
+
+export interface ModbusReadingResult {
+  address: number;
+  value: number | boolean;
+  timestamp: string;
+  formattedValue?: string;
+  success: boolean;
+}
+
+export interface ModbusWriteResult {
+  success: boolean;
+  message?: string;
+  timestamp: string;
+}

@@ -22,7 +22,7 @@ export const useTelemetryHistory = (deviceId: string, metric: string) => {
     try {
       const { data, error } = await supabase
         .from('energy_readings')
-        .select('timestamp, power')
+        .select('timestamp, power, device_id')
         .eq('device_id', deviceId)
         .order('timestamp', { ascending: false })
         .limit(100);
@@ -35,7 +35,7 @@ export const useTelemetryHistory = (deviceId: string, metric: string) => {
       const telemetryData: TelemetryData[] = data.map(item => ({
         timestamp: item.timestamp,
         metric: 'power',
-        device_id: deviceId,
+        device_id: item.device_id || deviceId,
         value: item.power || 0,
       }));
 
@@ -48,7 +48,9 @@ export const useTelemetryHistory = (deviceId: string, metric: string) => {
   };
 
   useEffect(() => {
-    fetchHistory();
+    if (deviceId) {
+      fetchHistory();
+    }
   }, [deviceId, metric]);
 
   // Make it compatible with react-query style interface

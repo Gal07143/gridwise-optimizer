@@ -38,3 +38,6 @@ verify_jwt = true
 
 [functions.write-modbus-register]
 verify_jwt = true
+
+[functions.energy-optimizer]
+verify_jwt = true
