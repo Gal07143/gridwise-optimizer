@@ -74,6 +74,7 @@ export interface SiteFormData {
   contact_phone?: string;
   tags?: string[] | Record<string, any>;
   main_image_url?: string;
+  organization_id?: string;
 }
 
 export interface DateRange {

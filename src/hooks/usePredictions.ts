@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-interface Prediction {
+export interface Prediction {
   time: string;
   consumption: number;
   consumptionPredicted: number;
@@ -12,7 +12,7 @@ interface Prediction {
   savingsPredicted: number;
 }
 
-interface Recommendation {
+export interface Recommendation {
   id: string;
   title: string;
   description: string;
@@ -21,6 +21,21 @@ interface Recommendation {
   applied: boolean;
   appliedAt?: string;
   priority: number;
+}
+
+export interface SystemRecommendation {
+  id: string;
+  title: string;
+  description: string;
+  potentialSavings?: number;
+  potential_savings?: string;
+  implementation_effort?: string;
+  impact: 'low' | 'medium' | 'high';
+  type: 'energy' | 'cost' | 'maintenance' | 'carbon' | 'efficiency' | 'operational';
+  createdAt: string;
+  priority: 'low' | 'medium' | 'high';
+  status: 'pending' | 'applied' | 'dismissed';
+  confidence: number;
 }
 
 export function usePredictions() {
@@ -122,7 +137,8 @@ export function usePredictions() {
     isLoading,
     error,
     fetchPredictions,
-    applyRecommendation
+    applyRecommendation,
+    refetch: fetchPredictions
   };
 }
 

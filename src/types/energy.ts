@@ -1,4 +1,3 @@
-
 // Energy Data Types
 export type DeviceType = 
   | 'solar' 
@@ -12,7 +11,7 @@ export type DeviceType =
   | 'hydro'
   | 'generator'
   | 'light'
-  | 'sensor'; // Added 'sensor' to fix comparison errors
+  | 'sensor'; 
 
 export type DeviceStatus = 
   | 'online' 
@@ -36,7 +35,7 @@ export interface Site {
   created_at?: string;
   updated_at?: string;
   type?: string;
-  status?: 'active' | 'inactive' | 'maintenance'; // Add status
+  status?: 'active' | 'inactive' | 'maintenance';
 }
 
 export interface EnergyDevice {
@@ -44,7 +43,7 @@ export interface EnergyDevice {
   name: string;
   type: DeviceType;
   status: DeviceStatus;
-  site_id?: string;
+  site_id: string;
   capacity: number;
   location?: string;
   description?: string;
@@ -59,7 +58,9 @@ export interface EnergyDevice {
   firmware_version?: string;
   tags?: string[] | Record<string, any>;
   protocol?: string;
-  updated_at?: string; // Add for compatibility
+  updated_at?: string;
+  current_output?: number;
+  model?: string;
 }
 
 export interface EnergyReading {

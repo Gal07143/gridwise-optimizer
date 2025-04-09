@@ -1,300 +1,305 @@
-import { supabase } from '@/integrations/supabase/client';
 import { Site, SiteFormData } from '@/types/site';
-import { toast } from 'sonner';
-import { crypto } from 'crypto';
+import { supabase } from '@/integrations/supabase/client';
+// Fix crypto import if needed
+// import { scrypt } from 'crypto';
 
-/**
- * Get all sites from the database
- */
-export const getSites = async (): Promise<Site[]> => {
+export async function getSites(): Promise<Site[]> {
   try {
     const { data, error } = await supabase
       .from('sites')
       .select('*')
       .order('name');
-    
-    if (error) throw error;
-    
-    // Map any legacy fields if needed
-    return (data as Site[]).map(site => ({
-      ...site,
-      // Ensure backward compatibility
-      location: site.address || site.location,
-      type: site.site_type || site.type
-    }));
-    
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    return data as Site[];
   } catch (error) {
     console.error('Error fetching sites:', error);
     throw error;
   }
-};
+}
 
-/**
- * Alias for getSites for backward compatibility
- */
-export const getAllSites = getSites;
-
-/**
- * Get a site by ID
- */
-export const getSiteById = async (id: string): Promise<Site | null> => {
+export async function getSiteById(id: string): Promise<Site> {
   try {
     const { data, error } = await supabase
       .from('sites')
       .select('*')
       .eq('id', id)
       .single();
-    
-    if (error) throw error;
-    
-    // Add backward compatibility fields
-    return {
-      ...data as Site,
-      location: data.address || data.location,
-      type: data.site_type || data.type
-    };
-    
-  } catch (error) {
-    console.error(`Error fetching site ${id}:`, error);
-    return null;
-  }
-};
 
-/**
- * Create a new site
- */
-export const createSite = async (siteData: SiteFormData): Promise<Site | null> => {
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    return data as Site;
+  } catch (error) {
+    console.error(`Error fetching site with ID ${id}:`, error);
+    throw error;
+  }
+}
+
+export async function createSite(siteData: SiteFormData): Promise<Site> {
   try {
-    // Convert field names to match the database schema
-    const siteForDb: any = { ...siteData };
-    
-    // Map location to address if address is not provided
-    if (!siteForDb.address && siteForDb.location) {
-      siteForDb.address = siteForDb.location;
-      // Don't include location field as it's not in the table schema
-      delete siteForDb.location;
+    const { data, error } = await supabase.from('sites').insert({
+      name: siteData.name,
+      location: siteData.location || `${siteData.city}, ${siteData.state}`,
+      address: siteData.address,
+      city: siteData.city,
+      state: siteData.state,
+      country: siteData.country,
+      postal_code: siteData.postal_code,
+      timezone: siteData.timezone,
+      lat: siteData.lat,
+      lng: siteData.lng,
+      status: siteData.status || "active",
+      description: siteData.description || "",
+      site_type: siteData.site_type || "residential"
+    }).select().single();
+
+    if (error) {
+      throw new Error(error.message);
     }
-    
-    // Map type to site_type if site_type is not provided
-    if (!siteForDb.site_type && siteForDb.type) {
-      siteForDb.site_type = siteForDb.type;
-      // Don't include type field as it's not in the table schema
-      delete siteForDb.type;
-    }
-    
-    const { data, error } = await supabase
-      .from('sites')
-      .insert([siteForDb])
-      .select()
-      .single();
-    
-    if (error) throw error;
-    
-    // Return with backward compatibility fields
-    return {
-      ...data as Site,
-      location: data.address,
-      type: data.site_type
-    };
-    
+
+    return data as Site;
   } catch (error) {
     console.error('Error creating site:', error);
     throw error;
   }
-};
+}
 
-/**
- * Create a new site from form data
- */
-export const createSiteFromFormData = (data: SiteFormData): Site => {
-  return {
-    id: crypto.randomUUID(),
-    name: data.name,
-    location: data.location,
-    timezone: data.timezone,
-    lat: data.lat,
-    lng: data.lng,
-    status: data.status || 'active',
-    type: data.type,
-    description: data.description,
-    city: data.city,
-    state: data.state,
-    country: data.country,
-    address: data.address,
-    postal_code: data.postal_code,
-    site_type: data.site_type,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    contact_person: data.contact_person,
-    contact_email: data.contact_email,
-    contact_phone: data.contact_phone,
-    main_image_url: data.main_image_url,
-    tags: data.tags || []
-  };
-};
-
-/**
- * Update an existing site
- */
-export const updateSite = async (id: string, siteData: Partial<Site>): Promise<boolean> => {
+export async function updateSite(id: string, siteData: Partial<Site>): Promise<Site> {
   try {
-    // Convert field names to match the database schema
-    const siteForDb: any = { ...siteData };
-    
-    // Map location to address if provided
-    if (siteData.location && !siteData.address) {
-      siteForDb.address = siteData.location;
-      delete siteForDb.location; // Remove location as it's not in the schema
-    }
-    
-    // Map type to site_type if provided
-    if (siteData.type && !siteData.site_type) {
-      siteForDb.site_type = siteData.type;
-      delete siteForDb.type; // Remove type as it's not in the schema
-    }
-    
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('sites')
-      .update(siteForDb)
-      .eq('id', id);
-    
-    if (error) throw error;
-    return true;
-    
+      .update(siteData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    return data as Site;
   } catch (error) {
-    console.error(`Error updating site ${id}:`, error);
+    console.error(`Error updating site with ID ${id}:`, error);
     throw error;
   }
-};
+}
 
-/**
- * Delete a site
- */
-export const deleteSite = async (id: string): Promise<boolean> => {
+export async function deleteSite(id: string): Promise<void> {
   try {
-    // Check if site has devices
-    const { data: devices, error: devicesError } = await supabase
-      .from('devices')
-      .select('id')
-      .eq('site_id', id);
-    
-    if (devicesError) throw devicesError;
-    
-    if (devices && devices.length > 0) {
-      toast.error(`Cannot delete site: ${devices.length} devices are still assigned to it`);
-      return false;
-    }
-    
     const { error } = await supabase
       .from('sites')
       .delete()
       .eq('id', id);
-    
-    if (error) throw error;
-    return true;
-    
+
+    if (error) {
+      throw new Error(error.message);
+    }
   } catch (error) {
-    console.error(`Error deleting site ${id}:`, error);
+    console.error(`Error deleting site with ID ${id}:`, error);
     throw error;
   }
-};
+}
 
-/**
- * Create a dummy site if no sites exist
- * This is useful for development and demo purposes
- */
-export const getOrCreateDummySite = async (): Promise<Site> => {
+export async function getSiteMetrics(id: string): Promise<any> {
   try {
-    // Check if any sites exist
-    const { data: existingSites, error: sitesError } = await supabase
-      .from('sites')
-      .select('id')
-      .limit(1);
-      
-    if (sitesError) throw sitesError;
-    
-    // If sites exist, return the first one
-    if (existingSites && existingSites.length > 0) {
-      const siteId = existingSites[0].id;
-      const site = await getSiteById(siteId);
-      
-      if (!site) {
-        throw new Error('Failed to retrieve existing site');
-      }
-      
-      return site;
-    }
-    
-    // Create a dummy site
-    const dummySiteData: SiteFormData = {
-      name: 'Default Site',
-      address: '123 Main St, Demo City',
-      city: 'Demo City',
-      state: 'CA',
-      country: 'USA',
-      postal_code: '12345',
-      timezone: 'America/Los_Angeles',
-      lat: 37.7749,
-      lng: -122.4194,
-      status: 'active',
-      description: 'Default demo site',
-      site_type: 'Commercial',
+    // In a real application, this would fetch metrics from a database or API
+    // For now, we'll return mock data
+    return {
+      totalConsumption: Math.random() * 1000 + 500,
+      totalProduction: Math.random() * 800 + 200,
+      totalSavings: Math.random() * 200 + 50,
+      peakDemand: Math.random() * 50 + 10,
+      co2Saved: Math.random() * 500 + 100,
+      devices: Math.floor(Math.random() * 10) + 2
     };
-    
-    const newSite = await createSite(dummySiteData);
-    
-    if (!newSite) {
-      throw new Error('Failed to create dummy site');
-    }
-    
-    return newSite;
   } catch (error) {
-    console.error('Error in getOrCreateDummySite:', error);
+    console.error(`Error fetching metrics for site with ID ${id}:`, error);
     throw error;
   }
-};
+}
 
-/**
- * Convert a Site to a SiteFormData object
- */
-export const siteToFormData = (site: Site): SiteFormData => {
-  return {
-    name: site.name,
-    address: site.address || site.location || '',
-    city: site.city || '',
-    state: site.state || '',
-    country: site.country || '',
-    postal_code: site.postal_code || '',
-    timezone: site.timezone || '',
-    lat: site.lat,
-    lng: site.lng,
-    status: site.status,
-    description: site.description || '',
-    site_type: site.site_type || site.type || '',
-    tags: site.tags || [],
-    main_image_url: site.main_image_url || '',
-    organization_id: site.organization_id || '',
-    // Legacy fields for compatibility
-    location: site.address || site.location || '',
-    type: site.site_type || site.type || '',
-    building_type: site.building_type || '',
-    area: site.area || 0,
-    contact_person: site.contact_person || '',
-    contact_email: site.contact_email || '',
-    contact_phone: site.contact_phone || '',
-  };
-};
+export async function getSiteDevices(id: string): Promise<any[]> {
+  try {
+    const { data, error } = await supabase
+      .from('devices')
+      .select('*')
+      .eq('site_id', id);
 
-/**
- * Convert SiteFormData to a Site object
- */
-export const formDataToSite = (formData: SiteFormData, existingSite?: Site): Partial<Site> => {
-  const site: Partial<Site> = {
-    ...formData,
-    // Support legacy fields
-    address: formData.address || formData.location || '',
-    site_type: formData.site_type || formData.type || '',
-  };
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error(`Error fetching devices for site with ID ${id}:`, error);
+    throw error;
+  }
+}
+
+export async function updateSiteImage(siteId: string, imageUrl: string): Promise<Site> {
+  try {
+    const { data, error } = await supabase
+      .from('sites')
+      .update({ 
+        main_image_url: imageUrl
+      })
+      .eq('id', siteId)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    return data as Site;
+  } catch (error) {
+    console.error('Error updating site image:', error);
+    throw error;
+  }
+}
+
+// Mock data for development
+export const mockSites: Site[] = [
+  {
+    id: 'site-1',
+    name: 'Main Residence',
+    location: 'San Francisco, CA',
+    description: 'Primary residential installation with solar and battery storage',
+    timezone: 'America/Los_Angeles',
+    lat: 37.7749,
+    lng: -122.4194,
+    created_at: '2023-01-15T08:00:00Z',
+    updated_at: '2023-06-20T15:30:00Z',
+    type: 'residential',
+    status: 'active',
+    city: 'San Francisco',
+    state: 'CA',
+    country: 'USA',
+    address: '123 Main St',
+    postal_code: '94105',
+    site_type: 'residential',
+    contact_person: 'John Doe',
+    contact_email: 'john@example.com',
+    contact_phone: '+1-555-123-4567'
+  },
+  {
+    id: 'site-2',
+    name: 'Beach House',
+    location: 'Malibu, CA',
+    description: 'Vacation home with solar panels and EV charging',
+    timezone: 'America/Los_Angeles',
+    lat: 34.0259,
+    lng: -118.7798,
+    created_at: '2023-03-10T10:15:00Z',
+    updated_at: '2023-07-05T09:45:00Z',
+    type: 'residential',
+    status: 'active',
+    city: 'Malibu',
+    state: 'CA',
+    country: 'USA',
+    address: '456 Ocean Dr',
+    postal_code: '90265',
+    site_type: 'residential',
+    contact_person: 'Jane Smith',
+    contact_email: 'jane@example.com',
+    contact_phone: '+1-555-987-6543'
+  },
+  {
+    id: 'site-3',
+    name: 'Downtown Office',
+    location: 'New York, NY',
+    description: 'Commercial office building with rooftop solar installation',
+    timezone: 'America/New_York',
+    lat: 40.7128,
+    lng: -74.006,
+    created_at: '2023-02-20T14:30:00Z',
+    updated_at: '2023-08-12T11:20:00Z',
+    type: 'commercial',
+    status: 'active',
+    city: 'New York',
+    state: 'NY',
+    country: 'USA',
+    address: '789 Broadway',
+    postal_code: '10003',
+    site_type: 'commercial',
+    contact_person: 'Robert Johnson',
+    contact_email: 'robert@example.com',
+    contact_phone: '+1-555-456-7890'
+  }
+];
+
+// Function to generate a mock site for development
+export function generateMockSite(): Site {
+  const id = `site-${Math.floor(Math.random() * 1000)}`;
+  const createdDate = new Date();
+  createdDate.setDate(createdDate.getDate() - Math.floor(Math.random() * 365));
   
-  return site;
-};
+  const updatedDate = new Date(createdDate);
+  updatedDate.setDate(updatedDate.getDate() + Math.floor(Math.random() * 30));
+  
+  const cities = ['San Francisco', 'Los Angeles', 'New York', 'Chicago', 'Miami', 'Seattle'];
+  const states = ['CA', 'CA', 'NY', 'IL', 'FL', 'WA'];
+  const types = ['residential', 'commercial', 'industrial'];
+  const statuses = ['active', 'inactive', 'maintenance'];
+  
+  const cityIndex = Math.floor(Math.random() * cities.length);
+  const typeIndex = Math.floor(Math.random() * types.length);
+  const statusIndex = Math.floor(Math.random() * statuses.length);
+  
+  return {
+    id,
+    name: `Site ${id.split('-')[1]}`,
+    location: `${cities[cityIndex]}, ${states[cityIndex]}`,
+    description: `This is a ${types[typeIndex]} site located in ${cities[cityIndex]}.`,
+    timezone: cityIndex <= 1 ? 'America/Los_Angeles' : cityIndex === 2 ? 'America/New_York' : 'America/Chicago',
+    lat: Math.random() * 10 + 35,
+    lng: Math.random() * 50 - 100,
+    created_at: createdDate.toISOString(),
+    updated_at: updatedDate.toISOString(),
+    type: types[typeIndex],
+    status: statuses[statusIndex],
+    city: cities[cityIndex],
+    state: states[cityIndex],
+    country: 'USA',
+    address: `${Math.floor(Math.random() * 1000) + 100} Main St`,
+    postal_code: `${Math.floor(Math.random() * 90000) + 10000}`,
+    site_type: types[typeIndex]
+  };
+}
+
+// Function to generate multiple mock sites
+export function generateMockSites(count: number): Site[] {
+  return Array.from({ length: count }, () => generateMockSite());
+}
+
+// Mock function to simulate creating a site with form data
+export async function mockCreateSite(formData: SiteFormData): Promise<Site> {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const newSite: Site = {
+        id: `site-${Math.floor(Math.random() * 1000)}`,
+        name: formData.name,
+        location: formData.location,
+        address: formData.address,
+        city: formData.city,
+        state: formData.state,
+        country: formData.country,
+        postal_code: formData.postal_code,
+        timezone: formData.timezone,
+        lat: formData.lat,
+        lng: formData.lng,
+        status: formData.status || "active",
+        description: formData.description || "",
+        site_type: formData.site_type || "residential",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      resolve(newSite);
+    }, 500);
+  });
+}

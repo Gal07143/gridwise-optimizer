@@ -14,6 +14,42 @@ export interface SubscriptionOptions {
 
 let activeChannels = new Map();
 
+export const subscribeToTable = (
+  tableName: string,
+  eventType: 'INSERT' | 'UPDATE' | 'DELETE' | '*' = '*',
+  callback: SubscriptionCallback
+) => {
+  try {
+    const channelName = `realtime-${tableName}-${eventType}`;
+    const channel = supabase.channel(channelName);
+    
+    channel
+      .on('postgres_changes', 
+        { 
+          event: eventType, 
+          schema: 'public', 
+          table: tableName 
+        }, 
+        (payload) => {
+          callback(payload);
+        }
+      )
+      .subscribe((status) => {
+        if (status !== 'SUBSCRIBED') {
+          console.error(`Failed to subscribe to ${tableName}:`, status);
+        }
+      });
+      
+    // Store reference for cleanup
+    activeChannels.set(channelName, channel);
+    
+    return channelName; // Return channel name for unsubscribing
+  } catch (error) {
+    console.error(`Error subscribing to ${tableName}:`, error);
+    return null;
+  }
+};
+
 export const subscribeToChanges = <T>(
   options: SubscriptionOptions,
   callback: SubscriptionCallback<T>
@@ -21,20 +57,25 @@ export const subscribeToChanges = <T>(
   const { table, schema = 'public', event = '*', filter } = options;
   
   try {
-    const channel = supabase.channel('realtime-changes');
+    const channelName = `${schema}-${table}-${event}-${filter || 'all'}`;
+    const channel = supabase.channel(channelName);
     
     // Store channel reference for later cleanup
-    const channelKey = `${schema}-${table}-${event}-${filter || 'all'}`;
-    activeChannels.set(channelKey, channel);
+    activeChannels.set(channelName, channel);
     
     // Configure channel
     channel
-      .on('presence', { event: 'sync' }, () => {
-        console.log('Presence synced');
-      })
-      .on('broadcast', { event: 'cursor-pos' }, (payload) => {
-        console.log('Broadcast received:', payload);
-      })
+      .on('postgres_changes', 
+        { 
+          event: event, 
+          schema: schema, 
+          table: table,
+          filter: filter
+        }, 
+        (payload) => {
+          callback(payload);
+        }
+      )
       .subscribe((status) => {
         if (status !== 'SUBSCRIBED') {
           console.error('Subscription error:', status);
@@ -43,9 +84,9 @@ export const subscribeToChanges = <T>(
     
     return () => {
       // Unsubscribe and clean up
-      if (activeChannels.has(channelKey)) {
+      if (activeChannels.has(channelName)) {
         supabase.removeChannel(channel);
-        activeChannels.delete(channelKey);
+        activeChannels.delete(channelName);
       }
     };
   } catch (error) {

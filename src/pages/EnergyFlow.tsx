@@ -1,54 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import { Main } from '@/components/ui/main';
-import { EnhancedEnergyFlow } from '@/components/energy';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { TabsList, TabsTrigger, Tabs, TabsContent } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
 import {
-  ArrowDownUp,
-  BadgeDollarSign,
-  BarChart,
+  ArrowDown,
+  ArrowUp,
   Battery,
-  BatteryCharging,
-  Bell,
-  Bolt,
-  BoltSlash,
-  Box,
-  Building,
-  CalendarDays,
-  Car,
-  ChartBar,
-  ChevronDown,
-  Clock12,
-  CreditCard,
-  Database,
-  Flame,
-  Gauge,
+  Cloud,
   Home,
-  Info,
-  LifeBuoy,
-  Lightbulb,
-  LucideIcon,
-  Minus,
-  MoreHorizontal,
-  Package,
-  Plus,
   Power,
-  RefreshCw,
-  Search,
-  Settings,
-  Share,
   Sun,
-  Terminal,
-  ToggleLeft,
-  ToggleRight,
-  Trash,
-  User,
-  Warehouse,
-  WifiOff,
-  X,
-  Zap
+  ZapOff,
+  Info,
+  Lightbulb,
+  Trash2,
+  Wrench,
+  Wind,
+  Camera
 } from 'lucide-react';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Main } from '@/components/ui/main';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
+import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const EnergyFlow = () => {
   const [solarProduction, setSolarProduction] = useState(75);

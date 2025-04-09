@@ -12,6 +12,7 @@ const mockDevice: EnergyDevice = {
   capacity: 10,
   current_output: 8.5,
   created_at: new Date().toISOString(),
+  last_updated: new Date().toISOString(),
   site_id: "site-1",
   description: "Main solar inverter"
 };
