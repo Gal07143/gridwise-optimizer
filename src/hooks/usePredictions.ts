@@ -20,7 +20,7 @@ export interface SystemRecommendation {
   description: string;
   potentialSavings: number;
   impact?: 'low' | 'medium' | 'high';
-  type?: 'energy' | 'cost' | 'maintenance' | 'carbon';
+  type?: 'energy' | 'cost' | 'maintenance' | 'carbon' | 'efficiency' | 'operational';
   priority: 'low' | 'medium' | 'high';
   confidence: number;
   implemented?: boolean;
@@ -33,6 +33,7 @@ export interface SystemRecommendation {
   createdAt?: string;
 }
 
+// Make sure this function is exported properly
 export const applyRecommendation = async (recommendationId: string): Promise<boolean> => {
   try {
     // Simulate API call
@@ -87,7 +88,11 @@ export const usePredictions = () => {
           potentialSavings: 42.50,
           confidence: 0.87,
           priority: 'high',
-          implemented: false
+          implemented: false,
+          type: 'cost',
+          implementation_effort: 'low',
+          potential_savings: 42.50,
+          estimated_roi: 210,
         },
         {
           id: '2',
@@ -96,7 +101,11 @@ export const usePredictions = () => {
           potentialSavings: 28.75,
           confidence: 0.92,
           priority: 'medium',
-          implemented: false
+          implemented: false,
+          type: 'efficiency',
+          implementation_effort: 'medium',
+          potential_savings: 28.75,
+          estimated_roi: 175,
         },
         {
           id: '3',
@@ -105,7 +114,11 @@ export const usePredictions = () => {
           potentialSavings: 15.20,
           confidence: 0.76,
           priority: 'low',
-          implemented: false
+          implemented: false,
+          type: 'operational',
+          implementation_effort: 'low',
+          potential_savings: 15.20,
+          estimated_roi: 90,
         }
       ];
       

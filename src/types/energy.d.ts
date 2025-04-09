@@ -39,11 +39,14 @@ export interface EnergyNode {
   icon?: string;
 }
 
+export type DeviceType = 'solar' | 'wind' | 'battery' | 'grid' | 'load' | 'ev_charger' | 'inverter' | 'meter';
+export type DeviceStatus = 'online' | 'offline' | 'maintenance' | 'error' | 'warning';
+
 export interface EnergyDevice {
   id: string;
   name: string;
-  type: 'solar' | 'wind' | 'battery' | 'grid' | 'load' | 'ev_charger' | 'inverter' | 'meter';
-  status: 'online' | 'offline' | 'maintenance' | 'error' | 'warning';
+  type: DeviceType;
+  status: DeviceStatus;
   capacity: number;
   current_output?: number;
   last_updated?: string;

@@ -12,6 +12,7 @@ const PredictionsCard: React.FC = () => {
   const { predictions, isLoading, error, fetchPredictions } = usePredictions();
 
   useEffect(() => {
+    // Invoke fetchPredictions without arguments
     fetchPredictions();
   }, []);
 

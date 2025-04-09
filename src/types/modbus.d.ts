@@ -2,105 +2,93 @@
 export interface ModbusDevice {
   id: string;
   name: string;
-  ip_address?: string;
+  ip: string;
+  ip_address?: string; // Alias for ip for backwards compatibility
   port: number;
   unit_id: number;
-  status?: 'online' | 'offline' | 'error';
-  protocol: 'tcp' | 'rtu'; 
-  description?: string;
-  last_connected?: string;
-  created_at?: string;
-  updated_at?: string;
   is_active: boolean;
+  description?: string;
+  protocol: "tcp" | "rtu";
+  inserted_at?: string;
+  updated_at: string;
   site_id?: string;
-  ip?: string; // Add compatibility with both naming conventions
 }
 
 export interface ModbusDeviceConfig {
   id?: string;
   name: string;
-  ip_address?: string;
-  ip?: string; // Add compatibility with both naming conventions
+  ip: string;
+  ip_address?: string; // Alias for compatibility
   port: number;
   unit_id: number;
-  protocol: 'tcp' | 'rtu';
-  site_id?: string;
-  is_active?: boolean;
+  protocol: "tcp" | "rtu";
+  is_active: boolean;
   description?: string;
-  created_at?: string;
-  updated_at?: string;
+  site_id?: string;
 }
 
-export interface ModbusRegisterDefinition {
-  id: string;
-  address: number;
+export interface ModbusRegister {
+  id?: string;
   name: string;
-  description?: string;
-  dataType: 'uint16' | 'int16' | 'uint32' | 'int32' | 'float32' | 'string';
+  address: number;
+  device_id: string;
+  register_type: "holding" | "input" | "coil" | "discrete_input";
+  data_type: "int16" | "uint16" | "int32" | "uint32" | "float" | "boolean" | "string";
   scaleFactor?: number;
-  scaling_factor?: number; // Alias for compatibility
+  scaling_factor?: number; // Alias for scaleFactor for backwards compatibility
   unit?: string;
-  access: 'read' | 'write' | 'read/write';
-  registerType: 'holding' | 'input' | 'coil' | 'discrete';
-  device_id?: string;
-  register_address?: number;
-  register_name?: string;
-  register_length?: number;
+  description?: string;
+  access?: "read" | "write" | "read_write";
+  is_active?: boolean;
+  update_frequency?: number;
+  high_alarm?: number;
+  low_alarm?: number;
+  last_value?: any;
+  last_read?: string;
+}
+
+export interface ModbusRegisterDefinition extends ModbusRegister {
+  device_name?: string;
 }
 
 export interface ModbusRegisterMap {
   id?: string;
-  name?: string; // Make name optional
+  name: string;
+  registers: ModbusRegister[];
   description?: string;
   device_id?: string;
-  created_at?: string;
-  updated_at?: string;
-  registers: ModbusRegisterDefinition[];
+}
+
+export interface ModbusReadResult {
+  value: number | boolean | string;
+  raw_value?: number | boolean;
+  timestamp: string;
+  register?: ModbusRegister;
+  error?: string;
+  success: boolean;
 }
 
 export interface ConnectionStatusOptions {
-  showToasts?: boolean;
-  autoConnect?: boolean;
-  deviceId?: string;
   initialStatus?: boolean;
   reconnectDelay?: number;
+  showToasts?: boolean;
+  deviceId?: string;
+  autoConnect?: boolean;
   retryInterval?: number;
   maxRetries?: number;
-}
-
-export interface ConnectionStatus {
-  isOnline: boolean;
-  lastConnected?: Date;
-  connectionAttempts: number;
-  error?: Error;
 }
 
 export interface ConnectionStatusResult {
   isOnline: boolean;
   isConnecting?: boolean;
-  isConnected?: boolean;
+  isConnected: boolean;
   lastConnected?: Date;
-  lastOnline?: Date | null;
-  lastOffline?: Date | null;
-  error?: Error | null;
+  lastOnline: Date | null;
+  lastOffline: Date | null;
+  error: Error | null;
+  status: "connected" | "connecting" | "disconnected" | "error" | "ready";
+  message?: string;
   connect?: () => Promise<void>;
   disconnect?: () => Promise<void>;
   retryConnection?: () => Promise<void>;
-  status: 'connected' | 'connecting' | 'disconnected' | 'error' | 'ready';
-  message?: string;
-}
-
-export interface ModbusReadingResult {
-  address: number;
-  value: number;
-  formattedValue: string;
-  timestamp: string;
-  success: boolean;
-  error?: Error | string; // Allow both Error and string
-}
-
-export interface ModbusWriteRequest {
-  registerAddress: number;
-  value: number | boolean;
-  registerType: "holding_register" | "coil";
 }
