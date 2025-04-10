@@ -3,17 +3,32 @@ version: '3.8'
 
 services:
   # Frontend application
-  app:
-    build: .
-    container_name: energy-ems-app
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: ems-frontend
+    restart: always
     ports:
       - "80:80"
-    restart: always
     depends_on:
-      - modbus-agent
-      - mqtt-agent
-    networks:
-      - energy-network
+      - backend
+
+  # Backend FastAPI service
+  backend:
+    build:
+      context: ./backend
+    container_name: ems-backend
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
+      - JWT_SECRET=${JWT_SECRET}
+    volumes:
+      - backend-data:/app/data
 
   # Modbus Agent for device communication
   modbus-agent:
@@ -25,8 +40,6 @@ services:
     ports:
       - "502:502"
     restart: always
-    networks:
-      - energy-network
 
   # MQTT Agent for real-time messaging
   mqtt-agent:
@@ -38,8 +51,6 @@ services:
     depends_on:
       - mqtt-broker
     restart: always
-    networks:
-      - energy-network
 
   # MQTT Broker (Mosquitto)
   mqtt-broker:
@@ -53,9 +64,10 @@ services:
       - ./mqtt-broker/data:/mosquitto/data
       - ./mqtt-broker/log:/mosquitto/log
     restart: always
-    networks:
-      - energy-network
 
 networks:
-  energy-network:
+  default:
     driver: bridge
+
+volumes:
+  backend-data:
