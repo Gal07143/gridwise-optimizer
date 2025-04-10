@@ -1,0 +1,18 @@
+
+{
+  "name": "ems-edge-ai",
+  "version": "1.0.0",
+  "description": "Edge AI module for EMS system",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "test": "node cli.js test-inference",
+    "sync-model": "node cli.js sync-model",
+    "sync-predictions": "node cli.js sync-predictions",
+    "status": "node cli.js status"
+  },
+  "bin": {
+    "edge-ai": "./cli.js"
+  }
+}
