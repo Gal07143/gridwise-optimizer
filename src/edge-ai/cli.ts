@@ -1,3 +1,4 @@
+
 #!/usr/bin/env node
 import { Command } from 'commander';
 import { edgeAI, modelSyncAgent, fallbackManager, inferenceEngine } from './index';

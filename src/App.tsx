@@ -16,6 +16,8 @@ import Projects from '@/pages/Projects';
 import ProjectDetail from '@/pages/ProjectDetail';
 import PrivateRoute from '@/components/auth/PrivateRoute';
 import Sites from '@/pages/Sites';
+// Import Routes from the proper case file
+import AppRoutes from '@/Routes';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -35,18 +37,7 @@ function App() {
           <AppStoreProvider>
             <MicrogridProvider>
               <EnergyFlowProvider>
-                <Routes>
-                  <Route path="/auth" element={<Auth />} />
-                  
-                  <Route path="/" element={<Layout />}>
-                    <Route index element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-                    <Route path="solar" element={<PrivateRoute><Solar /></PrivateRoute>} />
-                    <Route path="projects" element={<PrivateRoute><Projects /></PrivateRoute>} />
-                    <Route path="projects/:id" element={<PrivateRoute><ProjectDetail /></PrivateRoute>} />
-                    <Route path="sites" element={<PrivateRoute><Sites /></PrivateRoute>} />
-                    {/* Add other routes here */}
-                  </Route>
-                </Routes>
+                <AppRoutes />
                 <Toaster position="top-right" richColors />
               </EnergyFlowProvider>
             </MicrogridProvider>
