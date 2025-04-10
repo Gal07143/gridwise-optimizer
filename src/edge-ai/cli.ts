@@ -1,7 +1,7 @@
 
 #!/usr/bin/env node
 import { Command } from 'commander';
-import { edgeAI, modelSyncAgent, fallbackManager } from './index';
+import { edgeAI, modelSyncAgent, fallbackManager, inferenceEngine } from './index';
 import { TelemetryInput } from './config';
 
 // Create CLI program

@@ -13,7 +13,17 @@ import {
   Building2,
   PackageOpen,
   Shield,
-  Users
+  Users,
+  Cpu,
+  Plug,
+  Activity,
+  Radio,
+  PanelTop,
+  Lightbulb,
+  Gauge,
+  Workflow,
+  PlugZap,
+  CalendarDays
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 
@@ -43,18 +53,65 @@ export const Sidebar = ({ className }: SidebarProps) => {
         </button>
       </div>
 
-      <nav className="p-2 space-y-1">
-        <NavItem to="/" icon={<LayoutDashboard size={18} />} label="Dashboard" expanded={sidebarExpanded} />
-        <NavItem to="/solar" icon={<Sun size={18} />} label="Solar" expanded={sidebarExpanded} />
-        <NavItem to="/battery" icon={<Battery size={18} />} label="Battery" expanded={sidebarExpanded} />
-        <NavItem to="/projects" icon={<PackageOpen size={18} />} label="Projects" expanded={sidebarExpanded} />
-        <NavItem to="/sites" icon={<Building2 size={18} />} label="Sites" expanded={sidebarExpanded} />
-        <NavItem to="/analytics" icon={<BarChart3 size={18} />} label="Analytics" expanded={sidebarExpanded} />
-        <NavItem to="/energy" icon={<Zap size={18} />} label="Energy Flow" expanded={sidebarExpanded} />
-        <NavItem to="/users" icon={<Users size={18} />} label="Users" expanded={sidebarExpanded} />
-        <NavItem to="/security" icon={<Shield size={18} />} label="Security" expanded={sidebarExpanded} />
-        <NavItem to="/settings" icon={<Settings size={18} />} label="Settings" expanded={sidebarExpanded} />
-      </nav>
+      <div className="flex flex-col h-[calc(100vh-4rem)] overflow-y-auto">
+        <nav className="p-2 space-y-1">
+          {/* Main Navigation */}
+          <NavItem to="/" icon={<LayoutDashboard size={18} />} label="Dashboard" expanded={sidebarExpanded} />
+          
+          {/* Energy Management */}
+          {sidebarExpanded && (
+            <div className="pt-4 pb-1">
+              <p className="px-3 text-xs font-medium text-muted-foreground">ENERGY MANAGEMENT</p>
+            </div>
+          )}
+          <NavItem to="/energy-optimization" icon={<Zap size={18} />} label="Optimization" expanded={sidebarExpanded} />
+          <NavItem to="/solar" icon={<Sun size={18} />} label="Solar" expanded={sidebarExpanded} />
+          <NavItem to="/battery" icon={<Battery size={18} />} label="Battery" expanded={sidebarExpanded} />
+          
+          {/* Device Management */}
+          {sidebarExpanded && (
+            <div className="pt-4 pb-1">
+              <p className="px-3 text-xs font-medium text-muted-foreground">DEVICES & CONTROL</p>
+            </div>
+          )}
+          <NavItem to="/devices" icon={<PanelTop size={18} />} label="Devices" expanded={sidebarExpanded} />
+          <NavItem to="/modbus-devices" icon={<Radio size={18} />} label="Modbus Devices" expanded={sidebarExpanded} />
+          <NavItem to="/ev-charging" icon={<PlugZap size={18} />} label="EV Charging" expanded={sidebarExpanded} />
+          <NavItem to="/schedules" icon={<CalendarDays size={18} />} label="Schedules" expanded={sidebarExpanded} />
+
+          {/* Monitoring & Analytics */}
+          {sidebarExpanded && (
+            <div className="pt-4 pb-1">
+              <p className="px-3 text-xs font-medium text-muted-foreground">MONITORING & ANALYTICS</p>
+            </div>
+          )}
+          <NavItem to="/analytics" icon={<BarChart3 size={18} />} label="Analytics" expanded={sidebarExpanded} />
+          <NavItem to="/energy-flow" icon={<Workflow size={18} />} label="Energy Flow" expanded={sidebarExpanded} />
+          <NavItem to="/consumption" icon={<Lightbulb size={18} />} label="Consumption" expanded={sidebarExpanded} />
+          <NavItem to="/telemetry" icon={<Gauge size={18} />} label="Live Telemetry" expanded={sidebarExpanded} />
+          
+          {/* System & Administration */}
+          {sidebarExpanded && (
+            <div className="pt-4 pb-1">
+              <p className="px-3 text-xs font-medium text-muted-foreground">SYSTEM</p>
+            </div>
+          )}
+          <NavItem to="/sites" icon={<Building2 size={18} />} label="Sites" expanded={sidebarExpanded} />
+          <NavItem to="/users" icon={<Users size={18} />} label="Users" expanded={sidebarExpanded} />
+          <NavItem to="/security" icon={<Shield size={18} />} label="Security" expanded={sidebarExpanded} />
+          <NavItem to="/settings" icon={<Settings size={18} />} label="Settings" expanded={sidebarExpanded} />
+        </nav>
+        
+        {/* Bottom section for user profile, etc. */}
+        <div className="mt-auto p-2 border-t border-border/40">
+          <NavItem 
+            to="/projects" 
+            icon={<Cpu size={18} />} 
+            label="Edge AI System" 
+            expanded={sidebarExpanded} 
+            />
+        </div>
+      </div>
     </div>
   );
 };

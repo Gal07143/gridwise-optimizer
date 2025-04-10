@@ -1,192 +1,198 @@
 
 import * as fs from 'fs';
-import { supabase } from '@/integrations/supabase/client';
+import * as path from 'path';
 import { 
   QUEUE_PATH, 
-  PredictionOutput, 
-  AI_PREDICTIONS_TABLE,
-  ensureDirectories
+  ensureDirectories, 
+  PredictionOutput 
 } from './config';
-import { errorUtils } from '@/utils/errorUtils';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
- * Class responsible for managing offline operations and synchronization
+ * Class responsible for managing offline operation and queuing
  */
 export class FallbackManager {
-  private isOnline: boolean = true;
-  private syncInProgress: boolean = false;
+  private isInitialized = false;
   
   constructor() {
-    ensureDirectories();
-    this.checkConnection();
-    
-    // Periodically check connectivity and sync when back online
-    setInterval(() => {
-      this.checkConnection();
-    }, 60000); // Check every minute
+    this.initialize().catch(err => {
+      console.error('Error initializing fallback manager:', err);
+    });
   }
 
   /**
-   * Check if the system is online
+   * Initialize the fallback manager
    */
-  private async checkConnection(): Promise<void> {
+  private async initialize(): Promise<void> {
     try {
-      const { error } = await supabase.from('health_check').select('count').single();
-      const wasOffline = !this.isOnline;
-      this.isOnline = !error;
+      // Ensure directories exist
+      ensureDirectories();
       
-      // If we were offline and now online, try to sync
-      if (wasOffline && this.isOnline) {
-        console.log('Connection restored, syncing queued predictions...');
-        this.syncQueuedPredictions();
+      // Create queue file if it doesn't exist
+      if (!fs.existsSync(QUEUE_PATH)) {
+        fs.writeFileSync(QUEUE_PATH, JSON.stringify([]));
       }
+      
+      this.isInitialized = true;
+      console.log('Fallback manager initialized');
     } catch (error) {
-      this.isOnline = false;
-      console.log('System appears to be offline');
+      console.error('Error initializing fallback manager:', error);
+      throw error;
     }
   }
-
+  
   /**
-   * Save a prediction result (either directly to Supabase or to local buffer)
+   * Check if we're currently online (have connectivity to Supabase)
+   */
+  public async checkIsOnline(): Promise<boolean> {
+    try {
+      const { data, error } = await supabase.from('system_status').select('status').limit(1);
+      return !error && data != null;
+    } catch (error) {
+      console.log('Network connectivity check failed:', error);
+      return false;
+    }
+  }
+  
+  /**
+   * Save prediction to Supabase or local queue
    */
   public async savePrediction(prediction: PredictionOutput): Promise<boolean> {
-    if (this.isOnline) {
-      try {
-        return await this.savePredictionToSupabase(prediction);
-      } catch (error) {
-        console.error('Error saving prediction to Supabase, falling back to local storage:', error);
-        this.isOnline = false;
-        return this.queuePrediction(prediction);
-      }
-    } else {
-      return this.queuePrediction(prediction);
-    }
-  }
-
-  /**
-   * Save a prediction to the local queue file
-   */
-  private queuePrediction(prediction: PredictionOutput): boolean {
     try {
-      // Make sure the prediction is marked as not synced
-      prediction.is_synced = false;
+      if (!this.isInitialized) {
+        await this.initialize();
+      }
       
-      // Load existing queue
-      const queue = this.loadQueue();
+      const isOnline = await this.checkIsOnline();
       
-      // Add new prediction
-      queue.push(prediction);
-      
-      // Save updated queue
-      fs.writeFileSync(QUEUE_PATH, JSON.stringify(queue, null, 2));
-      console.log(`Prediction queued locally (queue size: ${queue.length})`);
-      return true;
+      if (isOnline) {
+        // Save directly to Supabase
+        const { error } = await supabase
+          .from('ai_predictions')
+          .insert({
+            id: prediction.prediction_id,
+            site_id: prediction.site_id,
+            prediction_type: prediction.forecast_type,
+            values: prediction.values,
+            timestamp: prediction.timestamp,
+            confidence: prediction.confidence,
+            model_version: prediction.model_version
+          });
+        
+        if (error) {
+          console.error('Error saving prediction to Supabase:', error);
+          await this.queuePrediction(prediction);
+          return false;
+        }
+        
+        prediction.is_synced = true;
+        return true;
+      } else {
+        // Queue locally
+        await this.queuePrediction(prediction);
+        return false;
+      }
     } catch (error) {
-      console.error('Error queuing prediction:', error);
+      console.error('Error in savePrediction:', error);
+      await this.queuePrediction(prediction);
       return false;
     }
   }
-
+  
   /**
-   * Load the current prediction queue
+   * Queue prediction locally
    */
-  private loadQueue(): PredictionOutput[] {
+  private async queuePrediction(prediction: PredictionOutput): Promise<void> {
     try {
+      // Read current queue
+      let queue: PredictionOutput[] = [];
       if (fs.existsSync(QUEUE_PATH)) {
         const queueData = fs.readFileSync(QUEUE_PATH, 'utf-8');
-        return JSON.parse(queueData) as PredictionOutput[];
-      }
-    } catch (error) {
-      console.error('Error loading prediction queue:', error);
-    }
-    
-    return [];
-  }
-
-  /**
-   * Save a prediction directly to Supabase
-   */
-  private async savePredictionToSupabase(prediction: PredictionOutput): Promise<boolean> {
-    try {
-      prediction.is_synced = true;
-      
-      const { error } = await supabase
-        .from(AI_PREDICTIONS_TABLE)
-        .insert([prediction]);
-      
-      if (error) {
-        throw error;
+        queue = JSON.parse(queueData) as PredictionOutput[];
       }
       
-      console.log(`Prediction saved to Supabase (ID: ${prediction.prediction_id})`);
-      return true;
+      // Add new prediction
+      prediction.is_synced = false;
+      queue.push(prediction);
+      
+      // Write updated queue
+      fs.writeFileSync(QUEUE_PATH, JSON.stringify(queue, null, 2));
+      
+      console.log(`Prediction queued locally. Queue size: ${queue.length}`);
     } catch (error) {
-      console.error('Error saving prediction to Supabase:', error);
-      return false;
+      console.error('Error queuing prediction locally:', error);
     }
   }
-
+  
   /**
-   * Sync all queued predictions to Supabase
+   * Sync queued predictions to Supabase
    */
   public async syncQueuedPredictions(): Promise<number> {
-    if (this.syncInProgress) {
-      console.log('Sync already in progress, skipping');
-      return 0;
-    }
-    
-    this.syncInProgress = true;
-    let syncedCount = 0;
-    
     try {
-      // Load queue
-      const queue = this.loadQueue();
+      if (!this.isInitialized) {
+        await this.initialize();
+      }
       
-      if (queue.length === 0) {
-        console.log('No predictions to sync');
-        this.syncInProgress = false;
+      // Check if we're online
+      const isOnline = await this.checkIsOnline();
+      if (!isOnline) {
+        console.log('Cannot sync predictions: Offline');
         return 0;
       }
       
-      console.log(`Found ${queue.length} predictions to sync`);
+      // Read current queue
+      if (!fs.existsSync(QUEUE_PATH)) {
+        console.log('No queued predictions to sync');
+        return 0;
+      }
       
-      // Try to sync each prediction
-      const remaining = [];
+      const queueData = fs.readFileSync(QUEUE_PATH, 'utf-8');
+      const queue: PredictionOutput[] = JSON.parse(queueData) as PredictionOutput[];
       
-      for (const prediction of queue) {
-        try {
-          const success = await this.savePredictionToSupabase(prediction);
-          
-          if (success) {
-            syncedCount++;
-          } else {
-            remaining.push(prediction);
-          }
-        } catch (error) {
-          console.error(`Error syncing prediction ${prediction.prediction_id}:`, error);
-          remaining.push(prediction);
+      if (queue.length === 0) {
+        console.log('No queued predictions to sync');
+        return 0;
+      }
+      
+      console.log(`Syncing ${queue.length} queued predictions...`);
+      
+      // Process in batches to avoid timeouts
+      const batchSize = 10;
+      let syncCount = 0;
+      let remainingQueue: PredictionOutput[] = [];
+      
+      for (let i = 0; i < queue.length; i += batchSize) {
+        const batch = queue.slice(i, i + batchSize);
+        
+        const { error } = await supabase
+          .from('ai_predictions')
+          .insert(batch.map(prediction => ({
+            id: prediction.prediction_id,
+            site_id: prediction.site_id,
+            prediction_type: prediction.forecast_type,
+            values: prediction.values,
+            timestamp: prediction.timestamp,
+            confidence: prediction.confidence,
+            model_version: prediction.model_version
+          })));
+        
+        if (error) {
+          console.error('Error syncing predictions batch:', error);
+          remainingQueue = remainingQueue.concat(batch);
+        } else {
+          syncCount += batch.length;
         }
       }
       
-      // Save remaining items back to queue
-      fs.writeFileSync(QUEUE_PATH, JSON.stringify(remaining, null, 2));
-      console.log(`Synced ${syncedCount} predictions, ${remaining.length} remaining`);
+      // Update queue with remaining items
+      fs.writeFileSync(QUEUE_PATH, JSON.stringify(remainingQueue, null, 2));
       
-      return syncedCount;
+      console.log(`Synced ${syncCount} predictions. Remaining: ${remainingQueue.length}`);
+      return syncCount;
     } catch (error) {
-      console.error('Error during prediction sync:', error);
-      return syncedCount;
-    } finally {
-      this.syncInProgress = false;
+      console.error('Error syncing queued predictions:', error);
+      return 0;
     }
-  }
-
-  /**
-   * Force check of connectivity status
-   */
-  public async checkIsOnline(): Promise<boolean> {
-    await this.checkConnection();
-    return this.isOnline;
   }
 }
 
