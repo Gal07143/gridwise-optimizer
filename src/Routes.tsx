@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 
@@ -27,6 +28,11 @@ import EnergyOptimization from '@/pages/EnergyOptimization';
 import WeatherForecast from '@/pages/WeatherForecast';
 import AIOverview from '@/pages/AIOverview';
 
+// Modbus Pages
+import ModbusDevices from '@/pages/modbus/ModbusDevices';
+import ModbusDeviceDetails from '@/pages/modbus/ModbusDeviceDetails';
+import AddModbusDevice from '@/pages/modbus/AddModbusDevice';
+
 // Integration pages
 import IntegrationsHome from '@/pages/integrations/IntegrationsHome';
 import IntegrationCategoryPage from '@/pages/integrations/IntegrationCategoryPage';
@@ -55,6 +61,12 @@ import Authentication from "@/pages/settings/Authentication";
 import DeviceCatalog from '@/pages/devices/DeviceCatalog';
 import DeviceCategoryDetail from '@/pages/devices/DeviceCategoryDetail';
 import DeviceModelDetail from '@/pages/devices/DeviceModelDetail';
+import DeviceDetails from '@/pages/devices/DeviceDetails';
+
+// User Management Routes
+import Users from '@/pages/users/Users';
+import UserProfile from '@/pages/users/UserProfile';
+import UserRoles from '@/pages/users/UserRoles';
 
 // AI Tools
 import AIModelTrainer from '@/components/admin/AIModelTrainer';
@@ -76,19 +88,23 @@ const AppRoutes = () => {
       {/* Protected Routes - No real protection for testing */}
       <Route path="/dashboard" element={<Dashboard />} />
       
+      {/* Device Routes */}
       <Route path="/devices" element={<Devices />} />
       <Route path="/devices/add" element={<AddDevice />} />
       <Route path="/devices/:deviceId" element={<DeviceView />} />
       <Route path="/devices/:deviceId/edit" element={<EditDevice />} />
+      <Route path="/devices/details/:deviceId" element={<DeviceDetails />} />
 
+      {/* Analytics & Reporting Routes */}
       <Route path="/analytics" element={<Analytics />} />
       <Route path="/consumption" element={<Consumption />} />
       <Route path="/production" element={<Production />} />
       <Route path="/reports" element={<Reports />} />
       <Route path="/alerts" element={<Alerts />} />
+
+      {/* Energy Management Routes */}
       <Route path="/energy-flow" element={<EnergyFlow />} />
       <Route path="/microgrid-control" element={<MicrogridControl />} />
-
       <Route path="/battery-management" element={<BatteryManagement />} />
       <Route path="/energy-optimization" element={<EnergyOptimization />} />
       <Route path="/weather-forecast" element={<WeatherForecast />} />
@@ -102,21 +118,29 @@ const AppRoutes = () => {
       <Route path="/integrations/model/add" element={<AddDeviceModelPage />} />
       <Route path="/integrations/model/:modelId/edit" element={<EditDeviceModelPage />} />
       <Route path="/integrations/mqtt" element={<MQTTIntegration />} />
-
       <Route path="/integrations/communication" element={<CommunicationDevices />} />
       <Route path="/integrations/communication/:deviceId" element={<CommunicationDeviceDetail />} />
-
       <Route path="/integrations/batteries" element={<IntegrationCategoryPage />} />
       <Route path="/integrations/inverters" element={<IntegrationCategoryPage />} />
       <Route path="/integrations/ev-chargers" element={<IntegrationCategoryPage />} />
       <Route path="/integrations/meters" element={<IntegrationCategoryPage />} />
       <Route path="/integrations/controllers" element={<IntegrationCategoryPage />} />
 
+      {/* Modbus Routes */}
+      <Route path="/modbus/devices" element={<ModbusDevices />} />
+      <Route path="/modbus/devices/:deviceId" element={<ModbusDeviceDetails />} />
+      <Route path="/modbus/devices/add" element={<AddModbusDevice />} />
+
       {/* System Routes */}
       <Route path="/system-status" element={<SystemStatus />} />
       <Route path="/security" element={<Security />} />
 
-      {/* Settings Routes - No role protection */}
+      {/* User Management Routes */}
+      <Route path="/users" element={<Users />} />
+      <Route path="/users/:userId" element={<UserProfile />} />
+      <Route path="/users/roles" element={<UserRoles />} />
+
+      {/* Settings Routes */}
       <Route path="/settings" element={<Settings />} />
       <Route path="/settings/user" element={<UserSettings />} />
       <Route path="/settings/sites" element={<SiteSettings />} />

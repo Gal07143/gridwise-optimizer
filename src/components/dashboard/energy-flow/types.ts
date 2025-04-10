@@ -1,6 +1,6 @@
 
-export type DeviceType = 'solar' | 'battery' | 'grid' | 'ev' | 'home' | 'heatpump' | 'generator' | 'wind';
-export type DeviceStatus = 'active' | 'inactive' | 'warning' | 'error';
+export type DeviceType = 'solar' | 'battery' | 'grid' | 'ev' | 'home' | 'heatpump' | 'generator' | 'wind' | 'load';
+export type DeviceStatus = 'active' | 'inactive' | 'warning' | 'error' | 'charging' | 'discharging' | 'idle';
 
 export interface EnergyNode {
   id: string;
@@ -20,6 +20,7 @@ export interface EnergyNode {
   power?: number;
   status?: DeviceStatus;
   batteryLevel?: number;
+  label?: string; // Added for compatibility
 }
 
 export interface EnergyConnection {
@@ -28,9 +29,9 @@ export interface EnergyConnection {
   target: string;
   animated: boolean;
   value: number;
-  from?: string;
-  to?: string;
-  active?: boolean;
+  from?: string; // Added for compatibility 
+  to?: string; // Added for compatibility
+  active?: boolean; // Added for compatibility
 }
 
 export interface EnergyFlowData {
@@ -47,14 +48,16 @@ export interface EnergyFlowState extends EnergyFlowData {
   isLoading: boolean;
 }
 
-export interface EnergyFlowContextType {
-  nodes: EnergyNode[];
-  connections: EnergyConnection[];
-  totalGeneration: number;
-  totalConsumption: number;
-  batteryPercentage: number;
-  selfConsumptionRate: number;
-  gridDependencyRate: number;
-  isLoading: boolean;
+export interface EnergyFlowContextType extends EnergyFlowState {
   refreshData: () => void;
+}
+
+export interface EnergyNodeProps {
+  node: EnergyNode;
+  selected?: boolean;
+  onClick?: () => void;
+}
+
+export interface EnergyFlowChartProps {
+  className?: string;
 }

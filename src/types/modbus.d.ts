@@ -2,18 +2,22 @@
 export interface ModbusDevice {
   id: string;
   name: string;
-  device_id: string;
-  ip_address: string;
+  device_id?: string;
+  ip_address?: string;
+  ip?: string; // For compatibility
   port: number;
-  slave_id: number;
+  slave_id?: number;
+  unit_id?: number; // For compatibility
   status: 'online' | 'offline' | 'error';
-  created_at: string;
+  created_at?: string;
+  inserted_at?: string; // For compatibility
   updated_at?: string;
-  site_id: string;
+  site_id?: string;
   protocol: 'TCP' | 'RTU';
   description?: string;
   manufacturer?: string;
   model?: string;
+  is_active?: boolean;
 }
 
 export interface ModbusDeviceConfig {
@@ -50,6 +54,8 @@ export interface ModbusRegisterDefinition {
   register_name: string;
   register_length: number;
   scaleFactor?: number;
+  register_type?: 'coil' | 'discrete_input' | 'holding' | 'input';
+  data_type?: 'int16' | 'uint16' | 'int32' | 'uint32' | 'float' | 'boolean';
 }
 
 export interface ModbusReadResult {

@@ -1,9 +1,16 @@
+
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, Battery, Zap, LineChart, BarChart3, Settings, CircuitBoard, Cloud, Cpu, Brain, CloudLightning } from 'lucide-react';
+import { 
+  Home, Battery, Zap, LineChart, BarChart3, Settings, CircuitBoard, 
+  Cloud, Cpu, Brain, CloudLightning, Package, Database, 
+  MonitorCheck, FileBarChart, AlertCircle, Users, Shield, 
+  PlugZap, Workflow, Network, GitMerge, PanelRight
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 export const navLinks = [
   {
@@ -55,6 +62,36 @@ export const navLinks = [
     title: 'Weather',
     href: '/weather',
     icon: <Cloud className="h-5 w-5" />,
+  },
+  {
+    title: 'Modbus Devices',
+    href: '/modbus/devices',
+    icon: <Network className="h-5 w-5" />,
+  },
+  {
+    title: 'System Status',
+    href: '/system-status',
+    icon: <MonitorCheck className="h-5 w-5" />,
+  },
+  {
+    title: 'Alerts',
+    href: '/alerts',
+    icon: <AlertCircle className="h-5 w-5" />,
+  },
+  {
+    title: 'Integrations',
+    href: '/integrations',
+    icon: <Workflow className="h-5 w-5" />,
+  },
+  {
+    title: 'Users',
+    href: '/users',
+    icon: <Users className="h-5 w-5" />,
+  },
+  {
+    title: 'Security',
+    href: '/security',
+    icon: <Shield className="h-5 w-5" />,
   },
   {
     title: 'Settings',
