@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { EnergyNode } from './types';
-import EnergyNode from './EnergyNode';
+import EnergyNodeComponent from './EnergyNode';
 
 interface EnergyNodeCardProps {
   node: EnergyNode;
@@ -10,6 +10,6 @@ interface EnergyNodeCardProps {
 
 export const EnergyNodeCard: React.FC<EnergyNodeCardProps> = ({ node, onClick }) => {
   return (
-    <EnergyNode node={node} onClick={onClick} />
+    <EnergyNodeComponent node={node} onClick={onClick} />
   );
 };

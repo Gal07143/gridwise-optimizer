@@ -27,6 +27,7 @@ export interface EnergyReading {
   power_factor?: number;
   temperature?: number;
   state_of_charge?: number;
+  created_at?: string;
 }
 
 export interface OptimizationSettings {
@@ -38,16 +39,18 @@ export interface OptimizationSettings {
   max_grid_power?: number;
   energy_export_limit?: number;
   
-  // Backward compatibility fields
+  // Added fields that were missing
   min_soc?: number;
   max_soc?: number;
+  time_window_start?: string;
+  time_window_end?: string;
+  objective?: 'cost' | 'self_consumption' | 'carbon' | 'peak_shaving';
+  
+  // Backward compatibility fields
   minBatterySoc?: number;
   maxBatterySoc?: number;
   priority_device_ids?: string[];
-  time_window_start?: string;
-  time_window_end?: string;
   evTargetSoc?: number;
-  objective?: 'cost' | 'self_consumption' | 'carbon' | 'peak_shaving';
 }
 
 export interface OptimizationResult {

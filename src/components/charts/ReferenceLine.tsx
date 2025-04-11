@@ -1,29 +1,30 @@
 
 import React from 'react';
+import { Line, ReferenceLine as RechartReferenceLine } from 'recharts';
 
 interface ReferenceLineProps {
-  y?: number;
-  x?: number;
+  value: number | string;
   stroke?: string;
   strokeDasharray?: string;
-  strokeWidth?: number;
-  label?: {
-    value: string;
-    position: 'insideTopRight' | 'insideBottomRight' | 'insideTopLeft' | 'insideBottomLeft';
-  };
+  label?: string | React.ReactNode;
+  position?: 'top' | 'bottom' | 'left' | 'right' | 'middle';
 }
 
 const ReferenceLine: React.FC<ReferenceLineProps> = ({
-  y,
-  x,
-  stroke = '#000',
-  strokeDasharray,
-  strokeWidth = 1,
-  label
+  value,
+  stroke = '#ff7300',
+  strokeDasharray = '3 3',
+  label,
+  position = 'right'
 }) => {
-  // This is just a stub component for compatibility with recharts
-  // In a real implementation, ReferenceLine would come from recharts
-  return null;
+  return (
+    <RechartReferenceLine 
+      y={value} 
+      stroke={stroke} 
+      strokeDasharray={strokeDasharray}
+      label={{ value: label, position }}
+    />
+  );
 };
 
 export default ReferenceLine;

@@ -2,78 +2,57 @@
 export interface ModbusDevice {
   id: string;
   name: string;
-  device_id?: string;
   ip_address?: string;
   ip?: string; // For compatibility
   port: number;
-  slave_id?: number;
-  unit_id?: number; // For compatibility
-  status: 'online' | 'offline' | 'error';
-  created_at?: string;
-  inserted_at?: string; // For compatibility
-  updated_at?: string;
+  unit_id: number;
+  protocol: 'tcp' | 'rtu';
   site_id?: string;
-  protocol: 'TCP' | 'RTU';
   description?: string;
-  manufacturer?: string;
-  model?: string;
-  is_active?: boolean;
-}
-
-export interface ModbusDeviceConfig {
-  name: string;
-  ip_address: string;
-  port: number;
-  slave_id: number;
-  protocol: 'TCP' | 'RTU';
-  description?: string;
-  site_id: string;
-}
-
-export interface ModbusRegisterMap {
-  id: string;
-  device_id: string;
-  registers: ModbusRegister[];
-  created_at: string;
-  updated_at?: string;
+  status?: 'active' | 'inactive' | 'error';
+  created_at?: string;
+  last_updated?: string;
 }
 
 export interface ModbusRegister {
+  id: string;
+  device_id: string;
+  register_address: number;
+  register_name: string;
+  register_type: 'holding' | 'input' | 'coil' | 'discrete';
+  register_length: number;
+  data_type: 'int16' | 'int32' | 'uint16' | 'uint32' | 'float' | 'float32' | 'float64' | 'bit' | 'string';
+  access?: 'read' | 'write' | 'read/write';
+  description?: string;
+  scaleFactor?: number;
+  unit?: string;
+}
+
+export type ModbusRegisterDefinition = {
   name: string;
   address: number;
-  register_type: 'coil' | 'discrete_input' | 'holding' | 'input';
-  data_type: 'int16' | 'uint16' | 'int32' | 'uint32' | 'float' | 'boolean';
+  registerType: 'holding' | 'input' | 'coil' | 'discrete';
+  dataType: 'int16' | 'int32' | 'uint16' | 'uint32' | 'float32' | 'float64' | 'bit';
+  access: 'read' | 'write' | 'read/write';
+  description?: string;
+};
+
+export interface ModbusRegisterMap {
+  id?: string;
+  device_id: string;
+  name?: string;
+  registers: ModbusRegisterDefinition[];
+}
+
+export interface ModbusRegisterValue {
   register_address: number;
-  register_name: string;
-  register_length: number;
-  scaleFactor?: number;
+  value: number | boolean | string;
+  timestamp: string;
 }
 
-export interface ModbusRegisterDefinition {
+export interface ModbusWriteRequest {
+  device_id: string;
   register_address: number;
-  register_name: string;
-  register_length: number;
-  scaleFactor?: number;
-  register_type?: 'coil' | 'discrete_input' | 'holding' | 'input';
-  data_type?: 'int16' | 'uint16' | 'int32' | 'uint32' | 'float' | 'boolean';
-}
-
-export interface ModbusReadResult {
-  address: number;
   value: number | boolean;
-  timestamp: string;
-}
-
-export interface ModbusReadingResult {
-  address: number;
-  value: number | boolean;
-  timestamp: string;
-  formattedValue?: string;
-  success: boolean;
-}
-
-export interface ModbusWriteResult {
-  success: boolean;
-  message?: string;
-  timestamp: string;
+  register_type?: 'holding' | 'coil';
 }
