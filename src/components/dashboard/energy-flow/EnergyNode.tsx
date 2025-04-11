@@ -61,6 +61,9 @@ const EnergyNode: React.FC<EnergyNodeProps> = ({
     }
   };
 
+  // Get power value from node, default to 0
+  const nodeValue = node.power || (node.data?.power ?? 0);
+
   return (
     <div 
       className={cn(
@@ -83,10 +86,10 @@ const EnergyNode: React.FC<EnergyNodeProps> = ({
           {renderIcon()}
         </div>
         <div className="text-xs font-medium text-slate-700 dark:text-slate-200 truncate max-w-full px-1">
-          {node.label || node.id}
+          {node.label || node.name || node.id}
         </div>
         <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-          {formatPower(node.power)}
+          {formatPower(nodeValue)}
         </div>
         
         {/* Battery level if applicable */}
@@ -106,3 +109,4 @@ const EnergyNode: React.FC<EnergyNodeProps> = ({
 };
 
 export default EnergyNode;
+

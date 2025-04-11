@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { EnergyFlowContextType, EnergyFlowState, EnergyNode, EnergyConnection } from './types';
 import { useAppStore } from '@/store/appStore';
@@ -58,6 +57,7 @@ export const EnergyFlowProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         name: device.name || 'Unknown Device',
         type: nodeType,
         deviceType: device.type as DeviceType,
+        power: power, // Explicitly set the power property
         position: { x: 0, y: 0 }, // Default position
         status: nodeStatus,
         data: {
@@ -87,7 +87,7 @@ export const EnergyFlowProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             source: source.id,
             target: storage.id,
             animated: true,
-            value: Math.min(source.data?.power || 0 * 0.4, Math.abs(storage.data?.power || 0)),
+            value: Math.min(source.power * 0.4, Math.abs(storage.data?.power || 0)),
           });
         }
       });
@@ -101,7 +101,7 @@ export const EnergyFlowProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           source: source.id,
           target: consumption.id,
           animated: true,
-          value: Math.min(source.data?.power || 0 * 0.6, consumption.data?.power || 0),
+          value: Math.min(source.power * 0.6, consumption.power),
         });
       });
     });
@@ -115,7 +115,7 @@ export const EnergyFlowProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             source: storage.id,
             target: consumption.id,
             animated: true,
-            value: Math.min(storage.data?.power || 0, (consumption.data?.power || 0) * 0.3),
+            value: Math.min(storage.data?.power || 0, consumption.power * 0.3),
           });
         });
       }

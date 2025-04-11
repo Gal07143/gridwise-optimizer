@@ -1,202 +1,170 @@
 
-import { Alert, AlertCountSummary, AlertSeverity } from '@/types/alert';
-import { supabase } from '@/lib/supabase';
+import { Alert, AlertSeverity, AlertFilters } from '@/types/alert';
 
-export const getRecentAlerts = async (): Promise<Alert[]> => {
-  try {
-    // Try to get real data from supabase
-    const { data, error } = await supabase
-      .from('alerts')
-      .select('*')
-      .order('timestamp', { ascending: false })
-      .limit(10);
-    
-    if (data && !error) {
-      return data as Alert[];
+// Sample data for alerts
+const sampleAlerts: Alert[] = [
+  {
+    id: '1',
+    title: 'Battery Low',
+    message: 'Battery storage system at 15% - consider charging',
+    severity: 'medium',
+    timestamp: new Date(Date.now() - 15 * 60000).toISOString(),
+    acknowledged: false,
+    device_id: 'batt-01',
+    site_id: 'site-1',
+    alert_source: 'battery-monitor'
+  },
+  {
+    id: '2',
+    title: 'Grid Connection Lost',
+    message: 'Grid connection interrupted, switching to island mode',
+    severity: 'critical',
+    timestamp: new Date(Date.now() - 45 * 60000).toISOString(),
+    acknowledged: true,
+    device_id: 'grid-01',
+    site_id: 'site-1',
+    alert_source: 'grid-monitor'
+  },
+  {
+    id: '3',
+    title: 'Solar Production Drop',
+    message: 'Solar production dropped by 40% in the last hour',
+    severity: 'low',
+    timestamp: new Date(Date.now() - 120 * 60000).toISOString(),
+    acknowledged: false,
+    device_id: 'solar-01',
+    site_id: 'site-1',
+    resolved: true,
+    alert_source: 'performance-monitor'
+  },
+  {
+    id: '4',
+    title: 'EV Charging Complete',
+    message: 'Vehicle charging completed at 100%',
+    severity: 'info',
+    timestamp: new Date(Date.now() - 180 * 60000).toISOString(),
+    acknowledged: true,
+    device_id: 'ev-01',
+    site_id: 'site-1',
+    resolved: true,
+    alert_source: 'ev-charger'
+  },
+  {
+    id: '5',
+    title: 'Firmware Update Available',
+    message: 'New firmware available for inverter device',
+    severity: 'warning',
+    timestamp: new Date(Date.now() - 24 * 60 * 60000).toISOString(),
+    acknowledged: false,
+    device_id: 'inv-01',
+    site_id: 'site-1',
+    alert_source: 'system-updates'
+  }
+];
+
+// Get all alerts
+export const getAlerts = async (filters?: AlertFilters): Promise<Alert[]> => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  let filteredAlerts = [...sampleAlerts];
+  
+  // Apply filters if provided
+  if (filters) {
+    if (filters.severity) {
+      filteredAlerts = filteredAlerts.filter(alert => 
+        filters.severity?.includes(alert.severity)
+      );
     }
     
-    // Fallback to mock data if supabase request fails
-    console.warn('Falling back to mock alerts data');
-    return [
-      {
-        id: 'alert-1',
-        title: 'Battery Low',
-        message: 'Battery state of charge below 10%',
-        severity: 'high',
-        timestamp: new Date().toISOString(),
-        acknowledged: false,
-        device_id: 'device-batt-01',
-        alert_source: 'battery_monitor',
-        source: 'battery_monitor',
-        resolved: false
-      },
-      {
-        id: 'alert-2',
-        title: 'Grid Connection Lost',
-        message: 'Connection to the electricity grid has been lost',
-        severity: 'critical',
-        timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
-        acknowledged: false,
-        device_id: 'device-grid-01',
-        alert_source: 'grid_monitor',
-        source: 'grid_monitor',
-        resolved: false
-      },
-      {
-        id: 'alert-3',
-        title: 'Inverter Warning',
-        message: 'Inverter temperature above normal operating range',
-        severity: 'medium',
-        timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-        acknowledged: true,
-        device_id: 'device-inv-01',
-        alert_source: 'inverter_monitor',
-        source: 'inverter_monitor',
-        resolved: false
-      },
-      {
-        id: 'alert-4',
-        title: 'System Update Available',
-        message: 'New firmware update available for the energy system',
-        severity: 'low',
-        timestamp: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
-        acknowledged: false,
-        alert_source: 'update_manager',
-        source: 'update_manager',
-        resolved: false
-      },
-      {
-        id: 'alert-5',
-        title: 'Peak Demand Detected',
-        message: 'High electricity demand detected. Consider reducing consumption',
-        severity: 'medium',
-        timestamp: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
-        acknowledged: false,
-        alert_source: 'demand_monitor',
-        source: 'demand_monitor',
-        resolved: false
+    if (filters.acknowledged !== undefined) {
+      filteredAlerts = filteredAlerts.filter(alert => 
+        alert.acknowledged === filters.acknowledged
+      );
+    }
+    
+    if (filters.siteId) {
+      filteredAlerts = filteredAlerts.filter(alert => 
+        alert.site_id === filters.siteId
+      );
+    }
+    
+    if (filters.deviceId) {
+      filteredAlerts = filteredAlerts.filter(alert => 
+        alert.device_id === filters.deviceId
+      );
+    }
+    
+    // Time range filtering
+    if (filters.timeRange) {
+      const now = new Date();
+      let startDate: Date;
+      
+      switch (filters.timeRange) {
+        case 'today':
+          startDate = new Date(now.setHours(0, 0, 0, 0));
+          break;
+        case 'week':
+          startDate = new Date(now.setDate(now.getDate() - 7));
+          break;
+        case 'month':
+          startDate = new Date(now.setMonth(now.getMonth() - 1));
+          break;
+        case 'custom':
+          startDate = filters.startDate ? new Date(filters.startDate) : new Date(0);
+          break;
+        default:
+          startDate = new Date(0);
       }
-    ];
-  } catch (error) {
-    console.error('Error fetching alerts', error);
-    return [];
-  }
-};
-
-export const getAlertCountSummary = async (): Promise<AlertCountSummary> => {
-  try {
-    // Try to get real data from supabase
-    const { data, error } = await supabase
-      .from('alerts')
-      .select('severity')
-      .eq('acknowledged', false);
-    
-    if (data && !error) {
-      // Count alerts by severity
-      const summary: AlertCountSummary = {
-        critical: 0,
-        high: 0,
-        medium: 0,
-        low: 0,
-        total: data.length
-      };
       
-      data.forEach((alert) => {
-        const sev = alert.severity.toLowerCase();
-        if (sev === 'critical') summary.critical++;
-        else if (sev === 'high') summary.high++;
-        else if (sev === 'medium') summary.medium++;
-        else if (sev === 'low') summary.low++;
+      const endDate = filters.endDate ? new Date(filters.endDate) : new Date();
+      
+      filteredAlerts = filteredAlerts.filter(alert => {
+        const alertDate = new Date(alert.timestamp);
+        return alertDate >= startDate && alertDate <= endDate;
       });
-      
-      return summary;
     }
-    
-    // Fallback to mock data
-    console.warn('Falling back to mock alert summary data');
-    return {
-      critical: 1,
-      high: 2,
-      medium: 3,
-      low: 4,
-      total: 10
-    };
-  } catch (error) {
-    console.error('Error fetching alert summary', error);
-    return {
-      critical: 0,
-      high: 0,
-      medium: 0,
-      low: 0,
-      total: 0
-    };
   }
+  
+  // Sort by timestamp (newest first)
+  return filteredAlerts.sort((a, b) => 
+    new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+  );
 };
 
-export const acknowledgeAlert = async (id: string): Promise<boolean> => {
-  try {
-    const { error } = await supabase
-      .from('alerts')
-      .update({ 
-        acknowledged: true,
-        acknowledged_at: new Date().toISOString()
-      })
-      .eq('id', id);
-    
-    return !error;
-  } catch (error) {
-    console.error('Error acknowledging alert', error);
-    return false;
-  }
+// Get recent alerts (last 24 hours)
+export const getRecentAlerts = async (): Promise<Alert[]> => {
+  const oneDayAgo = new Date();
+  oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+  
+  const allAlerts = await getAlerts();
+  return allAlerts.filter(alert => 
+    new Date(alert.timestamp) > oneDayAgo
+  );
 };
 
-export const resolveAlert = async (id: string): Promise<boolean> => {
-  try {
-    const { error } = await supabase
-      .from('alerts')
-      .update({ 
-        resolved: true,
-        resolved_at: new Date().toISOString()
-      })
-      .eq('id', id);
-    
-    return !error;
-  } catch (error) {
-    console.error('Error resolving alert', error);
-    return false;
+// Mark alert as acknowledged
+export const acknowledgeAlert = async (alertId: string): Promise<Alert> => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 800));
+  
+  const alert = sampleAlerts.find(a => a.id === alertId);
+  if (!alert) {
+    throw new Error(`Alert with ID ${alertId} not found`);
   }
+  
+  alert.acknowledged = true;
+  return alert;
 };
 
-export const getAlertsByDevice = async (deviceId: string): Promise<Alert[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('alerts')
-      .select('*')
-      .eq('device_id', deviceId)
-      .order('timestamp', { ascending: false });
-    
-    if (error) throw error;
-    return data as Alert[];
-  } catch (error) {
-    console.error('Error fetching alerts for device', error);
-    return [];
-  }
+// Get alert counts by severity
+export const getAlertCounts = async (): Promise<Record<AlertSeverity, number>> => {
+  const alerts = await getAlerts();
+  
+  return alerts.reduce((counts, alert) => {
+    counts[alert.severity] = (counts[alert.severity] || 0) + 1;
+    return counts;
+  }, {} as Record<AlertSeverity, number>);
 };
 
-export const createAlert = async (alert: Omit<Alert, 'id' | 'timestamp'>): Promise<boolean> => {
-  try {
-    const { error } = await supabase
-      .from('alerts')
-      .insert([
-        {
-          ...alert,
-          timestamp: new Date().toISOString()
-        }
-      ]);
-    
-    return !error;
-  } catch (error) {
-    console.error('Error creating alert', error);
-    return false;
-  }
-};
+export { Alert, AlertSeverity };
