@@ -1,49 +1,37 @@
 
-import * as React from "react";
-import { addDays, format } from "date-fns";
-import { Calendar as CalendarIcon } from "lucide-react";
-import { DateRange } from "react-day-picker";
-
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
+import React from 'react';
+import { format } from 'date-fns';
+import { Calendar as CalendarIcon } from 'lucide-react';
+import { DateRange } from 'react-day-picker';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
+} from '@/components/ui/popover';
 
 interface DateRangePickerProps {
-  className?: string;
   dateRange: DateRange;
-  onChange: (dateRange: DateRange) => void;
-  // Add onUpdate for backward compatibility
-  onUpdate?: (dateRange: DateRange) => void;
+  onUpdate: (range: DateRange) => void;
+  className?: string;
 }
 
 export function DateRangePicker({
-  className,
   dateRange,
-  onChange,
   onUpdate,
+  className,
 }: DateRangePickerProps) {
-  const handleDateRangeChange = (range: DateRange | undefined) => {
-    if (range) {
-      // Call both onChange and onUpdate if provided
-      onChange(range);
-      if (onUpdate) onUpdate(range);
-    }
-  };
-
   return (
     <div className={cn("grid gap-2", className)}>
       <Popover>
         <PopoverTrigger asChild>
           <Button
             id="date"
-            variant="outline"
+            variant={"outline"}
             className={cn(
-              "w-full justify-start text-left font-normal",
+              "w-[300px] justify-start text-left font-normal",
               !dateRange && "text-muted-foreground"
             )}
           >
@@ -68,7 +56,9 @@ export function DateRangePicker({
             mode="range"
             defaultMonth={dateRange?.from}
             selected={dateRange}
-            onSelect={handleDateRangeChange}
+            onSelect={(range: DateRange | undefined) => {
+              if (range) onUpdate(range);
+            }}
             numberOfMonths={2}
           />
         </PopoverContent>
@@ -76,5 +66,3 @@ export function DateRangePicker({
     </div>
   );
 }
-
-export default DateRangePicker;

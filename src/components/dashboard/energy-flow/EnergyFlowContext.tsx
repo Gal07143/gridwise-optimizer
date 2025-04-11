@@ -1,10 +1,10 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { EnergyFlowContextType, EnergyFlowState, EnergyNode, EnergyConnection } from '@/types/energy';
+import { EnergyFlowContextType, EnergyFlowState, EnergyNode, EnergyConnection } from './types';
 import { useAppStore } from '@/store/appStore';
 import { supabase } from '@/integrations/supabase/client';
 import { fetchDevices } from '@/services/supabase/supabaseService';
-import { useSubscription } from '@/hooks/use-realtime-updates';
+import { DeviceType, DeviceStatus } from './types';
 import { toast } from 'sonner';
 
 // Create context
@@ -14,14 +14,18 @@ const EnergyFlowContext = createContext<EnergyFlowContextType | undefined>(undef
 const initialState: EnergyFlowState = {
   nodes: [],
   connections: [],
+  totalGeneration: 0,
+  totalConsumption: 0,
+  batteryPercentage: 0,
+  selfConsumptionRate: 0,
+  gridDependencyRate: 0,
   isLoading: true,
 };
 
 export const EnergyFlowProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { currentSite } = useAppStore();
   const [state, setState] = useState<EnergyFlowState>(initialState);
-  const [isLoading, setIsLoading] = useState(true);
-
+  
   // Function to transform device data into energy flow data
   const transformDeviceData = useCallback((devices: any[]) => {
     if (!devices || devices.length === 0) return { nodes: [], connections: [] };
@@ -44,20 +48,24 @@ export const EnergyFlowProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       }
       
       // Ensure status is a valid value for EnergyNode
-      let nodeStatus: 'active' | 'inactive' | 'warning' | 'error' = 'inactive';
+      let nodeStatus: DeviceStatus = 'inactive';
       if (device.status === 'online') nodeStatus = 'active';
       else if (device.status === 'warning') nodeStatus = 'warning';
       else if (device.status === 'error') nodeStatus = 'error';
       
       return {
         id: device.id,
-        label: device.name,
+        name: device.name || 'Unknown Device',
         type: nodeType,
-        power,
+        deviceType: device.type as DeviceType,
+        position: { x: 0, y: 0 }, // Default position
         status: nodeStatus,
-        deviceType: device.type,
-        // Add batteryLevel for storage nodes
-        ...(device.type === 'battery' && { batteryLevel: device.metrics?.state_of_charge || 50 })
+        data: {
+          power,
+          status: nodeStatus,
+          ...(device.type === 'battery' && { batteryLevel: device.metrics?.state_of_charge || 50 })
+        },
+        batteryLevel: device.type === 'battery' ? (device.metrics?.state_of_charge || 50) : undefined
       };
     });
     
@@ -70,41 +78,44 @@ export const EnergyFlowProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const consumptionNodes = nodes.filter(n => n.type === 'consumption');
     
     // Connect sources to storage (if batteries are charging)
-    sourceNodes.forEach(source => {
-      storageNodes.forEach(storage => {
-        // If battery is charging, connect from source to battery
-        if (storage.power < 0) { // Negative power means charging
+    sourceNodes.forEach((source, sourceIndex) => {
+      storageNodes.forEach((storage, storageIndex) => {
+        // If battery is charging
+        if (storage.data?.power && storage.data.power < 0) {
           connections.push({
-            from: source.id,
-            to: storage.id,
-            value: Math.min(source.power * 0.4, Math.abs(storage.power)), // Partial flow
-            active: true
+            id: `source-storage-${sourceIndex}-${storageIndex}`,
+            source: source.id,
+            target: storage.id,
+            animated: true,
+            value: Math.min(source.data?.power || 0 * 0.4, Math.abs(storage.data?.power || 0)),
           });
         }
       });
     });
     
     // Connect sources to consumption
-    sourceNodes.forEach(source => {
-      consumptionNodes.forEach(consumption => {
+    sourceNodes.forEach((source, sourceIndex) => {
+      consumptionNodes.forEach((consumption, consumptionIndex) => {
         connections.push({
-          from: source.id,
-          to: consumption.id,
-          value: Math.min(source.power * 0.6, consumption.power), // Partial flow
-          active: source.power > 0 && consumption.power > 0
+          id: `source-consumption-${sourceIndex}-${consumptionIndex}`,
+          source: source.id,
+          target: consumption.id,
+          animated: true,
+          value: Math.min(source.data?.power || 0 * 0.6, consumption.data?.power || 0),
         });
       });
     });
     
     // Connect storage to consumption (if batteries are discharging)
-    storageNodes.forEach(storage => {
-      if (storage.power > 0) { // Positive power means discharging
-        consumptionNodes.forEach(consumption => {
+    storageNodes.forEach((storage, storageIndex) => {
+      if (storage.data?.power && storage.data.power > 0) {
+        consumptionNodes.forEach((consumption, consumptionIndex) => {
           connections.push({
-            from: storage.id,
-            to: consumption.id,
-            value: Math.min(storage.power, consumption.power * 0.3), // Partial flow
-            active: true
+            id: `storage-consumption-${storageIndex}-${consumptionIndex}`,
+            source: storage.id,
+            target: consumption.id,
+            animated: true,
+            value: Math.min(storage.data?.power || 0, (consumption.data?.power || 0) * 0.3),
           });
         });
       }
@@ -114,10 +125,10 @@ export const EnergyFlowProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   }, []);
 
   // Fetch device data from Supabase
-  const fetchDeviceData = useCallback(async () => {
+  const fetchEnergyFlowData = useCallback(async () => {
     if (!currentSite) return;
     
-    setIsLoading(true);
+    setState(prev => ({...prev, isLoading: true}));
     
     try {
       // Fetch devices associated with the current site
@@ -133,7 +144,7 @@ export const EnergyFlowProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               .eq('device_id', device.id)
               .order('timestamp', { ascending: false })
               .limit(1)
-              .single();
+              .maybeSingle();
               
             if (error) throw error;
             
@@ -156,121 +167,109 @@ export const EnergyFlowProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       // Transform device data into energy flow data
       const { nodes, connections } = transformDeviceData(energyReadings);
       
-      setState(prev => ({
-        ...prev,
+      // Calculate key metrics
+      const totalGeneration = nodes
+        .filter(node => node.type === 'source' && node.deviceType !== 'grid')
+        .reduce((sum, node) => sum + (node.data?.power || 0), 0);
+      
+      const totalConsumption = nodes
+        .filter(node => node.type === 'consumption')
+        .reduce((sum, node) => sum + (node.data?.power || 0), 0);
+      
+      const batteryNode = nodes.find(node => node.deviceType === 'battery');
+      const batteryPercentage = batteryNode?.data?.batteryLevel || 0;
+      
+      // Calculate self-consumption rate
+      const selfConsumptionRate = totalGeneration > 0 ? 
+        calculateSelfConsumption(nodes, connections) : 0;
+      
+      // Calculate grid dependency rate
+      const gridDependencyRate = totalConsumption > 0 ? 
+        calculateGridDependency(nodes, connections) : 0;
+      
+      setState({
         nodes,
         connections,
-      }));
+        totalGeneration,
+        totalConsumption,
+        batteryPercentage,
+        selfConsumptionRate,
+        gridDependencyRate,
+        isLoading: false
+      });
     } catch (error) {
       console.error('Error fetching energy flow data:', error);
       toast.error('Failed to load energy flow data');
-    } finally {
-      setIsLoading(false);
+      setState(prev => ({...prev, isLoading: false}));
     }
   }, [currentSite, transformDeviceData]);
 
-  // Subscribe to real-time updates
-  useSubscription({
-    event: '*',
-    schema: 'public',
-    table: 'energy_readings',
-    on: (payload) => {
-      // Update the state with the new reading
-      if (!payload.new) return;
-      
-      setState(prev => {
-        const updatedNodes = prev.nodes.map(node => {
-          // If this reading is for this node's device, update the node
-          if (node.id === payload.new.device_id) {
-            // Ensure status is a valid value for EnergyNode
-            let nodeStatus: 'active' | 'inactive' | 'warning' | 'error' = 'active';
-            
-            return {
-              ...node,
-              power: payload.new.power || node.power,
-              status: nodeStatus,
-              batteryLevel: payload.new.state_of_charge !== undefined 
-                ? payload.new.state_of_charge 
-                : node.batteryLevel
-            };
-          }
-          return node;
-        });
-        
-        // Extract updatedDevices from nodes
-        const updatedDevices = updatedNodes.map(node => ({
-          id: node.id,
-          type: node.deviceType,
-          metrics: { power: node.power, state_of_charge: node.batteryLevel }
-        }));
-        
-        // Get connections based on updated nodes
-        const { connections } = transformDeviceData(updatedDevices);
-        
-        return {
-          ...prev,
-          nodes: updatedNodes,
-          connections
-        };
-      });
-    },
-  });
+  // Helper function to calculate self-consumption rate
+  const calculateSelfConsumption = (nodes: EnergyNode[], connections: EnergyConnection[]): number => {
+    const sourceNodes = nodes.filter(node => node.type === 'source' && node.deviceType !== 'grid');
+    const totalGeneration = sourceNodes.reduce((sum, node) => sum + (node.data?.power || 0), 0);
+    
+    let selfConsumed = 0;
+    sourceNodes.forEach(source => {
+      const outgoingConnections = connections.filter(conn => conn.source === source.id);
+      selfConsumed += outgoingConnections.reduce((sum, conn) => sum + conn.value, 0);
+    });
+    
+    return totalGeneration > 0 ? (selfConsumed / totalGeneration) * 100 : 0;
+  };
+
+  // Helper function to calculate grid dependency rate
+  const calculateGridDependency = (nodes: EnergyNode[], connections: EnergyConnection[]): number => {
+    const gridNodes = nodes.filter(node => node.deviceType === 'grid');
+    const consumptionNodes = nodes.filter(node => node.type === 'consumption');
+    const totalConsumption = consumptionNodes.reduce((sum, node) => sum + (node.data?.power || 0), 0);
+    
+    let gridSupplied = 0;
+    gridNodes.forEach(grid => {
+      const outgoingConnections = connections.filter(conn => conn.source === grid.id);
+      gridSupplied += outgoingConnections.reduce((sum, conn) => sum + conn.value, 0);
+    });
+    
+    return totalConsumption > 0 ? (gridSupplied / totalConsumption) * 100 : 0;
+  };
+
+  // Subscribe to real-time updates for energy readings
+  useEffect(() => {
+    if (!currentSite) return;
+
+    const subscription = supabase
+      .channel('energy-readings-changes')
+      .on('postgres_changes', 
+        { 
+          event: 'INSERT', 
+          schema: 'public', 
+          table: 'energy_readings',
+        },
+        async (payload) => {
+          // When a new reading comes in, refresh the data
+          fetchEnergyFlowData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
+  }, [currentSite, fetchEnergyFlowData]);
 
   // Initial data fetch
   useEffect(() => {
     if (currentSite) {
-      fetchDeviceData();
+      fetchEnergyFlowData();
     }
-  }, [currentSite, fetchDeviceData]);
+  }, [currentSite, fetchEnergyFlowData]);
 
-  // Calculate key metrics
-  const totalGeneration = state.nodes
-    .filter(node => node.type === 'source' && node.deviceType !== 'grid')
-    .reduce((sum, node) => sum + node.power, 0);
-  
-  const totalConsumption = state.nodes
-    .filter(node => node.type === 'consumption')
-    .reduce((sum, node) => sum + node.power, 0);
-  
-  const batteryPercentage = state.nodes.find(node => node.deviceType === 'battery')?.batteryLevel || 0;
-  
-  const generationToHome = state.connections
-    .filter(conn => 
-      (state.nodes.find(n => n.id === conn.from)?.type === 'source' &&
-       state.nodes.find(n => n.id === conn.from)?.deviceType !== 'grid' &&
-       state.nodes.find(n => n.id === conn.to)?.deviceType === 'home' &&
-       conn.active)
-    )
-    .reduce((sum, conn) => sum + conn.value, 0);
-  
-  const selfConsumptionRate = totalGeneration > 0 
-    ? (generationToHome / totalGeneration) * 100 
-    : 0;
-  
-  const gridToConsumption = state.connections
-    .filter(conn => 
-      (state.nodes.find(n => n.id === conn.from)?.deviceType === 'grid' && 
-       conn.active)
-    )
-    .reduce((sum, conn) => sum + conn.value, 0);
-  
-  const gridDependencyRate = totalConsumption > 0 
-    ? (gridToConsumption / totalConsumption) * 100 
-    : 0;
-
-  const value: EnergyFlowContextType = {
-    ...state,
-    totalGeneration,
-    totalConsumption,
-    batteryPercentage,
-    selfConsumptionRate,
-    gridDependencyRate,
-    refreshData: fetchDeviceData,
-    isLoading,
-  };
+  const refreshData = useCallback(() => {
+    fetchEnergyFlowData();
+  }, [fetchEnergyFlowData]);
 
   return (
-    <EnergyFlowContext.Provider value={value}>
+    <EnergyFlowContext.Provider value={{...state, refreshData}}>
       {children}
     </EnergyFlowContext.Provider>
   );

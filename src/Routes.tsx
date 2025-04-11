@@ -27,6 +27,10 @@ import BatteryManagement from '@/pages/BatteryManagement';
 import EnergyOptimization from '@/pages/EnergyOptimization';
 import WeatherForecast from '@/pages/WeatherForecast';
 import AIOverview from '@/pages/AIOverview';
+import Preferences from '@/pages/Preferences';
+import Optimization from '@/pages/Optimization';
+import Savings from '@/pages/Savings';
+import SiteDetail from '@/pages/SiteDetail';
 
 // Modbus Pages
 import ModbusDevices from '@/pages/modbus/ModbusDevices';
@@ -107,8 +111,14 @@ const AppRoutes = () => {
       <Route path="/microgrid-control" element={<MicrogridControl />} />
       <Route path="/battery-management" element={<BatteryManagement />} />
       <Route path="/energy-optimization" element={<EnergyOptimization />} />
+      <Route path="/optimization" element={<Optimization />} />
+      <Route path="/savings" element={<Savings />} />
+      <Route path="/preferences" element={<Preferences />} />
       <Route path="/weather-forecast" element={<WeatherForecast />} />
       <Route path="/ai/overview" element={<AIOverview />} />
+
+      {/* Site Routes */}
+      <Route path="/sites/:id" element={<SiteDetail />} />
 
       {/* Integration Routes */}
       <Route path="/integrations" element={<IntegrationsHome />} />
@@ -170,4 +180,6 @@ const AppRoutes = () => {
   );
 };
 
+// Export both the component and the router object 
+export const router = AppRoutes;
 export default AppRoutes;

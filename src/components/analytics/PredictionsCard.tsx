@@ -4,15 +4,68 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { usePredictions } from '@/hooks/usePredictions';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { toast } from 'sonner';
+
+interface Prediction {
+  time: string;
+  consumption: number;
+  consumptionPredicted: number;
+  production: number;
+  productionPredicted: number;
+  savings: number;
+  savingsPredicted: number;
+}
+
+// Custom hook for predictions
+const usePredictions = () => {
+  const [predictions, setPredictions] = useState<Prediction[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<Error | null>(null);
+  
+  const fetchPredictions = async (siteId?: string) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      // In a real app, fetch from API using siteId
+      // For now, generate sample data
+      const sampleData: Prediction[] = Array.from({ length: 24 }, (_, i) => {
+        const hour = i;
+        const baseConsumption = 2 + Math.sin(hour / 4) * 1.5;
+        const baseProduction = hour > 6 && hour < 20 
+          ? 4 * Math.sin((hour - 6) / 14 * Math.PI) 
+          : 0;
+        
+        return {
+          time: `${hour}:00`,
+          consumption: baseConsumption + Math.random(),
+          consumptionPredicted: baseConsumption + Math.random() * 0.5,
+          production: baseProduction + Math.random() * (baseProduction > 0 ? 1 : 0),
+          productionPredicted: baseProduction + Math.random() * (baseProduction > 0 ? 0.8 : 0),
+          savings: (baseProduction * 0.1) + Math.random() * 0.3,
+          savingsPredicted: (baseProduction * 0.11) + Math.random() * 0.2,
+        };
+      });
+      
+      setPredictions(sampleData);
+      setIsLoading(false);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to fetch predictions'));
+      toast.error('Failed to load prediction data');
+      setIsLoading(false);
+    }
+  };
+
+  return { predictions, isLoading, error, fetchPredictions };
+};
 
 const PredictionsCard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('consumption');
   const { predictions, isLoading, error, fetchPredictions } = usePredictions();
 
   useEffect(() => {
-    fetchPredictions();
+    fetchPredictions('default-site');
   }, []);
 
   const renderChart = (dataKey: string) => {
@@ -45,7 +98,7 @@ const PredictionsCard: React.FC = () => {
         ) : error ? (
           <div className="text-center p-4 bg-destructive/10 rounded-md">
             <p className="text-destructive font-medium">Failed to load predictions</p>
-            <Button size="sm" variant="outline" className="mt-2" onClick={() => fetchPredictions()}>
+            <Button size="sm" variant="outline" className="mt-2" onClick={() => fetchPredictions('default-site')}>
               Try Again
             </Button>
           </div>

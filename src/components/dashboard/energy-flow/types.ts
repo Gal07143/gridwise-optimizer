@@ -1,4 +1,6 @@
 
+import { DeviceType, DeviceStatus } from '@/components/dashboard/energy-flow/types';
+
 export type DeviceType = 'solar' | 'battery' | 'grid' | 'ev' | 'home' | 'heatpump' | 'generator' | 'wind' | 'load';
 export type DeviceStatus = 'active' | 'inactive' | 'warning' | 'error' | 'charging' | 'discharging' | 'idle';
 
@@ -15,9 +17,9 @@ export interface EnergyNode {
     energy?: number;
     status?: DeviceStatus;
     capacity?: number;
+    batteryLevel?: number;
   };
   deviceType?: DeviceType;
-  power?: number;
   status?: DeviceStatus;
   batteryLevel?: number;
   label?: string; // Added for compatibility
