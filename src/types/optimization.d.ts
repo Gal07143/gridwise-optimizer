@@ -1,6 +1,6 @@
 
 export interface OptimizationSettings {
-  priority: "cost" | "self_consumption" | "carbon";
+  priority: "cost" | "self_consumption" | "carbon" | "peak_shaving";
   battery_strategy: "charge_from_solar" | "time_of_use" | "backup_only";
   ev_charging_time: string;
   ev_departure_time: string;
@@ -13,8 +13,10 @@ export interface OptimizationSettings {
   maxBatterySoc?: number; // For compatibility
   time_window_start?: string;
   time_window_end?: string;
-  objective?: string;
+  objective?: "cost" | "self_consumption" | "carbon" | "peak_shaving";
   site_id?: string;
+  priority_device_ids?: string[];
+  evTargetSoc?: number;
 }
 
 export interface OptimizationResult {
@@ -37,6 +39,5 @@ export interface OptimizationResult {
   site_id?: string;
 }
 
-export type OptimizationPriority = "cost" | "self_consumption" | "carbon";
-
+export type OptimizationPriority = "cost" | "self_consumption" | "carbon" | "peak_shaving";
 export type BatteryStrategy = "charge_from_solar" | "time_of_use" | "backup_only";

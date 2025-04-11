@@ -1,4 +1,3 @@
-
 export interface EnergyDevice {
   id: string;
   name: string;
@@ -7,12 +6,17 @@ export interface EnergyDevice {
   site_id: string;
   created_at?: string;
   last_updated?: string;
+  updated_at?: string; // Added this field
   metadata?: Record<string, any>;
   manufacturer?: string;
   model?: string;
   firmware_version?: string;
+  firmware?: string; // Added for compatibility
   installation_date?: string;
   metrics?: Record<string, any>;
+  capacity?: number;
+  description?: string;
+  location?: string;
 }
 
 export interface EnergyReading {
@@ -94,6 +98,8 @@ export interface EnergyForecast {
   weather_condition?: string;
   temperature?: number;
 }
+
+// Add DeviceModel definition
 
 export interface DeviceModel {
   id: string;

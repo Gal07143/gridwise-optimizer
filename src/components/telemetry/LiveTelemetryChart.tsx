@@ -27,8 +27,8 @@ const LiveTelemetryChart: React.FC<LiveTelemetryChartProps> = ({
   });
   
   // Format the data for the chart
-  const formattedData = telemetry ? formatTelemetryData(telemetry, metric) : [];
-
+  const formattedData = telemetry ? formatTelemetryData(telemetry) : [];
+  
   return (
     <TelemetryChart
       data={formattedData}
@@ -37,7 +37,7 @@ const LiveTelemetryChart: React.FC<LiveTelemetryChartProps> = ({
       height={height}
       showSource={showSource}
       loading={isLoading}
-      error={error}
+      error={error ? error.toString() : undefined}
     />
   );
 };

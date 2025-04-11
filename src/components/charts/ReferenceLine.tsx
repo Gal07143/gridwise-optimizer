@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Line, ReferenceLine as RechartReferenceLine } from 'recharts';
+import { ReferenceLine as RechartReferenceLine } from 'recharts';
 
 interface ReferenceLineProps {
   value: number | string;
@@ -8,6 +8,8 @@ interface ReferenceLineProps {
   strokeDasharray?: string;
   label?: string | React.ReactNode;
   position?: 'top' | 'bottom' | 'left' | 'right' | 'middle';
+  y?: number | string;
+  x?: number | string;
 }
 
 const ReferenceLine: React.FC<ReferenceLineProps> = ({
@@ -15,14 +17,21 @@ const ReferenceLine: React.FC<ReferenceLineProps> = ({
   stroke = '#ff7300',
   strokeDasharray = '3 3',
   label,
-  position = 'right'
+  position = 'right',
+  y,
+  x
 }) => {
+  // Use either explicit y/x props or default to value
+  const yValue = y !== undefined ? y : value;
+  const xValue = x !== undefined ? x : undefined;
+  
   return (
     <RechartReferenceLine 
-      y={value} 
+      y={yValue} 
+      x={xValue}
       stroke={stroke} 
       strokeDasharray={strokeDasharray}
-      label={{ value: label, position }}
+      label={label ? { value: label, position } : undefined}
     />
   );
 };

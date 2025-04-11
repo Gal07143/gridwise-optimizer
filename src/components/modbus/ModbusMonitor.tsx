@@ -1,4 +1,5 @@
 
+// For the ModbusMonitor component, update the type definitions and state handling:
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,7 +21,6 @@ const ModbusMonitor: React.FC<ModbusMonitorProps> = ({ deviceId }) => {
   const [device, setDevice] = useState<ModbusDevice | null>(null);
   const [registers, setRegisters] = useState<ModbusRegister[]>([]);
   const [selectedRegister, setSelectedRegister] = useState<ModbusRegister | null>(null);
-  const [regValues, setRegValues] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   

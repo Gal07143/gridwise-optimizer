@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -21,7 +20,7 @@ const formSchema = z.object({
   ip_address: z.string().min(1, { message: 'IP address is required.' }),
   port: z.coerce.number().int().min(1).max(65535),
   slave_id: z.coerce.number().int().min(1).max(255),
-  protocol: z.enum(['TCP', 'RTU']),
+  protocol: z.enum(['tcp', 'rtu']),
   description: z.string().optional(),
 });
 
@@ -38,10 +37,12 @@ const AddModbusDevice = () => {
       ip_address: '',
       port: 502,
       slave_id: 1,
-      protocol: 'TCP',
+      protocol: 'tcp',
       description: '',
     },
   });
+
+  const [protocol, setProtocol] = useState<'tcp' | 'rtu'>('tcp');
 
   // Handle form submission
   const onSubmit = async (data: FormValues) => {
@@ -168,15 +169,15 @@ const AddModbusDevice = () => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Protocol</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={setProtocol} defaultValue={protocol}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select protocol" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="TCP">Modbus TCP</SelectItem>
-                        <SelectItem value="RTU">Modbus RTU over TCP</SelectItem>
+                        <SelectItem value="tcp">Modbus TCP</SelectItem>
+                        <SelectItem value="rtu">Modbus RTU over TCP</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormDescription>

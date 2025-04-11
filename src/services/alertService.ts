@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -172,7 +171,8 @@ export const getAlertsByDeviceId = async (deviceId: string): Promise<Alert[]> =>
   }
 };
 
+// Fix the type exports
+export type { Alert, AlertCountSummary };
+
 // Alias getAlertCounts as getAlertCountSummary for compatibility
 export const getAlertCountSummary = getAlertCounts;
-
-export type { Alert, AlertCountSummary };

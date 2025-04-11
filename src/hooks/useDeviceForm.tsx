@@ -42,7 +42,7 @@ export const useDeviceForm = () => {
         firmware: deviceData.firmware || null,
         description: deviceData.description || null,
         site_id: deviceData.site_id || null,
-        updated_at: new Date().toISOString() // Add the required updated_at property
+        last_updated: new Date().toISOString() // Use last_updated instead of updated_at
       });
       
       if (newDevice) {

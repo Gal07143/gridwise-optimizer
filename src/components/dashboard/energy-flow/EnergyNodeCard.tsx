@@ -1,10 +1,10 @@
 
 import React from 'react';
-import { EnergyNode } from './types';
+import { EnergyNodeProps } from './types';
 import EnergyNodeComponent from './EnergyNode';
 
 interface EnergyNodeCardProps {
-  node: EnergyNode;
+  node: EnergyNodeProps['node'];
   onClick?: () => void;
 }
 

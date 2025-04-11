@@ -1,7 +1,6 @@
-
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
-import { OptimizationSettings } from '@/types/energy';
+import { OptimizationSettings } from '@/types/optimization';
 
 // Define device control command interfaces
 interface DeviceControlCommand {
@@ -40,8 +39,6 @@ export const useEnergyOptimization = (siteId: string) => {
     ev_charging_time: '01:00',
     ev_departure_time: '08:00',
     peak_shaving_enabled: true,
-    
-    // Backward compatibility fields
     min_soc: 20,
     max_soc: 90,
     minBatterySoc: 20,
