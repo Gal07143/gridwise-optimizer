@@ -3,38 +3,71 @@ import React, { useEffect, useState } from 'react';
 import { EnergyFlowChart } from '@/components/dashboard/EnergyFlowChart';
 import { fetchEnergyFlowData } from '@/services/energyFlowService';
 import { EnergyFlowData } from '@/components/dashboard/energy-flow/types';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface MinimalistEnergyFlowProps {
   siteId?: string;
   className?: string;
   height?: string;
+  refreshInterval?: number;
+  hideLabels?: boolean;
 }
 
 const MinimalistEnergyFlow: React.FC<MinimalistEnergyFlowProps> = ({
   siteId,
   className = '',
-  height = '200px'
+  height = '200px',
+  refreshInterval = 60000, // Default to 60 seconds
+  hideLabels = false
 }) => {
   const [flowData, setFlowData] = useState<EnergyFlowData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  const loadData = async () => {
+    try {
+      setIsLoading(true);
+      const data = await fetchEnergyFlowData(siteId);
+      
+      // If hideLabels is true, remove labels from nodes
+      if (hideLabels && data) {
+        data.nodes = data.nodes.map(node => ({
+          ...node,
+          label: undefined
+        }));
+      }
+      
+      setFlowData(data);
+      setError(null);
+    } catch (err) {
+      console.error('Error loading energy flow data:', err);
+      setError('Failed to load energy flow data');
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
   useEffect(() => {
-    fetchEnergyFlowData(siteId)
-      .then(data => setFlowData(data))
-      .catch(err => console.error('Error loading energy flow data:', err));
+    loadData();
     
-    const interval = setInterval(() => {
-      fetchEnergyFlowData(siteId)
-        .then(data => setFlowData(data))
-        .catch(err => console.error('Error loading energy flow data:', err));
-    }, 60000); // Refresh every 60 seconds
+    // Set up auto-refresh interval
+    const interval = setInterval(loadData, refreshInterval);
     
     return () => clearInterval(interval);
-  }, [siteId]);
+  }, [siteId, refreshInterval, hideLabels]);
 
-  if (!flowData) {
+  if (error) {
     return (
       <div className={`${className} flex items-center justify-center`} style={{ height }}>
-        <div className="animate-pulse rounded-full h-12 w-12 bg-primary/30"></div>
+        <p className="text-sm text-red-500">{error}</p>
+      </div>
+    );
+  }
+
+  if (isLoading || !flowData) {
+    return (
+      <div className={`${className} flex items-center justify-center`} style={{ height }}>
+        <Skeleton className="h-full w-full rounded-md opacity-50" />
       </div>
     );
   }
@@ -45,6 +78,7 @@ const MinimalistEnergyFlow: React.FC<MinimalistEnergyFlowProps> = ({
         nodes={flowData.nodes} 
         connections={flowData.connections} 
         animationDelay="0.3s"
+        className="h-full w-full"
       />
     </div>
   );
