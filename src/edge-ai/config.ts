@@ -48,3 +48,22 @@ export const DEFAULT_CONFIG: EdgeAIConfig = {
   modelUpdateCheckInterval: 24 * 60 * 60 * 1000, // 24 hours
   fallbackStrategy: 'queue'
 };
+
+// Add missing constants for syncAgent
+export const MODELS_DIR = './models';
+export const MODEL_PATH = `${MODELS_DIR}/model.onnx`;
+export const MODEL_META_PATH = `${MODELS_DIR}/metadata.json`;
+export const SUPABASE_BUCKET = 'ai-models';
+export const MODEL_OBJECT_PATH = 'edge/energy-forecast/model.onnx';
+export const MODEL_META_OBJECT_PATH = 'edge/energy-forecast/metadata.json';
+export const SYNC_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 hours
+export const MAX_RETRY_COUNT = 3;
+export const RETRY_DELAY_MS = 30 * 1000; // 30 seconds
+
+// Helper function to ensure directories exist
+export const ensureDirectories = () => {
+  // This is a placeholder for node.js fs functionality
+  // In a browser environment, this would need to be modified
+  console.log('Ensuring directories exist for model storage');
+  // In real implementation, would use fs.mkdirSync(MODELS_DIR, { recursive: true })
+};

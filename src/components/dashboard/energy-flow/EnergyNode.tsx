@@ -1,162 +1,105 @@
 
 import React from 'react';
-import { cn } from '@/lib/utils';
 import { EnergyNodeProps } from './types';
-import { Battery, Home, Sun, Wind, PlugZap, Gauge, Monitor } from 'lucide-react';
+import { Battery, Home, Zap, Sun, Wind, MonitorSmartphone, Car } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-const EnergyNode: React.FC<EnergyNodeProps> = ({ node, isSelected, onClick }) => {
-  // Determine icon based on device type
+const EnergyNode: React.FC<EnergyNodeProps> = ({ 
+  node, 
+  onClick,
+  selected, // Original prop
+  isSelected // Added for compatibility
+}) => {
+  // Use either selected or isSelected prop
+  const isNodeSelected = selected || isSelected;
+  
+  // Determine the icon based on device type
   const renderIcon = () => {
-    switch (node.deviceType.toLowerCase()) {
+    switch (node.deviceType) {
       case 'solar':
-        return <Sun className="h-6 w-6" />;
-      case 'wind':
-        return <Wind className="h-6 w-6" />;
+        return <Sun className="h-6 w-6 text-yellow-500" />;
       case 'battery':
-        return <Battery className="h-6 w-6" />;
-      case 'home':
-        return <Home className="h-6 w-6" />;
-      case 'ev':
-        return <PlugZap className="h-6 w-6" />;
+        return <Battery className="h-6 w-6 text-blue-500" />;
       case 'grid':
-        return <Gauge className="h-6 w-6" />;
+        return <Zap className="h-6 w-6 text-purple-500" />;
+      case 'ev':
+        return <Car className="h-6 w-6 text-green-500" />;
+      case 'home':
+        return <Home className="h-6 w-6 text-slate-500" />;
+      case 'wind':
+        return <Wind className="h-6 w-6 text-cyan-500" />;
+      case 'load':
+        return <MonitorSmartphone className="h-6 w-6 text-pink-500" />;
       default:
-        return <Monitor className="h-6 w-6" />;
+        return <Zap className="h-6 w-6 text-slate-400" />;
     }
   };
-
-  // Determine color scheme based on device type
-  const getColorScheme = () => {
-    switch (node.deviceType.toLowerCase()) {
-      case 'solar':
-        return {
-          bg: 'bg-yellow-100 dark:bg-yellow-900/30',
-          border: 'border-yellow-300 dark:border-yellow-700/50',
-          text: 'text-yellow-800 dark:text-yellow-300',
-          icon: 'text-yellow-600 dark:text-yellow-400',
-        };
-      case 'wind':
-        return {
-          bg: 'bg-blue-100 dark:bg-blue-900/30',
-          border: 'border-blue-300 dark:border-blue-700/50',
-          text: 'text-blue-800 dark:text-blue-300',
-          icon: 'text-blue-600 dark:text-blue-400',
-        };
-      case 'battery':
-        return {
-          bg: 'bg-purple-100 dark:bg-purple-900/30',
-          border: 'border-purple-300 dark:border-purple-700/50',
-          text: 'text-purple-800 dark:text-purple-300',
-          icon: 'text-purple-600 dark:text-purple-400',
-        };
-      case 'home':
-        return {
-          bg: 'bg-green-100 dark:bg-green-900/30',
-          border: 'border-green-300 dark:border-green-700/50',
-          text: 'text-green-800 dark:text-green-300',
-          icon: 'text-green-600 dark:text-green-400',
-        };
-      case 'ev':
-        return {
-          bg: 'bg-indigo-100 dark:bg-indigo-900/30',
-          border: 'border-indigo-300 dark:border-indigo-700/50',
-          text: 'text-indigo-800 dark:text-indigo-300',
-          icon: 'text-indigo-600 dark:text-indigo-400',
-        };
-      case 'grid':
-        return {
-          bg: 'bg-red-100 dark:bg-red-900/30',
-          border: 'border-red-300 dark:border-red-700/50',
-          text: 'text-red-800 dark:text-red-300',
-          icon: 'text-red-600 dark:text-red-400',
-        };
-      default:
-        return {
-          bg: 'bg-slate-100 dark:bg-slate-800/50',
-          border: 'border-slate-300 dark:border-slate-700/50',
-          text: 'text-slate-800 dark:text-slate-300',
-          icon: 'text-slate-600 dark:text-slate-400',
-        };
-    }
-  };
-
-  // Style based on node status
-  const getStatusStyle = () => {
+  
+  // Determine node status indicator color
+  const getStatusColor = () => {
     switch (node.status) {
       case 'active':
-        return 'shadow-glow shadow-green-200/20 dark:shadow-green-900/20';
-      case 'warning':
-        return 'shadow-glow shadow-yellow-200/20 dark:shadow-yellow-900/20';
-      case 'error':
-        return 'shadow-glow shadow-red-200/20 dark:shadow-red-900/20';
-      case 'inactive':
-        return 'opacity-60';
-      default:
-        return '';
-    }
-  };
-
-  // Status indicator color
-  const getStatusIndicator = () => {
-    switch (node.status) {
-      case 'active':
+      case 'charging':
         return 'bg-green-500';
       case 'warning':
         return 'bg-yellow-500';
       case 'error':
         return 'bg-red-500';
-      case 'inactive':
-        return 'bg-slate-400';
+      case 'discharging':
+        return 'bg-blue-500';
       default:
         return 'bg-slate-400';
     }
   };
-
-  const colorScheme = getColorScheme();
+  
+  // Format power value with appropriate units
+  const formatPower = (power: number) => {
+    if (power >= 1000) {
+      return `${(power / 1000).toFixed(2)} MW`;
+    } else {
+      return `${power.toFixed(1)} kW`;
+    }
+  };
 
   return (
     <div 
       className={cn(
-        'flex flex-col items-center justify-center space-y-2 cursor-pointer transition-all',
-        isSelected && 'scale-110'
+        "relative flex items-center justify-center w-28 h-28 rounded-full bg-slate-50 dark:bg-slate-800 border-2 shadow-md transition-all",
+        isNodeSelected
+          ? "border-primary scale-110 shadow-lg"
+          : "border-slate-200 dark:border-slate-700 hover:border-primary/50 cursor-pointer"
       )}
       onClick={onClick}
     >
-      {/* Device icon */}
-      <div 
-        className={cn(
-          'w-20 h-20 rounded-full flex items-center justify-center border-2 transition-all',
-          colorScheme.bg,
-          colorScheme.border,
-          getStatusStyle(),
-          isSelected && 'ring-2 ring-blue-500 ring-offset-2 ring-offset-slate-950'
-        )}
-      >
-        <div className={cn('transition-all', colorScheme.icon)}>
+      {/* Status indicator */}
+      <div className={cn(
+        "absolute top-1 right-1 w-3 h-3 rounded-full",
+        getStatusColor()
+      )} />
+      
+      {/* Icon and label */}
+      <div className="flex flex-col items-center text-center">
+        <div className="p-2 rounded-full bg-slate-100 dark:bg-slate-700 mb-1">
           {renderIcon()}
         </div>
-        
-        {/* Status indicator */}
-        <div className="absolute bottom-1 right-1">
-          <div className={cn(
-            'w-3 h-3 rounded-full border border-white',
-            getStatusIndicator()
-          )} />
+        <div className="text-xs font-medium text-slate-700 dark:text-slate-200 truncate max-w-full px-1">
+          {node.label || node.id}
         </div>
-      </div>
-      
-      {/* Device label */}
-      <div className="flex flex-col items-center">
-        <span className={cn(
-          'text-xs font-medium', 
-          colorScheme.text,
-          isSelected && 'font-bold'
-        )}>
-          {node.label}
-        </span>
-        <span className="text-xs text-slate-500">
-          {Math.abs(node.power).toFixed(1)} kW
-        </span>
+        <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          {formatPower(node.power)}
+        </div>
+        
+        {/* Battery level if applicable */}
+        {node.deviceType === 'battery' && typeof node.batteryLevel === 'number' && (
+          <div className="absolute bottom-1 left-0 w-full flex justify-center">
+            <div className="h-1.5 w-16 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-blue-500" 
+                style={{ width: `${node.batteryLevel}%` }}
+              ></div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

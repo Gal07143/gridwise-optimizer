@@ -1,6 +1,7 @@
 
 import { EnergyNode, EnergyConnection } from '@/components/dashboard/energy-flow/types';
 import { supabase } from '@/integrations/supabase/client';
+import { v4 as uuidv4 } from 'uuid';
 
 // Sample data for the initial state
 const defaultNodes: EnergyNode[] = [
@@ -63,29 +64,46 @@ const defaultNodes: EnergyNode[] = [
   }
 ];
 
-const defaultConnections: EnergyConnection[] = [
-  // Solar connections
-  { from: 'solar', to: 'home', value: 2.5, active: true },
-  { from: 'solar', to: 'battery', value: 1.2, active: true },
-  { from: 'solar', to: 'grid', value: 1.5, active: true },
-  { from: 'solar', to: 'devices', value: 0.8, active: true },
-  
-  // Wind connections
-  { from: 'wind', to: 'home', value: 0.8, active: true },
-  { from: 'wind', to: 'battery', value: 1.0, active: true },
-  { from: 'wind', to: 'devices', value: 0.5, active: true },
-  
-  // Battery connections
-  { from: 'battery', to: 'home', value: 1.2, active: true },
-  { from: 'battery', to: 'devices', value: 0.8, active: true },
-  { from: 'battery', to: 'ev', value: 1.5, active: true },
-  
-  // Grid connections
-  { from: 'grid', to: 'home', value: 0.3, active: true },
-  { from: 'grid', to: 'devices', value: 0.2, active: true },
-  { from: 'grid', to: 'ev', value: 1.5, active: true },
-  { from: 'grid', to: 'battery', value: 0.5, active: true }
-];
+// Convert from/to format to source/target format with proper IDs
+const createConnections = (): EnergyConnection[] => {
+  const connectionPairs = [
+    // Solar connections
+    { from: 'solar', to: 'home', value: 2.5, active: true },
+    { from: 'solar', to: 'battery', value: 1.2, active: true },
+    { from: 'solar', to: 'grid', value: 1.5, active: true },
+    { from: 'solar', to: 'devices', value: 0.8, active: true },
+    
+    // Wind connections
+    { from: 'wind', to: 'home', value: 0.8, active: true },
+    { from: 'wind', to: 'battery', value: 1.0, active: true },
+    { from: 'wind', to: 'devices', value: 0.5, active: true },
+    
+    // Battery connections
+    { from: 'battery', to: 'home', value: 1.2, active: true },
+    { from: 'battery', to: 'devices', value: 0.8, active: true },
+    { from: 'battery', to: 'ev', value: 1.5, active: true },
+    
+    // Grid connections
+    { from: 'grid', to: 'home', value: 0.3, active: true },
+    { from: 'grid', to: 'devices', value: 0.2, active: true },
+    { from: 'grid', to: 'ev', value: 1.5, active: true },
+    { from: 'grid', to: 'battery', value: 0.5, active: true }
+  ];
+
+  // Convert to EnergyConnection format with proper IDs
+  return connectionPairs.map(conn => ({
+    id: `${conn.from}-${conn.to}-${uuidv4().slice(0,8)}`,
+    source: conn.from,
+    target: conn.to,
+    animated: !!conn.active,
+    value: conn.value,
+    from: conn.from,
+    to: conn.to,
+    active: conn.active
+  }));
+};
+
+const defaultConnections = createConnections();
 
 export interface EnergyFlowData {
   nodes: EnergyNode[];

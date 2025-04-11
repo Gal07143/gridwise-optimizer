@@ -6,12 +6,14 @@ export interface ModbusDeviceConfig {
   ip_address?: string; // Alias for compatibility
   port: number;
   unit_id: number;
+  slave_id?: number; // Add for compatibility
   protocol: "tcp" | "rtu";
   is_active: boolean;
   description?: string;
   site_id?: string;
   updated_at?: string;
   created_at?: string;
+  status?: 'online' | 'offline' | 'error' | 'maintenance'; // Add status field
 }
 
 export interface ModbusRegisterDefinition {
@@ -48,6 +50,12 @@ export interface ModbusReadingResult {
 
 export type ModbusReadResult = ModbusReadingResult;
 
+export interface ModbusWriteResult {
+  success: boolean;
+  message?: string;
+  timestamp: string;
+}
+
 export interface ConnectionStatusOptions {
   autoConnect?: boolean;
   retryInterval?: number;
@@ -78,6 +86,7 @@ export interface ModbusDevice extends ModbusDeviceConfig {
   protocol: "tcp" | "rtu";
   description?: string;  
   ip_address?: string;
+  status?: 'online' | 'offline' | 'error' | 'maintenance'; // Add status field
 }
 
 export interface ModbusRegister {
@@ -90,4 +99,8 @@ export interface ModbusRegister {
   scaling_factor?: number;
   unit?: string;
   description?: string;
+  register_address?: number;
+  register_name?: string;
+  register_length?: number;
+  scaleFactor?: number;
 }

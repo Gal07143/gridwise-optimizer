@@ -10,11 +10,11 @@ export interface OptimizationSettings {
   // Add missing fields
   min_soc?: number;
   max_soc?: number;
+  minBatterySoc?: number; // For compatibility
+  maxBatterySoc?: number; // For compatibility
   time_window_start?: string;
   time_window_end?: string;
   objective?: string;
-  minBatterySoc?: number;
-  maxBatterySoc?: number;
   site_id?: string;
 }
 
@@ -35,7 +35,7 @@ export interface OptimizationResult {
   total_grid_export: number;
   self_consumption_percent: number;
   status: 'completed' | 'failed' | 'running';
-  site_id?: string;
+  site_id?: string; // Add this field
 }
 
 export type OptimizationPriority = "cost" | "self_consumption" | "carbon";

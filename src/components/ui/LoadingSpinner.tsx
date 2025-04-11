@@ -4,11 +4,13 @@ import React from 'react';
 interface LoadingSpinnerProps {
   size?: 'sm' | 'md' | 'lg';
   className?: string;
+  text?: string; // Add text prop
 }
 
 const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ 
   size = 'md',
-  className = ''
+  className = '',
+  text
 }) => {
   const sizeClasses = {
     sm: 'h-4 w-4 border-2',
@@ -17,8 +19,11 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   };
 
   return (
-    <div className={`${sizeClasses[size]} ${className} animate-spin rounded-full border-b-transparent border-primary`}>
-      <span className="sr-only">Loading...</span>
+    <div className="flex flex-col items-center justify-center">
+      <div className={`${sizeClasses[size]} ${className} animate-spin rounded-full border-b-transparent border-primary`}>
+        <span className="sr-only">Loading...</span>
+      </div>
+      {text && <p className="mt-3 text-sm text-muted-foreground">{text}</p>}
     </div>
   );
 };

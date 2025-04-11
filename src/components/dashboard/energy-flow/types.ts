@@ -1,14 +1,15 @@
 
-import { DeviceType, DeviceStatus } from '@/components/dashboard/energy-flow/types';
+// Remove conflicting imports
+// import { DeviceType, DeviceStatus } from '@/components/dashboard/energy-flow/types';
 
-export type DeviceType = 'solar' | 'battery' | 'grid' | 'ev' | 'home' | 'heatpump' | 'generator' | 'wind' | 'load';
-export type DeviceStatus = 'active' | 'inactive' | 'warning' | 'error' | 'charging' | 'discharging' | 'idle';
+export type DeviceType = 'solar' | 'battery' | 'grid' | 'ev' | 'home' | 'heatpump' | 'generator' | 'wind' | 'load' | 'inverter' | 'meter' | 'light' | 'hydro';
+export type DeviceStatus = 'active' | 'inactive' | 'warning' | 'error' | 'charging' | 'discharging' | 'idle' | 'online' | 'offline' | 'maintenance';
 
 export interface EnergyNode {
   id: string;
   name: string;
   type: 'source' | 'storage' | 'consumption';
-  position: {
+  position?: {
     x: number;
     y: number;
   };
@@ -22,7 +23,8 @@ export interface EnergyNode {
   deviceType?: DeviceType;
   status?: DeviceStatus;
   batteryLevel?: number;
-  label?: string; // Added for compatibility
+  label?: string;
+  power: number; // Add power as required property
 }
 
 export interface EnergyConnection {
@@ -31,9 +33,9 @@ export interface EnergyConnection {
   target: string;
   animated: boolean;
   value: number;
-  from?: string; // Added for compatibility 
-  to?: string; // Added for compatibility
-  active?: boolean; // Added for compatibility
+  from?: string; // For compatibility
+  to?: string; // For compatibility
+  active?: boolean; // For compatibility
 }
 
 export interface EnergyFlowData {
@@ -57,9 +59,11 @@ export interface EnergyFlowContextType extends EnergyFlowState {
 export interface EnergyNodeProps {
   node: EnergyNode;
   selected?: boolean;
+  isSelected?: boolean; // Add this for compatibility
   onClick?: () => void;
 }
 
 export interface EnergyFlowChartProps {
   className?: string;
+  animationDelay?: number; // Add this property
 }
