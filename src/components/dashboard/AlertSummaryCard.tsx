@@ -4,7 +4,7 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Bell, ArrowRight, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Alert } from '@/types/energy';
+import { Alert } from '@/types/alert';
 import { supabase } from '@/lib/supabase';
 import { Link } from 'react-router-dom';
 
@@ -45,6 +45,8 @@ const AlertSummaryCard = () => {
     switch (severity?.toLowerCase()) {
       case 'critical':
         return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400';
+      case 'high':
+        return 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400';
       case 'warning':
         return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400';
       default:
@@ -110,7 +112,7 @@ const AlertSummaryCard = () => {
               <div key={alert.id} className="flex items-start gap-3">
                 <div className={`flex-shrink-0 h-2 w-2 mt-2 rounded-full ${getSeverityClass(alert.severity)}`} />
                 <div>
-                  <p className="text-sm font-medium line-clamp-1">{alert.title || 'Untitled Alert'}</p>
+                  <p className="text-sm font-medium line-clamp-1">{alert.title || 'Alert'}</p>
                   <p className="text-xs text-muted-foreground line-clamp-1">{alert.message || 'No details'}</p>
                 </div>
               </div>

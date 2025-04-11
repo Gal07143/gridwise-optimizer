@@ -13,7 +13,7 @@ export interface ModbusDeviceConfig {
   site_id?: string;
   updated_at?: string;
   created_at?: string;
-  status?: 'online' | 'offline' | 'error' | 'maintenance'; // Add status field
+  status?: 'online' | 'offline' | 'error' | 'maintenance';
 }
 
 export interface ModbusRegisterDefinition {
@@ -86,7 +86,7 @@ export interface ModbusDevice extends ModbusDeviceConfig {
   protocol: "tcp" | "rtu";
   description?: string;  
   ip_address?: string;
-  status?: 'online' | 'offline' | 'error' | 'maintenance'; // Add status field
+  status?: 'online' | 'offline' | 'error' | 'maintenance'; 
 }
 
 export interface ModbusRegister {
@@ -103,4 +103,7 @@ export interface ModbusRegister {
   register_name?: string;
   register_length?: number;
   scaleFactor?: number;
+  // Add compatibility fields
+  registerType?: "input" | "holding";
+  dataType?: "int16" | "uint16" | "int32" | "uint32" | "float32";
 }

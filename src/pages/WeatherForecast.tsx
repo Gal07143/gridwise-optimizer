@@ -1,254 +1,327 @@
 
-import React, { useState } from 'react';
-import AppLayout from '@/components/layout/AppLayout';
+import React, { useState, useEffect } from 'react';
 import { Main } from '@/components/ui/main';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CloudSun, Droplets, Thermometer, Wind, Calendar, Clock, CloudRain, ArrowUpRight, ArrowDownRight, AlertTriangle, Battery } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import ErrorBoundary from '@/components/ui/ErrorBoundary';
-import { toast } from 'sonner';
+import { useAppStore } from '@/store/appStore';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { Cloud, Droplets, Sun, Wind, CloudRain, CloudSnow, CloudLightning, ThermometerSun } from 'lucide-react';
+import { fetchWeatherForecast } from '@/services/weatherService';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
-// Sample weather data for demonstration
-const forecastData = [
-  { day: 'Today', date: '2023-08-22', high: 28, low: 18, condition: 'Sunny', precipitation: 0, windSpeed: 10, humidity: 45, icon: <CloudSun className="h-6 w-6 text-yellow-500" /> },
-  { day: 'Tomorrow', date: '2023-08-23', high: 27, low: 17, condition: 'Partly Cloudy', precipitation: 10, windSpeed: 12, humidity: 50, icon: <CloudSun className="h-6 w-6 text-yellow-500" /> },
-  { day: 'Wednesday', date: '2023-08-24', high: 25, low: 16, condition: 'Light Rain', precipitation: 40, windSpeed: 15, humidity: 65, icon: <CloudRain className="h-6 w-6 text-blue-500" /> },
-  { day: 'Thursday', date: '2023-08-25', high: 23, low: 15, condition: 'Overcast', precipitation: 20, windSpeed: 14, humidity: 60, icon: <CloudSun className="h-6 w-6 text-gray-500" /> },
-  { day: 'Friday', date: '2023-08-26', high: 24, low: 16, condition: 'Sunny', precipitation: 0, windSpeed: 8, humidity: 40, icon: <CloudSun className="h-6 w-6 text-yellow-500" /> },
-  { day: 'Saturday', date: '2023-08-27', high: 26, low: 17, condition: 'Sunny', precipitation: 0, windSpeed: 7, humidity: 35, icon: <CloudSun className="h-6 w-6 text-yellow-500" /> },
-  { day: 'Sunday', date: '2023-08-28', high: 29, low: 19, condition: 'Partly Cloudy', precipitation: 5, windSpeed: 9, humidity: 45, icon: <CloudSun className="h-6 w-6 text-yellow-500" /> },
-];
-
-// Hourly forecast data
-const hourlyForecast = Array.from({ length: 24 }, (_, i) => {
-  const hour = i === 0 ? '12 AM' : i < 12 ? `${i} AM` : i === 12 ? '12 PM' : `${i - 12} PM`;
-  const temp = Math.round(22 + Math.sin((i / 24) * Math.PI * 2) * 6);
-  const precipitation = i > 14 && i < 18 ? 30 : 0;
-  const windSpeed = 8 + Math.sin((i / 24) * Math.PI) * 5;
-  return { hour, temp, precipitation, windSpeed, condition: precipitation > 0 ? 'Light Rain' : 'Clear' };
-});
+// Type for weather data
+interface WeatherData {
+  timestamp: string;
+  temperature: number;
+  humidity: number;
+  wind_speed: number;
+  condition: string;
+  precipitation: number;
+  cloud_cover: number;
+  solar_irradiance: number;
+}
 
 const WeatherForecast = () => {
-  const [activeTab, setActiveTab] = useState('forecast');
-  const [forecastType, setForecastType] = useState('daily');
-  const [location, setLocation] = useState('Main Site');
-
-  const handleRefresh = () => {
-    toast.success('Weather forecast refreshed');
+  const { currentSite } = useAppStore();
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('temperature');
+  const [range, setRange] = useState('24h');
+  const [weatherData, setWeatherData] = useState<WeatherData[]>([]);
+  
+  useEffect(() => {
+    const loadWeatherData = async () => {
+      try {
+        setLoading(true);
+        // In a real app, this would fetch from your backend API with currentSite.id
+        const data = await fetchWeatherForecast(currentSite?.id);
+        setWeatherData(data);
+      } catch (error) {
+        console.error('Failed to load weather forecast:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadWeatherData();
+  }, [currentSite, range]);
+  
+  const getWeatherIcon = (condition: string) => {
+    switch (condition?.toLowerCase()) {
+      case 'sunny':
+      case 'clear':
+        return <Sun className="h-8 w-8 text-yellow-500" />;
+      case 'cloudy':
+      case 'partly cloudy':
+        return <Cloud className="h-8 w-8 text-gray-500" />;
+      case 'rain':
+      case 'showers':
+        return <CloudRain className="h-8 w-8 text-blue-500" />;
+      case 'snow':
+        return <CloudSnow className="h-8 w-8 text-blue-200" />;
+      case 'thunderstorm':
+        return <CloudLightning className="h-8 w-8 text-purple-500" />;
+      default:
+        return <Sun className="h-8 w-8 text-yellow-500" />;
+    }
   };
 
-  const handleLocationChange = (value: string) => {
-    setLocation(value);
-    toast.success(`Location changed to ${value}`);
-  };
-
+  const currentWeather = weatherData.length > 0 ? weatherData[0] : null;
+  
   return (
-    <AppLayout>
-      <Main title="Weather Forecast" description="Weather conditions and forecast for your energy sites">
-        <ErrorBoundary>
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-            <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
-              <Select value={location} onValueChange={handleLocationChange}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select location" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Main Site">Main Site</SelectItem>
-                  <SelectItem value="Solar Farm">Solar Farm</SelectItem>
-                  <SelectItem value="Wind Park">Wind Park</SelectItem>
-                  <SelectItem value="Residential">Residential</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={forecastType} onValueChange={setForecastType}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Forecast type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="daily">Daily Forecast</SelectItem>
-                  <SelectItem value="hourly">Hourly Forecast</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <Button onClick={handleRefresh} variant="outline" className="shrink-0">
-              Refresh Forecast
-            </Button>
-          </div>
-
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-            <TabsList>
-              <TabsTrigger value="forecast">Forecast</TabsTrigger>
-              <TabsTrigger value="impact">Energy Impact</TabsTrigger>
-              <TabsTrigger value="historical">Historical Data</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="forecast" className="space-y-4">
-              {forecastType === 'daily' ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-4">
-                  {forecastData.map((day, index) => (
-                    <Card key={index} className="h-full">
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-lg flex justify-between items-center">
-                          <span>{day.day}</span>
-                          {day.icon}
-                        </CardTitle>
-                        <p className="text-sm text-muted-foreground">{day.date}</p>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-3">
-                          <div className="text-2xl font-bold flex items-center justify-between">
-                            <div className="flex items-center">
-                              <ArrowUpRight className="h-4 w-4 text-red-500 mr-1" />
-                              {day.high}°C
-                            </div>
-                            <div className="flex items-center">
-                              <ArrowDownRight className="h-4 w-4 text-blue-500 mr-1" />
-                              {day.low}°C
-                            </div>
-                          </div>
-                          <div className="text-sm">{day.condition}</div>
-                          <div className="grid grid-cols-2 gap-2 text-sm">
-                            <div className="flex items-center">
-                              <CloudRain className="h-4 w-4 mr-1 text-blue-500" />
-                              <span>{day.precipitation}%</span>
-                            </div>
-                            <div className="flex items-center">
-                              <Wind className="h-4 w-4 mr-1 text-gray-500" />
-                              <span>{day.windSpeed} km/h</span>
-                            </div>
-                            <div className="flex items-center">
-                              <Droplets className="h-4 w-4 mr-1 text-blue-400" />
-                              <span>{day.humidity}%</span>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+    <Main title="Weather Forecast">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold">Weather Forecast</h1>
+          <p className="text-gray-500 dark:text-gray-400">
+            Weather conditions and solar generation forecast
+          </p>
+        </div>
+        <Select value={range} onValueChange={setRange}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Select Range" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="24h">24 Hours</SelectItem>
+            <SelectItem value="48h">48 Hours</SelectItem>
+            <SelectItem value="7d">7 Days</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      
+      {loading ? (
+        <div className="flex items-center justify-center h-80">
+          <LoadingSpinner size="lg" text="Loading weather forecast..." />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          {/* Current Weather Card */}
+          <Card className="md:col-span-4 lg:col-span-1">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Current Conditions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {currentWeather ? (
+                <div className="flex flex-col items-center p-4">
+                  <div className="mb-4">
+                    {getWeatherIcon(currentWeather.condition)}
+                  </div>
+                  <div className="text-3xl font-bold mb-2">
+                    {Math.round(currentWeather.temperature)}°C
+                  </div>
+                  <div className="text-lg capitalize mb-4">
+                    {currentWeather.condition}
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4 w-full">
+                    <div className="flex items-center">
+                      <Wind className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <span className="text-sm">{currentWeather.wind_speed} m/s</span>
+                    </div>
+                    <div className="flex items-center">
+                      <Droplets className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <span className="text-sm">{currentWeather.humidity}%</span>
+                    </div>
+                    <div className="flex items-center">
+                      <CloudRain className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <span className="text-sm">{currentWeather.precipitation} mm</span>
+                    </div>
+                    <div className="flex items-center">
+                      <Cloud className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <span className="text-sm">{currentWeather.cloud_cover}%</span>
+                    </div>
+                  </div>
                 </div>
               ) : (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Hourly Forecast</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="overflow-x-auto">
-                      <div className="min-w-[800px]">
-                        <div className="grid grid-cols-24 gap-2">
-                          {hourlyForecast.map((hour, index) => (
-                            <div key={index} className="flex flex-col items-center">
-                              <div className="text-xs text-muted-foreground">{hour.hour}</div>
-                              <div className="h-40 flex flex-col items-center justify-end">
-                                <div 
-                                  className={`w-8 ${hour.condition.includes('Rain') ? 'bg-blue-400' : 'bg-orange-400'} rounded-t`}
-                                  style={{ height: `${(hour.temp - 15) * 8}px` }}
-                                >
-                                </div>
-                              </div>
-                              <div className="mt-1 text-sm font-medium">{hour.temp}°C</div>
-                              <div className="text-xs text-muted-foreground flex items-center">
-                                <CloudRain className="h-3 w-3 mr-1" />
-                                {hour.precipitation}%
-                              </div>
-                              <div className="text-xs text-muted-foreground flex items-center">
-                                <Wind className="h-3 w-3 mr-1" />
-                                {Math.round(hour.windSpeed)} km/h
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                <div className="text-center p-6">
+                  <p>No current weather data available</p>
+                </div>
               )}
-            </TabsContent>
-
-            <TabsContent value="impact" className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Forecasted Production Impact</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center py-2 border-b">
-                        <div className="flex items-center">
-                          <CloudSun className="h-5 w-5 text-yellow-500 mr-2" />
-                          <span>Solar Production</span>
-                        </div>
-                        <div className="font-medium text-green-600">+15% above average</div>
-                      </div>
-                      <div className="flex justify-between items-center py-2 border-b">
-                        <div className="flex items-center">
-                          <Wind className="h-5 w-5 text-blue-500 mr-2" />
-                          <span>Wind Production</span>
-                        </div>
-                        <div className="font-medium text-red-600">-8% below average</div>
-                      </div>
-                      <div className="flex justify-between items-center py-2">
-                        <div className="flex items-center">
-                          <Calendar className="h-5 w-5 text-purple-500 mr-2" />
-                          <span>Overall Weekly Outlook</span>
-                        </div>
-                        <div className="font-medium text-green-600">+7% above average</div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Recommended Actions</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ul className="space-y-2">
-                      <li className="flex items-start p-2 bg-green-50 dark:bg-green-900/20 rounded-md">
-                        <CloudSun className="h-5 w-5 text-green-600 mr-2 mt-0.5" />
-                        <div>
-                          <p className="font-medium">Maximize Solar Collection</p>
-                          <p className="text-sm text-muted-foreground">Clear skies predicted for next 3 days. Ensure panels are clean and optimally positioned.</p>
-                        </div>
-                      </li>
-                      <li className="flex items-start p-2 bg-blue-50 dark:bg-blue-900/20 rounded-md">
-                        <Battery className="h-5 w-5 text-blue-600 mr-2 mt-0.5" />
-                        <div>
-                          <p className="font-medium">Charge Storage</p>
-                          <p className="text-sm text-muted-foreground">Prioritize battery charging during peak solar hours (10 AM - 3 PM).</p>
-                        </div>
-                      </li>
-                      <li className="flex items-start p-2 bg-amber-50 dark:bg-amber-900/20 rounded-md">
-                        <AlertTriangle className="h-5 w-5 text-amber-600 mr-2 mt-0.5" />
-                        <div>
-                          <p className="font-medium">Prepare for Thursday</p>
-                          <p className="text-sm text-muted-foreground">Light rain expected. Adjust energy dispatching schedule accordingly.</p>
-                        </div>
-                      </li>
-                    </ul>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="historical" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Historical Weather Data</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-80 flex items-center justify-center text-muted-foreground">
-                    <p>Historical weather data charts will be displayed here</p>
+            </CardContent>
+          </Card>
+          
+          {/* Next 24 Hours Preview */}
+          <div className="md:col-span-4 lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            {weatherData.slice(1, 5).map((item, index) => (
+              <Card key={index}>
+                <CardContent className="p-4 flex flex-col items-center">
+                  <div className="text-sm text-muted-foreground mb-2">
+                    {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                  {getWeatherIcon(item.condition)}
+                  <div className="text-lg font-semibold mt-2">
+                    {Math.round(item.temperature)}°C
+                  </div>
+                  <div className="text-xs capitalize mt-1">
+                    {item.condition}
                   </div>
                 </CardContent>
               </Card>
-            </TabsContent>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      <Card>
+        <CardHeader className="pb-2">
+          <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid grid-cols-2 md:grid-cols-4">
+              <TabsTrigger value="temperature">
+                <ThermometerSun className="mr-2 h-4 w-4" />
+                Temperature
+              </TabsTrigger>
+              <TabsTrigger value="precipitation">
+                <CloudRain className="mr-2 h-4 w-4" />
+                Precipitation
+              </TabsTrigger>
+              <TabsTrigger value="solar">
+                <Sun className="mr-2 h-4 w-4" />
+                Solar
+              </TabsTrigger>
+              <TabsTrigger value="wind">
+                <Wind className="mr-2 h-4 w-4" />
+                Wind
+              </TabsTrigger>
+            </TabsList>
           </Tabs>
-        </ErrorBoundary>
-      </Main>
-    </AppLayout>
+        </CardHeader>
+        <CardContent className="p-4">
+          <div className="h-80">
+            <TabsContent value="temperature" className="h-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart
+                  data={weatherData}
+                  margin={{ top: 10, right: 30, left: 0, bottom: 20 }}
+                >
+                  <defs>
+                    <linearGradient id="colorTemp" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#ff7c43" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#ff7c43" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+                  <XAxis 
+                    dataKey="timestamp" 
+                    tickFormatter={(time) => new Date(time).toLocaleTimeString([], { hour: '2-digit' })}
+                  />
+                  <YAxis />
+                  <Tooltip 
+                    formatter={(value: number) => [`${value}°C`, 'Temperature']}
+                    labelFormatter={(time) => new Date(time).toLocaleString()}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="temperature"
+                    stroke="#ff7c43"
+                    fillOpacity={1}
+                    fill="url(#colorTemp)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </TabsContent>
+            
+            <TabsContent value="precipitation" className="h-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart
+                  data={weatherData}
+                  margin={{ top: 10, right: 30, left: 0, bottom: 20 }}
+                >
+                  <defs>
+                    <linearGradient id="colorPrecip" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+                  <XAxis 
+                    dataKey="timestamp" 
+                    tickFormatter={(time) => new Date(time).toLocaleTimeString([], { hour: '2-digit' })}
+                  />
+                  <YAxis />
+                  <Tooltip 
+                    formatter={(value: number) => [`${value} mm`, 'Precipitation']}
+                    labelFormatter={(time) => new Date(time).toLocaleString()}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="precipitation"
+                    stroke="#3b82f6"
+                    fillOpacity={1}
+                    fill="url(#colorPrecip)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </TabsContent>
+            
+            <TabsContent value="solar" className="h-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart
+                  data={weatherData}
+                  margin={{ top: 10, right: 30, left: 0, bottom: 20 }}
+                >
+                  <defs>
+                    <linearGradient id="colorSolar" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+                  <XAxis 
+                    dataKey="timestamp" 
+                    tickFormatter={(time) => new Date(time).toLocaleTimeString([], { hour: '2-digit' })}
+                  />
+                  <YAxis />
+                  <Tooltip 
+                    formatter={(value: number) => [`${value} W/m²`, 'Solar Irradiance']}
+                    labelFormatter={(time) => new Date(time).toLocaleString()}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="solar_irradiance"
+                    stroke="#f59e0b"
+                    fillOpacity={1}
+                    fill="url(#colorSolar)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </TabsContent>
+            
+            <TabsContent value="wind" className="h-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart
+                  data={weatherData}
+                  margin={{ top: 10, right: 30, left: 0, bottom: 20 }}
+                >
+                  <defs>
+                    <linearGradient id="colorWind" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+                  <XAxis 
+                    dataKey="timestamp" 
+                    tickFormatter={(time) => new Date(time).toLocaleTimeString([], { hour: '2-digit' })}
+                  />
+                  <YAxis />
+                  <Tooltip 
+                    formatter={(value: number) => [`${value} m/s`, 'Wind Speed']}
+                    labelFormatter={(time) => new Date(time).toLocaleString()}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="wind_speed"
+                    stroke="#10b981"
+                    fillOpacity={1}
+                    fill="url(#colorWind)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </TabsContent>
+          </div>
+        </CardContent>
+      </Card>
+    </Main>
   );
 };
 

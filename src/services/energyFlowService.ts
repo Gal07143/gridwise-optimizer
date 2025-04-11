@@ -1,191 +1,117 @@
 
-import { EnergyNode, EnergyConnection } from '@/components/dashboard/energy-flow/types';
-import { supabase } from '@/integrations/supabase/client';
-import { v4 as uuidv4 } from 'uuid';
+import { EnergyFlowData, EnergyNode, EnergyConnection } from '@/components/dashboard/energy-flow/types';
 
-// Sample data for the initial state
-const defaultNodes: EnergyNode[] = [
-  {
-    id: 'solar',
-    label: 'Solar Panels',
-    type: 'source',
-    power: 5.2,
-    status: 'active',
-    deviceType: 'solar'
-  },
-  {
-    id: 'wind',
-    label: 'Wind Turbine',
-    type: 'source',
-    power: 1.8,
-    status: 'active',
-    deviceType: 'wind'
-  },
-  {
-    id: 'battery',
-    label: 'Battery Storage',
-    type: 'storage',
-    power: 3.5,
-    status: 'active',
-    deviceType: 'battery',
-    batteryLevel: 65
-  },
-  {
-    id: 'grid',
-    label: 'Grid',
-    type: 'source',
-    power: 2.0,
-    status: 'active',
-    deviceType: 'grid'
-  },
-  {
-    id: 'home',
-    label: 'Home Consumption',
-    type: 'consumption',
-    power: 3.8,
-    status: 'active',
-    deviceType: 'load'
-  },
-  {
-    id: 'ev',
-    label: 'EV Charger',
-    type: 'consumption',
-    power: 1.5,
-    status: 'active',
-    deviceType: 'ev'
-  },
-  {
-    id: 'devices',
-    label: 'Smart Devices',
-    type: 'consumption',
-    power: 1.2,
-    status: 'active',
-    deviceType: 'load'
-  }
-];
-
-// Convert from/to format to source/target format with proper IDs
-const createConnections = (): EnergyConnection[] => {
-  const connectionPairs = [
-    // Solar connections
-    { from: 'solar', to: 'home', value: 2.5, active: true },
-    { from: 'solar', to: 'battery', value: 1.2, active: true },
-    { from: 'solar', to: 'grid', value: 1.5, active: true },
-    { from: 'solar', to: 'devices', value: 0.8, active: true },
-    
-    // Wind connections
-    { from: 'wind', to: 'home', value: 0.8, active: true },
-    { from: 'wind', to: 'battery', value: 1.0, active: true },
-    { from: 'wind', to: 'devices', value: 0.5, active: true },
-    
-    // Battery connections
-    { from: 'battery', to: 'home', value: 1.2, active: true },
-    { from: 'battery', to: 'devices', value: 0.8, active: true },
-    { from: 'battery', to: 'ev', value: 1.5, active: true },
-    
-    // Grid connections
-    { from: 'grid', to: 'home', value: 0.3, active: true },
-    { from: 'grid', to: 'devices', value: 0.2, active: true },
-    { from: 'grid', to: 'ev', value: 1.5, active: true },
-    { from: 'grid', to: 'battery', value: 0.5, active: true }
+export const fetchEnergyFlowData = async (siteId?: string): Promise<EnergyFlowData> => {
+  // Mock data that matches the updated types
+  const nodes: EnergyNode[] = [
+    {
+      id: 'solar',
+      name: 'Solar',
+      label: 'Solar',
+      type: 'source',
+      power: 4.2,
+      status: 'active',
+      deviceType: 'solar',
+    },
+    {
+      id: 'wind',
+      name: 'Wind',
+      label: 'Wind',
+      type: 'source',
+      power: 1.8,
+      status: 'active',
+      deviceType: 'wind',
+    },
+    {
+      id: 'battery',
+      name: 'Battery',
+      label: 'Battery',
+      type: 'storage',
+      power: 2.5,
+      status: 'active',
+      deviceType: 'battery',
+      batteryLevel: 78,
+    },
+    {
+      id: 'grid',
+      name: 'Grid',
+      label: 'Grid',
+      type: 'source',
+      power: 1.2,
+      status: 'active',
+      deviceType: 'grid',
+    },
+    {
+      id: 'home',
+      name: 'Home',
+      label: 'Home',
+      type: 'consumption',
+      power: 3.8,
+      status: 'active',
+      deviceType: 'load',
+    },
+    {
+      id: 'ev',
+      name: 'EV',
+      label: 'EV',
+      type: 'consumption',
+      power: 2.0,
+      status: 'active',
+      deviceType: 'ev',
+    },
+    {
+      id: 'heatpump',
+      name: 'Heat Pump',
+      label: 'Heat Pump',
+      type: 'consumption',
+      power: 1.8,
+      status: 'active',
+      deviceType: 'load',
+    }
   ];
 
-  // Convert to EnergyConnection format with proper IDs
-  return connectionPairs.map(conn => ({
-    id: `${conn.from}-${conn.to}-${uuidv4().slice(0,8)}`,
-    source: conn.from,
-    target: conn.to,
-    animated: !!conn.active,
-    value: conn.value,
-    from: conn.from,
-    to: conn.to,
-    active: conn.active
-  }));
+  const connections: EnergyConnection[] = [
+    { id: 'solar-battery', source: 'solar', target: 'battery', animated: true, value: 2.5 },
+    { id: 'solar-home', source: 'solar', target: 'home', animated: true, value: 1.7 },
+    { id: 'wind-home', source: 'wind', target: 'home', animated: true, value: 1.8 },
+    { id: 'grid-home', source: 'grid', target: 'home', animated: true, value: 0.3 },
+    { id: 'grid-ev', source: 'grid', target: 'ev', animated: true, value: 0.9 },
+    { id: 'battery-ev', source: 'battery', target: 'ev', animated: true, value: 1.1 },
+    { id: 'grid-heatpump', source: 'grid', target: 'heatpump', animated: true, value: 1.8 },
+  ];
+
+  // Calculate totals
+  const totalGeneration = nodes
+    .filter(node => node.type === 'source')
+    .reduce((sum, node) => sum + node.power, 0);
+
+  const totalConsumption = nodes
+    .filter(node => node.type === 'consumption')
+    .reduce((sum, node) => sum + node.power, 0);
+
+  const batteryNode = nodes.find(node => node.id === 'battery');
+  const batteryPercentage = batteryNode?.batteryLevel || 0;
+
+  const solarGeneration = nodes.find(node => node.id === 'solar')?.power || 0;
+  const selfConsumptionRate = Math.round((solarGeneration / totalConsumption) * 100);
+  const gridPower = nodes.find(node => node.id === 'grid')?.power || 0;
+  const gridDependencyRate = Math.round((gridPower / totalConsumption) * 100);
+
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 1000));
+
+  return {
+    nodes,
+    connections,
+    totalGeneration,
+    totalConsumption,
+    batteryPercentage,
+    selfConsumptionRate,
+    gridDependencyRate
+  };
 };
 
-const defaultConnections = createConnections();
-
-export interface EnergyFlowData {
-  nodes: EnergyNode[];
-  connections: EnergyConnection[];
-  timestamp: string;
-  totalGeneration: number;
-  totalConsumption: number;
-  batteryPercentage: number;
-  selfConsumptionRate: number;
-  gridDependencyRate: number;
-}
-
-// Function to fetch energy flow data
-export async function fetchEnergyFlowData(siteId: string): Promise<EnergyFlowData> {
-  try {
-    // In a real implementation, we would fetch this from Supabase
-    // For now, we'll use our default data and simulate some variations
-    
-    // Calculate totals
-    const totalGeneration = defaultNodes
-      .filter(node => node.type === 'source' && node.deviceType !== 'grid')
-      .reduce((sum, node) => sum + node.power, 0);
-    
-    const totalConsumption = defaultNodes
-      .filter(node => node.type === 'consumption')
-      .reduce((sum, node) => sum + node.power, 0);
-    
-    const batteryNode = defaultNodes.find(node => node.deviceType === 'battery');
-    const batteryPercentage = batteryNode?.batteryLevel || 0;
-    
-    // Calculate self-consumption rate (percentage of generated energy used directly)
-    const gridImport = defaultConnections
-      .filter(conn => conn.from === 'grid' && conn.active)
-      .reduce((sum, conn) => sum + conn.value, 0);
-    
-    const selfConsumption = totalConsumption - gridImport;
-    const selfConsumptionRate = totalGeneration > 0 
-      ? (selfConsumption / totalGeneration) * 100 
-      : 0;
-    
-    // Calculate grid dependency rate
-    const gridDependencyRate = totalConsumption > 0 
-      ? (gridImport / totalConsumption) * 100 
-      : 0;
-    
-    return {
-      nodes: defaultNodes,
-      connections: defaultConnections,
-      timestamp: new Date().toISOString(),
-      totalGeneration,
-      totalConsumption,
-      batteryPercentage,
-      selfConsumptionRate,
-      gridDependencyRate
-    };
-  } catch (error) {
-    console.error('Error fetching energy flow data:', error);
-    // Return default data in case of error
-    return {
-      nodes: defaultNodes,
-      connections: defaultConnections,
-      timestamp: new Date().toISOString(),
-      totalGeneration: 7.0,
-      totalConsumption: 6.5,
-      batteryPercentage: 65,
-      selfConsumptionRate: 75,
-      gridDependencyRate: 25
-    };
-  }
-}
-
-// Function to send control commands
-export async function sendEnergyFlowCommand(command: string, params: any): Promise<boolean> {
-  try {
-    // Simulate a command being sent
-    console.log(`Sending command: ${command}`, params);
-    // In a real implementation, we would send this to the backend
-    
-    // Simulate success
-    return true;
-  } catch (error) {
-    console.error('Error sending command:', error);
-    return false;
-  }
-}
+export const updateEnergyFlow = async (config: any) => {
+  console.log('Updating energy flow configuration', config);
+  return { success: true };
+};

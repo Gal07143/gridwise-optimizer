@@ -9,6 +9,7 @@ export interface EnergyNode {
   id: string;
   name: string;
   type: 'source' | 'storage' | 'consumption';
+  power: number; // Making power a required property
   position?: {
     x: number;
     y: number;
@@ -24,7 +25,6 @@ export interface EnergyNode {
   status?: DeviceStatus;
   batteryLevel?: number;
   label?: string;
-  power: number; // Add power as required property
 }
 
 export interface EnergyConnection {
@@ -65,5 +65,5 @@ export interface EnergyNodeProps {
 
 export interface EnergyFlowChartProps {
   className?: string;
-  animationDelay?: number; // Add this property
+  animationDelay?: number | string; // Updated type to accept string (CSS value)
 }

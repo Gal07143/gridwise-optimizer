@@ -3,7 +3,7 @@ export interface Alert {
   id: string;
   title: string;
   message: string;
-  severity: 'low' | 'medium' | 'high' | 'critical';
+  severity: 'low' | 'medium' | 'high' | 'critical' | 'info' | 'warning';
   timestamp: string;
   device_id?: string;
   site_id?: string;
@@ -13,9 +13,11 @@ export interface Alert {
   alert_source?: string;
   category?: string;
   resolution_steps?: string[];
+  source?: string;
+  resolved?: boolean;
 }
 
-export type AlertSeverity = 'low' | 'medium' | 'high' | 'critical';
+export type AlertSeverity = 'low' | 'medium' | 'high' | 'critical' | 'info' | 'warning';
 
 export interface AlertCountSummary {
   critical: number;

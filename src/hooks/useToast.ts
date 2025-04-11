@@ -1,50 +1,17 @@
 
-import { toast } from 'sonner';
+import { toast as sonnerToast } from "sonner";
 
-export interface ToastOptions {
-  duration?: number;
-  position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'top-center' | 'bottom-center';
-  id?: string;
-}
-
-export const useToast = () => {
-  const success = (message: string, options?: ToastOptions) => {
-    return toast.success(message, options);
-  };
-
-  const error = (message: string, options?: ToastOptions) => {
-    return toast.error(message, options);
-  };
-
-  const info = (message: string, options?: ToastOptions) => {
-    return toast.info(message, options);
-  };
-
-  const warning = (message: string, options?: ToastOptions) => {
-    return toast.warning(message, options);
-  };
-
-  const custom = (message: React.ReactNode, options?: ToastOptions) => {
-    return toast(message, options);
-  };
-
-  const dismiss = (toastId?: string) => {
-    if (toastId) {
-      toast.dismiss(toastId);
-    } else {
-      toast.dismiss();
-    }
-  };
-
+export function useToast() {
   return {
-    success,
-    error,
-    info,
-    warning,
-    custom,
-    dismiss,
-    toast // Export the raw toast object as well
+    toast: {
+      success: (message: string) => sonnerToast.success(message),
+      error: (message: string) => sonnerToast.error(message),
+      info: (message: string) => sonnerToast.info(message),
+      warning: (message: string) => sonnerToast.warning(message),
+      loading: (message: string) => sonnerToast.loading(message),
+      dismiss: () => sonnerToast.dismiss(),
+    },
   };
-};
+}
 
 export default useToast;

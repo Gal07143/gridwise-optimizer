@@ -7,7 +7,6 @@ export interface OptimizationSettings {
   peak_shaving_enabled: boolean;
   max_grid_power?: number;
   energy_export_limit?: number;
-  // Add missing fields
   min_soc?: number;
   max_soc?: number;
   minBatterySoc?: number; // For compatibility
@@ -35,7 +34,7 @@ export interface OptimizationResult {
   total_grid_export: number;
   self_consumption_percent: number;
   status: 'completed' | 'failed' | 'running';
-  site_id?: string; // Add this field
+  site_id?: string;
 }
 
 export type OptimizationPriority = "cost" | "self_consumption" | "carbon";

@@ -1,221 +1,186 @@
 
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  ArrowDown,
-  ArrowRight,
-  Battery,
-  Home,
-  Sun,
-  Zap,
-  Grid,
-  Plug,
-  PlugZap,
-  Car,
-  Lightbulb
-} from 'lucide-react';
-import { Progress } from '@/components/ui/progress';
-import { Label } from '@/components/ui/label';
-import { Slider } from '@/components/ui/slider';
-import { Switch } from '@/components/ui/switch';
-import { useTheme } from '@/contexts/theme/ThemeProvider';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls } from '@react-three/drei';
-import * as THREE from 'three';
+import React, { useState, useEffect } from 'react';
+import { Main } from '@/components/ui/main';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { useQuery } from '@tanstack/react-query';
+import { Button } from '@/components/ui/button';
+import { Eye, Download, RefreshCw, Settings } from 'lucide-react';
+import { useAppStore } from '@/store/appStore';
+import { EnhancedEnergyFlow } from '@/components/energy';
+import { fetchEnergyFlowData } from '@/services/energyFlowService';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-// Define a Camera component
-const Camera = () => {
-  return <perspectiveCamera position={[0, 0, 5]} />;
-};
-
-// 3D Animation components
-const SolarPanel = () => {
-  const mesh = React.useRef<THREE.Mesh>(null!);
+const EnergyFlow = () => {
+  const { currentSite } = useAppStore();
+  const [viewMode, setViewMode] = useState<'2d' | '3d'>('2d');
+  const [refreshInterval, setRefreshInterval] = useState<string>('10s');
   
-  useFrame(() => {
-    if (mesh.current) {
-      mesh.current.rotation.x += 0.01;
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ['energyFlow', currentSite?.id],
+    queryFn: () => fetchEnergyFlowData(currentSite?.id),
+    refetchInterval: getRefreshIntervalMs(refreshInterval),
+  });
+  
+  function getRefreshIntervalMs(interval: string): number {
+    switch (interval) {
+      case '5s': return 5000;
+      case '10s': return 10000;
+      case '30s': return 30000;
+      case '1m': return 60000;
+      case '5m': return 300000;
+      default: return 10000;
     }
+  }
+
+  // Get date for snapshot
+  const currentDate = new Date();
+  const formattedDate = currentDate.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
+  const formattedTime = currentDate.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit'
   });
   
   return (
-    <mesh ref={mesh}>
-      <boxGeometry args={[1, 0.1, 1]} />
-      <meshStandardMaterial color="blue" />
-    </mesh>
-  );
-};
-
-// Energy flow animation component
-const EnergyFlow = ({ from, to, active = true, color = '#10b981' }) => {
-  const fromPos = {
-    solar: { x: -6, y: 2 },
-    battery: { x: -6, y: -2 },
-    grid: { x: 0, y: 2 },
-    home: { x: 0, y: -2 },
-    car: { x: 6, y: -2 }
-  };
-  
-  const positions = {
-    x1: fromPos[from]?.x || 0,
-    y1: fromPos[from]?.y || 0,
-    x2: fromPos[to]?.x || 0,
-    y2: fromPos[to]?.y || 0
-  };
-  
-  const [dots, setDots] = useState([
-    { id: 1, position: 0 },
-    { id: 2, position: 0.3 },
-    { id: 3, position: 0.6 }
-  ]);
-  
-  React.useEffect(() => {
-    if (!active) return;
-    
-    const interval = setInterval(() => {
-      setDots(prevDots =>
-        prevDots.map(dot => ({
-          ...dot,
-          position: dot.position >= 1 ? 0 : dot.position + 0.03
-        }))
-      );
-    }, 50);
-    
-    return () => clearInterval(interval);
-  }, [active]);
-  
-  if (!active) return null;
-  
-  const distance = Math.sqrt(
-    Math.pow(positions.x2 - positions.x1, 2) + Math.pow(positions.y2 - positions.y1, 2)
-  );
-  
-  const angle = Math.atan2(positions.y2 - positions.y1, positions.x2 - positions.x1);
-  
-  return (
-    <g>
-      <line
-        x1={positions.x1}
-        y1={positions.y1}
-        x2={positions.x2}
-        y2={positions.y2}
-        stroke={color}
-        strokeWidth="2"
-        strokeDasharray="5,5"
-      />
-      {dots.map(dot => {
-        const x = positions.x1 + dot.position * (positions.x2 - positions.x1);
-        const y = positions.y1 + dot.position * (positions.y2 - positions.y1);
-        return (
-          <circle
-            key={dot.id}
-            cx={x}
-            cy={y}
-            r="5"
-            fill={color}
-          />
-        );
-      })}
-    </g>
-  );
-};
-
-const EnergyFlowPage: React.FC = () => {
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
-  
-  const [solarOutput, setSolarOutput] = useState(80);
-  const [batteryCharge, setBatteryCharge] = useState(65);
-  const [homeConsumption] = useState(3.2);
-  const [evCharging, setEvCharging] = useState(true);
-  const [gridExport, setGridExport] = useState(true);
-
-  return (
-    <div className="container mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6">Energy Flow</h1>
+    <Main title="Energy Flow Visualization">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-bold">Energy Flow</h1>
+          <p className="text-muted-foreground">
+            Visualize real-time energy flows between components
+          </p>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <Select
+            value={refreshInterval}
+            onValueChange={setRefreshInterval}
+          >
+            <SelectTrigger className="w-[120px]">
+              <SelectValue placeholder="Refresh rate" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="5s">5 seconds</SelectItem>
+              <SelectItem value="10s">10 seconds</SelectItem>
+              <SelectItem value="30s">30 seconds</SelectItem>
+              <SelectItem value="1m">1 minute</SelectItem>
+              <SelectItem value="5m">5 minutes</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Refresh
+          </Button>
+          
+          <Button variant="outline" size="sm">
+            <Download className="w-4 h-4 mr-2" />
+            Export
+          </Button>
+          
+          <Button variant="outline" size="sm">
+            <Settings className="w-4 h-4 mr-2" />
+            Configure
+          </Button>
+        </div>
+      </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="col-span-2 h-[600px] relative overflow-hidden">
-          <CardHeader>
-            <CardTitle>Live Energy Flow</CardTitle>
-          </CardHeader>
-          <CardContent className="h-full">
-            <div className="w-full h-full relative">
-              <svg viewBox="-10 -5 20 10" className="w-full h-full">
-                {/* Solar panel */}
-                <g transform="translate(-6, -3)">
-                  <rect x="-1.5" y="-1" width="3" height="2" fill={isDark ? "#fbbf24" : "#f59e0b"} rx="0.2" />
-                  <text x="0" y="1.5" textAnchor="middle" fontSize="0.6" fill="currentColor">Solar Panel</text>
-                  <text x="0" y="2.3" textAnchor="middle" fontSize="0.5" fill="currentColor">{solarOutput / 10} kW</text>
-                </g>
-                
-                {/* Battery */}
-                <g transform="translate(-6, 1)">
-                  <rect x="-1" y="-1" width="2" height="2" fill={isDark ? "#34d399" : "#10b981"} rx="0.2" />
-                  <text x="0" y="1.5" textAnchor="middle" fontSize="0.6" fill="currentColor">Battery</text>
-                  <text x="0" y="2.3" textAnchor="middle" fontSize="0.5" fill="currentColor">{batteryCharge}%</text>
-                </g>
-                
-                {/* Grid */}
-                <g transform="translate(0, -3)">
-                  <rect x="-1.5" y="-1" width="3" height="2" fill={isDark ? "#60a5fa" : "#3b82f6"} rx="0.2" />
-                  <text x="0" y="1.5" textAnchor="middle" fontSize="0.6" fill="currentColor">Grid</text>
-                  <text x="0" y="2.3" textAnchor="middle" fontSize="0.5" fill="currentColor">
-                    {gridExport ? "Exporting" : "Importing"}
-                  </text>
-                </g>
-                
-                {/* Home */}
-                <g transform="translate(0, 1)">
-                  <rect x="-1.5" y="-1" width="3" height="2" fill={isDark ? "#f472b6" : "#ec4899"} rx="0.2" />
-                  <text x="0" y="1.5" textAnchor="middle" fontSize="0.6" fill="currentColor">Home</text>
-                  <text x="0" y="2.3" textAnchor="middle" fontSize="0.5" fill="currentColor">{homeConsumption} kW</text>
-                </g>
-                
-                {/* EV */}
-                <g transform="translate(6, 1)">
-                  <rect x="-1.5" y="-1" width="3" height="2" fill={isDark ? "#a78bfa" : "#8b5cf6"} rx="0.2" />
-                  <text x="0" y="1.5" textAnchor="middle" fontSize="0.6" fill="currentColor">EV</text>
-                  <text x="0" y="2.3" textAnchor="middle" fontSize="0.5" fill="currentColor">
-                    {evCharging ? "Charging" : "Idle"}
-                  </text>
-                </g>
-                
-                {/* Energy flow lines */}
-                <EnergyFlow from="solar" to="battery" active={solarOutput > 50} color="#10b981" />
-                <EnergyFlow from="solar" to="home" active={solarOutput > 30} color="#10b981" />
-                <EnergyFlow from="solar" to="grid" active={solarOutput > 70 && gridExport} color="#10b981" />
-                <EnergyFlow from="battery" to="home" active={batteryCharge > 20 && solarOutput < 50} color="#10b981" />
-                <EnergyFlow from="grid" to="home" active={solarOutput < 20 && batteryCharge < 15} color="#3b82f6" />
-                <EnergyFlow from="battery" to="car" active={evCharging && batteryCharge > 50} color="#10b981" />
-                <EnergyFlow from="grid" to="car" active={evCharging && batteryCharge < 20} color="#3b82f6" />
-              </svg>
+      <div className="space-y-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-lg">
+                Energy Flow Visualization
+              </CardTitle>
+              <div className="flex gap-2">
+                <Button 
+                  variant={viewMode === '2d' ? 'default' : 'outline'} 
+                  size="sm"
+                  onClick={() => setViewMode('2d')}
+                >
+                  2D View
+                </Button>
+                <Button 
+                  variant={viewMode === '3d' ? 'default' : 'outline'} 
+                  size="sm"
+                  onClick={() => setViewMode('3d')}
+                >
+                  3D View
+                </Button>
+              </div>
             </div>
+          </CardHeader>
+          <CardContent>
+            {viewMode === '3d' ? (
+              <div className="h-[600px] flex items-center justify-center bg-muted/20 rounded-lg">
+                <div className="text-center">
+                  <p className="mb-2 text-lg">3D View Coming Soon</p>
+                  <p className="text-sm text-muted-foreground">3D visualization is under development</p>
+                  <Button 
+                    className="mt-4" 
+                    onClick={() => setViewMode('2d')}
+                    variant="outline"
+                  >
+                    Switch to 2D View
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="h-[600px] relative">
+                <EnhancedEnergyFlow 
+                  siteId={currentSite?.id} 
+                  hideHeader 
+                  className="h-full border-0 shadow-none" 
+                />
+                <div className="absolute top-4 left-4 bg-background/80 backdrop-blur-sm p-2 rounded-md text-xs">
+                  <div className="font-medium">{currentSite?.name || 'All Sites'}</div>
+                  <div className="text-muted-foreground">
+                    {formattedDate} at {formattedTime}
+                  </div>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
         
-        <div className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <Card>
             <CardHeader>
-              <CardTitle>Solar Production</CardTitle>
+              <CardTitle className="text-base">Generation Sources</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="mb-3">
-                <Progress value={solarOutput} />
-              </div>
-              <div className="flex flex-col space-y-4">
-                <div>
-                  <div className="flex justify-between items-center">
-                    <Label htmlFor="solar-output">Solar Output ({solarOutput}%)</Label>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center border-b pb-2">
+                  <div className="flex items-center">
+                    <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+                    <span>Solar</span>
                   </div>
-                  <Slider 
-                    id="solar-output" 
-                    value={[solarOutput]} 
-                    min={0} 
-                    max={100} 
-                    step={5}
-                    onValueChange={(vals) => setSolarOutput(vals[0])} 
-                  />
+                  <span className="font-medium">{data?.nodes.find(n => n.deviceType === 'solar')?.power.toFixed(1) || '0.0'} kW</span>
+                </div>
+                <div className="flex justify-between items-center border-b pb-2">
+                  <div className="flex items-center">
+                    <div className="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
+                    <span>Grid</span>
+                  </div>
+                  <span className="font-medium">{data?.nodes.find(n => n.deviceType === 'grid')?.power.toFixed(1) || '0.0'} kW</span>
+                </div>
+                <div className="flex justify-between items-center border-b pb-2">
+                  <div className="flex items-center">
+                    <div className="w-3 h-3 bg-teal-500 rounded-full mr-2"></div>
+                    <span>Wind</span>
+                  </div>
+                  <span className="font-medium">{data?.nodes.find(n => n.deviceType === 'wind')?.power.toFixed(1) || '0.0'} kW</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center">
+                    <div className="w-3 h-3 bg-amber-500 rounded-full mr-2"></div>
+                    <span>Battery (Discharging)</span>
+                  </div>
+                  <span className="font-medium">{data?.nodes.find(n => n.id === 'battery')?.power.toFixed(1) || '0.0'} kW</span>
                 </div>
               </div>
             </CardContent>
@@ -223,25 +188,37 @@ const EnergyFlowPage: React.FC = () => {
           
           <Card>
             <CardHeader>
-              <CardTitle>Battery Status</CardTitle>
+              <CardTitle className="text-base">Consumption Points</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="mb-3">
-                <Progress value={batteryCharge} />
-              </div>
-              <div className="flex flex-col space-y-4">
-                <div>
-                  <div className="flex justify-between items-center">
-                    <Label htmlFor="battery-charge">Battery Charge ({batteryCharge}%)</Label>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center border-b pb-2">
+                  <div className="flex items-center">
+                    <div className="w-3 h-3 bg-yellow-500 rounded-full mr-2"></div>
+                    <span>Home / Building</span>
                   </div>
-                  <Slider 
-                    id="battery-charge" 
-                    value={[batteryCharge]} 
-                    min={0} 
-                    max={100} 
-                    step={5} 
-                    onValueChange={(vals) => setBatteryCharge(vals[0])} 
-                  />
+                  <span className="font-medium">{data?.nodes.find(n => n.id === 'home')?.power.toFixed(1) || '0.0'} kW</span>
+                </div>
+                <div className="flex justify-between items-center border-b pb-2">
+                  <div className="flex items-center">
+                    <div className="w-3 h-3 bg-purple-500 rounded-full mr-2"></div>
+                    <span>EV Charger</span>
+                  </div>
+                  <span className="font-medium">{data?.nodes.find(n => n.id === 'ev')?.power.toFixed(1) || '0.0'} kW</span>
+                </div>
+                <div className="flex justify-between items-center border-b pb-2">
+                  <div className="flex items-center">
+                    <div className="w-3 h-3 bg-rose-500 rounded-full mr-2"></div>
+                    <span>Heat Pump</span>
+                  </div>
+                  <span className="font-medium">{data?.nodes.find(n => n.id === 'heatpump')?.power.toFixed(1) || '0.0'} kW</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center">
+                    <div className="w-3 h-3 bg-amber-500 rounded-full mr-2"></div>
+                    <span>Battery (Charging)</span>
+                  </div>
+                  <span className="font-medium">0.0 kW</span>
                 </div>
               </div>
             </CardContent>
@@ -249,40 +226,33 @@ const EnergyFlowPage: React.FC = () => {
           
           <Card>
             <CardHeader>
-              <CardTitle>System Controls</CardTitle>
+              <CardTitle className="text-base">Energy Metrics</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <Switch id="ev-charging" checked={evCharging} onCheckedChange={setEvCharging} />
-                <Label htmlFor="ev-charging">EV Charging Enabled</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Switch id="grid-export" checked={gridExport} onCheckedChange={setGridExport} />
-                <Label htmlFor="grid-export">Grid Export Enabled</Label>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center border-b pb-2">
+                  <span className="text-muted-foreground">Total Generation</span>
+                  <span className="font-medium">{data?.totalGeneration.toFixed(1) || '0.0'} kW</span>
+                </div>
+                <div className="flex justify-between items-center border-b pb-2">
+                  <span className="text-muted-foreground">Total Consumption</span>
+                  <span className="font-medium">{data?.totalConsumption.toFixed(1) || '0.0'} kW</span>
+                </div>
+                <div className="flex justify-between items-center border-b pb-2">
+                  <span className="text-muted-foreground">Self-Consumption Rate</span>
+                  <span className="font-medium">{data?.selfConsumptionRate || 0}%</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Grid Dependency</span>
+                  <span className="font-medium">{data?.gridDependencyRate || 0}%</span>
+                </div>
               </div>
             </CardContent>
           </Card>
         </div>
       </div>
-      
-      <div className="mt-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>3D Visualization</CardTitle>
-          </CardHeader>
-          <CardContent className="h-[300px]">
-            <Canvas>
-              <ambientLight intensity={0.5} />
-              <pointLight position={[10, 10, 10]} />
-              <SolarPanel />
-              <OrbitControls />
-              <Camera />
-            </Canvas>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+    </Main>
   );
 };
 
-export default EnergyFlowPage;
+export default EnergyFlow;
