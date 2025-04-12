@@ -1,6 +1,17 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { HomeIcon, BoltIcon, CogIcon, ChartBarIcon } from '@heroicons/react/24/outline';
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
+import {
+    LayoutDashboard,
+    Settings,
+    Activity,
+    Zap,
+    Menu,
+    X
+} from 'lucide-react';
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 /**
  * Navigation item interface
@@ -9,82 +20,161 @@ interface NavItem {
     path: string;
     label: string;
     icon: React.ElementType;
+    description?: string;
 }
 
 /**
- * Navigation component that provides the main navigation for the application
+ * Navigation link props interface
  */
-const Navigation = () => {
+interface NavLinkProps {
+    item: NavItem;
+    isMobile?: boolean;
+    onClick?: () => void;
+}
+
+/**
+ * Navigation items configuration
+ */
+const navItems: NavItem[] = [
+    {
+        path: '/dashboard',
+        label: 'Dashboard',
+        icon: LayoutDashboard,
+        description: 'Overview and analytics'
+    },
+    {
+        path: '/devices',
+        label: 'Devices',
+        icon: Zap,
+        description: 'Manage connected devices'
+    },
+    {
+        path: '/analytics',
+        label: 'Analytics',
+        icon: Activity,
+        description: 'Data insights and reports'
+    },
+    {
+        path: '/settings',
+        label: 'Settings',
+        icon: Settings,
+        description: 'System configuration'
+    }
+];
+
+/**
+ * Navigation link component
+ */
+const NavLink = ({ item, isMobile, onClick }: NavLinkProps) => {
     const location = useLocation();
+    const isActive = location.pathname.startsWith(item.path);
+    const Icon = item.icon;
 
-    /**
-     * Check if a navigation item is active based on the current path
-     */
-    const isActive = (path: string) => {
-        return location.pathname.startsWith(path);
-    };
-
-    /**
-     * Navigation items configuration
-     */
-    const navItems: NavItem[] = [
-        {
-            path: '/energy-management',
-            label: 'Energy Management',
-            icon: HomeIcon
-        },
-        {
-            path: '/energy-management/assets',
-            label: 'Assets',
-            icon: BoltIcon
-        },
-        {
-            path: '/energy-management/signals',
-            label: 'Grid Signals',
-            icon: ChartBarIcon
-        },
-        {
-            path: '/settings',
-            label: 'Settings',
-            icon: CogIcon
-        }
-    ];
+    if (isMobile) {
+        return (
+            <Link
+                to={item.path}
+                className={cn(
+                    "flex items-center space-x-4 px-3 py-2 rounded-lg transition-colors",
+                    isActive
+                        ? "bg-accent text-accent-foreground"
+                        : "hover:bg-accent/50"
+                )}
+                onClick={onClick}
+            >
+                <Icon className="h-5 w-5" />
+                <div>
+                    <p className="font-medium">{item.label}</p>
+                    {item.description && (
+                        <p className="text-sm text-muted-foreground">
+                            {item.description}
+                        </p>
+                    )}
+                </div>
+            </Link>
+        );
+    }
 
     return (
-        <nav className="bg-gray-800">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex items-center justify-between h-16">
-                    <div className="flex items-center">
-                        <div className="flex-shrink-0">
-                            <Link to="/" className="text-white font-bold text-xl">
-                                Gridwise
-                            </Link>
-                        </div>
-                        <div className="hidden md:block">
-                            <div className="ml-10 flex items-baseline space-x-4">
-                                {navItems.map((item) => {
-                                    const Icon = item.icon;
-                                    return (
-                                        <Link
-                                            key={item.path}
-                                            to={item.path}
-                                            className={`${
-                                                isActive(item.path)
-                                                    ? 'bg-gray-900 text-white'
-                                                    : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                                            } px-3 py-2 rounded-md text-sm font-medium`}
-                                        >
-                                            <Icon className="h-5 w-5 inline-block mr-2" />
-                                            {item.label}
-                                        </Link>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    </div>
+        <Link
+            to={item.path}
+            className={cn(
+                "flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                isActive
+                    ? "bg-accent text-accent-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+            )}
+            onClick={onClick}
+        >
+            <Icon className="h-4 w-4" />
+            <span>{item.label}</span>
+        </Link>
+    );
+};
+
+/**
+ * Mobile navigation component
+ */
+const MobileNav = () => {
+    const [open, setOpen] = React.useState(false);
+
+    return (
+        <Sheet open={open} onOpenChange={setOpen}>
+            <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="md:hidden">
+                    <Menu className="h-5 w-5" />
+                    <span className="sr-only">Toggle menu</span>
+                </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-80">
+                <div className="flex items-center justify-between">
+                    <Link to="/" className="flex items-center space-x-2" onClick={() => setOpen(false)}>
+                        <Zap className="h-6 w-6" />
+                        <span className="font-bold text-lg">Gridwise</span>
+                    </Link>
+                    <Button variant="ghost" size="icon" onClick={() => setOpen(false)}>
+                        <X className="h-5 w-5" />
+                    </Button>
+                </div>
+                <nav className="mt-8 flex flex-col space-y-2">
+                    {navItems.map((item) => (
+                        <NavLink 
+                            key={item.path} 
+                            item={item} 
+                            isMobile 
+                            onClick={() => setOpen(false)} 
+                        />
+                    ))}
+                </nav>
+            </SheetContent>
+        </Sheet>
+    );
+};
+
+/**
+ * Main navigation component
+ */
+const Navigation = () => {
+    return (
+        <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <div className="container flex h-14 items-center">
+                <div className="flex items-center space-x-4 md:space-x-6">
+                    <Link to="/" className="flex items-center space-x-2">
+                        <Zap className="h-6 w-6" />
+                        <span className="hidden font-bold md:inline-block">Gridwise</span>
+                    </Link>
+                    <nav className="hidden md:flex items-center space-x-2">
+                        {navItems.map((item) => (
+                            <NavLink key={item.path} item={item} />
+                        ))}
+                    </nav>
+                </div>
+                <div className="flex flex-1 items-center justify-end space-x-4">
+                    <ThemeToggle />
+                    <MobileNav />
                 </div>
             </div>
-        </nav>
+        </header>
     );
 };
 

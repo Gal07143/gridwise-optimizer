@@ -1,21 +1,61 @@
 import * as React from "react"
+import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
-const Card = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn(
-      "rounded-xl border bg-card text-card-foreground shadow",
-      className
-    )}
-    {...props}
-  />
-))
+/**
+ * Card variants configuration using class-variance-authority
+ * Includes different styles for different card types and states
+ */
+const cardVariants = cva(
+  "rounded-xl border bg-card text-card-foreground transition-all duration-200",
+  {
+    variants: {
+      variant: {
+        default: "shadow hover:shadow-md",
+        ghost: "border-none shadow-none hover:bg-accent/50",
+        outline: "border-2 shadow-none hover:border-primary/50",
+        elevated: "shadow-lg hover:shadow-xl",
+      },
+      interactive: {
+        true: "cursor-pointer",
+        false: "",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      interactive: false,
+    },
+  }
+)
+
+/**
+ * Card component props interface
+ * Extends HTML div attributes and includes additional props for variants
+ */
+export interface CardProps
+  extends React.HTMLAttributes<HTMLDivElement>,
+    VariantProps<typeof cardVariants> {
+  /** Whether the card is interactive (clickable) */
+  interactive?: boolean
+}
+
+/**
+ * Card component that supports different variants and interactive states
+ */
+const Card = React.forwardRef<HTMLDivElement, CardProps>(
+  ({ className, variant, interactive, ...props }, ref) => (
+    <div
+      ref={ref}
+      className={cn(cardVariants({ variant, interactive, className }))}
+      {...props}
+    />
+  )
+)
 Card.displayName = "Card"
 
+/**
+ * Card header component for consistent header styling
+ */
 const CardHeader = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
@@ -28,6 +68,9 @@ const CardHeader = React.forwardRef<
 ))
 CardHeader.displayName = "CardHeader"
 
+/**
+ * Card title component for consistent title styling
+ */
 const CardTitle = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLHeadingElement>
@@ -40,6 +83,9 @@ const CardTitle = React.forwardRef<
 ))
 CardTitle.displayName = "CardTitle"
 
+/**
+ * Card description component for consistent description styling
+ */
 const CardDescription = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLParagraphElement>
@@ -52,6 +98,9 @@ const CardDescription = React.forwardRef<
 ))
 CardDescription.displayName = "CardDescription"
 
+/**
+ * Card content component for consistent content styling
+ */
 const CardContent = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
@@ -60,6 +109,9 @@ const CardContent = React.forwardRef<
 ))
 CardContent.displayName = "CardContent"
 
+/**
+ * Card footer component for consistent footer styling
+ */
 const CardFooter = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
