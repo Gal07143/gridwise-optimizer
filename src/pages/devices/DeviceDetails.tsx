@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Main } from '@/components/ui/main';
@@ -13,27 +12,39 @@ import DeviceMaintenanceTab from './DeviceMaintenanceTab';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-// Convert Device to EnergyDevice
+// Convert Device to EnergyDevice with appropriate type safety
 const convertToEnergyDevice = (device: Device): EnergyDevice => {
+  // This function ensures safe type conversion
+  
+  // Check if the device.type is a valid DeviceType
+  const isValidDeviceType = (type: string): type is DeviceType => {
+    return ['solar', 'battery', 'grid', 'ev', 'home', 'heatpump', 'generator', 'wind'].includes(type);
+  };
+  
+  // Check if the device.status is a valid DeviceStatus
+  const isValidDeviceStatus = (status: string): status is DeviceStatus => {
+    return ['active', 'inactive', 'warning', 'error'].includes(status);
+  };
+  
+  // Default type and status if invalid
+  const safeType: DeviceType = isValidDeviceType(device.type) ? device.type as DeviceType : 'home';
+  const safeStatus: DeviceStatus = isValidDeviceStatus(device.status) ? device.status as DeviceStatus : 'inactive';
+  
   return {
     id: device.id,
     name: device.name,
-    // Cast string type to DeviceType enum, with check for valid type
-    type: (device.type as DeviceType) || 'unknown' as DeviceType,
-    // Cast string status to DeviceStatus enum, with check for valid status
-    status: (device.status as DeviceStatus) || 'unknown' as DeviceStatus,
+    type: safeType,
+    status: safeStatus,
+    site_id: device.site_id,
     capacity: device.capacity,
-    current_output: device.current_output,
+    power: device.current_output,
     description: device.description,
     location: device.location,
     created_at: device.created_at || new Date().toISOString(),
     last_updated: device.last_updated || new Date().toISOString(),
-    firmware: device.firmware,
-    protocol: device.protocol,
-    metrics: device.metrics || {},
-    site_id: device.site_id,
+    firmware_version: device.firmware,
     model: device.model,
-    installation_date: device.installation_date
+    manufacturer: device.manufacturer
   };
 };
 

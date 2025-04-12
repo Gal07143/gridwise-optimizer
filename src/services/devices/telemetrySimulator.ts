@@ -1,6 +1,9 @@
 
 import { EnergyReading } from "@/types/energy";
 
+/**
+ * Simulate real-time telemetry for a device
+ */
 export const simulateTelemetry = (deviceId: string, parameter?: string): EnergyReading => {
   const timestamp = new Date().toISOString();
   
@@ -18,6 +21,9 @@ export const simulateTelemetry = (deviceId: string, parameter?: string): EnergyR
   };
 };
 
+/**
+ * Simulate historical telemetry data for a device
+ */
 export const simulateHistoricalTelemetry = (
   deviceId: string, 
   hours = 24, 

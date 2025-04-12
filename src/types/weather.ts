@@ -15,7 +15,9 @@ export type WeatherCondition =
   | 'Partly Cloudy'
   | 'Cloudy'
   | 'Light Rain'
-  | 'Rain';
+  | 'Rain'
+  | 'Mostly Cloudy'
+  | 'Scattered Clouds';
 
 export interface WeatherData {
   condition: WeatherCondition;

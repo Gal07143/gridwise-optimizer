@@ -1,64 +1,42 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { EnergyReading } from '@/types/energy';
+import { simulateHistoricalTelemetry } from '@/services/devices/telemetrySimulator';
 
-// Define the interface with required properties
-interface TelemetryData {
-  timestamp: string;
-  metric: string;
-  device_id: string;
-  value: number;
-}
+/**
+ * Hook to fetch telemetry history for a device
+ */
+export function useTelemetryHistory(deviceId: string, parameter: string) {
+  const [data, setData] = useState<EnergyReading[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<Error | null>(null);
 
-export const useTelemetryHistory = (deviceId: string, metric: string) => {
-  const [history, setHistory] = useState<TelemetryData[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchHistory = async () => {
+  const fetchData = async () => {
     setIsLoading(true);
-    setError(null);
-
     try {
-      const { data, error } = await supabase
-        .from('energy_readings')
-        .select('timestamp, power, device_id')
-        .eq('device_id', deviceId)
-        .order('timestamp', { ascending: false })
-        .limit(100);
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      // Transform the data to match the TelemetryData interface
-      const telemetryData: TelemetryData[] = data.map(item => ({
-        timestamp: item.timestamp,
-        metric: 'power',
-        device_id: item.device_id || deviceId,
-        value: item.power || 0,
-      }));
-
-      setHistory(telemetryData);
-    } catch (err: any) {
-      setError(err.message);
+      // In a real app, you would fetch from an API here
+      // For simulation, we use the simulator
+      const simulatedData = simulateHistoricalTelemetry(deviceId, 24);
+      setData(simulatedData);
+      setError(null);
+      return simulatedData;
+    } catch (err) {
+      console.error('Error fetching telemetry history:', err);
+      setError(err instanceof Error ? err : new Error('Failed to fetch telemetry history'));
+      return [];
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    if (deviceId) {
-      fetchHistory();
-    }
-  }, [deviceId, metric]);
+    fetchData();
+  }, [deviceId, parameter]);
 
-  // Make it compatible with react-query style interface
-  return { 
-    history, 
-    isLoading, 
-    error, 
-    data: history,
-    refetch: fetchHistory
+  return {
+    data,
+    isLoading,
+    error,
+    refetch: fetchData
   };
-};
+}
