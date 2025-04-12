@@ -277,10 +277,12 @@ export interface AutomatedReport {
 export interface EquipmentGroup {
   id: string;
   name: string;
-  description?: string;
-  parentGroupId?: string;
+  description: string;
+  parentId: string | null;
   equipmentIds: string[];
-  type: 'functional' | 'physical' | 'organizational' | 'custom';
+  type: 'FUNCTIONAL' | 'LOCATION' | 'SYSTEM';
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface EnergySaving {
