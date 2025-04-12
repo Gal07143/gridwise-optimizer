@@ -1,4 +1,3 @@
-
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
@@ -16,8 +15,7 @@ export default defineConfig(({ mode }) => ({
       // For React-SWC, don't use fastRefresh property
       // It's internally managed by the plugin
     }),
-    mode === 'development' &&
-    componentTagger(),
+    (mode === 'development' || mode === 'preview') && componentTagger(),
   ].filter(Boolean),
   resolve: {
     alias: {
@@ -26,14 +24,16 @@ export default defineConfig(({ mode }) => ({
   },
   define: {
     // This enables compatibility with packages that use process.env
-    'process.env': {}
+    'process.env': {
+      NODE_ENV: JSON.stringify(mode),
+    }
   },
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-router-dom', 'framer-motion'],
   },
   // Increase build performance and manage memory usage
   build: {
-    sourcemap: mode !== 'production',
+    sourcemap: true, // Enable sourcemaps for debugging
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
@@ -50,5 +50,9 @@ export default defineConfig(({ mode }) => ({
         }
       }
     }
+  },
+  preview: {
+    port: 8080,
+    host: true,
   }
 }));
