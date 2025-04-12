@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { energyManagementService } from '../services/energyManagementService';
 import { Asset, GridSignal } from '../types/energyManagement';
 
@@ -19,55 +19,81 @@ export const EnergyManagementProvider: React.FC<{ children: React.ReactNode }> =
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const refreshAssets = async () => {
+    // Memoized refresh functions to prevent unnecessary re-renders
+    const refreshAssets = useCallback(async () => {
         try {
             const data = await energyManagementService.getAssets();
-            setAssets(data);
+            setAssets(prevAssets => {
+                // Only update if data has changed
+                if (JSON.stringify(prevAssets) !== JSON.stringify(data)) {
+                    return data;
+                }
+                return prevAssets;
+            });
             setError(null);
         } catch (err) {
             setError('Failed to fetch assets');
             console.error(err);
         }
-    };
+    }, []);
 
-    const refreshSignals = async () => {
+    const refreshSignals = useCallback(async () => {
         try {
             const data = await energyManagementService.getGridSignals();
-            setSignals(data);
+            setSignals(prevSignals => {
+                // Only update if data has changed
+                if (JSON.stringify(prevSignals) !== JSON.stringify(data)) {
+                    return data;
+                }
+                return prevSignals;
+            });
             setError(null);
         } catch (err) {
             setError('Failed to fetch grid signals');
             console.error(err);
         }
-    };
+    }, []);
+
+    // Memoized context value to prevent unnecessary re-renders
+    const contextValue = useMemo(() => ({
+        assets,
+        signals,
+        loading,
+        error,
+        refreshAssets,
+        refreshSignals,
+    }), [assets, signals, loading, error, refreshAssets, refreshSignals]);
 
     useEffect(() => {
+        let mounted = true;
+
         const initializeData = async () => {
             setLoading(true);
             try {
+                // Use Promise.all to fetch data in parallel
                 await Promise.all([refreshAssets(), refreshSignals()]);
             } catch (err) {
-                setError('Failed to initialize data');
-                console.error(err);
+                if (mounted) {
+                    setError('Failed to initialize data');
+                    console.error(err);
+                }
             } finally {
-                setLoading(false);
+                if (mounted) {
+                    setLoading(false);
+                }
             }
         };
 
         initializeData();
-    }, []);
+
+        // Cleanup function to prevent state updates after unmount
+        return () => {
+            mounted = false;
+        };
+    }, [refreshAssets, refreshSignals]);
 
     return (
-        <EnergyManagementContext.Provider
-            value={{
-                assets,
-                signals,
-                loading,
-                error,
-                refreshAssets,
-                refreshSignals,
-            }}
-        >
+        <EnergyManagementContext.Provider value={contextValue}>
             {children}
         </EnergyManagementContext.Provider>
     );
