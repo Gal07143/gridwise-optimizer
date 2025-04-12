@@ -42,7 +42,17 @@ import { supabaseService } from '@/services/supabaseService';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { useWebSocket } from '@/hooks/useWebSocket';
-import { format } from 'date-fns';
+import { format, subDays, subHours } from 'date-fns';
+import { fetchEnergyAnalytics } from '@/lib/supabase';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+interface EnergyData {
+  timestamp: string;
+  consumption: number;
+  production: number;
+  grid_import: number;
+  grid_export: number;
+}
 
 const Dashboard: React.FC = () => {
   const { setDashboardView, currentSite } = useAppStore();
@@ -51,10 +61,10 @@ const Dashboard: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [historicalData, setHistoricalData] = useState<any[]>([]);
-  const [selectedTimeRange, setSelectedTimeRange] = useState<'1h' | '24h' | '7d'>('1h');
+  const [historicalData, setHistoricalData] = useState<EnergyData[]>([]);
+  const [selectedTimeRange, setSelectedTimeRange] = useState<'hour' | 'day' | 'week' | 'month'>('day');
   
-  const { lastMessage, sendMessage } = useWebSocket('ws://localhost:3001');
+  const { lastMessage, sendMessage } = useWebSocket('ws://localhost:8080/ws');
 
   useEffect(() => {
     setDashboardView('energy');
@@ -96,9 +106,8 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     if (lastMessage) {
-      const data = JSON.parse(lastMessage.data);
-      setDashboardData(data);
-      setHistoricalData(prev => [...prev, { ...data, timestamp: new Date() }].slice(-100));
+      const newData = JSON.parse(lastMessage.data);
+      setHistoricalData(prev => [...prev, newData].slice(-100));
     }
   }, [lastMessage]);
 
@@ -107,10 +116,36 @@ const Dashboard: React.FC = () => {
     fetchDashboardData();
   };
 
-  const handleTimeRangeChange = (range: '1h' | '24h' | '7d') => {
-    setSelectedTimeRange(range);
-    sendMessage(JSON.stringify({ type: 'timeRange', value: range }));
-  };
+  const fetchData = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const endDate = new Date().toISOString();
+      const startDate = (() => {
+        switch (selectedTimeRange) {
+          case 'hour':
+            return subHours(new Date(), 1).toISOString();
+          case 'day':
+            return subDays(new Date(), 1).toISOString();
+          case 'week':
+            return subDays(new Date(), 7).toISOString();
+          case 'month':
+            return subDays(new Date(), 30).toISOString();
+        }
+      })();
+
+      const data = await fetchEnergyAnalytics(startDate, endDate, selectedTimeRange);
+      setHistoricalData(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch data');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [selectedTimeRange]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   if (isLoading && !isRefreshing) {
     return (
@@ -164,29 +199,20 @@ const Dashboard: React.FC = () => {
               </p>
             </div>
             <div className="flex gap-2">
-              <div className="flex items-center gap-2">
-                <Button 
-                  variant={selectedTimeRange === '1h' ? 'default' : 'outline'} 
-                  size="sm"
-                  onClick={() => handleTimeRangeChange('1h')}
-                >
-                  1H
-                </Button>
-                <Button 
-                  variant={selectedTimeRange === '24h' ? 'default' : 'outline'} 
-                  size="sm"
-                  onClick={() => handleTimeRangeChange('24h')}
-                >
-                  24H
-                </Button>
-                <Button 
-                  variant={selectedTimeRange === '7d' ? 'default' : 'outline'} 
-                  size="sm"
-                  onClick={() => handleTimeRangeChange('7d')}
-                >
-                  7D
-                </Button>
-              </div>
+              <Select
+                value={selectedTimeRange}
+                onValueChange={(value: 'hour' | 'day' | 'week' | 'month') => setSelectedTimeRange(value)}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Select time range" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="hour">Last Hour</SelectItem>
+                  <SelectItem value="day">Last 24 Hours</SelectItem>
+                  <SelectItem value="week">Last Week</SelectItem>
+                  <SelectItem value="month">Last Month</SelectItem>
+                </SelectContent>
+              </Select>
               <Button variant="outline" size="sm" className="gap-1">
                 <Share2 className="h-4 w-4" /> Share
               </Button>
@@ -335,39 +361,46 @@ const Dashboard: React.FC = () => {
               <CardTitle>Energy Flow History</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-[300px]">
+              <div className="h-[400px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={historicalData}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis 
                       dataKey="timestamp" 
-                      tickFormatter={(value) => format(new Date(value), 'HH:mm')}
+                      tickFormatter={(value) => format(new Date(value), 'MMM d, HH:mm')}
                     />
                     <YAxis />
                     <Tooltip 
-                      labelFormatter={(value) => format(new Date(value), 'HH:mm:ss')}
-                      formatter={(value: number) => [`${value} kW`, 'Power']}
+                      labelFormatter={(value) => format(new Date(value), 'MMM d, HH:mm')}
+                      formatter={(value: number) => [`${value} kWh`, '']}
                     />
                     <Legend />
                     <Line 
                       type="monotone" 
-                      dataKey="gridSupply.power" 
-                      name="Grid Supply" 
+                      dataKey="consumption" 
+                      name="Consumption" 
+                      stroke="#ef4444" 
+                      strokeWidth={2}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="production" 
+                      name="Production" 
+                      stroke="#22c55e" 
+                      strokeWidth={2}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="grid_import" 
+                      name="Grid Import" 
                       stroke="#3b82f6" 
                       strokeWidth={2}
                     />
                     <Line 
                       type="monotone" 
-                      dataKey="pvProduction.power" 
-                      name="PV Production" 
+                      dataKey="grid_export" 
+                      name="Grid Export" 
                       stroke="#f59e0b" 
-                      strokeWidth={2}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="household.consumption" 
-                      name="Household" 
-                      stroke="#10b981" 
                       strokeWidth={2}
                     />
                   </LineChart>
