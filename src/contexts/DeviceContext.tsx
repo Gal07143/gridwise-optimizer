@@ -2,27 +2,34 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'react-hot-toast';
 
+/**
+ * Device interface representing a device in the system
+ */
 export interface Device {
   id: string;
   name: string;
   type: string;
   protocol: string;
-  mqtt_topic?: string;
+  status: 'online' | 'offline';
+  last_seen: string | null;
+  mqtt_topic: string;
   http_endpoint?: string;
-  status: string;
-  last_seen?: string;
-  is_active: boolean;
-  metadata?: Record<string, any>;
+  ip_address?: string;
+  port?: number;
+  slave_id?: number;
 }
 
+/**
+ * TelemetryData interface representing telemetry data from a device
+ */
 export interface TelemetryData {
-  id: string;
-  device_id: string;
   timestamp: string;
-  message: Record<string, any>;
-  source: string;
+  data: Record<string, any>;
 }
 
+/**
+ * DeviceContextType interface defining the shape of the device context
+ */
 interface DeviceContextType {
   devices: Device[];
   loading: boolean;
@@ -38,8 +45,12 @@ interface DeviceContextType {
   fetchDeviceTelemetry: (deviceId: string) => Promise<void>;
 }
 
+// Create the device context
 const DeviceContext = createContext<DeviceContextType | undefined>(undefined);
 
+/**
+ * DeviceProvider component that provides device data and operations to the application
+ */
 export function DeviceProvider({ children }: { children: React.ReactNode }) {
   const [devices, setDevices] = useState<Device[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,6 +58,9 @@ export function DeviceProvider({ children }: { children: React.ReactNode }) {
   const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
   const [deviceTelemetry, setDeviceTelemetry] = useState<Record<string, TelemetryData[]>>({});
 
+  /**
+   * Fetch all devices from the database
+   */
   const fetchDevices = async () => {
     try {
       setLoading(true);
@@ -58,13 +72,17 @@ export function DeviceProvider({ children }: { children: React.ReactNode }) {
       if (error) throw error;
       setDevices(data || []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch devices');
-      toast.error('Failed to fetch devices');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch devices';
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
+  /**
+   * Add a new device to the database
+   */
   const addDevice = async (device: Omit<Device, 'id'>) => {
     try {
       const { data, error } = await supabase
@@ -77,11 +95,15 @@ export function DeviceProvider({ children }: { children: React.ReactNode }) {
       setDevices(prev => [data, ...prev]);
       toast.success('Device added successfully');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add device');
-      toast.error('Failed to add device');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to add device';
+      setError(errorMessage);
+      toast.error(errorMessage);
     }
   };
 
+  /**
+   * Update an existing device in the database
+   */
   const updateDevice = async (id: string, updates: Partial<Device>) => {
     try {
       const { data, error } = await supabase
@@ -97,11 +119,15 @@ export function DeviceProvider({ children }: { children: React.ReactNode }) {
       ));
       toast.success('Device updated successfully');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update device');
-      toast.error('Failed to update device');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update device';
+      setError(errorMessage);
+      toast.error(errorMessage);
     }
   };
 
+  /**
+   * Delete a device from the database
+   */
   const deleteDevice = async (id: string) => {
     try {
       const { error } = await supabase
@@ -113,11 +139,15 @@ export function DeviceProvider({ children }: { children: React.ReactNode }) {
       setDevices(prev => prev.filter(device => device.id !== id));
       toast.success('Device deleted successfully');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete device');
-      toast.error('Failed to delete device');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to delete device';
+      setError(errorMessage);
+      toast.error(errorMessage);
     }
   };
 
+  /**
+   * Send a command to a device
+   */
   const sendCommand = async (deviceId: string, command: Record<string, any>) => {
     try {
       const response = await fetch(`/api/devices/${deviceId}/command`, {
@@ -131,11 +161,15 @@ export function DeviceProvider({ children }: { children: React.ReactNode }) {
       if (!response.ok) throw new Error('Failed to send command');
       toast.success('Command sent successfully');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to send command');
-      toast.error('Failed to send command');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to send command';
+      setError(errorMessage);
+      toast.error(errorMessage);
     }
   };
 
+  /**
+   * Fetch telemetry data for a specific device
+   */
   const fetchDeviceTelemetry = async (deviceId: string) => {
     try {
       const { data, error } = await supabase
@@ -151,7 +185,8 @@ export function DeviceProvider({ children }: { children: React.ReactNode }) {
         [deviceId]: data || [],
       }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch telemetry');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch telemetry';
+      setError(errorMessage);
       toast.error('Failed to fetch telemetry data');
     }
   };
@@ -228,6 +263,9 @@ export function DeviceProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+/**
+ * Custom hook to use the device context
+ */
 export function useDevices() {
   const context = useContext(DeviceContext);
   if (context === undefined) {

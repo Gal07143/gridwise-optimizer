@@ -1,105 +1,191 @@
 import React, { useEffect, useState } from 'react';
-import { useDevices } from '@/contexts/DeviceContext';
+import { useNavigate } from 'react-router-dom';
+import { useDevices, Device } from '@/contexts/DeviceContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, RefreshCw, Settings, Power } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
-interface ModbusDevice {
-  id: string;
-  name: string;
+interface ModbusDevice extends Device {
   ipAddress: string;
   port: number;
   slaveId: number;
-  status: 'connected' | 'disconnected';
-  lastSeen?: string;
 }
 
-const ModbusDevices = () => {
-  const { devices } = useDevices();
-  const [modbusDevices, setModbusDevices] = useState<ModbusDevice[]>([]);
-  const [loading, setLoading] = useState(true);
+/**
+ * ModbusDeviceCard component for displaying a single Modbus device
+ */
+const ModbusDeviceCard = ({ device, onRefresh, onTogglePower }: { 
+  device: ModbusDevice; 
+  onRefresh: () => void;
+  onTogglePower: () => void;
+}) => (
+  <Card>
+    <CardHeader>
+      <CardTitle>{device.name}</CardTitle>
+    </CardHeader>
+    <CardContent>
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <p className="text-sm text-muted-foreground">IP Address</p>
+            <p className="font-medium">{device.ipAddress}</p>
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground">Port</p>
+            <p className="font-medium">{device.port}</p>
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground">Slave ID</p>
+            <p className="font-medium">{device.slaveId}</p>
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground">Status</p>
+            <p className={`font-medium ${device.status === 'online' ? 'text-green-500' : 'text-red-500'}`}>
+              {device.status}
+            </p>
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground">Last Seen</p>
+            <p className="font-medium">
+              {device.last_seen ? new Date(device.last_seen).toLocaleString() : 'Never'}
+            </p>
+          </div>
+        </div>
+        <div className="flex space-x-2">
+          <Button variant="outline" size="sm" onClick={onRefresh}>
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Refresh
+          </Button>
+          <Button variant="outline" size="sm" onClick={onTogglePower}>
+            <Power className="w-4 h-4 mr-2" />
+            Toggle Power
+          </Button>
+          <Button variant="outline" size="sm">
+            <Settings className="w-4 h-4 mr-2" />
+            Settings
+          </Button>
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+);
 
-  // Filter Modbus devices from all devices
+/**
+ * LoadingState component for displaying a loading state
+ */
+const LoadingState = () => (
+  <div className="container mx-auto p-6">
+    <Card>
+      <CardContent className="p-6">
+        <p className="text-center text-muted-foreground">Loading Modbus devices...</p>
+      </CardContent>
+    </Card>
+  </div>
+);
+
+/**
+ * ErrorState component for displaying an error state
+ */
+const ErrorState = ({ error }: { error: string }) => (
+  <div className="container mx-auto p-6">
+    <Card>
+      <CardContent className="p-6">
+        <p className="text-center text-red-500">{error}</p>
+      </CardContent>
+    </Card>
+  </div>
+);
+
+/**
+ * EmptyState component for displaying an empty state
+ */
+const EmptyState = () => (
+  <Card>
+    <CardContent className="p-6">
+      <p className="text-center text-muted-foreground">No Modbus devices found</p>
+    </CardContent>
+  </Card>
+);
+
+/**
+ * ModbusDevices component for displaying and managing Modbus devices
+ */
+const ModbusDevices = () => {
+  const navigate = useNavigate();
+  const { devices, loading, error, fetchDevices, sendCommand } = useDevices();
+  const [modbusDevices, setModbusDevices] = useState<ModbusDevice[]>([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
   useEffect(() => {
-    const modbusDevs = devices
+    fetchDevices();
+  }, [fetchDevices]);
+
+  useEffect(() => {
+    const filteredDevices = devices
       .filter(device => device.protocol === 'modbus')
       .map(device => ({
-        id: device.id,
-        name: device.name,
-        ipAddress: device.metadata?.ipAddress || 'Unknown',
-        port: device.metadata?.port || 502,
-        slaveId: device.metadata?.slaveId || 1,
-        status: device.status === 'online' ? 'connected' as const : 'disconnected' as const,
-        lastSeen: device.last_seen,
-      }));
-    
-    setModbusDevices(modbusDevs);
-    setLoading(false);
+        ...device,
+        ipAddress: device.mqtt_topic?.split('/')[0] || '',
+        port: parseInt(device.mqtt_topic?.split('/')[1] || '502', 10),
+        slaveId: parseInt(device.mqtt_topic?.split('/')[2] || '1', 10),
+      })) as ModbusDevice[];
+    setModbusDevices(filteredDevices);
   }, [devices]);
 
+  const handleRefresh = async (deviceId: string) => {
+    setIsRefreshing(true);
+    try {
+      await fetchDevices();
+      toast.success('Device data refreshed');
+    } catch (error) {
+      toast.error('Failed to refresh device data');
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  const handleTogglePower = async (deviceId: string) => {
+    try {
+      await sendCommand(deviceId, { command: 'toggle_power' });
+      toast.success('Power command sent');
+    } catch (error) {
+      toast.error('Failed to send power command');
+    }
+  };
+
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <LoadingState />;
+  }
+
+  if (error) {
+    return <ErrorState error={error} />;
   }
 
   return (
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Modbus Devices</h1>
-        <Button>
+        <h1 className="text-2xl font-bold">Modbus Devices</h1>
+        <Button onClick={() => navigate('/devices/new')}>
           <Plus className="w-4 h-4 mr-2" />
           Add Modbus Device
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {modbusDevices.length > 0 ? (
-          modbusDevices.map(device => (
-            <Card key={device.id}>
-              <CardHeader>
-                <CardTitle>{device.name}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="font-medium">IP Address:</span>
-                    <span>{device.ipAddress}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Port:</span>
-                    <span>{device.port}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Slave ID:</span>
-                    <span>{device.slaveId}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Status:</span>
-                    <span className={device.status === 'connected' ? 'text-green-500' : 'text-red-500'}>
-                      {device.status}
-                    </span>
-                  </div>
-                  {device.lastSeen && (
-                    <div className="flex justify-between">
-                      <span className="font-medium">Last Seen:</span>
-                      <span>{new Date(device.lastSeen).toLocaleString()}</span>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))
-        ) : (
-          <Card className="col-span-full">
-            <CardContent className="p-6">
-              <p className="text-center text-muted-foreground">No Modbus devices found</p>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+      {modbusDevices.length === 0 ? (
+        <EmptyState />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {modbusDevices.map((device) => (
+            <ModbusDeviceCard
+              key={device.id}
+              device={device}
+              onRefresh={() => handleRefresh(device.id)}
+              onTogglePower={() => handleTogglePower(device.id)}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

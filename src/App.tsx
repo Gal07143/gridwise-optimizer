@@ -8,8 +8,8 @@ import MicrogridProvider from '@/components/microgrid/MicrogridProvider';
 import { EnergyFlowProvider } from '@/components/dashboard/energy-flow/EnergyFlowContext';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import AppRoutes from '@/Routes';
-import { BrowserRouter } from 'react-router-dom';
 
+// Create a query client with default options
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -28,6 +28,9 @@ const router = createBrowserRouter([
   }
 ]);
 
+/**
+ * Main application component that sets up providers and routing
+ */
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
