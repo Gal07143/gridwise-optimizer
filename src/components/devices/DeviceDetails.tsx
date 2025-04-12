@@ -27,6 +27,8 @@ import DeviceSettingsForm from './DeviceSettingsForm';
 import Skeleton from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/toast';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import { EnergyDashboard } from '@/components/energy/EnergyDashboard';
+import { fetchEnergyMetrics, getEnergyOptimizationSuggestions } from '@/lib/api/energy';
 
 interface DeviceDetailsProps {
   deviceId: string;
@@ -85,6 +87,12 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ deviceId, onUpdate, onDel
       setDevice(data);
       setError(null);
       setRetryCount(0);
+
+      // Fetch energy metrics
+      const metrics = await fetchEnergyMetrics(deviceId, '24h');
+
+      // Get optimization suggestions
+      const suggestions = await getEnergyOptimizationSuggestions(deviceId);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load device');
       showToast({
@@ -218,7 +226,12 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ deviceId, onUpdate, onDel
                 </Box>
                 <Box>
                   <Typography variant="subtitle2">Location</Typography>
-                  <Typography sx={{ mt: 1 }}>{device.location}</Typography>
+                  <Typography sx={{ mt: 1 }}>{device.location.zone}</Typography>
+                  {device.location.coordinates && (
+                    <Typography sx={{ mt: 1 }}>
+                      Coordinates: {device.location.coordinates.lat}, {device.location.coordinates.lng}
+                    </Typography>
+                  )}
                 </Box>
                 <Box>
                   <Typography variant="subtitle2">Last Seen</Typography>
@@ -292,6 +305,7 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ deviceId, onUpdate, onDel
           </DialogActions>
         </Dialog>
       </Card>
+      <EnergyDashboard devices={[device].filter((d): d is Device => d !== null)} />
     </ErrorBoundary>
   );
 };
