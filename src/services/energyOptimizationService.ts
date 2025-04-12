@@ -1,4 +1,3 @@
-
 import { OptimizationSettings, OptimizationResult } from '@/types/optimization';
 import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
@@ -200,5 +199,52 @@ export const getOptimizationHistory = async (siteId: string, limit = 10): Promis
     console.error('Error fetching optimization history:', error);
     toast.error('Failed to fetch optimization history');
     return [];
+  }
+};
+
+/**
+ * Save user optimization preferences
+ */
+export const saveUserPreferences = async (
+  userId: string,
+  preferences: Partial<OptimizationSettings>
+): Promise<boolean> => {
+  try {
+    console.log('Saving user preferences for user:', userId, preferences);
+    
+    // In a real app, this would call an API to persist the preferences
+    // For demo purposes, we'll simulate a delay and return success
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    // We could store these in localStorage for persistence between sessions
+    localStorage.setItem(`user_preferences_${userId}`, JSON.stringify(preferences));
+    
+    return true;
+  } catch (error) {
+    console.error('Failed to save user preferences:', error);
+    toast.error('Failed to save preferences');
+    return false;
+  }
+};
+
+/**
+ * Load user optimization preferences
+ */
+export const loadUserPreferences = async (
+  userId: string
+): Promise<Partial<OptimizationSettings> | null> => {
+  try {
+    // In a real app, this would fetch from an API
+    // For demo purposes, we'll check localStorage
+    const savedPreferences = localStorage.getItem(`user_preferences_${userId}`);
+    
+    if (savedPreferences) {
+      return JSON.parse(savedPreferences);
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Failed to load user preferences:', error);
+    return null;
   }
 };
