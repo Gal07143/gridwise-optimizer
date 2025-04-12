@@ -1,34 +1,59 @@
-import { useEffect, useState, useMemo } from 'react';
-import { useEnergyManagement } from '../../contexts/EnergyManagementContext';
-import { Asset, GridSignal } from '../../types/energyManagement';
+import React, { useEffect, useState, useMemo } from 'react';
+import { energyManagementService } from '@/services/energyManagementService';
+import { Asset, GridSignal } from '@/types/energyManagement';
 import { FixedSizeList as List } from 'react-window';
 
-const AssetItem = ({ data, index, style }: { data: Asset[]; index: number; style: React.CSSProperties }) => {
+const AssetItem = ({ data, index, style }: { data: Asset[], index: number, style: React.CSSProperties }) => {
     const asset = data[index];
     return (
-        <div style={style} className="border-b pb-4">
-            <h3 className="font-medium">{asset.name}</h3>
-            <p className="text-sm text-gray-600">Type: {asset.type}</p>
-            <p className="text-sm text-gray-600">Status: {asset.status}</p>
+        <div style={style} className="border-b border-gray-200">
+            <div className="p-4">
+                <h3 className="text-lg font-semibold">{asset.name}</h3>
+                <p className="text-gray-600">Type: {asset.type}</p>
+                <p className="text-gray-600">Status: {asset.status}</p>
+            </div>
         </div>
     );
 };
 
-const SignalItem = ({ data, index, style }: { data: GridSignal[]; index: number; style: React.CSSProperties }) => {
+const SignalItem = ({ data, index, style }: { data: GridSignal[], index: number, style: React.CSSProperties }) => {
     const signal = data[index];
     return (
-        <div style={style} className="border-b pb-4">
-            <h3 className="font-medium">{signal.type}</h3>
-            <p className="text-sm text-gray-600">Value: {signal.value}</p>
-            <p className="text-sm text-gray-600">Time: {new Date(signal.timestamp).toLocaleString()}</p>
+        <div style={style} className="border-b border-gray-200">
+            <div className="p-4">
+                <h3 className="text-lg font-semibold">{signal.type}</h3>
+                <p className="text-gray-600">Value: {signal.value}</p>
+                <p className="text-gray-600">Timestamp: {new Date(signal.timestamp).toLocaleString()}</p>
+            </div>
         </div>
     );
 };
 
 const EnergyManagementDashboard = () => {
-    const { assets, signals, loading, error } = useEnergyManagement();
+    const [assets, setAssets] = useState<Asset[]>([]);
+    const [signals, setSignals] = useState<GridSignal[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-    // Memoize the recent signals to prevent unnecessary recalculations
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const [assetsData, signalsData] = await Promise.all([
+                    energyManagementService.getAssets(),
+                    energyManagementService.getGridSignals()
+                ]);
+                setAssets(assetsData);
+                setSignals(signalsData);
+                setLoading(false);
+            } catch (err) {
+                setError('Failed to load data');
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, []);
+
     const recentSignals = useMemo(() => signals.slice(0, 5), [signals]);
 
     if (loading) {

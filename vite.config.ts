@@ -9,17 +9,28 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
     hmr: true, // Make sure HMR (Hot Module Replacement) is enabled
+    proxy: {
+      '/api': {
+        target: 'http://localhost:4000',
+        changeOrigin: true
+      }
+    }
   },
   plugins: [
-    react({
-      // For React-SWC, don't use fastRefresh property
-      // It's internally managed by the plugin
-    }),
+    react(),
     (mode === 'development' || mode === 'preview') && componentTagger(),
   ].filter(Boolean),
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      "@": path.resolve(__dirname, "./apps/frontend/src"),
+      "@components": path.resolve(__dirname, "./apps/frontend/src/components"),
+      "@pages": path.resolve(__dirname, "./apps/frontend/src/pages"),
+      "@lib": path.resolve(__dirname, "./apps/frontend/src/lib"),
+      "@utils": path.resolve(__dirname, "./apps/frontend/src/utils"),
+      "@contexts": path.resolve(__dirname, "./apps/frontend/src/contexts"),
+      "@hooks": path.resolve(__dirname, "./apps/frontend/src/hooks"),
+      "@services": path.resolve(__dirname, "./apps/frontend/src/services"),
+      "@types": path.resolve(__dirname, "./apps/frontend/src/types")
     },
   },
   define: {
