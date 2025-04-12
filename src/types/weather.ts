@@ -10,7 +10,12 @@ export type WeatherCondition =
   | 'snowy'
   | 'foggy'
   | 'windy'
-  | 'clear';
+  | 'clear'
+  | 'Clear'
+  | 'Partly Cloudy'
+  | 'Cloudy'
+  | 'Light Rain'
+  | 'Rain';
 
 export interface WeatherData {
   condition: WeatherCondition;

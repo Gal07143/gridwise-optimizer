@@ -1,6 +1,8 @@
+
 import { DeviceModel } from '@/types/device-model';
 import { toast } from 'sonner';
 import { DeviceModelCategory } from '@/types/device-model-category';
+import { supabase } from '@/integrations/supabase/client';
 
 // Fetch all device models
 export const fetchDeviceModels = async (): Promise<DeviceModel[]> => {

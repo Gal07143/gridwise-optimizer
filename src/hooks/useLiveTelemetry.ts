@@ -1,6 +1,7 @@
+
 import { useState, useEffect } from 'react';
 import { useConnectionStatus } from './useConnectionStatus';
-import { simulateTelemetry } from '@/services/devices/telemetrySimulator';
+import { simulateTelemetry, simulateHistoricalTelemetry } from '@/services/devices/telemetrySimulator';
 import { EnergyReading } from '@/types/energy';
 import { toast } from 'sonner';
 
@@ -36,7 +37,7 @@ export function useLiveTelemetry({
     try {
       if (!deviceId || !isConnected) return;
       
-      const newReading = simulationMode ? simulateTelemetry(deviceId, parameter) : await fetchFromAPI();
+      const newReading = simulationMode ? simulateTelemetry(deviceId) : await fetchFromAPI();
       
       setReading(newReading);
       setHistory(prev => {

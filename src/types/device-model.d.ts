@@ -1,3 +1,4 @@
+
 export interface DeviceModel {
   id: string;
   name: string;
@@ -12,17 +13,19 @@ export interface DeviceModel {
   release_date?: string;
   firmware_version?: string;
   protocol?: string;
-  support_level: 'none' | 'full' | 'partial' | 'beta' | 'community'; // Update support_level to include 'beta' and 'community'
+  support_level: 'none' | 'full' | 'partial' | 'beta' | 'community';
   images?: string[] | Record<string, any>;
   has_manual?: boolean;
   has_datasheet?: boolean;
   has_video?: boolean;
   datasheets?: string[];
   firmware_versions?: string[];
-  model_name?: string; // Add model_name property
+  model?: string;
+  supported: boolean;
+  created_at?: string;
+  updated_at?: string;
   certifications?: string[];
-  model?: string; // Add for compatibility
-  supported?: boolean; // Add for compatibility
+  warranty?: string;
 }
 
 export interface DeviceModelWithRequiredName {
@@ -32,7 +35,7 @@ export interface DeviceModelWithRequiredName {
   model_number: string;
   device_type: string;
   category?: string;
-  protocol?: string; // Make protocol optional here
+  protocol?: string;
 }
 
 export interface DeviceModelCategory {

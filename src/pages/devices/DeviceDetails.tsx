@@ -18,10 +18,10 @@ const convertToEnergyDevice = (device: Device): EnergyDevice => {
   return {
     id: device.id,
     name: device.name,
-    // Cast string type to DeviceType enum
-    type: device.type as DeviceType,
-    // Cast string status to DeviceStatus enum
-    status: device.status as DeviceStatus,
+    // Cast string type to DeviceType enum, with check for valid type
+    type: (device.type as DeviceType) || 'unknown' as DeviceType,
+    // Cast string status to DeviceStatus enum, with check for valid status
+    status: (device.status as DeviceStatus) || 'unknown' as DeviceStatus,
     capacity: device.capacity,
     current_output: device.current_output,
     description: device.description,

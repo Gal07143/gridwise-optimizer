@@ -1,17 +1,7 @@
 
 import { EnergyReading } from "@/types/energy";
 
-export interface TelemetryReading {
-  power: number;
-  voltage: number;
-  current: number;
-  temperature: number;
-  state_of_charge?: number;
-  frequency?: number;
-  timestamp: string;
-}
-
-export const generateTelemetry = (deviceId: string): EnergyReading => {
+export const simulateTelemetry = (deviceId: string, parameter?: string): EnergyReading => {
   const timestamp = new Date().toISOString();
   
   return {

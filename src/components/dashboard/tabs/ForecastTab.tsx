@@ -50,7 +50,7 @@ const ForecastTab: React.FC<ForecastTabProps> = ({ siteId }) => {
   });
 
   // Add the missing selfConsumptionRate property
-  const forecastMetrics: ForecastMetrics = forecastMetricsData || {
+  const forecastMetrics: ForecastMetrics = forecastMetricsData ? forecastMetricsData : {
     totalGeneration: 0,
     totalConsumption: 0,
     netEnergy: 0,

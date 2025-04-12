@@ -1,196 +1,217 @@
-import { toast } from 'sonner';
-import { executeSql } from './sqlExecutor';
-import { DeviceModel } from '@/types/device-model';
+import { DeviceModel } from "@/types/device-model";
+import { Device } from "@/types/device";
 
-// Mock data for device models since we're now using SQL execution
-const deviceModels: DeviceModel[] = [
-  {
-    id: '1',
-    name: 'SolarEdge Inverter',
-    manufacturer: 'SolarEdge',
-    model_number: 'SE7600H-US',
-    model: 'SE7600H-US',
-    device_type: 'inverter',
-    category: 'Solar Inverters',
-    protocol: 'SunSpec',
-    support_level: 'full',
-    specifications: {},
-    created_at: new Date().toISOString()
-  },
-  {
-    id: '2',
-    name: 'Tesla Powerwall',
-    manufacturer: 'Tesla',
-    model_number: 'Powerwall 2',
-    model: 'Powerwall 2',
-    device_type: 'battery',
-    category: 'Battery Systems',
-    protocol: 'Proprietary',
-    support_level: 'full',
-    specifications: {},
-    created_at: new Date().toISOString()
-  }
-];
-
-// Get device models with category
-export const getDeviceModelsWithCategory = async (category?: string): Promise<DeviceModel[]> => {
-  try {
-    // Build SQL query
-    let query = `
-      SELECT * FROM device_models
-      WHERE 1=1
-    `;
-
-    const params: any[] = [];
-
-    if (category && category !== 'all') {
-      query += ` AND category = $1`;
-      params.push(category);
-    }
-
-    query += ` ORDER BY name ASC`;
-
-    // Execute SQL via edge function
-    const result = await executeSql<DeviceModel>(query, params);
-    
-    if (Array.isArray(result)) {
-      return result;
-    }
-    
-    return [];
-  } catch (error) {
-    console.error('Error fetching device models:', error);
-    toast.error('Failed to fetch device models');
-    return deviceModels; // Return mock data as fallback
-  }
-};
-
-export const getMockDeviceModels = (): DeviceModel[] => {
+export const getDeviceModels = (): DeviceModel[] => {
+  // Sample device models data
   return [
     {
-      id: '1',
-      name: 'SolarEdge Inverter',
-      manufacturer: 'SolarEdge',
-      model_number: 'SE7600H-US',
-      model: 'SE7600H-US',
-      device_type: 'inverter',
-      category: 'Solar Inverters',
-      description: 'High-efficiency solar inverter',
-      protocol: 'SunSpec',
-      support_level: 'full',
-      specifications: {},
-      created_at: new Date().toISOString()
+      id: "1",
+      name: "SolarEdge SE10K",
+      manufacturer: "SolarEdge",
+      model: "SE10K",
+      model_number: "SE10000H-US",
+      device_type: "inverter",
+      category: "Solar Inverters",
+      description: "SolarEdge 10kW Three Phase Inverter with HD-Wave Technology",
+      power_rating: 10,
+      support_level: "full",
+      protocol: "Modbus TCP",
+      has_manual: true,
+      supported: true
     },
     {
-      id: '2',
-      name: 'Tesla Powerwall',
-      manufacturer: 'Tesla',
-      model_number: 'Powerwall 2',
-      model: 'Powerwall 2',
-      device_type: 'battery',
-      category: 'Battery Systems',
-      description: 'Home battery storage system',
-      protocol: 'Proprietary',
-      support_level: 'full',
-      specifications: {},
-      created_at: new Date().toISOString()
+      id: "2",
+      name: "Tesla Powerwall 2",
+      manufacturer: "Tesla",
+      model: "Powerwall 2",
+      model_number: "Powerwall 2",
+      device_type: "battery",
+      category: "Battery Systems",
+      description: "Rechargeable home battery system with 13.5 kWh capacity",
+      capacity: 13.5,
+      support_level: "full",
+      protocol: "Tesla API",
+      has_manual: true,
+      supported: true
     },
     {
-      id: '3',
-      name: 'Fronius Symo',
-      manufacturer: 'Fronius',
-      model_number: 'Symo 10.0-3',
-      model: 'Symo 10.0-3',
-      device_type: 'inverter',
-      category: 'Solar Inverters',
-      description: 'Three-phase inverter for commercial applications',
-      protocol: 'SunSpec',
-      support_level: 'full',
-      specifications: {},
-      created_at: new Date().toISOString()
+      id: "3",
+      name: "Enphase IQ7+",
+      manufacturer: "Enphase",
+      model: "IQ7+",
+      model_number: "IQ7PLUS-72-x-US",
+      device_type: "inverter",
+      category: "Solar Inverters",
+      description: "High-efficiency microinverter for residential solar",
+      power_rating: 0.29,
+      support_level: "beta",
+      protocol: "Enphase API",
+      has_manual: true,
+      supported: true
     },
     {
-      id: '4',
-      name: 'Enphase Microinverter',
-      manufacturer: 'Enphase',
-      model_number: 'IQ7+',
-      model: 'IQ7+',
-      device_type: 'inverter',
-      category: 'Solar Inverters',
-      description: 'Module-level power electronics',
-      protocol: 'Envoy',
-      support_level: 'full',
-      specifications: {},
-      created_at: new Date().toISOString()
+      id: "4",
+      name: "Generac PWRcell",
+      manufacturer: "Generac",
+      model: "PWRcell",
+      model_number: "PWRcell",
+      device_type: "battery",
+      category: "Battery Systems",
+      description: "Scalable battery storage system for home backup power",
+      capacity: 8.6,
+      support_level: "partial",
+      protocol: "Generac API",
+      has_manual: true,
+      supported: true
     },
     {
-      id: '5',
-      name: 'SMA Sunny Boy',
-      manufacturer: 'SMA',
-      model_number: 'SB 7.7-US',
-      model: 'SB 7.7-US',
-      device_type: 'inverter',
-      category: 'Solar Inverters',
-      description: 'String inverter for residential applications',
-      protocol: 'WebConnect',
-      support_level: 'full',
-      specifications: {},
-      created_at: new Date().toISOString()
+      id: "5",
+      name: "Emporia Vue",
+      manufacturer: "Emporia",
+      model: "Vue",
+      model_number: "EM001",
+      device_type: "meter",
+      category: "Smart Meters",
+      description: "Real-time energy monitor with circuit-level resolution",
+      support_level: "community",
+      protocol: "Emporia API",
+      has_manual: true,
+      supported: true
     },
     {
-      id: '6',
-      name: 'LG Chem RESU',
-      manufacturer: 'LG Chem',
-      model_number: 'RESU10H',
-      model: 'RESU10H',
-      device_type: 'battery',
-      category: 'Battery Systems',
-      description: 'Residential energy storage unit',
-      protocol: 'CAN',
-      support_level: 'full',
-      specifications: {},
-      created_at: new Date().toISOString()
+      id: "6",
+      name: "Sense Energy Monitor",
+      manufacturer: "Sense",
+      model: "Energy Monitor",
+      model_number: "SENSE-EM",
+      device_type: "meter",
+      category: "Smart Meters",
+      description: "Home energy monitor that provides insights into energy usage",
+      support_level: "community",
+      protocol: "Sense API",
+      has_manual: true,
+      supported: true
+    },
+    {
+      id: "7",
+      name: "ABB Terra AC",
+      manufacturer: "ABB",
+      model: "Terra AC",
+      model_number: "6AGC082141",
+      device_type: "evCharger",
+      category: "EV Chargers",
+      description: "AC wallbox for charging electric vehicles",
+      power_rating: 7.5,
+      support_level: "partial",
+      protocol: "OCPP 1.6",
+      has_manual: true,
+      supported: true
+    },
+    {
+      id: "8",
+      name: "ChargePoint Home Flex",
+      manufacturer: "ChargePoint",
+      model: "Home Flex",
+      model_number: "CPH50",
+      device_type: "evCharger",
+      category: "EV Chargers",
+      description: "Level 2 EV charger with adjustable amperage",
+      power_rating: 9.6,
+      support_level: "full",
+      protocol: "ChargePoint API",
+      has_manual: true,
+      supported: true
     }
   ];
 };
 
-// Function to get device categories
-export const getDeviceCategories = async (): Promise<string[]> => {
-  try {
-    const query = `
-      SELECT DISTINCT category 
-      FROM device_models 
-      WHERE category IS NOT NULL
-      ORDER BY category
-    `;
-    
-    const results = await executeSql<{category: string}>(query);
-    
-    if (Array.isArray(results)) {
-      return results.map(row => row.category);
-    }
-    
-    return ['inverter', 'battery', 'meter', 'solar', 'wind'];
-  } catch (error) {
-    console.error('Error fetching device categories:', error);
-    return ['inverter', 'battery', 'meter', 'solar', 'wind'];
-  }
+export const getDeviceById = (deviceId: string): Device | undefined => {
+  const mockDevices: Device[] = [
+    {
+      id: 'device-1',
+      name: 'Solar Inverter',
+      type: 'inverter',
+      status: 'active',
+      capacity: 10,
+      site_id: 'site-1',
+      model: 'SE10K',
+      description: 'SolarEdge Inverter',
+    },
+    {
+      id: 'device-2',
+      name: 'Battery Storage',
+      type: 'battery',
+      status: 'idle',
+      capacity: 13.5,
+      site_id: 'site-1',
+      model: 'Powerwall 2',
+      description: 'Tesla Powerwall',
+    },
+    {
+      id: 'device-3',
+      name: 'EV Charger',
+      type: 'evCharger',
+      status: 'charging',
+      capacity: 7.2,
+      site_id: 'site-2',
+      model: 'Home Flex',
+      description: 'ChargePoint Home Flex',
+    },
+  ];
+
+  return mockDevices.find(device => device.id === deviceId);
 };
 
-// Add the missing getDeviceModelById function
-export const getDeviceModelById = async (id: string): Promise<DeviceModel | null> => {
-  try {
-    const query = `SELECT * FROM device_models WHERE id = $1`;
-    const result = await executeSql<DeviceModel>(query, [id]);
-    
-    if (Array.isArray(result) && result.length > 0) {
-      return result[0];
-    }
-    
-    return null;
-  } catch (error) {
-    console.error('Error fetching device model:', error);
-    toast.error('Failed to fetch device model');
-    return null;
-  }
+export const getDevicesBySiteId = (siteId: string): Device[] => {
+  const mockDevices: Device[] = [
+    {
+      id: 'device-1',
+      name: 'Solar Inverter',
+      type: 'inverter',
+      status: 'active',
+      capacity: 10,
+      site_id: 'site-1',
+      model: 'SE10K',
+      description: 'SolarEdge Inverter',
+    },
+    {
+      id: 'device-2',
+      name: 'Battery Storage',
+      type: 'battery',
+      status: 'idle',
+      capacity: 13.5,
+      site_id: 'site-1',
+      model: 'Powerwall 2',
+      description: 'Tesla Powerwall',
+    },
+    {
+      id: 'device-3',
+      name: 'EV Charger',
+      type: 'evCharger',
+      status: 'charging',
+      capacity: 7.2,
+      site_id: 'site-2',
+      model: 'Home Flex',
+      description: 'ChargePoint Home Flex',
+    },
+  ];
+
+  return mockDevices.filter(device => device.site_id === siteId);
+};
+
+export const createDevice = (device: Device): Device => {
+  // Mock implementation
+  console.log('Creating device:', device);
+  return device;
+};
+
+export const updateDevice = (deviceId: string, updates: Partial<Device>): Device => {
+  // Mock implementation
+  console.log(`Updating device ${deviceId} with:`, updates);
+  return { id: deviceId, ...updates } as Device;
+};
+
+export const deleteDevice = (deviceId: string): void => {
+  // Mock implementation
+  console.log('Deleting device:', deviceId);
 };

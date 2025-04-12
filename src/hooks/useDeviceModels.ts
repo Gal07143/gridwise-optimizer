@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { DeviceModel } from '@/types/device-model';
 import { DeviceType } from '@/types/energy';
@@ -30,6 +31,7 @@ export const useDeviceModels = () => {
         support_level: 'full',
         firmware_version: '1.46.1',
         has_manual: true,
+        supported: true
       },
       {
         id: '2',
@@ -50,6 +52,7 @@ export const useDeviceModels = () => {
         support_level: 'full',
         firmware_version: '3.2249',
         has_manual: true,
+        supported: true
       },
       {
         id: '3',
@@ -69,6 +72,7 @@ export const useDeviceModels = () => {
         support_level: 'beta',
         firmware_version: '7.0.2',
         has_manual: true,
+        supported: true
       }
     ];
     
