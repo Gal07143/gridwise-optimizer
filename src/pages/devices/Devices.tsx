@@ -247,26 +247,6 @@ const Devices = () => {
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
-                      
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <ChevronRight className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem asChild>
-                            <Link to={`/devices/${device.id}/edit`}>Edit Device</Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-red-500 focus:text-red-500"
-                            onClick={() => handleDeleteDevice(device.id)}
-                          >
-                            <Trash className="h-4 w-4 mr-2" />
-                            Delete Device
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
                     </div>
                   </div>
                 </CardContent>
@@ -274,20 +254,8 @@ const Devices = () => {
             ))}
           </div>
         ) : (
-          <div className="text-center py-16 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
-            <Info className="mx-auto h-10 w-10 text-slate-400" />
-            <h3 className="mt-4 text-lg font-medium">No devices found</h3>
-            <p className="mt-2 text-sm text-muted-foreground max-w-sm mx-auto">
-              {searchQuery 
-                ? "No devices match your search criteria. Try adjusting your filters."
-                : "You haven't added any devices yet. Start by adding your first device."}
-            </p>
-            <Button variant="outline" className="mt-6" asChild>
-              <Link to="/devices/add">
-                <Plus className="mr-2 h-4 w-4" />
-                Add Your First Device
-              </Link>
-            </Button>
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">No devices found matching your criteria</p>
           </div>
         )}
       </div>
@@ -295,4 +263,4 @@ const Devices = () => {
   );
 };
 
-export default Devices;
+export default Devices; 
