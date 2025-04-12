@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { DeviceModel } from '@/types/device-model';
-import { getAllDeviceModels } from '@/services/deviceCatalogService';
+import { getDeviceModels } from '@/services/deviceCatalogService';
 import { Main } from '@/components/ui/main';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,7 +15,7 @@ const DeviceCatalogPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const { data: devices, isLoading, error } = useQuery({
     queryKey: ['deviceModels'],
-    queryFn: getAllDeviceModels,
+    queryFn: getDeviceModels,
   });
 
   const filteredDevices = devices
