@@ -5,7 +5,7 @@ import Layout from './components/layout/Layout';
 // Pages
 import Dashboard from './pages/Dashboard';
 import Analytics from './pages/Analytics';
-import Devices from './pages/devices/Devices';
+import DevicesPage from './pages/devices/Devices';
 import DeviceDetails from './pages/devices/DeviceDetails';
 import ModbusDevices from './pages/modbus/ModbusDevices';
 import Settings from './pages/settings/Settings';
@@ -28,7 +28,7 @@ const AppRoutes: React.FC = () => (
       <Route path="reports" element={<Analytics />} />
 
       {/* Devices */}
-      <Route path="devices" element={<Devices />} />
+      <Route path="devices" element={<DevicesPage />} />
       <Route path="devices/:deviceId" element={<DeviceDetails />} />
       <Route path="modbus/devices" element={<ModbusDevices />} />
 

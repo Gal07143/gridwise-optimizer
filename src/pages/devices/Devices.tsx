@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
@@ -270,4 +269,5 @@ const DevicesPage = () => {
   );
 };
 
+export { DevicesPage };
 export default DevicesPage;
