@@ -9,9 +9,18 @@ import { Shield } from 'lucide-react';
 interface QRCodeProps {
   secret: string;
   email: string;
+  onVerify: () => Promise<void>;
+  verificationCode: string;
+  setVerificationCode: (code: string) => void;
 }
 
-const QRCodeComponent: React.FC<QRCodeProps> = ({ secret, email }) => {
+const QRCodeComponent: React.FC<QRCodeProps> = ({
+  secret,
+  email,
+  onVerify,
+  verificationCode,
+  setVerificationCode,
+}) => {
   const otpauthUrl = `otpauth://totp/Gridwise:${email}?secret=${secret}&issuer=Gridwise`;
 
   return (
@@ -59,9 +68,13 @@ const QRCodeComponent: React.FC<QRCodeProps> = ({ secret, email }) => {
           <Input
             placeholder="Enter 6-digit code from your authenticator app"
             maxLength={6}
+            value={verificationCode}
+            onChange={(e) => setVerificationCode(e.target.value)}
           />
         </div>
-        <Button className="w-full">Verify and Enable 2FA</Button>
+        <Button className="w-full" onClick={onVerify}>
+          Verify and Enable 2FA
+        </Button>
       </CardContent>
     </Card>
   );

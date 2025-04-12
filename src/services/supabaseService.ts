@@ -1,7 +1,14 @@
-import { supabase } from '../lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 import { SecuritySettings, DashboardData } from '../types/settings';
 
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
 export const supabaseService = {
+    supabase, // Expose the Supabase client
+
     // Settings
     async getSettings(userId: string) {
         const { data, error } = await supabase
@@ -16,8 +23,7 @@ export const supabaseService = {
     async updateSettings(userId: string, settings: any) {
         const { data, error } = await supabase
             .from('settings')
-            .upsert({ ...settings, user_id: userId, updated_at: new Date() })
-            .select();
+            .upsert({ user_id: userId, ...settings });
         
         if (error) throw error;
         return data;
@@ -38,23 +44,7 @@ export const supabaseService = {
     async updateSecuritySettings(userId: string, settings: SecuritySettings) {
         const { data, error } = await supabase
             .from('security_settings')
-            .upsert({
-                user_id: userId,
-                two_factor_enabled: settings.authentication.twoFactorEnabled,
-                session_timeout: settings.authentication.sessionTimeout,
-                password_policy: settings.authentication.passwordPolicy,
-                encryption_enabled: settings.encryption.enabled,
-                encryption_algorithm: settings.encryption.algorithm,
-                key_rotation: settings.encryption.keyRotation,
-                rate_limiting: settings.apiSecurity.rateLimiting,
-                allowed_origins: settings.apiSecurity.allowedOrigins,
-                token_expiration: settings.apiSecurity.tokenExpiration,
-                audit_logging_enabled: settings.auditLogging.enabled,
-                retention_period: settings.auditLogging.retentionPeriod,
-                log_level: settings.auditLogging.logLevel,
-                updated_at: new Date()
-            })
-            .select();
+            .upsert({ user_id: userId, ...settings });
         
         if (error) throw error;
         return data;
@@ -75,16 +65,7 @@ export const supabaseService = {
     async updateDashboardData(userId: string, data: DashboardData) {
         const { data: result, error } = await supabase
             .from('dashboard_data')
-            .upsert({
-                user_id: userId,
-                grid_supply: data.gridSupply,
-                pv_production: data.pvProduction,
-                battery: data.battery,
-                household: data.household,
-                energy_flow: data.energyFlow,
-                updated_at: new Date()
-            })
-            .select();
+            .upsert({ user_id: userId, ...data });
         
         if (error) throw error;
         return result;

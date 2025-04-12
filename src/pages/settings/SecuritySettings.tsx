@@ -1,137 +1,53 @@
 import React, { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { SecuritySettings as SecuritySettingsType } from '@/types/settings';
-import ErrorBoundary from '@/components/ErrorBoundary';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react';
-import { supabaseService } from '@/services/supabaseService';
-import { useAuth } from '@/contexts/AuthContext';
+import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { Shield, Key, Clock, Globe, History, AlertTriangle } from 'lucide-react';
+import { Shield, Key, Clock, Globe, History, AlertTriangle, Loader2 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format } from 'date-fns';
 import QRCodeComponent from '@/components/security/QRCode';
-
-const securitySettingsSchema = z.object({
-  authentication: z.object({
-    twoFactorEnabled: z.boolean(),
-    sessionTimeout: z.number().min(5).max(120),
-    passwordPolicy: z.object({
-      minLength: z.number().min(8).max(32),
-      requireSpecialChars: z.boolean(),
-      requireNumbers: z.boolean(),
-    }),
-  }),
-  encryption: z.object({
-    enabled: z.boolean(),
-    algorithm: z.string(),
-    keyRotation: z.number().min(1).max(365),
-  }),
-  apiSecurity: z.object({
-    rateLimiting: z.boolean(),
-    allowedOrigins: z.array(z.string()),
-    tokenExpiration: z.number().min(1).max(24),
-  }),
-  auditLogging: z.object({
-    enabled: z.boolean(),
-    retentionPeriod: z.number().min(1).max(365),
-    logLevel: z.enum(['info', 'warning', 'error']),
-  }),
-});
-
-interface SecurityAuditLog {
-  id: string;
-  action: string;
-  timestamp: string;
-  ip_address: string;
-  user_agent: string;
-}
-
-interface ApiKey {
-  id: string;
-  name: string;
-  key: string;
-  created_at: string;
-  last_used: string | null;
-}
-
-interface Session {
-  id: string;
-  device: string;
-  ip_address: string;
-  last_active: string;
-  current: boolean;
-}
+import { securityService, SecurityAuditLog, ApiKey, Session } from '@/services/securityService';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 const SecuritySettings: React.FC = () => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
-  
-  const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<SecuritySettingsType>({
-    resolver: zodResolver(securitySettingsSchema),
-  });
-
+  const [isLoading, setIsLoading] = useState(false);
   const [is2FAEnabled, setIs2FAEnabled] = useState(false);
+  const [secret, setSecret] = useState<string>('');
   const [auditLogs, setAuditLogs] = useState<SecurityAuditLog[]>([]);
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [whitelistedIPs, setWhitelistedIPs] = useState<string[]>([]);
   const [newIP, setNewIP] = useState('');
-  const [secret, setSecret] = useState<string>('');
+  const [verificationCode, setVerificationCode] = useState('');
 
   useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        setIsLoading(true);
-        if (!user?.id) {
-          throw new Error('User not authenticated');
-        }
-        const data = await supabaseService.getSecuritySettings(user.id);
-        if (data) {
-          setValue('authentication.twoFactorEnabled', data.two_factor_enabled);
-          setValue('authentication.sessionTimeout', data.session_timeout);
-          setValue('authentication.passwordPolicy', data.password_policy);
-          setValue('encryption.enabled', data.encryption_enabled);
-          setValue('encryption.algorithm', data.encryption_algorithm);
-          setValue('encryption.keyRotation', data.key_rotation);
-          setValue('apiSecurity.rateLimiting', data.rate_limiting);
-          setValue('apiSecurity.allowedOrigins', data.allowed_origins);
-          setValue('apiSecurity.tokenExpiration', data.token_expiration);
-          setValue('auditLogging.enabled', data.audit_logging_enabled);
-          setValue('auditLogging.retentionPeriod', data.retention_period);
-          setValue('auditLogging.logLevel', data.log_level);
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load security settings');
-        console.error(err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     if (user?.id) {
-      fetchSettings();
+      loadSecurityData();
     }
-  }, [setValue, user?.id]);
+  }, [user?.id]);
 
-  const onSubmit = async (data: SecuritySettingsType) => {
+  const loadSecurityData = async () => {
     try {
       setIsLoading(true);
-      if (!user?.id) {
-        throw new Error('User not authenticated');
-      }
-      await supabaseService.updateSecuritySettings(user.id, data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save security settings');
-      console.error(err);
+      const [logs, keys, activeSessions, ips] = await Promise.all([
+        securityService.getAuditLogs(user!.id),
+        securityService.getApiKeys(user!.id),
+        securityService.getActiveSessions(user!.id),
+        securityService.getWhitelistedIPs(user!.id)
+      ]);
+
+      setAuditLogs(logs);
+      setApiKeys(keys);
+      setSessions(activeSessions);
+      setWhitelistedIPs(ips);
+    } catch (error) {
+      toast.error('Failed to load security data');
     } finally {
       setIsLoading(false);
     }
@@ -141,9 +57,13 @@ const SecuritySettings: React.FC = () => {
     try {
       setIsLoading(true);
       if (!is2FAEnabled) {
-        // Generate a new secret when enabling 2FA
         const newSecret = Math.random().toString(36).substr(2, 16).toUpperCase();
         setSecret(newSecret);
+        await securityService.enable2FA(user!.id, newSecret);
+        await securityService.logSecurityEvent(user!.id, '2FA_ENABLED');
+      } else {
+        await securityService.disable2FA(user!.id);
+        await securityService.logSecurityEvent(user!.id, '2FA_DISABLED');
       }
       setIs2FAEnabled(!is2FAEnabled);
       toast.success(`Two-factor authentication ${!is2FAEnabled ? 'enabled' : 'disabled'}`);
@@ -154,23 +74,57 @@ const SecuritySettings: React.FC = () => {
     }
   };
 
-  const handleAddIP = () => {
-    if (newIP && !whitelistedIPs.includes(newIP)) {
-      setWhitelistedIPs([...whitelistedIPs, newIP]);
-      setNewIP('');
-      toast.success('IP address added to whitelist');
+  const handleVerify2FA = async () => {
+    try {
+      setIsLoading(true);
+      const isValid = await securityService.verify2FACode(user!.id, verificationCode);
+      if (isValid) {
+        await securityService.logSecurityEvent(user!.id, '2FA_VERIFIED');
+        toast.success('2FA verification successful');
+      } else {
+        toast.error('Invalid verification code');
+      }
+    } catch (error) {
+      toast.error('Failed to verify 2FA code');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleRemoveIP = (ip: string) => {
-    setWhitelistedIPs(whitelistedIPs.filter(i => i !== ip));
-    toast.success('IP address removed from whitelist');
+  const handleAddIP = async () => {
+    try {
+      setIsLoading(true);
+      await securityService.addWhitelistedIP(user!.id, newIP);
+      await securityService.logSecurityEvent(user!.id, 'IP_WHITELIST_ADDED', { ip: newIP });
+      setWhitelistedIPs([...whitelistedIPs, newIP]);
+      setNewIP('');
+      toast.success('IP address added to whitelist');
+    } catch (error) {
+      toast.error('Failed to add IP address');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRemoveIP = async (ip: string) => {
+    try {
+      setIsLoading(true);
+      await securityService.removeWhitelistedIP(user!.id, ip);
+      await securityService.logSecurityEvent(user!.id, 'IP_WHITELIST_REMOVED', { ip });
+      setWhitelistedIPs(whitelistedIPs.filter(i => i !== ip));
+      toast.success('IP address removed from whitelist');
+    } catch (error) {
+      toast.error('Failed to remove IP address');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleRevokeSession = async (sessionId: string) => {
     try {
       setIsLoading(true);
-      // Implement session revocation logic here
+      await securityService.revokeSession(sessionId);
+      await securityService.logSecurityEvent(user!.id, 'SESSION_REVOKED', { sessionId });
       setSessions(sessions.filter(session => session.id !== sessionId));
       toast.success('Session revoked successfully');
     } catch (error) {
@@ -183,14 +137,8 @@ const SecuritySettings: React.FC = () => {
   const handleCreateApiKey = async () => {
     try {
       setIsLoading(true);
-      // Implement API key creation logic here
-      const newKey: ApiKey = {
-        id: Math.random().toString(36).substr(2, 9),
-        name: `API Key ${apiKeys.length + 1}`,
-        key: Math.random().toString(36).substr(2, 24),
-        created_at: new Date().toISOString(),
-        last_used: null
-      };
+      const newKey = await securityService.createApiKey(user!.id, `API Key ${apiKeys.length + 1}`, ['read']);
+      await securityService.logSecurityEvent(user!.id, 'API_KEY_CREATED', { keyId: newKey.id });
       setApiKeys([...apiKeys, newKey]);
       toast.success('New API key created');
     } catch (error) {
@@ -203,7 +151,8 @@ const SecuritySettings: React.FC = () => {
   const handleRevokeApiKey = async (keyId: string) => {
     try {
       setIsLoading(true);
-      // Implement API key revocation logic here
+      await securityService.revokeApiKey(keyId);
+      await securityService.logSecurityEvent(user!.id, 'API_KEY_REVOKED', { keyId });
       setApiKeys(apiKeys.filter(key => key.id !== keyId));
       toast.success('API key revoked successfully');
     } catch (error) {
@@ -217,14 +166,6 @@ const SecuritySettings: React.FC = () => {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="text-red-500 p-4">
-        {error}
       </div>
     );
   }
@@ -267,6 +208,9 @@ const SecuritySettings: React.FC = () => {
                   <QRCodeComponent
                     secret={secret}
                     email={user?.email || ''}
+                    onVerify={handleVerify2FA}
+                    verificationCode={verificationCode}
+                    setVerificationCode={setVerificationCode}
                   />
                 )}
               </TabsContent>
@@ -363,7 +307,9 @@ const SecuritySettings: React.FC = () => {
                       value={newIP}
                       onChange={(e) => setNewIP(e.target.value)}
                     />
-                    <Button onClick={handleAddIP}>Add IP</Button>
+                    <Button onClick={handleAddIP} disabled={isLoading}>
+                      Add IP
+                    </Button>
                   </div>
                   <div className="space-y-2">
                     {whitelistedIPs.map((ip) => (
@@ -376,6 +322,7 @@ const SecuritySettings: React.FC = () => {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleRemoveIP(ip)}
+                          disabled={isLoading}
                         >
                           Remove
                         </Button>
