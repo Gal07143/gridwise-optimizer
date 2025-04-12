@@ -1,19 +1,35 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useSiteContext } from '@/contexts/SiteContext';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, Settings, Info, Clock, Calendar, MapPin } from 'lucide-react';
+import { 
+  RefreshCw, 
+  Settings, 
+  Info, 
+  Clock, 
+  Calendar, 
+  MapPin, 
+  Download, 
+  Moon, 
+  Sun, 
+  Fullscreen
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { formatDistanceToNow } from 'date-fns';
+import { useTheme } from 'next-themes';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 interface DashboardHeaderProps {
   title?: string;
+  hideControls?: boolean;
 }
 
-const DashboardHeader: React.FC<DashboardHeaderProps> = ({ title }) => {
+const DashboardHeader: React.FC<DashboardHeaderProps> = ({ title, hideControls = false }) => {
   const { activeSite, refreshSites, loading } = useSiteContext();
+  const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
+  const [fullscreen, setFullscreen] = useState(false);
 
   const handleRefresh = () => {
     refreshSites();
@@ -21,6 +37,24 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ title }) => {
 
   const handleSettings = () => {
     navigate('/settings');
+  };
+  
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(err => {
+        console.error(`Error attempting to enable fullscreen: ${err.message}`);
+      });
+      setFullscreen(true);
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+        setFullscreen(false);
+      }
+    }
+  };
+  
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
   };
 
   const lastUpdated = activeSite?.updated_at ? new Date(activeSite.updated_at) : new Date();
@@ -60,27 +94,68 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ title }) => {
           )}
         </div>
       </div>
-      <div className="flex gap-2 mt-4 md:mt-0">
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={handleRefresh} 
-          className="border-gridx-blue/20 text-gridx-blue hover:bg-gridx-blue/5"
-          disabled={loading}
-        >
-          <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={handleSettings}
-          className="border-gridx-blue/20 text-gridx-blue hover:bg-gridx-blue/5"
-        >
-          <Settings className="mr-2 h-4 w-4" />
-          Settings
-        </Button>
-      </div>
+      {!hideControls && (
+        <div className="flex gap-2 mt-4 md:mt-0">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={toggleTheme} 
+            className="border-gridx-blue/20 text-gridx-blue hover:bg-gridx-blue/5"
+          >
+            {theme === 'dark' ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
+            {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={toggleFullscreen} 
+            className="border-gridx-blue/20 text-gridx-blue hover:bg-gridx-blue/5"
+          >
+            <Fullscreen className="mr-2 h-4 w-4" />
+            {fullscreen ? 'Exit' : 'Fullscreen'}
+          </Button>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="border-gridx-blue/20 text-gridx-blue hover:bg-gridx-blue/5"
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Export
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem>Export as PDF</DropdownMenuItem>
+              <DropdownMenuItem>Export as CSV</DropdownMenuItem>
+              <DropdownMenuItem>Export as Image</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleRefresh} 
+            className="border-gridx-blue/20 text-gridx-blue hover:bg-gridx-blue/5"
+            disabled={loading}
+          >
+            <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleSettings}
+            className="border-gridx-blue/20 text-gridx-blue hover:bg-gridx-blue/5"
+          >
+            <Settings className="mr-2 h-4 w-4" />
+            Settings
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

@@ -7,8 +7,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
 import MicrogridProvider from '@/components/microgrid/MicrogridProvider';
 import { EnergyFlowProvider } from '@/components/dashboard/energy-flow/EnergyFlowContext';
-import { RouterProvider } from 'react-router-dom';
-import { router } from '@/routes';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import AppRoutes from '@/Routes';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -19,6 +19,14 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+// Create a browser router using the route configuration
+const router = createBrowserRouter([
+  {
+    path: "*",
+    element: <AppRoutes />
+  }
+]);
 
 function App() {
   return (

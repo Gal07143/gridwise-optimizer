@@ -1,266 +1,171 @@
-import React from 'react';
-import { ForecastMetrics } from '@/hooks/useForecast';
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle, 
-  CardDescription 
-} from '@/components/ui/card';
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  Legend,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis
-} from 'recharts';
-import { getSiteForecasts, getSiteForecastMetrics } from '@/services/forecasts/forecastQueries';
+
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useQuery } from '@tanstack/react-query';
+import { fetchForecasts } from '@/services/forecasts/forecastService';
+import { ForecastMetrics, ProcessedForecastData } from '@/types/energy';
+import ForecastMetricsPanel from '../forecasts/ForecastMetricsPanel';
 import { Skeleton } from '@/components/ui/skeleton';
-import ForecastMetricsPanel from '@/components/dashboard/forecasts/ForecastMetricsPanel';
-import { Badge } from '@/components/ui/badge';
-import { Info, SunMoon, Droplets, Wind, TrendingUp } from 'lucide-react';
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
 
-interface ForecastTabProps {
-  siteId: string;
-}
-
-const ForecastTab: React.FC<ForecastTabProps> = ({ siteId }) => {
-  const [forecastHours, setForecastHours] = useState<number>(24);
+// Process the forecast data for visualization
+const processForecasts = (data: any[]): ProcessedForecastData[] => {
+  if (!data || !Array.isArray(data)) return [];
   
-  const { data: forecastData, isLoading: isLoadingForecast, error: forecastError } = useQuery({
-    queryKey: ['energy-forecast', siteId, forecastHours],
-    queryFn: () => getSiteForecasts(siteId, forecastHours),
-  });
+  return data.map(item => ({
+    timestamp: new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    production: item.generation_forecast || 0,
+    consumption: item.consumption_forecast || 0,
+    balance: (item.generation_forecast || 0) - (item.consumption_forecast || 0)
+  }));
+};
 
-  const { data: forecastMetricsData, isLoading: isLoadingMetrics } = useQuery({
-    queryKey: ['forecast-metrics', siteId],
-    queryFn: () => getSiteForecastMetrics(siteId),
-  });
-
-  const calculateMetrics = (data: any[]): ForecastMetrics => {
-    const totalGeneration = data.reduce((acc, item) => acc + item.generation_forecast, 0);
-    const totalConsumption = data.reduce((acc, item) => acc + item.consumption_forecast, 0);
-    const netEnergy = totalGeneration - totalConsumption;
-    const peakGeneration = data.reduce((acc, item) => Math.max(acc, item.generation_forecast), 0);
-    const peakConsumption = data.reduce((acc, item) => Math.max(acc, item.consumption_forecast), 0);
-    const confidence = data.reduce((acc, item) => acc + item.confidence, 0) / data.length;
-
+// Calculate metrics from forecast data
+const calculateMetrics = (data: any[]): ForecastMetrics => {
+  if (!data || !data.length) {
     return {
-      totalGeneration,
-      totalConsumption,
-      netEnergy,
-      selfConsumptionRate: totalGeneration > 0 ? Math.min(100, (Math.min(totalGeneration, totalConsumption) / totalGeneration) * 100) : 0,
-      peakGeneration,
-      peakConsumption,
-      confidence
+      totalGeneration: 0,
+      totalConsumption: 0,
+      netEnergy: 0,
+      peakGeneration: 0,
+      peakConsumption: 0,
+      selfConsumptionRate: 0,
+      confidence: 0
     };
-  };
+  }
 
-  const forecastMetrics: ForecastMetrics = forecastMetricsData ? calculateMetrics(forecastMetricsData) : {
+  const totalGeneration = data.reduce((sum, item) => sum + (item.generation_forecast || 0), 0);
+  const totalConsumption = data.reduce((sum, item) => sum + (item.consumption_forecast || 0), 0);
+  const peakGeneration = Math.max(...data.map(item => item.generation_forecast || 0));
+  const peakConsumption = Math.max(...data.map(item => item.consumption_forecast || 0));
+  
+  // Calculate self-consumption rate (percentage of generated energy directly consumed)
+  const selfConsumption = data.reduce((sum, item) => {
+    const gen = item.generation_forecast || 0;
+    const con = item.consumption_forecast || 0;
+    return sum + Math.min(gen, con);
+  }, 0);
+  
+  const selfConsumptionRate = totalGeneration > 0 ? (selfConsumption / totalGeneration) * 100 : 0;
+
+  return {
+    totalGeneration,
+    totalConsumption,
+    netEnergy: totalGeneration - totalConsumption,
+    peakGeneration,
+    peakConsumption,
+    selfConsumptionRate,
+    confidence: 85 // Sample confidence level
+  };
+};
+
+const ForecastTab: React.FC = () => {
+  const [timeframe, setTimeframe] = useState<'24h' | '48h' | '7d'>('24h');
+  
+  const { data: forecastData, isLoading: isForecastLoading } = useQuery({
+    queryKey: ['forecasts', timeframe],
+    queryFn: () => fetchForecasts(timeframe),
+  });
+  
+  const { data: weatherData, isLoading: isWeatherLoading } = useQuery({
+    queryKey: ['weather', timeframe],
+    queryFn: () => fetchForecasts(timeframe), // In a real app, this would be a separate API call
+  });
+  
+  const processedData = forecastData ? processForecasts(forecastData) : [];
+  const metrics = forecastData ? calculateMetrics(forecastData) : {
     totalGeneration: 0,
     totalConsumption: 0,
     netEnergy: 0,
-    selfConsumptionRate: 0,
-    confidence: 85,
     peakGeneration: 0,
-    peakConsumption: 0
+    peakConsumption: 0,
+    selfConsumptionRate: 0
   };
-
-  const processForecastData = () => {
-    if (!forecastData || forecastData.length === 0) {
-      return Array.from({ length: 24 }, (_, i) => ({
-        hour: `${i}:00`,
-        generation: Math.random() * 10 + 5,
-        consumption: Math.random() * 8 + 3,
-        confidence: Math.random() * 20 + 80
-      }));
-    }
-
-    return forecastData.map(item => {
-      const date = new Date(item.forecast_time);
-      return {
-        hour: `${date.getHours()}:00`,
-        generation: item.generation_forecast,
-        consumption: item.consumption_forecast,
-        confidence: item.confidence || 85
-      };
-    });
-  };
-
-  const chartData = processForecastData();
-
-  const weatherFactors = [
-    { name: 'Solar Radiation', icon: <SunMoon className="h-4 w-4" />, value: 78, impact: 'high' },
-    { name: 'Precipitation', icon: <Droplets className="h-4 w-4" />, value: 12, impact: 'low' },
-    { name: 'Wind Speed', icon: <Wind className="h-4 w-4" />, value: 45, impact: 'medium' },
-    { name: 'Trend Analysis', icon: <TrendingUp className="h-4 w-4" />, value: 92, impact: 'high' },
-  ];
-
+  
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Energy Forecast</h2>
-        <Badge variant="outline" className="flex gap-1 items-center">
-          ML Powered
-          <HoverCard>
-            <HoverCardTrigger>
-              <Info className="h-4 w-4 text-muted-foreground cursor-help" />
-            </HoverCardTrigger>
-            <HoverCardContent className="w-80">
-              <p className="text-sm">Forecasts are generated using machine learning algorithms that analyze historical consumption patterns, weather data, and system behavior.</p>
-            </HoverCardContent>
-          </HoverCard>
-        </Badge>
-      </div>
-
-      {isLoadingMetrics ? (
-        <Skeleton className="h-20 w-full" />
-      ) : (
-        <ForecastMetricsPanel metrics={forecastMetrics} />
-      )}
-      
-      <div className="grid grid-cols-1 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>24-Hour Forecast</CardTitle>
-            <CardDescription>Predicted energy generation and consumption</CardDescription>
-          </CardHeader>
-          <CardContent className="h-[400px]">
-            {isLoadingForecast ? (
-              <Skeleton className="w-full h-full" />
-            ) : forecastError ? (
-              <div className="flex items-center justify-center h-full text-muted-foreground">
-                Failed to load forecast data
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart
-                  data={chartData}
-                  margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-                >
-                  <defs>
-                    <linearGradient id="colorGen" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="rgba(45, 211, 111, 0.8)" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="rgba(45, 211, 111, 0.1)" stopOpacity={0.1}/>
-                    </linearGradient>
-                    <linearGradient id="colorCons" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="rgba(122, 90, 248, 0.8)" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="rgba(122, 90, 248, 0.1)" stopOpacity={0.1}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="hour" />
-                  <YAxis label={{ value: 'kW', angle: -90, position: 'insideLeft' }} />
-                  <Tooltip 
-                    formatter={(value: number, name: string) => [
-                      `${value.toFixed(1)} kW`, 
-                      name === 'generation' ? 'Generation' : 'Consumption'
-                    ]} 
-                  />
-                  <Legend />
-                  <Area
-                    type="monotone"
-                    dataKey="generation"
-                    name="Generation"
-                    stroke="rgba(45, 211, 111, 1)"
-                    fillOpacity={1}
-                    fill="url(#colorGen)"
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="consumption"
-                    name="Consumption"
-                    stroke="rgba(122, 90, 248, 1)"
-                    fillOpacity={1}
-                    fill="url(#colorCons)"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Confidence Analysis</CardTitle>
-            <CardDescription>Forecast prediction confidence over time</CardDescription>
-          </CardHeader>
-          <CardContent className="h-[300px]">
-            {isLoadingForecast ? (
-              <Skeleton className="w-full h-full" />
-            ) : forecastError ? (
-              <div className="flex items-center justify-center h-full text-muted-foreground">
-                Failed to load forecast data
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart
-                  data={chartData}
-                  margin={{ top: 10, right: 30, left: 10, bottom: 0 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="hour" />
-                  <YAxis domain={[0, 100]} label={{ value: 'Confidence %', angle: -90, position: 'insideLeft' }} />
-                  <Tooltip formatter={(value: number) => [`${value.toFixed(1)}%`, 'Confidence']} />
-                  <Line
-                    type="monotone"
-                    dataKey="confidence"
-                    name="Confidence"
-                    stroke="#ff7300"
-                    activeDot={{ r: 8 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            )}
-          </CardContent>
-        </Card>
+    <div className="space-y-4">
+      <Tabs defaultValue="energy" className="w-full">
+        <TabsList>
+          <TabsTrigger value="energy">Energy Forecast</TabsTrigger>
+          <TabsTrigger value="weather">Weather Forecast</TabsTrigger>
+        </TabsList>
         
-        <Card>
-          <CardHeader>
-            <CardTitle>Influencing Factors</CardTitle>
-            <CardDescription>Factors affecting the forecast</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {weatherFactors.map((factor, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    {factor.icon}
-                    <span>{factor.name}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-[150px] h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                      <div 
-                        className={`h-full rounded-full ${
-                          factor.impact === 'high' 
-                            ? 'bg-green-500' 
-                            : factor.impact === 'medium' 
-                              ? 'bg-amber-500' 
-                              : 'bg-blue-500'
-                        }`}
-                        style={{ width: `${factor.value}%` }}
-                      />
-                    </div>
-                    <span className="text-sm">{factor.value}%</span>
-                  </div>
-                </div>
-              ))}
+        <TabsContent value="energy" className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-medium">Energy Production & Consumption</h3>
+            <div className="flex space-x-2">
+              <button 
+                className={`px-3 py-1 text-xs ${timeframe === '24h' ? 'bg-primary text-white' : 'bg-secondary'} rounded-md`}
+                onClick={() => setTimeframe('24h')}
+              >
+                24h
+              </button>
+              <button 
+                className={`px-3 py-1 text-xs ${timeframe === '48h' ? 'bg-primary text-white' : 'bg-secondary'} rounded-md`}
+                onClick={() => setTimeframe('48h')}
+              >
+                48h
+              </button>
+              <button 
+                className={`px-3 py-1 text-xs ${timeframe === '7d' ? 'bg-primary text-white' : 'bg-secondary'} rounded-md`}
+                onClick={() => setTimeframe('7d')}
+              >
+                7d
+              </button>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+          
+          {isForecastLoading ? (
+            <Skeleton className="h-[300px] w-full" />
+          ) : (
+            <Card>
+              <CardContent className="pt-6">
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      data={processedData}
+                      margin={{
+                        top: 5,
+                        right: 30,
+                        left: 20,
+                        bottom: 5,
+                      }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="timestamp" />
+                      <YAxis />
+                      <Tooltip />
+                      <Line type="monotone" dataKey="production" stroke="#8884d8" activeDot={{ r: 8 }} />
+                      <Line type="monotone" dataKey="consumption" stroke="#82ca9d" />
+                      <Line type="monotone" dataKey="balance" stroke="#ffc658" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          
+          <ForecastMetricsPanel metrics={metrics} isLoading={isForecastLoading} />
+        </TabsContent>
+        
+        <TabsContent value="weather" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Weather Forecast</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isWeatherLoading ? (
+                <Skeleton className="h-[300px] w-full" />
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground">Weather forecast visualization will be displayed here.</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

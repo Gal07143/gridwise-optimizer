@@ -9,6 +9,7 @@ import NotFound from '@/pages/NotFound';
 
 // Protected pages
 import Dashboard from '@/pages/Dashboard';
+import AdvancedDashboard from '@/pages/AdvancedDashboard';
 import Devices from '@/pages/Devices';
 import AddDevice from '@/pages/AddDevice';
 import DeviceView from '@/pages/DeviceView';
@@ -31,6 +32,8 @@ import Preferences from '@/pages/Preferences';
 import Optimization from '@/pages/Optimization';
 import Savings from '@/pages/Savings';
 import SiteDetail from '@/pages/SiteDetail';
+import SmartGridManagement from '@/pages/SmartGridManagement';
+import SystemTopology from '@/pages/SystemTopology';
 
 // Modbus Pages
 import ModbusDevices from '@/pages/modbus/ModbusDevices';
@@ -80,99 +83,112 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import RoleProtectedRoute from '@/components/auth/RoleProtectedRoute';
 import LoadingScreen from '@/components/LoadingScreen';
 
+// Layout
+import AppLayout from '@/components/layout/AppLayout';
+
 const AppRoutes = () => {
   const location = useLocation();
 
   return (
     <Routes>
-      {/* Public Routes - Make Index redirect to Dashboard */}
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      {/* Public Routes */}
       <Route path="/auth" element={<Auth />} />
-
-      {/* Protected Routes - No real protection for testing */}
-      <Route path="/dashboard" element={<Dashboard />} />
       
-      {/* Device Routes */}
-      <Route path="/devices" element={<Devices />} />
-      <Route path="/devices/add" element={<AddDevice />} />
-      <Route path="/devices/:deviceId" element={<DeviceView />} />
-      <Route path="/devices/:deviceId/edit" element={<EditDevice />} />
-      <Route path="/devices/details/:deviceId" element={<DeviceDetails />} />
-
-      {/* Analytics & Reporting Routes */}
-      <Route path="/analytics" element={<Analytics />} />
-      <Route path="/consumption" element={<Consumption />} />
-      <Route path="/production" element={<Production />} />
-      <Route path="/reports" element={<Reports />} />
-      <Route path="/alerts" element={<Alerts />} />
-
-      {/* Energy Management Routes */}
-      <Route path="/energy-flow" element={<EnergyFlow />} />
-      <Route path="/microgrid-control" element={<MicrogridControl />} />
-      <Route path="/battery-management" element={<BatteryManagement />} />
-      <Route path="/energy-optimization" element={<EnergyOptimization />} />
-      <Route path="/optimization" element={<Optimization />} />
-      <Route path="/savings" element={<Savings />} />
-      <Route path="/preferences" element={<Preferences />} />
-      <Route path="/weather-forecast" element={<WeatherForecast />} />
-      <Route path="/ai/overview" element={<AIOverview />} />
-
-      {/* Site Routes */}
-      <Route path="/sites/:id" element={<SiteDetail />} />
-
-      {/* Integration Routes */}
-      <Route path="/integrations" element={<IntegrationsHome />} />
-      <Route path="/integrations/:categoryId" element={<IntegrationCategoryPage />} />
-      <Route path="/integrations/model/:modelId" element={<DeviceModelDetailPage />} />
-      <Route path="/integrations/device-model/:modelId" element={<DeviceModelDetailPage />} />
-      <Route path="/integrations/model/add" element={<AddDeviceModelPage />} />
-      <Route path="/integrations/model/:modelId/edit" element={<EditDeviceModelPage />} />
-      <Route path="/integrations/mqtt" element={<MQTTIntegration />} />
-      <Route path="/integrations/communication" element={<CommunicationDevices />} />
-      <Route path="/integrations/communication/:deviceId" element={<CommunicationDeviceDetail />} />
-      <Route path="/integrations/batteries" element={<IntegrationCategoryPage />} />
-      <Route path="/integrations/inverters" element={<IntegrationCategoryPage />} />
-      <Route path="/integrations/ev-chargers" element={<IntegrationCategoryPage />} />
-      <Route path="/integrations/meters" element={<IntegrationCategoryPage />} />
-      <Route path="/integrations/controllers" element={<IntegrationCategoryPage />} />
-
-      {/* Modbus Routes */}
-      <Route path="/modbus/devices" element={<ModbusDevices />} />
-      <Route path="/modbus/devices/:deviceId" element={<ModbusDeviceDetails />} />
-      <Route path="/modbus/devices/add" element={<AddModbusDevice />} />
-
-      {/* System Routes */}
-      <Route path="/system-status" element={<SystemStatus />} />
-      <Route path="/security" element={<Security />} />
-
-      {/* User Management Routes */}
-      <Route path="/users" element={<Users />} />
-      <Route path="/users/:userId" element={<UserProfile />} />
-      <Route path="/users/roles" element={<UserRoles />} />
-
-      {/* Settings Routes */}
-      <Route path="/settings" element={<Settings />} />
-      <Route path="/settings/user" element={<UserSettings />} />
-      <Route path="/settings/sites" element={<SiteSettings />} />
-      <Route path="/settings/sites/add" element={<AddSite />} />
-      <Route path="/settings/sites/:siteId/edit" element={<EditSite />} />
-      <Route path="/settings/tariffs" element={<TariffSettings />} />
-      <Route path="/settings/api" element={<ApiSettings />} />
-      <Route path="/settings/notifications" element={<NotificationServices />} />
-      <Route path="/settings/thresholds" element={<OperationalThresholds />} />
-      <Route path="/settings/algorithms" element={<OptimizationAlgorithms />} />
-      <Route path="/settings/external" element={<ExternalServices />} />
-      <Route path="/settings/system-updates" element={<SystemUpdates />} />
-      <Route path="/settings/authentication" element={<Authentication />} />
-      
-      {/* AI Routes */}
-      <Route path="/ai/trainer" element={<AIModelTrainer />} />
-      
-      {/* Device Catalog Routes */}
-      <Route path="/device-view/:deviceId" element={<Navigate to={`/devices/${window.location.pathname.split('/').pop()}`} replace />} />
-      <Route path="/devices/catalog" element={<DeviceCatalog />} />
-      <Route path="/devices/category/:categoryId" element={<DeviceCategoryDetail />} />
-      <Route path="/devices/model/:modelId" element={<DeviceModelDetail />} />
+      {/* App Layout wrapping protected routes */}
+      <Route path="/" element={<AppLayout />}>
+        {/* Redirect root to dashboard */}
+        <Route index element={<Navigate to="/dashboard" replace />} />
+        
+        {/* Dashboard */}
+        <Route path="dashboard" element={<Dashboard />} />
+        <Route path="advanced-dashboard" element={<AdvancedDashboard />} />
+        
+        {/* Device Routes */}
+        <Route path="devices" element={<Devices />} />
+        <Route path="devices/add" element={<AddDevice />} />
+        <Route path="devices/:deviceId" element={<DeviceView />} />
+        <Route path="devices/:deviceId/edit" element={<EditDevice />} />
+        <Route path="devices/details/:deviceId" element={<DeviceDetails />} />
+        
+        {/* Analytics & Reporting Routes */}
+        <Route path="analytics" element={<Analytics />} />
+        <Route path="consumption" element={<Consumption />} />
+        <Route path="production" element={<Production />} />
+        <Route path="reports" element={<Reports />} />
+        <Route path="alerts" element={<Alerts />} />
+        
+        {/* Energy Management Routes */}
+        <Route path="energy-flow" element={<EnergyFlow />} />
+        <Route path="microgrid-control" element={<MicrogridControl />} />
+        <Route path="battery-management" element={<BatteryManagement />} />
+        <Route path="energy-optimization" element={<EnergyOptimization />} />
+        <Route path="optimization" element={<Optimization />} />
+        <Route path="savings" element={<Savings />} />
+        <Route path="preferences" element={<Preferences />} />
+        <Route path="weather-forecast" element={<WeatherForecast />} />
+        <Route path="ai/overview" element={<AIOverview />} />
+        
+        {/* New Advanced Energy Management Routes */}
+        <Route path="smart-grid" element={<SmartGridManagement />} />
+        <Route path="system-topology" element={<SystemTopology />} />
+        
+        {/* Site Routes */}
+        <Route path="sites/:id" element={<SiteDetail />} />
+        
+        {/* Integration Routes */}
+        <Route path="integrations" element={<IntegrationsHome />} />
+        <Route path="integrations/:categoryId" element={<IntegrationCategoryPage />} />
+        <Route path="integrations/model/:modelId" element={<DeviceModelDetailPage />} />
+        <Route path="integrations/device-model/:modelId" element={<DeviceModelDetailPage />} />
+        <Route path="integrations/model/add" element={<AddDeviceModelPage />} />
+        <Route path="integrations/model/:modelId/edit" element={<EditDeviceModelPage />} />
+        <Route path="integrations/mqtt" element={<MQTTIntegration />} />
+        <Route path="integrations/communication" element={<CommunicationDevices />} />
+        <Route path="integrations/communication/:deviceId" element={<CommunicationDeviceDetail />} />
+        <Route path="integrations/batteries" element={<IntegrationCategoryPage />} />
+        <Route path="integrations/inverters" element={<IntegrationCategoryPage />} />
+        <Route path="integrations/ev-chargers" element={<IntegrationCategoryPage />} />
+        <Route path="integrations/meters" element={<IntegrationCategoryPage />} />
+        <Route path="integrations/controllers" element={<IntegrationCategoryPage />} />
+        
+        {/* Modbus Routes */}
+        <Route path="modbus/devices" element={<ModbusDevices />} />
+        <Route path="modbus/devices/:deviceId" element={<ModbusDeviceDetails />} />
+        <Route path="modbus/devices/add" element={<AddModbusDevice />} />
+        
+        {/* System Routes */}
+        <Route path="system-status" element={<SystemStatus />} />
+        <Route path="security" element={<Security />} />
+        
+        {/* User Management Routes */}
+        <Route path="users" element={<Users />} />
+        <Route path="users/:userId" element={<UserProfile />} />
+        <Route path="users/roles" element={<UserRoles />} />
+        
+        {/* Settings Routes */}
+        <Route path="settings" element={<Settings />} />
+        <Route path="settings/user" element={<UserSettings />} />
+        <Route path="settings/sites" element={<SiteSettings />} />
+        <Route path="settings/sites/add" element={<AddSite />} />
+        <Route path="settings/sites/:siteId/edit" element={<EditSite />} />
+        <Route path="settings/tariffs" element={<TariffSettings />} />
+        <Route path="settings/api" element={<ApiSettings />} />
+        <Route path="settings/notifications" element={<NotificationServices />} />
+        <Route path="settings/thresholds" element={<OperationalThresholds />} />
+        <Route path="settings/algorithms" element={<OptimizationAlgorithms />} />
+        <Route path="settings/external" element={<ExternalServices />} />
+        <Route path="settings/system-updates" element={<SystemUpdates />} />
+        <Route path="settings/authentication" element={<Authentication />} />
+        
+        {/* AI Routes */}
+        <Route path="ai/trainer" element={<AIModelTrainer />} />
+        
+        {/* Device Catalog Routes */}
+        <Route path="device-view/:deviceId" element={<Navigate to={`/devices/${window.location.pathname.split('/').pop()}`} replace />} />
+        <Route path="devices/catalog" element={<DeviceCatalog />} />
+        <Route path="devices/category/:categoryId" element={<DeviceCategoryDetail />} />
+        <Route path="devices/model/:modelId" element={<DeviceModelDetail />} />
+      </Route>
       
       {/* Catch-all route */}
       <Route path="*" element={<NotFound />} />
@@ -180,6 +196,4 @@ const AppRoutes = () => {
   );
 };
 
-// Export both the component and the router object 
-export const router = AppRoutes;
 export default AppRoutes;

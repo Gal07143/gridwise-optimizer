@@ -1,7 +1,5 @@
-import { WeatherForecast } from '@/types/energy';
 
-// Define WeatherCondition type here to avoid the missing type error
-export type WeatherCondition = 'Clear' | 'Cloudy' | 'Rainy' | 'Sunny' | 'Partially cloudy' | 'Overcast' | 'Stormy';
+import { WeatherCondition, WeatherForecast } from '@/types/energy';
 
 // Function to generate a random weather condition from the allowed types
 const getWeatherCondition = (): WeatherCondition => {
@@ -36,6 +34,38 @@ export const generateMockForecasts = (siteId: string = 'default', hours: number 
       cloud_cover: cloudCover,
       wind_speed: windSpeed,
       probability: Math.random() * 100
+    });
+  }
+  
+  return forecasts;
+};
+
+// Generate weather forecasts with more detailed weather information
+export const generateWeatherForecasts = (siteId: string = 'default', hours: number = 24): WeatherForecast[] => {
+  const now = Date.now();
+  const forecasts: WeatherForecast[] = [];
+  
+  for (let i = 0; i < hours; i++) {
+    const timestamp = now + i * 3600000; // One hour interval
+    const temperature = Math.floor(Math.random() * 20) + 15; // 15-35 degrees Celsius
+    const cloudCover = Math.floor(Math.random() * 100); // 0-100%
+    const windSpeed = Math.floor(Math.random() * 15); // 0-15 m/s
+    const humidity = Math.floor(Math.random() * 40) + 40; // 40-80%
+    const pressure = Math.floor(Math.random() * 30) + 980; // 980-1010 hPa
+    const precipitation = Math.random() < 0.3 ? Math.random() * 5 : 0; // 30% chance of precipitation
+    
+    // Use the properly typed weather condition
+    const weatherCondition: WeatherCondition = getWeatherCondition();
+    
+    forecasts.push({
+      timestamp: new Date(timestamp).toISOString(),
+      temperature,
+      weather_condition: weatherCondition,
+      cloud_cover: cloudCover,
+      wind_speed: windSpeed,
+      precipitation,
+      humidity,
+      pressure
     });
   }
   

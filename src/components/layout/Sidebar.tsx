@@ -23,7 +23,13 @@ import {
   Gauge,
   Workflow,
   PlugZap,
-  CalendarDays
+  CalendarDays,
+  Network,
+  PowerCircuit,
+  Blocks,
+  Layers,
+  DraftingCompass,
+  FileDigit,
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 
@@ -68,6 +74,16 @@ export const Sidebar = ({ className }: SidebarProps) => {
           <NavItem to="/solar" icon={<Sun size={18} />} label="Solar" expanded={sidebarExpanded} />
           <NavItem to="/battery" icon={<Battery size={18} />} label="Battery" expanded={sidebarExpanded} />
           
+          {/* Smart Grid - New Section */}
+          {sidebarExpanded && (
+            <div className="pt-4 pb-1">
+              <p className="px-3 text-xs font-medium text-muted-foreground">SMART GRID</p>
+            </div>
+          )}
+          <NavItem to="/smart-grid" icon={<PowerCircuit size={18} />} label="Grid Management" expanded={sidebarExpanded} />
+          <NavItem to="/system-topology" icon={<Network size={18} />} label="System Topology" expanded={sidebarExpanded} />
+          <NavItem to="/energy-flow" icon={<Workflow size={18} />} label="Energy Flow" expanded={sidebarExpanded} />
+          
           {/* Device Management */}
           {sidebarExpanded && (
             <div className="pt-4 pb-1">
@@ -75,7 +91,7 @@ export const Sidebar = ({ className }: SidebarProps) => {
             </div>
           )}
           <NavItem to="/devices" icon={<PanelTop size={18} />} label="Devices" expanded={sidebarExpanded} />
-          <NavItem to="/modbus-devices" icon={<Radio size={18} />} label="Modbus Devices" expanded={sidebarExpanded} />
+          <NavItem to="/modbus/devices" icon={<Radio size={18} />} label="Modbus Devices" expanded={sidebarExpanded} />
           <NavItem to="/ev-charging" icon={<PlugZap size={18} />} label="EV Charging" expanded={sidebarExpanded} />
           <NavItem to="/schedules" icon={<CalendarDays size={18} />} label="Schedules" expanded={sidebarExpanded} />
 
@@ -86,9 +102,9 @@ export const Sidebar = ({ className }: SidebarProps) => {
             </div>
           )}
           <NavItem to="/analytics" icon={<BarChart3 size={18} />} label="Analytics" expanded={sidebarExpanded} />
-          <NavItem to="/energy-flow" icon={<Workflow size={18} />} label="Energy Flow" expanded={sidebarExpanded} />
           <NavItem to="/consumption" icon={<Lightbulb size={18} />} label="Consumption" expanded={sidebarExpanded} />
           <NavItem to="/telemetry" icon={<Gauge size={18} />} label="Live Telemetry" expanded={sidebarExpanded} />
+          <NavItem to="/reports" icon={<FileDigit size={18} />} label="Reports" expanded={sidebarExpanded} />
           
           {/* System & Administration */}
           {sidebarExpanded && (

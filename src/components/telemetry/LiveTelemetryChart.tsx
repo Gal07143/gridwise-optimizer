@@ -12,6 +12,7 @@ export interface LiveTelemetryChartProps {
   unit: string;
   height?: number;
   showSource?: boolean;
+  timeframe?: string;
 }
 
 const LiveTelemetryChart: React.FC<LiveTelemetryChartProps> = ({ 
@@ -19,10 +20,11 @@ const LiveTelemetryChart: React.FC<LiveTelemetryChartProps> = ({
   metric, 
   unit, 
   height = 200,
-  showSource = false
+  showSource = false,
+  timeframe = '24h'
 }) => {
   // Fix the function call by providing a timeframe parameter
-  const { data: telemetry, isLoading, error, refetch } = useTelemetryHistory(deviceId, metric, '24h');
+  const { data: telemetry, isLoading, error, refetch } = useTelemetryHistory(deviceId, metric, timeframe);
   
   // Format the data for the chart
   const formattedData = telemetry ? formatTelemetryData(telemetry) : [];

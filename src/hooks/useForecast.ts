@@ -1,127 +1,106 @@
 
 import { useState, useEffect } from 'react';
-import { EnergyForecast } from '@/types/energy';
-import { generateMockForecasts } from '@/services/forecasts/sampleGenerator';
+import { fetchForecasts } from '@/services/forecasts/forecastService';
+import { ProcessedForecastData, ForecastMetrics } from '@/types/energy';
 
-// Define the WeatherData interface directly in this file to resolve the import error
-export interface WeatherData {
-  condition: string;
-  temperature: number;
-  humidity: number;
-  wind_speed: number;
-  cloud_cover: number;
-  precipitation: number;
-  timestamp: string;
-}
-
-export interface ProcessedForecastData {
-  timestamp: string;
-  production: number;
-  consumption: number;
-  balance?: number;
-  generation?: number; // Alternative name for production
-  hour?: string;       // For hour-based display
-}
-
-export interface ForecastMetrics {
-  totalGeneration: number;
-  totalConsumption: number;
-  netEnergy: number;
-  selfConsumptionRate: number;
-  confidence: number;
-  peakGeneration: number;
-  peakConsumption: number;
-}
-
-export function useForecast(siteId: string = 'default') {
+export const useForecast = (timeframe: string = '24h', siteId?: string) => {
   const [processedData, setProcessedData] = useState<ProcessedForecastData[]>([]);
-  const [forecastMetrics, setForecastMetrics] = useState<ForecastMetrics>({
+  const [metrics, setMetrics] = useState<ForecastMetrics>({
     totalGeneration: 0,
     totalConsumption: 0,
     netEnergy: 0,
-    selfConsumptionRate: 0,
-    confidence: 85,
     peakGeneration: 0,
-    peakConsumption: 0
+    peakConsumption: 0,
+    selfConsumptionRate: 0
   });
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const [isUsingLocalData, setIsUsingLocalData] = useState(true);
-  const [currentWeather, setCurrentWeather] = useState<WeatherData | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
 
-  const refreshData = async () => {
-    setIsLoading(true);
+  // Process the forecast data for visualization
+  const processForecasts = (data: any[]): ProcessedForecastData[] => {
+    if (!data || !Array.isArray(data)) return [];
+    
+    return data.map(item => ({
+      timestamp: new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      production: item.generation_forecast || 0,
+      consumption: item.consumption_forecast || 0,
+      balance: (item.generation_forecast || 0) - (item.consumption_forecast || 0)
+    }));
+  };
+
+  // Calculate metrics from forecast data
+  const calculateMetrics = (data: any[]): ForecastMetrics => {
+    if (!data || !data.length) {
+      return {
+        totalGeneration: 0,
+        totalConsumption: 0,
+        netEnergy: 0,
+        peakGeneration: 0,
+        peakConsumption: 0,
+        selfConsumptionRate: 0
+      };
+    }
+
+    const totalGeneration = data.reduce((sum, item) => sum + (item.generation_forecast || 0), 0);
+    const totalConsumption = data.reduce((sum, item) => sum + (item.consumption_forecast || 0), 0);
+    const peakGeneration = Math.max(...data.map(item => item.generation_forecast || 0));
+    const peakConsumption = Math.max(...data.map(item => item.consumption_forecast || 0));
+    
+    // Calculate self-consumption rate (percentage of generated energy directly consumed)
+    const selfConsumption = data.reduce((sum, item) => {
+      const gen = item.generation_forecast || 0;
+      const con = item.consumption_forecast || 0;
+      return sum + Math.min(gen, con);
+    }, 0);
+    
+    const selfConsumptionRate = totalGeneration > 0 ? (selfConsumption / totalGeneration) * 100 : 0;
+
+    return {
+      totalGeneration,
+      totalConsumption,
+      netEnergy: totalGeneration - totalConsumption,
+      peakGeneration,
+      peakConsumption,
+      selfConsumptionRate
+    };
+  };
+
+  // Fetch and process the forecast data
+  const fetchAndProcessForecasts = async () => {
     try {
-      // In a real app, this would be an API call
-      const mockData = generateMockForecasts(siteId, 24);
-      
-      // Process the data
-      const processed = mockData.map(item => ({
-        timestamp: item.timestamp,
-        hour: new Date(item.timestamp).getHours().toString().padStart(2, '0') + ':00',
-        production: item.generation_forecast || 0,
-        consumption: item.consumption_forecast || 0,
-        generation: item.generation_forecast || 0, // Alternative name
-        balance: (item.generation_forecast || 0) - (item.consumption_forecast || 0)
-      }));
+      setLoading(true);
+      const data = await fetchForecasts(timeframe, siteId);
+      const processed = processForecasts(data);
+      const calculatedMetrics = calculateMetrics(data);
       
       setProcessedData(processed);
-      
-      // Calculate metrics
-      const totalGen = processed.reduce((sum, item) => sum + item.production, 0);
-      const totalCons = processed.reduce((sum, item) => sum + item.consumption, 0);
-      const peakGen = Math.max(...processed.map(item => item.production));
-      const peakCons = Math.max(...processed.map(item => item.consumption));
-      
-      // Calculate self-consumption rate (capped at 100%)
-      let selfConsumptionRate = totalGen > 0 ? Math.min(100, (Math.min(totalGen, totalCons) / totalGen) * 100) : 0;
-      
-      setForecastMetrics({
-        totalGeneration: totalGen,
-        totalConsumption: totalCons,
-        netEnergy: totalGen - totalCons,
-        selfConsumptionRate: selfConsumptionRate,
-        confidence: 85 + Math.random() * 10,
-        peakGeneration: peakGen,
-        peakConsumption: peakCons
-      });
-      
-      // Set current weather from the first forecast item
-      if (mockData[0]) {
-        setCurrentWeather({
-          condition: mockData[0].weather_condition || 'Clear',
-          temperature: mockData[0].temperature || 20,
-          humidity: 50,
-          wind_speed: mockData[0].wind_speed || 5,
-          cloud_cover: mockData[0].cloud_cover || 10,
-          precipitation: 0,
-          timestamp: mockData[0].timestamp
-        });
-      }
-      
-      setLastUpdated(new Date().toISOString());
+      setMetrics(calculatedMetrics);
       setError(null);
     } catch (err) {
-      console.error('Error fetching forecast data:', err);
-      setError(err instanceof Error ? err : new Error('Failed to fetch forecast data'));
+      console.error('Error fetching forecasts:', err);
+      setError(err instanceof Error ? err : new Error('Failed to fetch forecasts'));
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
+  // Initial fetch and periodic refresh
   useEffect(() => {
-    refreshData();
-  }, [siteId]);
+    fetchAndProcessForecasts();
+    
+    const interval = setInterval(fetchAndProcessForecasts, 5 * 60 * 1000); // Refresh every 5 minutes
+    
+    return () => {
+      clearInterval(interval);
+    };
+  }, [timeframe, siteId]);
 
-  return {
-    processedData,
-    forecastMetrics,
-    isLoading,
-    error,
-    isUsingLocalData,
-    currentWeather,
-    lastUpdated,
-    refreshData
+  // Manually trigger a refresh
+  const refresh = () => {
+    fetchAndProcessForecasts();
   };
-}
+
+  return { data: processedData, metrics, loading, error, refresh };
+};
+
+export default useForecast;
