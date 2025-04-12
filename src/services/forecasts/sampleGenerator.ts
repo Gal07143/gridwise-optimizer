@@ -1,4 +1,3 @@
-
 import { EnergyForecast } from '@/types/energy-forecast';
 import { WeatherForecast } from '@/types/forecast';
 import { v4 as uuidv4 } from 'uuid';
@@ -172,7 +171,7 @@ function getWindDirection(): string {
   return directions[Math.floor(Math.random() * directions.length)];
 }
 
-function getWeatherCondition(hour: number): string {
+function getWeatherCondition(hour: number): WeatherCondition {
   // Simple weather patterns based on time of day and randomness
   const rand = Math.random();
   

@@ -1,7 +1,16 @@
 
 import { useState, useEffect } from 'react';
-import { WeatherData } from '@/types/weather';
-import axios from 'axios';
+import { EnergyForecast, WeatherData } from '@/types/energy';
+import { generateMockForecasts } from '@/services/forecasts/sampleGenerator';
+
+export interface ProcessedForecastData {
+  timestamp: string;
+  production: number;
+  consumption: number;
+  balance?: number;
+  generation?: number; // Alternative name for production
+  hour?: string;       // For hour-based display
+}
 
 export interface ForecastMetrics {
   totalGeneration: number;
@@ -13,83 +22,86 @@ export interface ForecastMetrics {
   peakConsumption: number;
 }
 
-export interface ForecastSettings {
-  hours: number;
-  includeBattery: boolean;
-  includeEV: boolean;
-}
-
-interface ProcessedForecastData {
-  time: string;
-  solarGeneration: number;
-  homeConsumption: number;
-  batteryFlow: number;
-  gridFlow: number;
-}
-
-export function useForecast(siteId?: string, settings?: Partial<ForecastSettings>) {
+export function useForecast(siteId: string = 'default') {
   const [processedData, setProcessedData] = useState<ProcessedForecastData[]>([]);
   const [forecastMetrics, setForecastMetrics] = useState<ForecastMetrics>({
-    totalGeneration: 36.5,
-    totalConsumption: 42.8,
-    netEnergy: -6.3,
-    selfConsumptionRate: 78,
+    totalGeneration: 0,
+    totalConsumption: 0,
+    netEnergy: 0,
+    selfConsumptionRate: 0,
     confidence: 85,
-    peakGeneration: 8.2,
-    peakConsumption: 6.5
+    peakGeneration: 0,
+    peakConsumption: 0
   });
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<any>(null);
-  const [isUsingLocalData, setIsUsingLocalData] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const [isUsingLocalData, setIsUsingLocalData] = useState(true);
   const [currentWeather, setCurrentWeather] = useState<WeatherData | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<string | null>(new Date().toISOString());
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+
+  const refreshData = async () => {
+    setIsLoading(true);
+    try {
+      // In a real app, this would be an API call
+      const mockData = generateMockForecasts(siteId, 24);
+      
+      // Process the data
+      const processed = mockData.map(item => ({
+        timestamp: item.timestamp,
+        hour: new Date(item.timestamp).getHours().toString().padStart(2, '0') + ':00',
+        production: item.generation_forecast || 0,
+        consumption: item.consumption_forecast || 0,
+        generation: item.generation_forecast || 0, // Alternative name
+        balance: (item.generation_forecast || 0) - (item.consumption_forecast || 0)
+      }));
+      
+      setProcessedData(processed);
+      
+      // Calculate metrics
+      const totalGen = processed.reduce((sum, item) => sum + item.production, 0);
+      const totalCons = processed.reduce((sum, item) => sum + item.consumption, 0);
+      const peakGen = Math.max(...processed.map(item => item.production));
+      const peakCons = Math.max(...processed.map(item => item.consumption));
+      
+      // Calculate self-consumption rate (capped at 100%)
+      let selfConsumptionRate = totalGen > 0 ? Math.min(100, (Math.min(totalGen, totalCons) / totalGen) * 100) : 0;
+      
+      setForecastMetrics({
+        totalGeneration: totalGen,
+        totalConsumption: totalCons,
+        netEnergy: totalGen - totalCons,
+        selfConsumptionRate: selfConsumptionRate,
+        confidence: 85 + Math.random() * 10,
+        peakGeneration: peakGen,
+        peakConsumption: peakCons
+      });
+      
+      // Set current weather from the first forecast item
+      if (mockData[0]) {
+        setCurrentWeather({
+          condition: mockData[0].weather_condition || 'Clear',
+          temperature: mockData[0].temperature || 20,
+          humidity: 50,
+          wind_speed: mockData[0].wind_speed || 5,
+          cloud_cover: mockData[0].cloud_cover || 10,
+          precipitation: 0,
+          timestamp: mockData[0].timestamp
+        });
+      }
+      
+      setLastUpdated(new Date().toISOString());
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching forecast data:', err);
+      setError(err instanceof Error ? err : new Error('Failed to fetch forecast data'));
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchForecastData = async () => {
-      setIsLoading(true);
-      try {
-        // In a real app, this would call your backend API
-        // For now, we'll generate some sample data
-        const data = generateSampleForecastData();
-        setProcessedData(data);
-        
-        // Fetch current weather
-        try {
-          const weatherResponse = await axios.get('/api/weather');
-          setCurrentWeather(weatherResponse.data);
-          setIsUsingLocalData(false);
-        } catch (weatherError) {
-          console.log('Using sample weather data', weatherError);
-          setCurrentWeather({
-            condition: 'partly-cloudy',
-            temperature: 22,
-            humidity: 65,
-            wind_speed: 12,
-            cloud_cover: 40,
-            precipitation: 0,
-            timestamp: new Date().toISOString()
-          });
-          setIsUsingLocalData(true);
-        }
-        
-        setLastUpdated(new Date().toISOString());
-      } catch (err) {
-        console.error('Error fetching forecast data:', err);
-        setError(err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchForecastData();
+    refreshData();
   }, [siteId]);
-
-  const refreshData = () => {
-    const data = generateSampleForecastData();
-    setProcessedData(data);
-    setLastUpdated(new Date().toISOString());
-    return Promise.resolve(forecastMetrics);
-  };
 
   return {
     processedData,
@@ -99,62 +111,6 @@ export function useForecast(siteId?: string, settings?: Partial<ForecastSettings
     isUsingLocalData,
     currentWeather,
     lastUpdated,
-    refreshData,
-    metrics: forecastMetrics,
-    refetch: refreshData
+    refreshData
   };
-}
-
-function generateSampleForecastData(): ProcessedForecastData[] {
-  const data: ProcessedForecastData[] = [];
-  const now = new Date();
-  
-  for (let i = 0; i < 24; i++) {
-    const hour = new Date(now.getTime() + i * 60 * 60 * 1000);
-    const hourString = hour.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    
-    // Solar production peaks during midday
-    const timeOfDay = hour.getHours();
-    let solarGeneration = 0;
-    
-    if (timeOfDay >= 6 && timeOfDay <= 18) {
-      // Bell curve for solar production with peak at noon
-      const distanceFromNoon = Math.abs(12 - timeOfDay);
-      solarGeneration = Math.max(0, 7.5 - distanceFromNoon * 1.2) * (0.8 + Math.random() * 0.4);
-    }
-    
-    // Consumption has morning and evening peaks
-    let consumption = 2.0; // Base load
-    if (timeOfDay >= 6 && timeOfDay <= 9) {
-      // Morning peak
-      consumption += 2.5 * (0.8 + Math.random() * 0.4);
-    } else if (timeOfDay >= 17 && timeOfDay <= 22) {
-      // Evening peak
-      consumption += 3.0 * (0.8 + Math.random() * 0.4);
-    } else {
-      // Regular hours
-      consumption += 1.0 * (0.8 + Math.random() * 0.4);
-    }
-    
-    // Battery charges when surplus solar, discharges during evening
-    let batteryFlow = 0;
-    if (solarGeneration > consumption) {
-      batteryFlow = Math.min(2.0, (solarGeneration - consumption) * 0.8); // Charging (positive)
-    } else if (timeOfDay >= 18 && timeOfDay <= 22) {
-      batteryFlow = -Math.min(2.5, Math.random() * 1.5); // Discharging (negative)
-    }
-    
-    // Grid flow: positive = import, negative = export
-    const gridFlow = consumption - solarGeneration - batteryFlow;
-    
-    data.push({
-      time: hourString,
-      solarGeneration: parseFloat(solarGeneration.toFixed(1)),
-      homeConsumption: parseFloat(consumption.toFixed(1)),
-      batteryFlow: parseFloat(batteryFlow.toFixed(1)),
-      gridFlow: parseFloat(gridFlow.toFixed(1))
-    });
-  }
-  
-  return data;
 }

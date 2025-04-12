@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Main } from '@/components/ui/main';
@@ -16,19 +17,26 @@ import { toast } from 'sonner';
 const convertToEnergyDevice = (device: Device): EnergyDevice => {
   // This function ensures safe type conversion
   
-  // Check if the device.type is a valid DeviceType
-  const isValidDeviceType = (type: string): type is DeviceType => {
-    return ['solar', 'battery', 'grid', 'ev', 'home', 'heatpump', 'generator', 'wind'].includes(type);
-  };
+  // Valid device types according to DeviceType
+  const validDeviceTypes: DeviceType[] = [
+    'solar', 'battery', 'grid', 'ev_charger', 'load', 'inverter',
+    'meter', 'light', 'generator', 'hydro', 'wind', 'sensor'
+  ];
   
-  // Check if the device.status is a valid DeviceStatus
-  const isValidDeviceStatus = (status: string): status is DeviceStatus => {
-    return ['active', 'inactive', 'warning', 'error'].includes(status);
-  };
+  // Valid device statuses according to DeviceStatus
+  const validDeviceStatuses: DeviceStatus[] = [
+    'online', 'offline', 'maintenance', 'error', 'warning',
+    'idle', 'active', 'charging', 'discharging'
+  ];
   
   // Default type and status if invalid
-  const safeType: DeviceType = isValidDeviceType(device.type) ? device.type as DeviceType : 'home';
-  const safeStatus: DeviceStatus = isValidDeviceStatus(device.status) ? device.status as DeviceStatus : 'inactive';
+  const safeType: DeviceType = validDeviceTypes.includes(device.type as DeviceType)
+    ? (device.type as DeviceType)
+    : 'load'; // Default type
+    
+  const safeStatus: DeviceStatus = validDeviceStatuses.includes(device.status as DeviceStatus)
+    ? (device.status as DeviceStatus)
+    : 'idle'; // Default status
   
   return {
     id: device.id,
@@ -36,8 +44,7 @@ const convertToEnergyDevice = (device: Device): EnergyDevice => {
     type: safeType,
     status: safeStatus,
     site_id: device.site_id,
-    capacity: device.capacity,
-    power: device.current_output,
+    capacity: device.capacity || 0,
     description: device.description,
     location: device.location,
     created_at: device.created_at || new Date().toISOString(),

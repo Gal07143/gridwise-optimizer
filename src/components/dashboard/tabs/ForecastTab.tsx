@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { 
@@ -50,7 +49,13 @@ const ForecastTab: React.FC<ForecastTabProps> = ({ siteId }) => {
   });
 
   // Add the missing selfConsumptionRate property
-  const forecastMetrics: ForecastMetrics = forecastMetricsData ? forecastMetricsData : {
+  const forecastMetrics: ForecastMetrics = forecastMetricsData ? {
+    ...forecastMetricsData,
+    selfConsumptionRate: forecastMetricsData.selfConsumptionRate || 
+      (forecastMetricsData.totalGeneration > 0 
+        ? Math.min(100, (Math.min(forecastMetricsData.totalGeneration, forecastMetricsData.totalConsumption) / forecastMetricsData.totalGeneration) * 100) 
+        : 0)
+  } : {
     totalGeneration: 0,
     totalConsumption: 0,
     netEnergy: 0,

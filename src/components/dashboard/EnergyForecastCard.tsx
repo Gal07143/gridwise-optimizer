@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { LineChart, CloudRain, ArrowDownUp, RefreshCw } from 'lucide-react';
 import DashboardCard from './DashboardCard';
@@ -28,7 +27,6 @@ const EnergyForecastCard = ({ className, animationDelay }: EnergyForecastCardPro
     refreshData
   } = useForecast();
 
-  // Handle loading and error states
   if (isLoading && processedData.length === 0) {
     return (
       <DashboardCard 
@@ -64,12 +62,10 @@ const EnergyForecastCard = ({ className, animationDelay }: EnergyForecastCardPro
     );
   }
 
-  // Format the last updated time
   const formattedTime = lastUpdated 
     ? new Date(lastUpdated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
     : null;
 
-  // Determine net energy status (surplus/deficit)
   const hasEnergySurplus = forecastMetrics.netEnergy > 0;
 
   return (
@@ -80,7 +76,6 @@ const EnergyForecastCard = ({ className, animationDelay }: EnergyForecastCardPro
       style={animationDelay ? { animationDelay } : undefined}
       actions={
         <div className="flex items-center gap-2">
-          {/* Net energy indicator */}
           <HoverCard>
             <HoverCardTrigger asChild>
               <Badge 
@@ -101,7 +96,6 @@ const EnergyForecastCard = ({ className, animationDelay }: EnergyForecastCardPro
             </HoverCardContent>
           </HoverCard>
           
-          {/* Weather information */}
           {currentWeather && (
             <Badge variant="outline" className="flex items-center gap-1 bg-white/5 backdrop-blur-sm">
               <CloudRain size={14} />
@@ -110,14 +104,12 @@ const EnergyForecastCard = ({ className, animationDelay }: EnergyForecastCardPro
             </Badge>
           )}
           
-          {/* Last updated time */}
           {formattedTime && (
             <span className="text-xs text-muted-foreground hidden md:inline-block">
               Updated: {formattedTime}
             </span>
           )}
           
-          {/* Refresh button */}
           <Button variant="ghost" size="icon" onClick={refreshData} className="h-8 w-8 rounded-full hover:bg-gray-100/20 dark:hover:bg-gray-800/20">
             <RefreshCw size={14} />
           </Button>
@@ -131,7 +123,7 @@ const EnergyForecastCard = ({ className, animationDelay }: EnergyForecastCardPro
       )}
       
       <ForecastMetricsPanel metrics={forecastMetrics} />
-      <ForecastChart data={processedData} />
+      <ForecastChart data={processedData as ProcessedForecastData[]} />
       <ForecastFooter confidence={forecastMetrics.confidence} />
     </DashboardCard>
   );
