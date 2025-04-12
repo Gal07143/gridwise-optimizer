@@ -13,6 +13,7 @@ import { useAppStore } from '@/store/appStore';
 import { fetchDevices } from '@/services/supabase/supabaseService';
 import { useQuery } from '@tanstack/react-query';
 import { EnergyDevice } from '@/types/energy';
+import { OptimizationPriority } from '@/types/optimization';
 
 const OptimizationControls = () => {
   const { currentSite } = useAppStore();
@@ -50,6 +51,14 @@ const OptimizationControls = () => {
     
     runOptimization(deviceIds);
   };
+
+  const handleTabChange = (value: string) => {
+    // Handle objective change safely with type casting
+    if (value === 'cost' || value === 'self_consumption' || 
+        value === 'carbon' || value === 'peak_shaving') {
+      updateSettings({ priority: value as OptimizationPriority });
+    }
+  };
   
   return (
     <Card className="shadow-sm border border-slate-200 dark:border-slate-800">
@@ -64,12 +73,7 @@ const OptimizationControls = () => {
       </CardHeader>
       
       <CardContent>
-        <Tabs defaultValue="self_consumption" onValueChange={(value) => {
-          // Handle objective change safely
-          if (typeof value === 'string') {
-            updateSettings({ objective: value });
-          }
-        }}>
+        <Tabs defaultValue="self_consumption" onValueChange={handleTabChange}>
           <TabsList className="grid w-full grid-cols-4 mb-4">
             <TabsTrigger value="self_consumption" className="flex flex-col py-2 h-auto">
               <Leaf className="h-4 w-4 mb-1" />

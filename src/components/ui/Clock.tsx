@@ -5,43 +5,61 @@ import { cn } from '@/lib/utils';
 interface ClockProps {
   className?: string;
   showSeconds?: boolean;
-  use24Hour?: boolean;
+  size?: 'sm' | 'md' | 'lg';
+  format?: '12h' | '24h';
 }
 
-const Clock: React.FC<ClockProps> = ({
-  className,
+const Clock: React.FC<ClockProps> = ({ 
+  className, 
   showSeconds = true,
-  use24Hour = true
+  size = 'md',
+  format = '24h'
 }) => {
-  const [time, setTime] = useState<Date>(new Date());
+  const [time, setTime] = useState(new Date());
   
   useEffect(() => {
-    const intervalId = setInterval(() => {
-      setTime(new Date());
-    }, 1000);
-    
-    return () => clearInterval(intervalId);
+    const timer = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(timer);
   }, []);
   
-  const formatTime = () => {
-    let hours = time.getHours();
-    const minutes = time.getMinutes().toString().padStart(2, '0');
-    const seconds = time.getSeconds().toString().padStart(2, '0');
-    let period = '';
+  // Format hours based on 12h/24h format
+  const hours = format === '12h' 
+    ? time.getHours() % 12 || 12
+    : time.getHours();
+  
+  // Pad single digits with leading zeros
+  const formatNumber = (num: number) => num.toString().padStart(2, '0');
+  
+  const getTimeString = () => {
+    const timeStr = `${formatNumber(hours)}:${formatNumber(time.getMinutes())}`;
     
-    if (!use24Hour) {
-      period = hours >= 12 ? ' PM' : ' AM';
-      hours = hours % 12 || 12;
+    if (showSeconds) {
+      return `${timeStr}:${formatNumber(time.getSeconds())}`;
     }
     
-    const hoursStr = hours.toString().padStart(2, '0');
-    
-    return `${hoursStr}:${minutes}${showSeconds ? `:${seconds}` : ''}${period}`;
+    return timeStr;
   };
   
+  // Add AM/PM for 12-hour format
+  const getPeriod = () => {
+    if (format === '12h') {
+      return time.getHours() >= 12 ? 'PM' : 'AM';
+    }
+    return null;
+  };
+  
+  // Size classes
+  const sizeClasses = 
+    size === 'sm' ? 'text-lg' :
+    size === 'lg' ? 'text-3xl' :
+    'text-2xl';
+  
   return (
-    <div className={cn("font-mono text-lg", className)}>
-      {formatTime()}
+    <div className={cn("font-mono", sizeClasses, className)}>
+      <span className="font-semibold">{getTimeString()}</span>
+      {format === '12h' && (
+        <span className="ml-1 text-xs align-top">{getPeriod()}</span>
+      )}
     </div>
   );
 };

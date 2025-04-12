@@ -1,199 +1,148 @@
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { WeatherForecast } from '@/types/energy';
 
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { generateSampleForecasts } from "./sampleGenerator";
+export interface ForecastParams {
+  siteId: string;
+  startDate?: string;
+  endDate?: string;
+  resolution?: 'hourly' | 'daily';
+  includeWeather?: boolean;
+}
 
-export interface ForecastDataPoint {
-  time: string;
-  generation: number;
+export interface EnergyForecast {
+  timestamp: string;
+  solar_generation: number;
   consumption: number;
-  netEnergy: number;
-  weather?: {
-    condition?: string;
-    temperature?: number;
-    cloudCover?: number;
-    windSpeed?: number;
+  battery_soc?: number;
+  grid_import?: number;
+  grid_export?: number;
+}
+
+export interface ForecastResult {
+  forecasts: EnergyForecast[];
+  weather?: WeatherForecast[];
+  meta: {
+    site_id: string;
+    start_date: string;
+    end_date: string;
+    resolution: string;
+    total_generation: number;
+    total_consumption: number;
+    net_grid_import: number;
   };
 }
 
-export interface ForecastMetrics {
-  totalGeneration: number;
-  totalConsumption: number;
-  peakGeneration: number;
-  peakConsumption: number;
-  confidence: number;
-  netEnergy: number;
-}
-
-export interface WeatherCondition {
-  condition: string;
-  temperature: number;
-  cloudCover: number;
-  windSpeed: number;
-}
-
-/**
- * Get energy forecast data for a site
- */
-export const getEnergyForecast = async (siteId: string): Promise<{
-  forecastData: ForecastDataPoint[];
-  metrics: ForecastMetrics;
-  weather: WeatherCondition | null;
-  isLocalData: boolean;
-}> => {
+export const getEnergyForecasts = async (params: ForecastParams): Promise<ForecastResult> => {
   try {
-    console.log(`Fetching energy forecast for site: ${siteId}`);
+    const { siteId, startDate, endDate, resolution = 'hourly', includeWeather = false } = params;
     
-    // Call the Supabase Edge Function
-    const { data, error } = await supabase.functions.invoke("energy-ai-predictions", {
-      body: { siteId, days: 1, includeWeather: true },
-    });
+    // Default to next 24 hours if no dates provided
+    const start = startDate || new Date().toISOString();
+    const end = endDate || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
     
-    if (error) {
-      console.error("Error fetching energy forecast:", error);
-      throw error;
+    // Fetch energy forecasts
+    const { data: forecasts, error: forecastError } = await supabase
+      .from('energy_forecasts')
+      .select('*')
+      .eq('site_id', siteId)
+      .gte('timestamp', start)
+      .lte('timestamp', end)
+      .order('timestamp', { ascending: true });
+    
+    if (forecastError) throw forecastError;
+    
+    // Fetch weather forecasts if requested
+    let weather: WeatherForecast[] = [];
+    if (includeWeather) {
+      const { data: weatherData, error: weatherError } = await supabase
+        .from('weather_forecasts')
+        .select('*')
+        .eq('site_id', siteId)
+        .gte('timestamp', start)
+        .lte('timestamp', end)
+        .order('timestamp', { ascending: true });
+      
+      if (weatherError) throw weatherError;
+      weather = weatherData || [];
     }
     
-    if (!data?.predictions || data.predictions.length === 0) {
-      throw new Error("No forecast data available");
-    }
-    
-    // Transform the data to the required format
-    const forecastData: ForecastDataPoint[] = data.predictions.map((prediction: any) => {
-      const time = new Date(prediction.date);
-      return {
-        time: time.toISOString(),
-        generation: Number(prediction.generation),
-        consumption: Number(prediction.consumption),
-        netEnergy: Number(prediction.generation) - Number(prediction.consumption),
-        weather: {
-          condition: prediction.weatherCondition,
-          temperature: prediction.temperature,
-          cloudCover: prediction.cloudCover,
-          windSpeed: prediction.windSpeed,
-        },
-      };
-    });
-    
-    // Sort by time
-    forecastData.sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
-    
-    // Calculate metrics
-    const totalGeneration = forecastData.reduce((sum, item) => sum + item.generation, 0);
-    const totalConsumption = forecastData.reduce((sum, item) => sum + item.consumption, 0);
-    const peakGeneration = Math.max(...forecastData.map(item => item.generation));
-    const peakConsumption = Math.max(...forecastData.map(item => item.consumption));
-    const netEnergy = totalGeneration - totalConsumption;
-    
-    // Get confidence from the first prediction
-    const confidence = typeof data.predictions[0]?.confidence === 'number' 
-      ? data.predictions[0].confidence 
-      : 85;
-    
-    // Get current weather from the first forecast point
-    let weather: WeatherCondition | null = null;
-    
-    if (forecastData[0]?.weather) {
-      weather = {
-        condition: forecastData[0].weather.condition || 'Sunny', // Default value to ensure it's not undefined
-        temperature: forecastData[0].weather.temperature ?? 0,
-        cloudCover: forecastData[0].weather.cloudCover ?? 0,
-        windSpeed: forecastData[0].weather.windSpeed ?? 0,
-      };
-    }
+    // Calculate totals
+    const totalGeneration = forecasts?.reduce((sum, f) => sum + (f.solar_generation || 0), 0) || 0;
+    const totalConsumption = forecasts?.reduce((sum, f) => sum + (f.consumption || 0), 0) || 0;
+    const netGridImport = forecasts?.reduce((sum, f) => {
+      const gridImport = f.grid_import || 0;
+      const gridExport = f.grid_export || 0;
+      return sum + gridImport - gridExport;
+    }, 0) || 0;
     
     return {
-      forecastData,
-      metrics: {
-        totalGeneration: Number(totalGeneration.toFixed(1)),
-        totalConsumption: Number(totalConsumption.toFixed(1)),
-        peakGeneration: Number(peakGeneration.toFixed(1)),
-        peakConsumption: Number(peakConsumption.toFixed(1)),
-        confidence: Math.round(confidence),
-        netEnergy: Number(netEnergy.toFixed(1))
-      },
-      weather,
-      isLocalData: false
+      forecasts: forecasts || [],
+      weather: includeWeather ? weather : undefined,
+      meta: {
+        site_id: siteId,
+        start_date: start,
+        end_date: end,
+        resolution,
+        total_generation: totalGeneration,
+        total_consumption: totalConsumption,
+        net_grid_import: netGridImport
+      }
     };
   } catch (error) {
-    console.error("Error in energy forecast service:", error);
-    
-    // Fallback to sample data
-    console.log("Falling back to sample forecast data");
-    const sampleData = generateSampleForecasts(siteId);
-    
-    // Map the sample data to the same format
-    const forecastData: ForecastDataPoint[] = sampleData.map(forecast => {
-      const time = new Date(forecast.forecast_time);
-      return {
-        time: time.toISOString(),
-        generation: forecast.generation_forecast,
-        consumption: forecast.consumption_forecast,
-        netEnergy: forecast.generation_forecast - forecast.consumption_forecast,
-        weather: {
-          condition: forecast.weather_condition || 'Sunny',
-          temperature: forecast.temperature || 22,
-          cloudCover: forecast.cloud_cover || 10,
-          windSpeed: forecast.wind_speed || 5,
-        },
-      };
-    });
-    
-    // Calculate metrics from sample data
-    const totalGeneration = forecastData.reduce((sum, item) => sum + item.generation, 0);
-    const totalConsumption = forecastData.reduce((sum, item) => sum + item.consumption, 0);
-    const peakGeneration = Math.max(...forecastData.map(item => item.generation));
-    const peakConsumption = Math.max(...forecastData.map(item => item.consumption));
-    const netEnergy = totalGeneration - totalConsumption;
-    
-    // Create a valid WeatherCondition object
-    const weather: WeatherCondition = {
-      condition: forecastData[0]?.weather?.condition || 'Sunny',
-      temperature: forecastData[0]?.weather?.temperature || 22,
-      cloudCover: forecastData[0]?.weather?.cloudCover || 10, 
-      windSpeed: forecastData[0]?.weather?.windSpeed || 5
-    };
-    
-    return {
-      forecastData,
-      metrics: {
-        totalGeneration: Number(totalGeneration.toFixed(1)),
-        totalConsumption: Number(totalConsumption.toFixed(1)),
-        peakGeneration: Number(peakGeneration.toFixed(1)),
-        peakConsumption: Number(peakConsumption.toFixed(1)),
-        confidence: 85, // Default confidence for sample data
-        netEnergy: Number(netEnergy.toFixed(1))
-      },
-      weather,
-      isLocalData: true
-    };
+    console.error('Error fetching energy forecasts:', error);
+    toast.error('Failed to load energy forecasts');
+    throw error;
   }
 };
 
-/**
- * Get weather forecast for a site
- */
-export const getWeatherForecast = async (siteId: string): Promise<WeatherCondition | null> => {
+export const getWeatherForecast = async (siteId: string): Promise<WeatherForecast[]> => {
   try {
-    const { data, error } = await supabase.functions.invoke("weather-api", {
-      body: { siteId, days: 1 },
-    });
+    const { data, error } = await supabase
+      .from('weather_forecasts')
+      .select('*')
+      .eq('site_id', siteId)
+      .gte('timestamp', new Date().toISOString())
+      .order('timestamp', { ascending: true });
+    
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching weather forecast:', error);
+    toast.error('Failed to load weather forecast');
+    return [];
+  }
+};
 
+export const generateForecasts = async (siteId: string): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase.functions.invoke('generate-forecasts', {
+      body: { siteId }
+    });
+    
     if (error) throw error;
     
-    if (!data?.forecast || data.forecast.length === 0) {
-      return null;
+    if (data.success) {
+      toast.success('Energy forecasts generated successfully');
+      return true;
+    } else {
+      toast.error(data.message || 'Failed to generate forecasts');
+      return false;
     }
-    
-    const currentWeather = data.forecast[0];
-    return {
-      condition: currentWeather.condition || 'Unknown',
-      temperature: currentWeather.temperature || 0,
-      cloudCover: currentWeather.cloud_cover || 0,
-      windSpeed: currentWeather.wind_speed || 0,
-    };
   } catch (error) {
-    console.error("Error fetching weather forecast:", error);
-    return null;
+    console.error('Error generating forecasts:', error);
+    toast.error('Failed to generate forecasts');
+    return false;
+  }
+};
+
+export const getForecastAccuracy = async (siteId: string): Promise<number> => {
+  try {
+    // This would typically compare forecasts to actual values
+    // For now, return a mock accuracy value
+    return 87.5; // 87.5% accuracy
+  } catch (error) {
+    console.error('Error calculating forecast accuracy:', error);
+    return 0;
   }
 };

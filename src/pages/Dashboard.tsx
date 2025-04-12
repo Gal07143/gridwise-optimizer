@@ -1,204 +1,272 @@
 
-import React, { useState } from 'react';
-import { DashboardLayout, DashboardGrid, DashboardCard } from '@/components/ui/dashboard/DashboardLayout';
-import { useMicrogrid } from '@/components/microgrid/MicrogridProvider';
-import { EnhancedEnergyFlow } from '@/components/energy';
-import DashboardHeader from '@/components/dashboard/DashboardHeader';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ChevronRight, Activity, Zap, BarChart3, Calendar, Battery, Sun, PlugZap } from 'lucide-react';
-import { Card } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
+import React, { useEffect } from 'react';
+import { Main } from '@/components/ui/main';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAppStore } from '@/store/appStore';
+import { EnergyFlowProvider } from '@/components/dashboard/energy-flow/EnergyFlowContext';
+import HighTechEnergyFlow from '@/components/energy/HighTechEnergyFlow';
+import EnergyDashboardWidget from '@/components/dashboard/EnergyDashboardWidget';
 import { Button } from '@/components/ui/button';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { Gauge } from 'lucide-react';
 
-const Dashboard = () => {
-  const { state } = useMicrogrid();
-  const [activeTab, setActiveTab] = useState("overview");
+// Sample data for quick visualization
+const energyData = [
+  { name: '00:00', consumption: 2.1, generation: 0, battery: -0.5 },
+  { name: '02:00', consumption: 1.9, generation: 0, battery: -0.3 },
+  { name: '04:00', consumption: 1.8, generation: 0.2, battery: 0 },
+  { name: '06:00', consumption: 2.0, generation: 0.8, battery: 0.2 },
+  { name: '08:00', consumption: 2.5, generation: 1.5, battery: 0.5 },
+  { name: '10:00', consumption: 3.1, generation: 2.4, battery: 0.7 },
+  { name: '12:00', consumption: 2.8, generation: 3.5, battery: 1.2 },
+  { name: '14:00', consumption: 2.4, generation: 3.2, battery: 0.8 },
+  { name: '16:00', consumption: 2.3, generation: 2.1, battery: 0.4 },
+  { name: '18:00', consumption: 3.2, generation: 1.5, battery: -0.2 },
+  { name: '20:00', consumption: 3.5, generation: 0.6, battery: -0.8 },
+  { name: '22:00', consumption: 2.9, generation: 0, battery: -0.6 },
+];
 
-  // Format numbers with appropriate units
-  const formatEnergy = (value: number) => `${value.toFixed(1)} kWh`;
-  const formatPower = (value: number) => `${value.toFixed(1)} kW`;
-  const formatPercent = (value: number) => `${value.toFixed(0)}%`;
-
+const Dashboard: React.FC = () => {
+  const { setDashboardView, currentSite } = useAppStore();
+  
+  useEffect(() => {
+    setDashboardView('dashboard');
+  }, [setDashboardView]);
+  
   return (
-    <div className="w-full">
-      <DashboardHeader />
-      
-      <Tabs 
-        defaultValue="overview" 
-        value={activeTab} 
-        onValueChange={setActiveTab}
-        className="w-full"
-      >
-        <TabsList className="mb-6 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
-          <TabsTrigger value="overview" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700">
-            Overview
-          </TabsTrigger>
-          <TabsTrigger value="consumption" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700">
-            Consumption
-          </TabsTrigger>
-          <TabsTrigger value="production" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700">
-            Production
-          </TabsTrigger>
-          <TabsTrigger value="forecast" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700">
-            Forecast
-          </TabsTrigger>
-        </TabsList>
+    <EnergyFlowProvider>
+      <Main>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Energy Dashboard</h1>
+            <p className="text-slate-600 dark:text-slate-400">
+              {currentSite?.name || 'Site'} overview and real-time energy monitoring
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm">Export Data</Button>
+            <Button size="sm">Optimize System</Button>
+          </div>
+        </div>
         
-        <TabsContent value="overview" className="m-0">
-          <DashboardLayout>
-            {/* Energy Flow Visualization */}
-            <DashboardCard className="mb-6 col-span-full">
-              <h3 className="text-lg font-semibold mb-4">Live Energy Flow</h3>
-              <div className="h-[300px] w-full">
-                <EnhancedEnergyFlow />
-              </div>
-            </DashboardCard>
-            
-            {/* Key Metrics */}
-            <DashboardGrid columns={4}>
-              <DashboardCard gradient className="flex flex-col">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="p-3 bg-blue-500/10 rounded-lg">
-                    <Battery className="h-5 w-5 text-blue-500" />
-                  </div>
-                  <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Battery</span>
-                </div>
-                <div className="mt-auto">
-                  <h3 className="text-2xl font-semibold mb-1">{formatPercent(state.batteryLevel)}</h3>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Progress value={state.batteryLevel} className="h-2" />
-                    <span className="text-xs text-slate-500">
-                      {state.batteryCharging ? 'Charging' : 'Discharging'}
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-500">{formatEnergy(state.batteryCapacity)}</p>
-                </div>
-              </DashboardCard>
-              
-              <DashboardCard gradient className="flex flex-col">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="p-3 bg-yellow-500/10 rounded-lg">
-                    <Sun className="h-5 w-5 text-yellow-500" />
-                  </div>
-                  <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Solar</span>
-                </div>
-                <div className="mt-auto">
-                  <h3 className="text-2xl font-semibold mb-1">{formatPower(state.solarProduction)}</h3>
-                  <p className="text-xs text-slate-500 mb-2">{formatPercent(state.solarEfficiency)} efficiency</p>
-                  <div className="inline-flex items-center text-xs text-green-500">
-                    <Activity className="h-3 w-3 mr-1" />
-                    Active
-                  </div>
-                </div>
-              </DashboardCard>
-              
-              <DashboardCard gradient className="flex flex-col">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="p-3 bg-red-500/10 rounded-lg">
-                    <Zap className="h-5 w-5 text-red-500" />
-                  </div>
-                  <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Load</span>
-                </div>
-                <div className="mt-auto">
-                  <h3 className="text-2xl font-semibold mb-1">{formatPower(state.loadConsumption)}</h3>
-                  <p className="text-xs text-slate-500 mb-2">Home Consumption</p>
-                  <div className="inline-flex items-center text-xs text-slate-500">
-                    <Activity className="h-3 w-3 mr-1" />
-                    {state.loadConsumption > 5 ? 'High Usage' : 'Normal'}
-                  </div>
-                </div>
-              </DashboardCard>
-              
-              <DashboardCard gradient className="flex flex-col">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="p-3 bg-purple-500/10 rounded-lg">
-                    <PlugZap className="h-5 w-5 text-purple-500" />
-                  </div>
-                  <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Grid</span>
-                </div>
-                <div className="mt-auto">
-                  <h3 className="text-2xl font-semibold mb-1">
-                    {state.gridImport > 0 ? formatPower(state.gridImport) : formatPower(state.gridExport)}
-                  </h3>
-                  <p className="text-xs text-slate-500 mb-2">
-                    {state.gridImport > 0 ? 'Importing' : 'Exporting'}
-                  </p>
-                  <div className="inline-flex items-center text-xs text-slate-500">
-                    <Activity className="h-3 w-3 mr-1" />
-                    Connected
-                  </div>
-                </div>
-              </DashboardCard>
-            </DashboardGrid>
-            
-            {/* Analytics and Schedule */}
-            <DashboardGrid columns={2} className="mt-6">
-              <DashboardCard>
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold">Energy Analytics</h3>
-                  <Button variant="outline" size="sm" className="text-xs">
-                    View More <ChevronRight className="h-3 w-3 ml-1" />
-                  </Button>
-                </div>
-                <div className="h-64 flex items-center justify-center bg-slate-50 dark:bg-slate-800/30 rounded-lg">
-                  <BarChart3 className="h-10 w-10 text-slate-300 dark:text-slate-600" />
-                </div>
-              </DashboardCard>
-              
-              <DashboardCard>
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold">Upcoming Events</h3>
-                  <Button variant="outline" size="sm" className="text-xs">
-                    View All <ChevronRight className="h-3 w-3 ml-1" />
-                  </Button>
-                </div>
-                <div className="space-y-3">
-                  <div className="flex items-center p-3 bg-slate-50 dark:bg-slate-800/30 rounded-lg">
-                    <div className="p-2 mr-3 bg-blue-500/10 rounded">
-                      <Calendar className="h-4 w-4 text-blue-500" />
-                    </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          {/* High-tech energy flow */}
+          <div className="lg:col-span-2">
+            <HighTechEnergyFlow 
+              siteId={currentSite?.id}
+              title="Live Energy Flow"
+              subtitle="Real-time power distribution across your system"
+              variant="detailed"
+            />
+          </div>
+          
+          {/* Power gauges */}
+          <div className="grid grid-cols-1 gap-6">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Gauge className="h-5 w-5 text-blue-500" />
+                  Power Balance
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {/* Solar gauge */}
+                  <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium">Battery Charge</p>
-                      <p className="text-xs text-slate-500">Today, 2:00 PM - 4:00 PM</p>
+                      <div className="text-sm font-medium">Solar Production</div>
+                      <div className="text-2xl font-semibold">3.2 kW</div>
+                    </div>
+                    <div className="w-24 h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <div className="h-full bg-yellow-500" style={{ width: '65%' }}></div>
                     </div>
                   </div>
-                  <div className="flex items-center p-3 bg-slate-50 dark:bg-slate-800/30 rounded-lg">
-                    <div className="p-2 mr-3 bg-yellow-500/10 rounded">
-                      <Calendar className="h-4 w-4 text-yellow-500" />
-                    </div>
+                  
+                  {/* Battery gauge */}
+                  <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium">Peak Shaving</p>
-                      <p className="text-xs text-slate-500">Today, 6:00 PM - 8:00 PM</p>
+                      <div className="text-sm font-medium">Battery</div>
+                      <div className="text-2xl font-semibold">1.1 kW</div>
+                    </div>
+                    <div className="w-24 h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <div className="h-full bg-blue-500" style={{ width: '30%' }}></div>
+                    </div>
+                  </div>
+                  
+                  {/* Grid gauge */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-sm font-medium">Grid Import</div>
+                      <div className="text-2xl font-semibold">0.5 kW</div>
+                    </div>
+                    <div className="w-24 h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <div className="h-full bg-purple-500" style={{ width: '15%' }}></div>
+                    </div>
+                  </div>
+                  
+                  {/* Home consumption gauge */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-sm font-medium">Consumption</div>
+                      <div className="text-2xl font-semibold">2.8 kW</div>
+                    </div>
+                    <div className="w-24 h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <div className="h-full bg-green-500" style={{ width: '55%' }}></div>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm font-medium">Self-Consumption</div>
+                      <div className="text-lg font-semibold text-green-600">76%</div>
                     </div>
                   </div>
                 </div>
-              </DashboardCard>
-            </DashboardGrid>
-          </DashboardLayout>
-        </TabsContent>
-        
-        <TabsContent value="consumption">
-          <div className="p-8 text-center">
-            <h3 className="text-xl font-semibold">Consumption Analytics</h3>
-            <p className="text-slate-500">Detailed consumption data will be displayed here</p>
+              </CardContent>
+            </Card>
           </div>
-        </TabsContent>
+        </div>
         
-        <TabsContent value="production">
-          <div className="p-8 text-center">
-            <h3 className="text-xl font-semibold">Production Analytics</h3>
-            <p className="text-slate-500">Solar and other generation data will be displayed here</p>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Energy chart */}
+          <div className="lg:col-span-2">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">Today's Energy Flow</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart
+                      data={energyData}
+                      margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                    >
+                      <defs>
+                        <linearGradient id="colorConsumption" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
+                          <stop offset="95%" stopColor="#10b981" stopOpacity={0.1} />
+                        </linearGradient>
+                        <linearGradient id="colorGeneration" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.8} />
+                          <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.1} />
+                        </linearGradient>
+                        <linearGradient id="colorBattery" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
+                          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.1} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Area
+                        type="monotone"
+                        dataKey="consumption"
+                        stroke="#10b981"
+                        fillOpacity={1}
+                        fill="url(#colorConsumption)"
+                        name="Consumption"
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="generation"
+                        stroke="#f59e0b"
+                        fillOpacity={1}
+                        fill="url(#colorGeneration)"
+                        name="Generation"
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="battery"
+                        stroke="#3b82f6"
+                        fillOpacity={1}
+                        fill="url(#colorBattery)"
+                        name="Battery"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        </TabsContent>
-        
-        <TabsContent value="forecast">
-          <div className="p-8 text-center">
-            <h3 className="text-xl font-semibold">Energy Forecast</h3>
-            <p className="text-slate-500">AI-powered forecasts will be displayed here</p>
+          
+          {/* Energy stats */}
+          <div>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">Summary Stats</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-800/60 rounded-lg">
+                    <div>
+                      <div className="text-sm text-slate-500 dark:text-slate-400">Total Generation</div>
+                      <div className="text-xl font-semibold">21.4 kWh</div>
+                    </div>
+                    <div className="h-10 w-10 bg-yellow-100 dark:bg-yellow-900/20 rounded-full flex items-center justify-center">
+                      <svg className="w-6 h-6 text-yellow-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <circle cx="12" cy="12" r="5" />
+                        <line x1="12" y1="1" x2="12" y2="3" />
+                        <line x1="12" y1="21" x2="12" y2="23" />
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                        <line x1="1" y1="12" x2="3" y2="12" />
+                        <line x1="21" y1="12" x2="23" y2="12" />
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                      </svg>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-800/60 rounded-lg">
+                    <div>
+                      <div className="text-sm text-slate-500 dark:text-slate-400">Total Consumption</div>
+                      <div className="text-xl font-semibold">24.8 kWh</div>
+                    </div>
+                    <div className="h-10 w-10 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center">
+                      <svg className="w-6 h-6 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                        <polyline points="9 22 9 12 15 12 15 22" />
+                      </svg>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-800/60 rounded-lg">
+                    <div>
+                      <div className="text-sm text-slate-500 dark:text-slate-400">Grid Import</div>
+                      <div className="text-xl font-semibold">6.2 kWh</div>
+                    </div>
+                    <div className="h-10 w-10 bg-purple-100 dark:bg-purple-900/20 rounded-full flex items-center justify-center">
+                      <svg className="w-6 h-6 text-purple-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M18 15h-6v4l-7-7 7-7v4h6v6z" />
+                      </svg>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-800/60 rounded-lg">
+                    <div>
+                      <div className="text-sm text-slate-500 dark:text-slate-400">Battery Cycles</div>
+                      <div className="text-xl font-semibold">0.8</div>
+                    </div>
+                    <div className="h-10 w-10 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
+                      <svg className="w-6 h-6 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <rect x="2" y="7" width="20" height="15" rx="2" />
+                        <line x1="12" y1="7" x2="12" y2="22" />
+                        <line x1="17" y1="7" x2="17" y2="22" />
+                        <line x1="7" y1="7" x2="7" y2="22" />
+                        <line x1="17" y1="2" x2="17" y2="7" />
+                        <line x1="7" y1="2" x2="7" y2="7" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        </TabsContent>
-      </Tabs>
-    </div>
+        </div>
+      </Main>
+    </EnergyFlowProvider>
   );
 };
 

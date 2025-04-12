@@ -46,8 +46,7 @@ export const useEnergyOptimization = (siteId: string) => {
     priority_device_ids: [],
     time_window_start: '00:00',
     time_window_end: '23:59',
-    evTargetSoc: 80,
-    objective: 'cost'
+    evTargetSoc: 80
   });
 
   // Recommendation management
@@ -64,7 +63,8 @@ export const useEnergyOptimization = (siteId: string) => {
       if (settings.max_soc !== undefined) updated.maxBatterySoc = settings.max_soc;
       if (settings.minBatterySoc !== undefined) updated.min_soc = settings.minBatterySoc;
       if (settings.maxBatterySoc !== undefined) updated.max_soc = settings.maxBatterySoc;
-      if (settings.objective !== undefined) updated.priority = settings.objective as any;
+      if (settings.priority !== undefined) updated.objective = settings.priority;
+      if (settings.objective !== undefined) updated.priority = settings.objective;
       
       return updated;
     });

@@ -3,7 +3,7 @@ import React, { CSSProperties } from 'react';
 import { cn } from '@/lib/utils';
 
 interface LabelProps {
-  value?: string;
+  value?: string | number;
   position?: 'top' | 'bottom' | 'left' | 'right' | 'inside';
   offset?: number;
   className?: string;

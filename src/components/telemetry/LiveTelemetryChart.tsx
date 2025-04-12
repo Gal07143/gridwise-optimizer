@@ -23,7 +23,8 @@ const LiveTelemetryChart: React.FC<LiveTelemetryChartProps> = ({
 }) => {
   const { data: telemetry, isLoading, error, refetch } = useTelemetryHistory({
     deviceId,
-    parameter: metric
+    parameter: metric,
+    timeRange: '24h' // Adding the missing required parameter
   });
   
   // Format the data for the chart

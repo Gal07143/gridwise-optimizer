@@ -1,75 +1,77 @@
 
 import React from 'react';
-import { cn } from '@/lib/utils';
 
-interface FlowLineProps {
+interface EnergyFlowLineProps {
   line: {
     id: string;
-    source: { x: number; y: number };
-    target: { x: number; y: number };
-    animated: boolean;
+    points: { x1: number; y1: number; x2: number; y2: number };
     value: number;
-    strokeWidth: number;
-    active?: boolean;
+    color?: string;
+    isActive?: boolean;
   };
 }
 
-export const EnergyFlowLine: React.FC<FlowLineProps> = ({ line }) => {
-  if (!line) return null;
+export const EnergyFlowLine: React.FC<EnergyFlowLineProps> = ({ line }) => {
+  const { points, value, color = '#3b82f6', isActive = true } = line;
+  const { x1, y1, x2, y2 } = points;
+
+  // Don't render inactive lines
+  if (!isActive) {
+    return null;
+  }
+
+  // Calculate line width based on value (energy flow amount)
+  const lineWidth = Math.max(1, Math.min(8, 1 + value / 2));
   
-  const { source, target, animated, strokeWidth, active = true } = line;
+  // Calculate control points for curved line
+  const midX = (x1 + x2) / 2;
+  const midY = (y1 + y2) / 2;
+  const offsetX = (x2 - x1) * 0.2;
+  const offsetY = (y2 - y1) * 0.2;
   
-  // Adjust the line to connect to node edges instead of centers
-  const dx = target.x - source.x;
-  const dy = target.y - source.y;
-  const distance = Math.sqrt(dx * dx + dy * dy);
-  
-  // Calculate the path for the line
-  const path = `M ${source.x} ${source.y} L ${target.x} ${target.y}`;
-  
-  // Calculate the direction for the animated flow
-  const isRightToLeft = source.x > target.x;
+  // Path for curved line
+  const path = `M${x1},${y1} C${midX - offsetX},${midY - offsetY} ${midX + offsetX},${midY + offsetY} ${x2},${y2}`;
   
   return (
     <g>
       {/* Base line */}
       <path
         d={path}
-        stroke={active ? '#94a3b8' : '#cbd5e1'}
-        strokeWidth={strokeWidth}
+        stroke={color}
+        strokeWidth={lineWidth}
         fill="none"
+        opacity={0.6}
       />
       
-      {/* Animated overlay if line is animated */}
-      {animated && active && (
-        <path
-          d={path}
-          stroke="#3b82f6"
-          strokeWidth={strokeWidth}
-          fill="none"
-          strokeDasharray="4 4"
-          strokeLinecap="round"
-          className={cn(
-            "transition-all",
-            isRightToLeft ? "animate-flow-backwards" : "animate-flow"
-          )}
+      {/* Animated flow dots */}
+      <circle r={lineWidth * 0.8} fill="#fff">
+        <animateMotion
+          dur="3s"
+          repeatCount="indefinite"
+          path={path}
         />
-      )}
+      </circle>
       
-      {/* Energy value indicator */}
-      {line.value > 0 && (
+      {/* Value label */}
+      {value > 0.5 && (
         <text
-          x={(source.x + target.x) / 2}
-          y={(source.y + target.y) / 2 - 10}
+          x={midX}
+          y={midY}
           textAnchor="middle"
-          fill="#64748b"
+          dominantBaseline="middle"
+          fill="#666"
           fontSize="10"
           fontWeight="500"
-          className="select-none pointer-events-none"
+          className="drop-shadow"
+          stroke="#fff"
+          strokeWidth="0.5"
+          paintOrder="stroke"
         >
-          {line.value.toFixed(1)} kW
+          {value.toFixed(1)} kW
         </text>
       )}
     </g>
   );
 };
+
+export default EnergyFlowLine;

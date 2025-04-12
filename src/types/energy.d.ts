@@ -139,12 +139,13 @@ export interface ChartSeries {
 }
 
 export interface WeatherForecast {
+  id: string;
   timestamp: string;
-  condition: string;
   temperature: number;
   humidity: number;
   wind_speed: number;
-  precipitation_probability: number;
   cloud_cover: number;
-  solar_irradiance: number;
+  precipitation: number;
+  weather_condition: string;
+  site_id?: string;
 }
