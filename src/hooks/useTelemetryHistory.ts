@@ -1,42 +1,61 @@
 
 import { useState, useEffect } from 'react';
-import { EnergyReading } from '@/types/energy';
-import { simulateHistoricalTelemetry } from '@/services/devices/telemetrySimulator';
+import { TelemetryMetric } from '@/components/telemetry/LiveTelemetryChart';
+import { simulateTelemetry } from '@/services/devices/telemetrySimulator';
 
-/**
- * Hook to fetch telemetry history for a device
- */
-export function useTelemetryHistory(deviceId: string, parameter: string) {
-  const [data, setData] = useState<EnergyReading[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+// Sample telemetry data structure
+interface TelemetryData {
+  timestamp: string;
+  value: number;
+  unit: string;
+}
+
+export function useTelemetryHistory(deviceId: string, metric: TelemetryMetric, timeframe: string = '24h') {
+  const [data, setData] = useState<TelemetryData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetchData = async () => {
-    setIsLoading(true);
+  useEffect(() => {
+    const fetchTelemetryData = async () => {
+      try {
+        setIsLoading(true);
+        // In a real app, we'd fetch data from an API
+        // For now, use a simulator function
+        const simulatedData = simulateTelemetry(deviceId, metric, timeframe);
+        setData(simulatedData);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching telemetry history:', err);
+        setError(err instanceof Error ? err : new Error('Failed to fetch telemetry data'));
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTelemetryData();
+    
+    // Set up polling for live data
+    const intervalId = setInterval(() => {
+      fetchTelemetryData();
+    }, 30000); // Poll every 30 seconds
+    
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [deviceId, metric, timeframe]);
+
+  const refetch = async () => {
     try {
-      // In a real app, you would fetch from an API here
-      // For simulation, we use the simulator
-      const simulatedData = simulateHistoricalTelemetry(deviceId, 24);
+      setIsLoading(true);
+      const simulatedData = simulateTelemetry(deviceId, metric, timeframe);
       setData(simulatedData);
-      setError(null);
-      return simulatedData;
     } catch (err) {
-      console.error('Error fetching telemetry history:', err);
-      setError(err instanceof Error ? err : new Error('Failed to fetch telemetry history'));
-      return [];
+      console.error('Error refetching telemetry data:', err);
+      setError(err instanceof Error ? err : new Error('Failed to fetch telemetry data'));
     } finally {
       setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, [deviceId, parameter]);
-
-  return {
-    data,
-    isLoading,
-    error,
-    refetch: fetchData
-  };
+  return { data, isLoading, error, refetch };
 }

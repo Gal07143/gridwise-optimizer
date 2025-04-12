@@ -1,266 +1,233 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { Device } from '@/types/device';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Calendar, Clock, AlertTriangle } from 'lucide-react';
-import { Device } from '@/types/device';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-
-interface MaintenanceRecord {
-  id: string;
-  device_id: string;
-  maintenance_type: string;
-  scheduled_date: string;
-  completed_date?: string;
-  notes?: string;
-  performed_by?: string;
-  created_at: string;
-}
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AlertCircle, CheckCircle2, Clock, RefreshCw, WrenchIcon, FileText, CalendarDays, AlertTriangle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 interface DeviceMaintenanceTabProps {
   device: Device;
 }
 
 const DeviceMaintenanceTab: React.FC<DeviceMaintenanceTabProps> = ({ device }) => {
-  const [maintenanceRecords, setMaintenanceRecords] = useState<MaintenanceRecord[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [newRecord, setNewRecord] = useState({
-    maintenance_type: '',
-    scheduled_date: new Date().toISOString().split('T')[0],
-    notes: '',
-  });
+  const [loading, setLoading] = useState<boolean>(false);
 
-  useEffect(() => {
-    const fetchMaintenanceRecords = async () => {
-      try {
-        setIsLoading(true);
-        const { data, error } = await supabase
-          .from('maintenance_records')
-          .select('*')
-          .eq('device_id', device.id)
-          .order('scheduled_date', { ascending: false });
-
-        if (error) throw error;
-        
-        setMaintenanceRecords(data || []);
-      } catch (error) {
-        console.error('Error fetching maintenance records:', error);
-        toast.error('Failed to load maintenance records');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (device?.id) {
-      fetchMaintenanceRecords();
-    } else {
-      // If no device ID, create some sample data
-      setMaintenanceRecords([
-        {
-          id: '1',
-          device_id: device?.id || 'unknown',
-          maintenance_type: 'Cleaning',
-          scheduled_date: '2023-12-15',
-          completed_date: '2023-12-15',
-          notes: 'Regular cleaning of solar panels',
-          performed_by: 'John Doe',
-          created_at: '2023-12-01T10:00:00Z'
-        },
-        {
-          id: '2',
-          device_id: device?.id || 'unknown',
-          maintenance_type: 'Inspection',
-          scheduled_date: '2024-02-10',
-          notes: 'Annual inspection of all components',
-          created_at: '2023-12-05T14:30:00Z'
-        }
-      ]);
-      setIsLoading(false);
-    }
-  }, [device.id]);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setNewRecord(prev => ({ ...prev, [name]: value }));
+  const handleDiagnosticCheck = () => {
+    setLoading(true);
+    // Simulate diagnostic check
+    setTimeout(() => {
+      setLoading(false);
+    }, 2000);
   };
 
-  const handleAddRecord = async () => {
-    try {
-      // Validate input
-      if (!newRecord.maintenance_type || !newRecord.scheduled_date) {
-        toast.error('Please provide maintenance type and scheduled date');
-        return;
-      }
-
-      // Insert record into database
-      const { data, error } = await supabase
-        .from('maintenance_records')
-        .insert({
-          device_id: device.id,
-          maintenance_type: newRecord.maintenance_type,
-          scheduled_date: newRecord.scheduled_date,
-          notes: newRecord.notes || null
-        })
-        .select();
-
-      if (error) throw error;
-      
-      // Add the new record to state
-      if (data && data.length > 0) {
-        setMaintenanceRecords(prev => [data[0], ...prev]);
-      }
-      
-      // Reset form
-      setNewRecord({
-        maintenance_type: '',
-        scheduled_date: new Date().toISOString().split('T')[0],
-        notes: '',
-      });
-      
-      toast.success('Maintenance record added successfully');
-    } catch (error) {
-      console.error('Error adding maintenance record:', error);
-      toast.error('Failed to add maintenance record');
-    }
+  const getNextMaintenanceDate = () => {
+    // Mock function to calculate next maintenance date
+    const today = new Date();
+    const nextMaintenance = new Date(today);
+    nextMaintenance.setMonth(today.getMonth() + 3);
+    return nextMaintenance.toLocaleDateString();
   };
 
-  const handleCompleteRecord = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from('maintenance_records')
-        .update({
-          completed_date: new Date().toISOString().split('T')[0],
-          performed_by: 'Current User' // You would use the actual user's name here
-        })
-        .eq('id', id);
+  const maintenanceHistory = [
+    { date: '2025-03-15', type: 'Inspection', notes: 'Regular inspection completed. All systems normal.' },
+    { date: '2025-01-10', type: 'Firmware Update', notes: 'Updated firmware to version 2.3.1' },
+    { date: '2024-11-22', type: 'Service', notes: 'Replaced cooling fan and cleaned dust' },
+  ];
 
-      if (error) throw error;
-      
-      // Update state
-      setMaintenanceRecords(prev => prev.map(record => 
-        record.id === id 
-          ? { ...record, completed_date: new Date().toISOString().split('T')[0], performed_by: 'Current User' } 
-          : record
-      ));
-      
-      toast.success('Maintenance marked as completed');
-    } catch (error) {
-      console.error('Error updating maintenance record:', error);
-      toast.error('Failed to mark maintenance as completed');
-    }
-  };
+  const diagnosticReports = [
+    { date: '2025-04-01', status: 'pass', component: 'Communication Module', value: 'OK' },
+    { date: '2025-04-01', status: 'pass', component: 'Temperature Sensor', value: '32.4°C' },
+    { date: '2025-04-01', status: 'warning', component: 'Cooling Fan', value: 'Slower than expected' },
+    { date: '2025-04-01', status: 'pass', component: 'Firmware Version', value: device.firmware || 'Unknown' },
+  ];
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Add Maintenance Record</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label htmlFor="maintenance_type" className="text-sm font-medium">
-                Maintenance Type
-              </label>
-              <Input
-                id="maintenance_type"
-                name="maintenance_type"
-                placeholder="e.g., Cleaning, Inspection, Repair"
-                value={newRecord.maintenance_type}
-                onChange={handleInputChange}
-              />
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="scheduled_date" className="text-sm font-medium">
-                Scheduled Date
-              </label>
-              <Input
-                id="scheduled_date"
-                name="scheduled_date"
-                type="date"
-                value={newRecord.scheduled_date}
-                onChange={handleInputChange}
-              />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <label htmlFor="notes" className="text-sm font-medium">
-              Notes
-            </label>
-            <Textarea
-              id="notes"
-              name="notes"
-              placeholder="Enter maintenance details..."
-              value={newRecord.notes}
-              onChange={handleInputChange}
-              rows={4}
-            />
-          </div>
-        </CardContent>
-        <CardFooter>
-          <Button onClick={handleAddRecord}>Add Maintenance Record</Button>
-        </CardFooter>
-      </Card>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle>Maintenance History</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="flex justify-center items-center h-32">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-          ) : maintenanceRecords.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-8 text-center">
-              <AlertTriangle className="w-12 h-12 text-muted-foreground mb-2" />
-              <p className="text-muted-foreground">No maintenance records found for this device</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {maintenanceRecords.map((record) => (
-                <Card key={record.id} className={`border-l-4 ${record.completed_date ? 'border-l-green-500' : 'border-l-amber-500'}`}>
-                  <CardContent className="p-4">
-                    <div className="flex flex-wrap justify-between items-start gap-4">
-                      <div>
-                        <h3 className="font-medium text-lg">{record.maintenance_type}</h3>
-                        {record.notes && <p className="text-muted-foreground mt-1">{record.notes}</p>}
-                      </div>
-                      <div className="space-y-1 text-sm">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-muted-foreground" />
-                          <span>Scheduled: {new Date(record.scheduled_date).toLocaleDateString()}</span>
-                        </div>
-                        {record.completed_date && (
-                          <div className="flex items-center gap-2">
-                            <Clock className="h-4 w-4 text-muted-foreground" />
-                            <span>Completed: {new Date(record.completed_date).toLocaleDateString()}</span>
-                          </div>
-                        )}
-                        {record.performed_by && <p className="text-sm text-muted-foreground">By: {record.performed_by}</p>}
-                      </div>
-                    </div>
-                    {!record.completed_date && (
-                      <div className="mt-4 flex justify-end">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleCompleteRecord(record.id)}
-                        >
-                          Mark as Completed
-                        </Button>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <Tabs defaultValue="overview" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="overview">Maintenance Overview</TabsTrigger>
+          <TabsTrigger value="diagnostic">Diagnostic Tools</TabsTrigger>
+          <TabsTrigger value="history">Maintenance History</TabsTrigger>
+          <TabsTrigger value="documents">Documentation</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="overview" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Maintenance Status</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 border rounded-lg flex items-center gap-3">
+                  <div className="bg-green-100 dark:bg-green-900/20 p-3 rounded-full">
+                    <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Device Status</p>
+                    <p className="font-medium">Operational</p>
+                  </div>
+                </div>
+                
+                <div className="p-4 border rounded-lg flex items-center gap-3">
+                  <div className="bg-blue-100 dark:bg-blue-900/20 p-3 rounded-full">
+                    <Clock className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Next Maintenance</p>
+                    <p className="font-medium">{getNextMaintenanceDate()}</p>
+                  </div>
+                </div>
+                
+                <div className="p-4 border rounded-lg flex items-center gap-3">
+                  <div className="bg-amber-100 dark:bg-amber-900/20 p-3 rounded-full">
+                    <WrenchIcon className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Service Interval</p>
+                    <p className="font-medium">Every 3 months</p>
+                  </div>
+                </div>
+                
+                <div className="p-4 border rounded-lg flex items-center gap-3">
+                  <div className="bg-purple-100 dark:bg-purple-900/20 p-3 rounded-full">
+                    <FileText className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Last Service</p>
+                    <p className="font-medium">March 15, 2025</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter className="border-t pt-4 flex justify-between">
+              <div className="text-sm text-muted-foreground flex items-center gap-1">
+                <CalendarDays className="h-4 w-4" />
+                <span>Device installed on {new Date(device.created_at || Date.now()).toLocaleDateString()}</span>
+              </div>
+              <Button variant="outline" onClick={handleDiagnosticCheck}>Run Diagnostic</Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="diagnostic" className="space-y-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle>Diagnostic Tools</CardTitle>
+              <Button variant="outline" size="sm" className="h-8" disabled={loading} onClick={handleDiagnosticCheck}>
+                {loading ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+                Run Diagnostic
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-md border overflow-hidden">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-muted/50">
+                      <th className="p-2 text-left font-medium text-muted-foreground">Component</th>
+                      <th className="p-2 text-left font-medium text-muted-foreground">Status</th>
+                      <th className="p-2 text-left font-medium text-muted-foreground">Value</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {diagnosticReports.map((report, index) => (
+                      <tr key={index}>
+                        <td className="p-2">{report.component}</td>
+                        <td className="p-2">
+                          {report.status === 'pass' ? (
+                            <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-600/20">
+                              <CheckCircle2 className="h-3 w-3 mr-1" /> Pass
+                            </Badge>
+                          ) : report.status === 'warning' ? (
+                            <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-600/20">
+                              <AlertTriangle className="h-3 w-3 mr-1" /> Warning
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-600/20">
+                              <AlertCircle className="h-3 w-3 mr-1" /> Fail
+                            </Badge>
+                          )}
+                        </td>
+                        <td className="p-2">{report.value}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="history" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Maintenance History</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-md border overflow-hidden">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-muted/50">
+                      <th className="p-2 text-left font-medium text-muted-foreground">Date</th>
+                      <th className="p-2 text-left font-medium text-muted-foreground">Type</th>
+                      <th className="p-2 text-left font-medium text-muted-foreground">Notes</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {maintenanceHistory.map((item, index) => (
+                      <tr key={index}>
+                        <td className="p-2">{new Date(item.date).toLocaleDateString()}</td>
+                        <td className="p-2">{item.type}</td>
+                        <td className="p-2">{item.notes}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+            <CardFooter className="border-t pt-4">
+              <Button variant="outline">Download Full History</Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="documents" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Device Documentation</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Access technical documentation, user manuals, and service guides for this device.
+              </p>
+              <div className="space-y-2">
+                <div className="p-3 border rounded-lg flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-blue-600" />
+                    <span>User Manual</span>
+                  </div>
+                  <Button variant="ghost" size="sm">View</Button>
+                </div>
+                <div className="p-3 border rounded-lg flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-blue-600" />
+                    <span>Technical Specifications</span>
+                  </div>
+                  <Button variant="ghost" size="sm">View</Button>
+                </div>
+                <div className="p-3 border rounded-lg flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-blue-600" />
+                    <span>Service Guide</span>
+                  </div>
+                  <Button variant="ghost" size="sm">View</Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

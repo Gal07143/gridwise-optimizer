@@ -2,7 +2,7 @@ import React from 'react';
 import { LineChart, CloudRain, ArrowDownUp, RefreshCw } from 'lucide-react';
 import DashboardCard from './DashboardCard';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useForecast } from '@/hooks/useForecast';
+import { useForecast, ProcessedForecastData } from '@/hooks/useForecast';
 import ForecastMetricsPanel from './forecasts/ForecastMetricsPanel';
 import ForecastChart from './forecasts/ForecastChart';
 import ForecastFooter from './forecasts/ForecastFooter';
@@ -123,7 +123,7 @@ const EnergyForecastCard = ({ className, animationDelay }: EnergyForecastCardPro
       )}
       
       <ForecastMetricsPanel metrics={forecastMetrics} />
-      <ForecastChart data={processedData as ProcessedForecastData[]} />
+      <ForecastChart data={processedData} />
       <ForecastFooter confidence={forecastMetrics.confidence} />
     </DashboardCard>
   );

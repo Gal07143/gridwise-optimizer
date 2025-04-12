@@ -8,27 +8,23 @@ import { EnergyDevice, DeviceType, DeviceStatus } from '@/types/energy';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import DeviceDetailTab from '@/components/devices/tabs/DeviceDetailTab';
 import DeviceControlPanel from '@/components/dashboard/devices/DeviceControlPanel';
-import DeviceTelemetryTab from './DeviceTelemetryTab';
-import DeviceMaintenanceTab from './DeviceMaintenanceTab';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+// Update the safe device types list
+const validDeviceTypes: DeviceType[] = [
+  'solar', 'battery', 'grid', 'ev_charger', 'load', 'inverter',
+  'meter', 'light', 'generator', 'hydro', 'wind', 'sensor'
+];
+
+// Update the safe device statuses list
+const validDeviceStatuses: DeviceStatus[] = [
+  'online', 'offline', 'maintenance', 'error', 'warning',
+  'idle', 'active', 'charging', 'discharging'
+];
+
 // Convert Device to EnergyDevice with appropriate type safety
 const convertToEnergyDevice = (device: Device): EnergyDevice => {
-  // This function ensures safe type conversion
-  
-  // Valid device types according to DeviceType
-  const validDeviceTypes: DeviceType[] = [
-    'solar', 'battery', 'grid', 'ev_charger', 'load', 'inverter',
-    'meter', 'light', 'generator', 'hydro', 'wind', 'sensor'
-  ];
-  
-  // Valid device statuses according to DeviceStatus
-  const validDeviceStatuses: DeviceStatus[] = [
-    'online', 'offline', 'maintenance', 'error', 'warning',
-    'idle', 'active', 'charging', 'discharging'
-  ];
-  
   // Default type and status if invalid
   const safeType: DeviceType = validDeviceTypes.includes(device.type as DeviceType)
     ? (device.type as DeviceType)
@@ -49,11 +45,15 @@ const convertToEnergyDevice = (device: Device): EnergyDevice => {
     location: device.location,
     created_at: device.created_at || new Date().toISOString(),
     last_updated: device.last_updated || new Date().toISOString(),
-    firmware_version: device.firmware,
-    model: device.model,
-    manufacturer: device.manufacturer
+    firmware_version: device.firmware || '',
+    model: device.model || '',
+    manufacturer: device.manufacturer || ''
   };
 };
+
+// Import statement for DeviceTelemetryTab and DeviceMaintenanceTab
+const DeviceTelemetryTab = React.lazy(() => import('./DeviceTelemetryTab'));
+const DeviceMaintenanceTab = React.lazy(() => import('./DeviceMaintenanceTab'));
 
 const DeviceDetails: React.FC = () => {
   const { deviceId } = useParams<{ deviceId: string }>();
@@ -162,10 +162,14 @@ const DeviceDetails: React.FC = () => {
             <DeviceDetailTab device={device} />
           </TabsContent>
           <TabsContent value="telemetry">
-            <DeviceTelemetryTab device={device} />
+            <React.Suspense fallback={<div>Loading telemetry...</div>}>
+              <DeviceTelemetryTab device={device} />
+            </React.Suspense>
           </TabsContent>
           <TabsContent value="maintenance">
-            <DeviceMaintenanceTab device={device} />
+            <React.Suspense fallback={<div>Loading maintenance...</div>}>
+              <DeviceMaintenanceTab device={device} />
+            </React.Suspense>
           </TabsContent>
         </Tabs>
       </div>

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React from 'react';
+import { ForecastMetrics } from '@/hooks/useForecast';
 import { 
   Card, 
   CardContent, 
@@ -29,7 +29,6 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import { ForecastMetrics } from '@/hooks/useForecast';
 
 interface ForecastTabProps {
   siteId: string;
@@ -48,14 +47,26 @@ const ForecastTab: React.FC<ForecastTabProps> = ({ siteId }) => {
     queryFn: () => getSiteForecastMetrics(siteId),
   });
 
-  // Add the missing selfConsumptionRate property
-  const forecastMetrics: ForecastMetrics = forecastMetricsData ? {
-    ...forecastMetricsData,
-    selfConsumptionRate: forecastMetricsData.selfConsumptionRate || 
-      (forecastMetricsData.totalGeneration > 0 
-        ? Math.min(100, (Math.min(forecastMetricsData.totalGeneration, forecastMetricsData.totalConsumption) / forecastMetricsData.totalGeneration) * 100) 
-        : 0)
-  } : {
+  const calculateMetrics = (data: any[]): ForecastMetrics => {
+    const totalGeneration = data.reduce((acc, item) => acc + item.generation_forecast, 0);
+    const totalConsumption = data.reduce((acc, item) => acc + item.consumption_forecast, 0);
+    const netEnergy = totalGeneration - totalConsumption;
+    const peakGeneration = data.reduce((acc, item) => Math.max(acc, item.generation_forecast), 0);
+    const peakConsumption = data.reduce((acc, item) => Math.max(acc, item.consumption_forecast), 0);
+    const confidence = data.reduce((acc, item) => acc + item.confidence, 0) / data.length;
+
+    return {
+      totalGeneration,
+      totalConsumption,
+      netEnergy,
+      selfConsumptionRate: totalGeneration > 0 ? Math.min(100, (Math.min(totalGeneration, totalConsumption) / totalGeneration) * 100) : 0,
+      peakGeneration,
+      peakConsumption,
+      confidence
+    };
+  };
+
+  const forecastMetrics: ForecastMetrics = forecastMetricsData ? calculateMetrics(forecastMetricsData) : {
     totalGeneration: 0,
     totalConsumption: 0,
     netEnergy: 0,

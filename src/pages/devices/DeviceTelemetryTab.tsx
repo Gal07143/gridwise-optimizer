@@ -1,151 +1,88 @@
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React from 'react';
 import { Device } from '@/types/device';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { supabase } from '@/integrations/supabase/client';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import LiveTelemetryChart from '@/components/telemetry/LiveTelemetryChart';
 
 interface DeviceTelemetryTabProps {
   device: Device;
 }
 
 const DeviceTelemetryTab: React.FC<DeviceTelemetryTabProps> = ({ device }) => {
-  const [telemetryData, setTelemetryData] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchTelemetryData = async () => {
-      try {
-        setIsLoading(true);
-        const { data, error } = await supabase
-          .from('energy_readings')
-          .select('*')
-          .eq('device_id', device.id)
-          .order('timestamp', { ascending: false })
-          .limit(100);
-
-        if (error) throw error;
-        
-        // Process data for chart format
-        const processedData = data?.map(item => ({
-          timestamp: new Date(item.timestamp).toLocaleTimeString(),
-          power: item.power,
-          energy: item.energy,
-          voltage: item.voltage,
-          current: item.current,
-          temperature: item.temperature
-        })) || [];
-        
-        setTelemetryData(processedData.reverse());
-      } catch (error) {
-        console.error('Error fetching telemetry data:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (device?.id) {
-      fetchTelemetryData();
+  // Different metrics to show based on device type
+  const getMetricsForDeviceType = (type: string) => {
+    switch (type) {
+      case 'solar':
+        return [
+          { metric: 'power', unit: 'W', label: 'Power Output' },
+          { metric: 'voltage', unit: 'V', label: 'Voltage' },
+          { metric: 'current', unit: 'A', label: 'Current' },
+          { metric: 'temperature', unit: '°C', label: 'Temperature' },
+        ];
+      case 'battery':
+        return [
+          { metric: 'state_of_charge', unit: '%', label: 'State of Charge' },
+          { metric: 'power', unit: 'W', label: 'Power' },
+          { metric: 'voltage', unit: 'V', label: 'Voltage' },
+          { metric: 'temperature', unit: '°C', label: 'Temperature' },
+        ];
+      case 'inverter':
+        return [
+          { metric: 'power', unit: 'W', label: 'Power Output' },
+          { metric: 'efficiency', unit: '%', label: 'Efficiency' },
+          { metric: 'temperature', unit: '°C', label: 'Temperature' },
+          { metric: 'frequency', unit: 'Hz', label: 'AC Frequency' },
+        ];
+      case 'ev_charger':
+        return [
+          { metric: 'power', unit: 'W', label: 'Charging Power' },
+          { metric: 'energy_delivered', unit: 'kWh', label: 'Energy Delivered' },
+          { metric: 'current', unit: 'A', label: 'Current' },
+          { metric: 'temperature', unit: '°C', label: 'Temperature' },
+        ];
+      default:
+        return [
+          { metric: 'power', unit: 'W', label: 'Power' },
+          { metric: 'energy', unit: 'kWh', label: 'Energy' },
+        ];
     }
-  }, [device.id]);
+  };
 
-  // Generate sample data if no real data exists
-  useEffect(() => {
-    if (telemetryData.length === 0 && !isLoading) {
-      // Create sample data for demonstration
-      const sampleData = Array.from({ length: 24 }, (_, i) => {
-        const time = new Date();
-        time.setHours(time.getHours() - (24 - i));
-        
-        return {
-          timestamp: time.toLocaleTimeString(),
-          power: Math.random() * 5 + 2,
-          energy: Math.random() * 10 + 10,
-          voltage: Math.random() * 20 + 220,
-          current: Math.random() * 5 + 2,
-          temperature: Math.random() * 10 + 25
-        };
-      });
-      
-      setTelemetryData(sampleData);
-    }
-  }, [telemetryData, isLoading]);
+  const metrics = getMetricsForDeviceType(device.type);
 
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Power Output</CardTitle>
+          <CardTitle>Real-time Telemetry</CardTitle>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <div className="flex justify-center items-center h-64">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-          ) : (
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={telemetryData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="timestamp" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="power" stroke="#8884d8" activeDot={{ r: 8 }} />
-              </LineChart>
-            </ResponsiveContainer>
-          )}
+          <Tabs defaultValue={metrics[0]?.metric || "power"} className="space-y-4">
+            <TabsList>
+              {metrics.map((metric) => (
+                <TabsTrigger key={metric.metric} value={metric.metric}>
+                  {metric.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+
+            {metrics.map((metric) => (
+              <TabsContent key={metric.metric} value={metric.metric} className="space-y-4">
+                <div className="h-[400px] w-full">
+                  <LiveTelemetryChart
+                    deviceId={device.id}
+                    metric={metric.metric}
+                    unit={metric.unit}
+                    height={350}
+                    showSource
+                  />
+                </div>
+              </TabsContent>
+            ))}
+          </Tabs>
         </CardContent>
       </Card>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Energy Generation</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="flex justify-center items-center h-64">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height={250}>
-                <LineChart data={telemetryData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="timestamp" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line type="monotone" dataKey="energy" stroke="#82ca9d" />
-                </LineChart>
-              </ResponsiveContainer>
-            )}
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle>Device Temperature</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="flex justify-center items-center h-64">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height={250}>
-                <LineChart data={telemetryData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="timestamp" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line type="monotone" dataKey="temperature" stroke="#ff7300" />
-                </LineChart>
-              </ResponsiveContainer>
-            )}
-          </CardContent>
-        </Card>
-      </div>
     </div>
   );
 };

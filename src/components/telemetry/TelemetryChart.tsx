@@ -1,24 +1,28 @@
 
 import React from 'react';
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
-import { format, parseISO } from 'date-fns';
-import { Loader2, AlertCircle } from 'lucide-react';
-import { getMetricColor } from './telemetryUtils';
-import { TelemetryMetric } from './LiveTelemetryChart';
-
-interface ChartData {
-  timestamp: string;
-  value: number;
-}
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend
+} from 'recharts';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { formatValueWithUnit } from './telemetryUtils';
 
 interface TelemetryChartProps {
-  data: ChartData[];
-  metric: TelemetryMetric;
+  data: any[];
+  metric: string;
   unit: string;
   height?: number;
-  loading?: boolean;
-  error?: Error | null;
   showSource?: boolean;
+  loading?: boolean;
+  error?: Error;
 }
 
 const TelemetryChart: React.FC<TelemetryChartProps> = ({
@@ -26,92 +30,97 @@ const TelemetryChart: React.FC<TelemetryChartProps> = ({
   metric,
   unit,
   height = 200,
+  showSource = false,
   loading = false,
-  error = null,
-  showSource = false
+  error
 }) => {
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center" style={{ height }}>
-        <div className="flex flex-col items-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <span className="mt-2 text-sm text-muted-foreground">Loading telemetry data...</span>
-        </div>
-      </div>
-    );
-  }
+  const formatTime = (timestamp: string) => {
+    const date = new Date(timestamp);
+    return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+  };
+
+  const formatValue = (value: number) => {
+    return formatValueWithUnit(value, unit);
+  };
 
   if (error) {
     return (
-      <div className="flex items-center justify-center" style={{ height }}>
-        <div className="flex flex-col items-center text-center">
-          <AlertCircle className="h-8 w-8 text-destructive" />
-          <span className="mt-2 text-sm font-medium text-destructive">Error loading data</span>
-          <span className="text-xs text-muted-foreground mt-1 max-w-xs">
-            {error.message}
-          </span>
-        </div>
-      </div>
+      <Card>
+        <CardHeader className="pb-0">
+          <CardTitle className="text-lg font-medium flex items-center">
+            {metric.charAt(0).toUpperCase() + metric.slice(1)} Telemetry
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center h-[200px] text-center">
+          <div>
+            <p className="text-red-500 mb-2">Failed to load telemetry data</p>
+            <Button variant="outline" size="sm">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Retry
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
-  if (!data || data.length === 0) {
+  if (loading && (!data || data.length === 0)) {
     return (
-      <div className="flex items-center justify-center" style={{ height }}>
-        <div className="flex flex-col items-center text-center">
-          <span className="text-sm text-muted-foreground">No data available</span>
-        </div>
-      </div>
+      <Card>
+        <CardHeader className="pb-0">
+          <CardTitle className="text-lg font-medium">
+            {metric.charAt(0).toUpperCase() + metric.slice(1)} Telemetry
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center h-[200px]">
+          <div className="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent"></div>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div style={{ height, width: '100%' }}>
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart
-          data={data}
-          margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
-        >
-          <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
-          <XAxis
-            dataKey="timestamp"
-            tickFormatter={(timestamp) => {
-              const date = parseISO(timestamp);
-              return format(date, 'HH:mm');
-            }}
-            tick={{ fontSize: 12 }}
-          />
-          <YAxis
-            unit={` ${unit}`}
-            tick={{ fontSize: 12 }}
-            width={45}
-          />
-          <Tooltip
-            formatter={(value: number) => [`${value} ${unit}`, metric]}
-            labelFormatter={(timestamp) => {
-              const date = parseISO(timestamp);
-              return format(date, 'dd MMM yyyy, HH:mm:ss');
-            }}
-            contentStyle={{
-              backgroundColor: 'var(--background)',
-              borderColor: 'var(--border)',
-              borderRadius: '0.375rem',
-              fontSize: '0.875rem',
-            }}
-          />
-          {showSource && <Legend />}
-          <Line
-            type="monotone"
-            dataKey="value"
-            stroke={getMetricColor(metric)}
-            strokeWidth={2}
-            dot={false}
-            activeDot={{ r: 5 }}
-            name={metric.charAt(0).toUpperCase() + metric.slice(1).replace('_', ' ')}
-          />
-        </LineChart>
-      </ResponsiveContainer>
-    </div>
+    <Card>
+      <CardHeader className="pb-0">
+        <CardTitle className="text-lg font-medium flex justify-between items-center">
+          <span>{metric.charAt(0).toUpperCase() + metric.slice(1)} Telemetry</span>
+          {loading && <RefreshCw className="h-4 w-4 animate-spin" />}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div style={{ height: `${height}px` }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={data} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+              <XAxis 
+                dataKey="timestamp" 
+                tickFormatter={formatTime}
+                tick={{ fontSize: 12 }}
+              />
+              <YAxis 
+                tickFormatter={formatValue}
+                tick={{ fontSize: 12 }}
+              />
+              <Tooltip 
+                labelFormatter={(value) => new Date(value).toLocaleString()}
+                formatter={(value: any) => [formatValueWithUnit(value, unit), metric]}
+              />
+              <Legend />
+              <Line
+                type="monotone"
+                dataKey="value"
+                name={`${metric.charAt(0).toUpperCase() + metric.slice(1)} (${unit})`}
+                stroke="#3b82f6"
+                strokeWidth={2}
+                dot={false}
+                activeDot={{ r: 4 }}
+                isAnimationActive={true}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 

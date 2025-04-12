@@ -7,8 +7,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
 import MicrogridProvider from '@/components/microgrid/MicrogridProvider';
 import { EnergyFlowProvider } from '@/components/dashboard/energy-flow/EnergyFlowContext';
-// Import Routes from the proper case file
-import AppRoutes from '@/Routes';
+import { RouterProvider } from 'react-router-dom';
+import { router } from '@/routes';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -28,7 +28,7 @@ function App() {
           <AppStoreProvider>
             <MicrogridProvider>
               <EnergyFlowProvider>
-                <AppRoutes />
+                <RouterProvider router={router} />
                 <Toaster position="top-right" richColors />
               </EnergyFlowProvider>
             </MicrogridProvider>

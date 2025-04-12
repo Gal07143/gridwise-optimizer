@@ -1,7 +1,18 @@
 
 import { useState, useEffect } from 'react';
-import { EnergyForecast, WeatherData } from '@/types/energy';
+import { EnergyForecast } from '@/types/energy';
 import { generateMockForecasts } from '@/services/forecasts/sampleGenerator';
+
+// Define the WeatherData interface directly in this file to resolve the import error
+export interface WeatherData {
+  condition: string;
+  temperature: number;
+  humidity: number;
+  wind_speed: number;
+  cloud_cover: number;
+  precipitation: number;
+  timestamp: string;
+}
 
 export interface ProcessedForecastData {
   timestamp: string;
