@@ -20,11 +20,9 @@ GROUP BY d.id, d.name, d.type, d.status;
 DROP VIEW IF EXISTS public.energy_consumption_patterns;
 CREATE VIEW public.energy_consumption_patterns AS
 SELECT 
-    DATE_TRUNC('hour', timestamp) as hour,
-    AVG(consumption) as avg_consumption,
-    AVG(production) as avg_production,
-    AVG(grid_import) as avg_grid_import,
-    AVG(grid_export) as avg_grid_export
-FROM public.energy_consumption
-GROUP BY DATE_TRUNC('hour', timestamp)
+    DATE_TRUNC('hour', eem.timestamp) as hour,
+    AVG(eem.efficiency_score) as avg_efficiency_score,
+    COUNT(*) as reading_count
+FROM public.energy_efficiency_metrics eem
+GROUP BY DATE_TRUNC('hour', eem.timestamp)
 ORDER BY hour; 
