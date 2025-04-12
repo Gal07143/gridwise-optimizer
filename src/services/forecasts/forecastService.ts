@@ -1,148 +1,77 @@
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import { WeatherForecast } from '@/types/energy';
 
-export interface ForecastParams {
-  siteId: string;
-  startDate?: string;
-  endDate?: string;
-  resolution?: 'hourly' | 'daily';
-  includeWeather?: boolean;
-}
+import { WeatherForecast, ForecastDataPoint, ForecastMetrics } from '@/types/forecast';
+import { EnergyForecast } from '@/types/energy';
 
-export interface EnergyForecast {
-  timestamp: string;
-  solar_generation: number;
-  consumption: number;
-  battery_soc?: number;
-  grid_import?: number;
-  grid_export?: number;
-}
-
-export interface ForecastResult {
-  forecasts: EnergyForecast[];
-  weather?: WeatherForecast[];
-  meta: {
-    site_id: string;
-    start_date: string;
-    end_date: string;
-    resolution: string;
-    total_generation: number;
-    total_consumption: number;
-    net_grid_import: number;
-  };
-}
-
-export const getEnergyForecasts = async (params: ForecastParams): Promise<ForecastResult> => {
-  try {
-    const { siteId, startDate, endDate, resolution = 'hourly', includeWeather = false } = params;
-    
-    // Default to next 24 hours if no dates provided
-    const start = startDate || new Date().toISOString();
-    const end = endDate || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-    
-    // Fetch energy forecasts
-    const { data: forecasts, error: forecastError } = await supabase
-      .from('energy_forecasts')
-      .select('*')
-      .eq('site_id', siteId)
-      .gte('timestamp', start)
-      .lte('timestamp', end)
-      .order('timestamp', { ascending: true });
-    
-    if (forecastError) throw forecastError;
-    
-    // Fetch weather forecasts if requested
-    let weather: WeatherForecast[] = [];
-    if (includeWeather) {
-      const { data: weatherData, error: weatherError } = await supabase
-        .from('weather_forecasts')
-        .select('*')
-        .eq('site_id', siteId)
-        .gte('timestamp', start)
-        .lte('timestamp', end)
-        .order('timestamp', { ascending: true });
-      
-      if (weatherError) throw weatherError;
-      weather = weatherData || [];
-    }
-    
-    // Calculate totals
-    const totalGeneration = forecasts?.reduce((sum, f) => sum + (f.solar_generation || 0), 0) || 0;
-    const totalConsumption = forecasts?.reduce((sum, f) => sum + (f.consumption || 0), 0) || 0;
-    const netGridImport = forecasts?.reduce((sum, f) => {
-      const gridImport = f.grid_import || 0;
-      const gridExport = f.grid_export || 0;
-      return sum + gridImport - gridExport;
-    }, 0) || 0;
-    
-    return {
-      forecasts: forecasts || [],
-      weather: includeWeather ? weather : undefined,
-      meta: {
-        site_id: siteId,
-        start_date: start,
-        end_date: end,
-        resolution,
-        total_generation: totalGeneration,
-        total_consumption: totalConsumption,
-        net_grid_import: netGridImport
-      }
-    };
-  } catch (error) {
-    console.error('Error fetching energy forecasts:', error);
-    toast.error('Failed to load energy forecasts');
-    throw error;
-  }
-};
-
+// Get detailed weather forecast by site ID
 export const getWeatherForecast = async (siteId: string): Promise<WeatherForecast[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('weather_forecasts')
-      .select('*')
-      .eq('site_id', siteId)
-      .gte('timestamp', new Date().toISOString())
-      .order('timestamp', { ascending: true });
+  // In a real app, this would fetch from an API
+  const now = new Date();
+  const forecasts: WeatherForecast[] = [];
+  
+  // Generate 24 hours of forecast data
+  for (let i = 0; i < 24; i++) {
+    const timestamp = new Date(now.getTime() + i * 60 * 60 * 1000);
+    const hour = timestamp.getHours();
     
-    if (error) throw error;
-    return data || [];
-  } catch (error) {
-    console.error('Error fetching weather forecast:', error);
-    toast.error('Failed to load weather forecast');
-    return [];
-  }
-};
-
-export const generateForecasts = async (siteId: string): Promise<boolean> => {
-  try {
-    const { data, error } = await supabase.functions.invoke('generate-forecasts', {
-      body: { siteId }
+    // Simulate day/night pattern for temperature and irradiance
+    const isDaytime = hour >= 6 && hour <= 18;
+    const temperature = isDaytime ? 
+      20 + Math.sin((hour - 6) * Math.PI / 12) * 8 : // Day: 12-28°C curve
+      12 + Math.sin((hour - 18) * Math.PI / 12) * 4; // Night: 8-16°C curve
+    
+    const irradiance = isDaytime ? 
+      Math.sin((hour - 6) * Math.PI / 12) * 800 : // Peak at noon
+      0; // No solar irradiance at night
+    
+    forecasts.push({
+      site_id: siteId,
+      timestamp: timestamp.toISOString(),
+      temperature: Math.round(temperature * 10) / 10,
+      humidity: Math.floor(50 + Math.random() * 30),
+      wind_speed: Math.floor(5 + Math.random() * 15),
+      cloud_cover: Math.floor(Math.random() * 100),
+      precipitation: Math.random() * 0.3,
+      weather_condition: isDaytime ? 'partly_cloudy' : 'clear',
+      solar_irradiance: Math.max(0, Math.round(irradiance))
     });
-    
-    if (error) throw error;
-    
-    if (data.success) {
-      toast.success('Energy forecasts generated successfully');
-      return true;
-    } else {
-      toast.error(data.message || 'Failed to generate forecasts');
-      return false;
-    }
-  } catch (error) {
-    console.error('Error generating forecasts:', error);
-    toast.error('Failed to generate forecasts');
-    return false;
   }
+  
+  return forecasts;
 };
 
-export const getForecastAccuracy = async (siteId: string): Promise<number> => {
-  try {
-    // This would typically compare forecasts to actual values
-    // For now, return a mock accuracy value
-    return 87.5; // 87.5% accuracy
-  } catch (error) {
-    console.error('Error calculating forecast accuracy:', error);
-    return 0;
+// Alternative name for getWeatherForecast for backward compatibility
+export const fetchWeatherForecast = getWeatherForecast;
+
+// Get energy forecasts (production, consumption, etc.)
+export const getEnergyForecasts = async (siteId: string): Promise<EnergyForecast[]> => {
+  // In a real app, this would fetch from an API
+  const now = new Date();
+  const forecasts: EnergyForecast[] = [];
+  
+  // Generate 24 hours of forecast data
+  for (let i = 0; i < 24; i++) {
+    const timestamp = new Date(now.getTime() + i * 60 * 60 * 1000);
+    const hour = timestamp.getHours();
+    
+    // Simulate day/night pattern
+    const isDaytime = hour >= 6 && hour <= 18;
+    
+    // Simulated production (solar)
+    const production = isDaytime ? 
+      Math.sin((hour - 6) * Math.PI / 12) * 10 : // Peak at noon
+      0; // No production at night
+    
+    // Simulated consumption
+    const consumption = 2 + Math.sin((hour) * Math.PI / 12) * 3; // Higher in evening
+    
+    forecasts.push({
+      site_id: siteId,
+      timestamp: timestamp.toISOString(),
+      forecasted_production: Math.round(production * 10) / 10,
+      forecasted_consumption: Math.round(consumption * 10) / 10,
+      confidence: 0.8 - (i / 24 * 0.4), // Confidence decreases over time
+    });
   }
+  
+  return forecasts;
 };

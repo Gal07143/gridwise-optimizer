@@ -1,9 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import AppLayout from '@/components/layout/AppLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
-import { WeatherForecast } from '@/types/energy';
-import { fetchWeatherForecast } from '@/services/forecasts/forecastService';
+import { getWeatherForecast } from '@/services/forecasts/forecastService';
+import { WeatherForecast } from '@/types/forecast';
 import { useAppStore } from '@/store/appStore';
 import { Skeleton } from '@/components/ui/skeleton';
 import Clock from '@/components/ui/Clock';
@@ -23,7 +24,7 @@ const WeatherForecastPage = () => {
       
       setLoading(true);
       try {
-        const forecastData = await fetchWeatherForecast(currentSite.id);
+        const forecastData = await getWeatherForecast(currentSite.id);
         
         // Process daily forecast
         const daily = forecastData.reduce((acc: any, item: WeatherForecast) => {

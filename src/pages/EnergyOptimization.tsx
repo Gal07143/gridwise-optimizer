@@ -25,7 +25,7 @@ import { useAppStore } from '@/store/appStore';
 import { fetchDevices } from '@/services/supabase/supabaseService';
 import { EnergyDevice } from '@/types/energy';
 import { useEnergyOptimization } from '@/hooks/useEnergyOptimization';
-import { OptimizationSettings } from '@/types/optimization';
+import { OptimizationSettings, OptimizationObjective } from '@/types/optimization';
 import { toast } from 'sonner';
 import ReferenceLine from '@/components/charts/ReferenceLine';
 import LabelComponent from '@/components/charts/Label';
@@ -50,7 +50,7 @@ const EnergyOptimization = () => {
   const [evDepartureTime, setEvDepartureTime] = useState('08:00');
   const [evTargetSoc, setEvTargetSoc] = useState(80);
   const [priorityDevices, setPriorityDevices] = useState<string[]>([]);
-  const [selectedObjective, setSelectedObjective] = useState<string>('cost');
+  const [selectedObjective, setSelectedObjective] = useState<OptimizationObjective>('cost');
   const [isPeakShavingEnabled, setIsPeakShavingEnabled] = useState(false);
   const [maxGridPower, setMaxGridPower] = useState<number | undefined>(undefined);
   const [energyExportLimit, setEnergyExportLimit] = useState<number | undefined>(undefined);
@@ -63,16 +63,15 @@ const EnergyOptimization = () => {
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [isApplyingRecommendation, setIsApplyingRecommendation] = useState(false);
   const [recommendations, setRecommendations] = useState<any[]>([]);
-  const [isControlling, setIsControlling] = useState(false);
-  const [optimizationResult, setOptimizationResult] = useState<any>(null);
   const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(false);
+  const [optimizationResult, setOptimizationResult] = useState<any>(null);
 
   const {
     runOptimization,
     updateSettings,
     currentSettings,
     controlDevice,
-    isControlling,
+    isControlling: deviceControllingState,
     applyRecommendation,
   } = useEnergyOptimization(siteId);
 
@@ -101,7 +100,7 @@ const EnergyOptimization = () => {
       }
 
       const optimizationSettings: OptimizationSettings = {
-        priority: selectedObjective as "cost" | "self_consumption" | "carbon",
+        priority: selectedObjective,
         battery_strategy: batteryStrategy as "charge_from_solar" | "time_of_use" | "backup_only",
         ev_charging_time: currentSettings.ev_charging_time,
         ev_departure_time: evDepartureTime,
@@ -155,7 +154,6 @@ const EnergyOptimization = () => {
   };
 
   const handleControlDevice = async (deviceId: string, command: string, parameters?: Record<string, any>) => {
-    setIsControlling(true);
     try {
       const result = await controlDevice({ deviceId, command, parameters });
       if (result?.success) {
@@ -166,8 +164,6 @@ const EnergyOptimization = () => {
     } catch (error: any) {
       console.error('Error controlling device:', error);
       toast.error(`Failed to control device: ${error.message || 'Unknown error'}`);
-    } finally {
-      setIsControlling(false);
     }
   };
 
@@ -187,8 +183,13 @@ const EnergyOptimization = () => {
     { timestamp: '24:00', battery_charge_power: 100, grid_power: 500, load_power: 600, pv_power: 0, battery_soc: 40 },
   ];
 
-  const generateCustomColor = (data: any) => {
-    const value = typeof data === 'number' ? data : parseInt(data as string, 10);
+  const generateCustomColor = (data: any): string => {
+    let value = 0;
+    if (typeof data === 'number') {
+      value = data;
+    } else if (typeof data === 'string' && !isNaN(Number(data))) {
+      value = Number(data);
+    }
     return value >= 30 ? '#8884d8' : '#82ca9d';
   };
 
@@ -416,20 +417,18 @@ const EnergyOptimization = () => {
                     <YAxis />
                     <Tooltip />
                     <Legend />
-                    <Bar dataKey="battery_charge_power" fill="#8884d8" name="Battery Charge">
+                    <Bar dataKey="battery_charge_power" name="Battery Charge">
                       {dailySimulatedData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={generateCustomColor(entry.battery_charge_power)} />
                       ))}
                     </Bar>
-                    <ReferenceLine y={30} stroke="#A0522D" strokeDasharray="3 3" />
-                    <LabelComponent value="Threshold" position="right" />
-                    <Bar dataKey="grid_power" fill="#82ca9d" name="Grid Power">
+                    <ReferenceLine value={30} y={30} stroke="#A0522D" strokeDasharray="3 3" />
+                    <Bar dataKey="grid_power" name="Grid Power">
                       {dailySimulatedData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={generateCustomColor(entry.grid_power)} />
                       ))}
                     </Bar>
-                    <ReferenceLine y={30} stroke="#A0522D" strokeDasharray="3 3" />
-                    <LabelComponent value="Threshold" position="right" />
+                    <ReferenceLine value={30} y={30} stroke="#A0522D" strokeDasharray="3 3" />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (

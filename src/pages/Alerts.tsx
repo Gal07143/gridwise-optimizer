@@ -9,7 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Bell, AlertTriangle, Check, Filter, RefreshCw } from 'lucide-react';
 import { Alert, getRecentAlerts, getAlertCounts } from '@/services/alertService';
-import { AlertCountSummary } from '@/services/alertService';
+import { AlertCountSummary } from '@/types/alert';
 import { toast } from 'sonner';
 
 const Alerts = () => {

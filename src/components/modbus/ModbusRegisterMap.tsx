@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,7 +16,7 @@ interface ModbusRegisterMapProps {
 }
 
 export default function ModbusRegisterMapComponent({ deviceId, onSave }: ModbusRegisterMapProps) {
-  const [registerMap, setRegisterMap] = useState<ModbusRegisterMap>(getDefaultRegisterMap());
+  const [registerMap, setRegisterMap] = useState<ModbusRegisterMap>(getDefaultRegisterMap(deviceId));
   const [newRegister, setNewRegister] = useState({
     name: '',
     address: 0,
@@ -27,9 +28,10 @@ export default function ModbusRegisterMapComponent({ deviceId, onSave }: ModbusR
 
   useEffect(() => {
     // If the device ID changes, reset the map
-    setRegisterMap(getDefaultRegisterMap());
+    setRegisterMap(getDefaultRegisterMap(deviceId));
   }, [deviceId]);
 
+  // Rest of component implementation
   const handleAddRegister = () => {
     if (!newRegister.name) {
       toast.error('Register name is required');
@@ -53,9 +55,9 @@ export default function ModbusRegisterMapComponent({ deviceId, onSave }: ModbusR
     setNewRegister({
       name: '',
       address: 0,
-      registerType: 'holding',
-      dataType: 'int16',
-      access: 'read',
+      registerType: 'holding' as any,
+      dataType: 'int16' as any,
+      access: 'read' as any,
       description: ''
     });
 

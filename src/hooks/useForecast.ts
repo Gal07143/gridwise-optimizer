@@ -1,87 +1,56 @@
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { toast } from 'sonner';
-import { useSiteContext } from '@/contexts/SiteContext';
 import { 
-  getEnergyForecast, 
-  ForecastDataPoint, 
-  ForecastMetrics, 
-  WeatherCondition 
+  getWeatherForecast, 
+  getEnergyForecasts 
 } from '@/services/forecasts/forecastService';
+import { 
+  WeatherForecast, 
+  ForecastDataPoint,
+  ForecastMetrics,
+  WeatherCondition 
+} from '@/types/forecast';
+import { EnergyForecast } from '@/types/energy';
 
-const REFRESH_INTERVAL = 300000; // 5 minutes
-
-export function useForecast() {
-  const { activeSite } = useSiteContext();
-  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
-  const [processedData, setProcessedData] = useState<any[]>([]);
+export const useForecast = (siteId: string) => {
+  const [forecastType, setForecastType] = useState<'energy' | 'weather'>('energy');
   
-  // Fetch energy forecasts using the service
   const {
-    data,
-    isLoading,
-    error,
-    refetch
+    data: weatherForecast,
+    isLoading: isWeatherLoading,
+    error: weatherError,
   } = useQuery({
-    queryKey: ['energyForecast', activeSite?.id],
-    queryFn: async () => {
-      if (!activeSite?.id) {
-        throw new Error('No active site selected');
-      }
-      
-      const result = await getEnergyForecast(activeSite.id);
-      setLastUpdated(new Date().toISOString());
-      return result;
-    },
-    refetchInterval: REFRESH_INTERVAL,
-    refetchOnWindowFocus: false,
-    enabled: !!activeSite?.id,
-    retry: 1,
-    staleTime: 240000, // 4 minutes
+    queryKey: ['weatherForecast', siteId],
+    queryFn: () => getWeatherForecast(siteId),
+    enabled: !!siteId && forecastType === 'weather',
   });
-
-  // Process the raw forecast data into the format needed for charts
-  useEffect(() => {
-    if (!data?.forecastData || data.forecastData.length === 0) return;
-    
-    // Convert the forecast data into hourly data points for the chart
-    const hourlyData = data.forecastData.map(item => {
-      const date = new Date(item.time);
-      return {
-        time: item.time,
-        hour: `${date.getHours()}:00`,
-        generation: item.generation,
-        consumption: item.consumption,
-        netEnergy: item.netEnergy,
-        weather: item.weather
-      };
-    });
-    
-    setProcessedData(hourlyData);
-  }, [data]);
-
-  // Function to manually refresh the data
-  const refreshData = useCallback(() => {
-    refetch();
-    toast.success('Forecast data refreshed');
-  }, [refetch]);
-
+  
+  const {
+    data: energyForecast,
+    isLoading: isEnergyLoading,
+    error: energyError,
+  } = useQuery({
+    queryKey: ['energyForecast', siteId],
+    queryFn: () => getEnergyForecasts(siteId),
+    enabled: !!siteId && forecastType === 'energy',
+  });
+  
+  // Transform forecast data for charts
+  const transformedForecast = energyForecast?.map(forecast => ({
+    timestamp: new Date(forecast.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    production: forecast.forecasted_production,
+    consumption: forecast.forecasted_consumption,
+    balance: forecast.forecasted_production - forecast.forecasted_consumption,
+  })) || [];
+  
   return {
-    processedData,
-    forecastMetrics: data?.metrics || {
-      totalGeneration: 0,
-      totalConsumption: 0,
-      peakGeneration: 0,
-      peakConsumption: 0,
-      confidence: 85,
-      netEnergy: 0
-    },
-    currentWeather: data?.weather,
-    isLoading,
-    error,
-    refreshData,
-    isUsingLocalData: data?.isLocalData || false,
-    lastUpdated
+    weatherForecast,
+    energyForecast,
+    transformedForecast,
+    isLoading: isWeatherLoading || isEnergyLoading,
+    error: weatherError || energyError,
+    forecastType,
+    setForecastType,
   };
-}
+};

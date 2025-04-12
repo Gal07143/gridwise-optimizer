@@ -66,6 +66,14 @@ const AddModbusDevice = () => {
     }
   };
 
+  // Fix the Select onValueChange prop
+  const handleProtocolChange = (value: string) => {
+    if (value === 'tcp' || value === 'rtu') {
+      setProtocol(value);
+      form.setValue('protocol', value);
+    }
+  };
+
   return (
     <div className="container mx-auto p-4 space-y-6">
       {/* Header with back button */}
@@ -169,7 +177,10 @@ const AddModbusDevice = () => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Protocol</FormLabel>
-                    <Select onValueChange={setProtocol} defaultValue={protocol}>
+                    <Select 
+                      onValueChange={handleProtocolChange} 
+                      defaultValue={protocol}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select protocol" />

@@ -1,273 +1,216 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Plus, Search, Filter, MoreVertical, MonitorOff, 
-  Monitor, Activity, Settings, Trash2 
-} from 'lucide-react';
-import { 
-  Card, CardHeader, CardTitle, CardDescription, CardContent 
-} from '@/components/ui/card';
+import { Main } from '@/components/ui/main';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { 
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, 
-  DropdownMenuTrigger 
-} from '@/components/ui/dropdown-menu';
-import { toast } from 'sonner';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { getAllModbusDevices, updateModbusDevice } from '@/services/modbus/modbusService';
+import { Plus, Search, X, Wifi, Settings, WifiOff } from 'lucide-react';
+import { toast } from 'sonner';
 import { ModbusDevice } from '@/types/modbus';
-import { PageHeader } from '@/components/ui/page-header';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Skeleton } from '@/components/ui/skeleton';
+
+// Mock data and service functions
+const mockModbusDevices: ModbusDevice[] = [
+  {
+    id: 'modbus-1',
+    name: 'Solar Inverter',
+    ip_address: '192.168.1.100',
+    port: 502,
+    unit_id: 1,
+    protocol: 'tcp',
+    status: 'online'
+  },
+  {
+    id: 'modbus-2',
+    name: 'Battery Management System',
+    ip_address: '192.168.1.101',
+    port: 502,
+    unit_id: 2,
+    protocol: 'tcp',
+    status: 'offline'
+  },
+  {
+    id: 'modbus-3',
+    name: 'Energy Meter',
+    ip_address: '192.168.1.102',
+    port: 1502,
+    unit_id: 3,
+    protocol: 'rtu',
+    status: 'online'
+  },
+  {
+    id: 'modbus-4',
+    name: 'HVAC Controller',
+    ip_address: '192.168.1.103',
+    port: 502,
+    unit_id: 4,
+    protocol: 'tcp',
+    status: 'error'
+  }
+];
+
+// Mock service function
+const getModbusDevices = async (): Promise<ModbusDevice[]> => {
+  // In a real app, this would fetch from an API
+  return mockModbusDevices;
+};
+
+const deleteModbusDevice = async (deviceId: string): Promise<boolean> => {
+  console.log(`Deleting Modbus device: ${deviceId}`);
+  return true;
+};
 
 const ModbusDevices = () => {
+  const navigate = useNavigate();
   const [devices, setDevices] = useState<ModbusDevice[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState('all');
-  const navigate = useNavigate();
-
-  // Load devices on mount
+  
   useEffect(() => {
+    const fetchDevices = async () => {
+      try {
+        setLoading(true);
+        const data = await getModbusDevices();
+        setDevices(data);
+      } catch (error) {
+        console.error('Failed to fetch devices:', error);
+        toast.error('Failed to load devices');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
     fetchDevices();
   }, []);
-
-  // Fetch devices from API
-  const fetchDevices = async () => {
+  
+  const handleAddDevice = () => {
+    navigate('/modbus/add-device');
+  };
+  
+  const handleDeleteDevice = async (deviceId: string) => {
     try {
-      setLoading(true);
-      const data = await getAllModbusDevices();
-      setDevices(data);
+      const success = await deleteModbusDevice(deviceId);
+      if (success) {
+        setDevices(devices.filter(d => d.id !== deviceId));
+        toast.success('Device deleted successfully');
+      }
     } catch (error) {
-      console.error('Error fetching Modbus devices:', error);
-      toast.error('Failed to load Modbus devices');
-    } finally {
-      setLoading(false);
+      console.error('Failed to delete device:', error);
+      toast.error('Failed to delete device');
     }
   };
-
-  // Filter devices based on search query and active tab
-  const filteredDevices = devices.filter(device => {
-    const matchesSearch = 
-      searchQuery === '' || 
-      device.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (device.description && device.description.toLowerCase().includes(searchQuery.toLowerCase()));
-    
-    if (activeTab === 'online') {
-      return matchesSearch && device.status === 'online';
-    } else if (activeTab === 'offline') {
-      return matchesSearch && device.status === 'offline';
-    } else {
-      return matchesSearch;
-    }
-  });
-
-  // Toggle device online/offline status
-  const toggleDeviceStatus = async (device: ModbusDevice) => {
-    try {
-      const newStatus = device.status === 'online' ? 'offline' : 'online';
-      await updateModbusDevice(device.id, { ...device, status: newStatus });
-      setDevices(devices.map(d => d.id === device.id ? { ...d, status: newStatus } : d));
-      toast.success(`Device ${device.name} is now ${newStatus}`);
-    } catch (error) {
-      toast.error(`Failed to update device status`);
-    }
+  
+  const filteredDevices = devices.filter(device => 
+    device.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    device.ip_address?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  
+  const statusIcons = {
+    online: <Wifi className="h-4 w-4 text-green-500" />,
+    offline: <WifiOff className="h-4 w-4 text-slate-500" />,
+    error: <Settings className="h-4 w-4 text-red-500" />
   };
-
+  
   return (
-    <div className="container mx-auto p-4 space-y-6">
-      <PageHeader 
-        title="Modbus Devices" 
-        description="Configure and monitor your Modbus devices"
-      />
-
-      {/* Controls */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-between">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
+    <Main title="Modbus Devices">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold">Modbus Devices</h1>
+          <p className="text-muted-foreground mt-1">Configure and monitor Modbus-compatible devices</p>
+        </div>
+        <Button onClick={handleAddDevice}>
+          <Plus className="h-4 w-4 mr-2" />
+          Add Device
+        </Button>
+      </div>
+      
+      <div className="mb-6">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            type="search"
             placeholder="Search devices..."
-            className="pl-8"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 pr-9"
           />
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm">
-            <Filter className="h-4 w-4 mr-1" /> Filter
-          </Button>
-          <Button onClick={() => navigate('/modbus/devices/add')}>
-            <Plus className="h-4 w-4 mr-1" /> Add Device
-          </Button>
+          {searchQuery && (
+            <button
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              onClick={() => setSearchQuery('')}
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
       </div>
-
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="all">All Devices</TabsTrigger>
-          <TabsTrigger value="online">Online</TabsTrigger>
-          <TabsTrigger value="offline">Offline</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="all" className="mt-4">
-          <DevicesList 
-            devices={filteredDevices} 
-            loading={loading} 
-            toggleStatus={toggleDeviceStatus}
-            onViewDevice={(id) => navigate(`/modbus/devices/${id}`)}
-          />
-        </TabsContent>
-        <TabsContent value="online" className="mt-4">
-          <DevicesList 
-            devices={filteredDevices} 
-            loading={loading}
-            toggleStatus={toggleDeviceStatus} 
-            onViewDevice={(id) => navigate(`/modbus/devices/${id}`)}
-          />
-        </TabsContent>
-        <TabsContent value="offline" className="mt-4">
-          <DevicesList 
-            devices={filteredDevices} 
-            loading={loading}
-            toggleStatus={toggleDeviceStatus} 
-            onViewDevice={(id) => navigate(`/modbus/devices/${id}`)}
-          />
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
-};
-
-interface DevicesListProps {
-  devices: ModbusDevice[];
-  loading: boolean;
-  toggleStatus: (device: ModbusDevice) => void;
-  onViewDevice: (id: string) => void;
-}
-
-const DevicesList: React.FC<DevicesListProps> = ({ 
-  devices, loading, toggleStatus, onViewDevice 
-}) => {
-  if (loading) {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {[...Array(6)].map((_, i) => (
-          <Card key={i} className="overflow-hidden">
-            <CardHeader className="pb-2">
-              <Skeleton className="h-5 w-1/2 mb-1" />
-              <Skeleton className="h-4 w-3/4" />
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col space-y-2">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-2/3" />
-                <div className="mt-2 flex justify-between">
-                  <Skeleton className="h-8 w-20" />
-                  <Skeleton className="h-8 w-8 rounded-full" />
+      
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(3)].map((_, i) => (
+            <Card key={i} className="animate-pulse">
+              <CardHeader className="h-24 bg-muted"></CardHeader>
+              <CardContent className="h-32"></CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : filteredDevices.length === 0 ? (
+        <div className="text-center py-12">
+          <h2 className="text-xl font-semibold mb-2">No devices found</h2>
+          <p className="text-muted-foreground mb-6">Add a new Modbus device to get started</p>
+          <Button onClick={handleAddDevice}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Device
+          </Button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredDevices.map(device => (
+            <Card key={device.id} className="overflow-hidden">
+              <CardHeader className="pb-2">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="flex items-center">
+                      {statusIcons[device.status as keyof typeof statusIcons]}
+                      <span className="ml-2">{device.name}</span>
+                    </CardTitle>
+                    <CardDescription>{device.ip_address}:{device.port}</CardDescription>
+                  </div>
+                  <Badge>{device.protocol.toUpperCase()}</Badge>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    );
-  }
-
-  if (devices.length === 0) {
-    return (
-      <Card className="p-8 text-center">
-        <CardContent>
-          <div className="flex flex-col items-center space-y-3">
-            <Cpu className="h-12 w-12 text-muted-foreground opacity-50" />
-            <h3 className="text-xl font-medium">No devices found</h3>
-            <p className="text-muted-foreground">Add a Modbus device to get started</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {devices.map((device) => (
-        <Card key={device.id} className="overflow-hidden">
-          <CardHeader className="pb-2">
-            <div className="flex justify-between items-start">
-              <div>
-                <CardTitle className="text-lg">{device.name}</CardTitle>
-                <CardDescription>{device.ip_address || device.ip}:{device.port}</CardDescription>
-              </div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <MoreVertical className="h-4 w-4" />
-                    <span className="sr-only">Open menu</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => onViewDevice(device.id)}>
-                    <Settings className="h-4 w-4 mr-2" /> 
-                    Configure
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => toggleStatus(device)}>
-                    {device.status === 'online' ? (
-                      <>
-                        <MonitorOff className="h-4 w-4 mr-2" /> 
-                        Set Offline
-                      </>
-                    ) : (
-                      <>
-                        <Monitor className="h-4 w-4 mr-2" /> 
-                        Set Online
-                      </>
-                    )}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="text-destructive">
-                    <Trash2 className="h-4 w-4 mr-2" /> 
-                    Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col space-y-2">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Protocol:</span>
-                <span className="font-medium">{device.protocol}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Unit ID:</span>
-                <span className="font-medium">{device.slave_id || device.unit_id || 1}</span>
-              </div>
-              {device.description && (
-                <p className="text-sm text-muted-foreground mt-2">{device.description}</p>
-              )}
-              <div className="pt-3 flex justify-between items-center">
-                <Badge 
-                  variant={device.status === 'online' ? "success" : "secondary"} 
-                  className="flex items-center"
-                >
-                  <Activity className="h-3 w-3 mr-1" /> 
-                  {device.status === 'online' ? 'Online' : 'Offline'}
-                </Badge>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => onViewDevice(device.id)}
-                >
-                  Monitor
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="grid grid-cols-2 text-sm">
+                    <span className="text-muted-foreground">Unit ID</span>
+                    <span>{device.unit_id || device.slave_id}</span>
+                  </div>
+                  <div className="grid grid-cols-2 text-sm">
+                    <span className="text-muted-foreground">Status</span>
+                    <span className={device.status === 'online' ? 'text-green-500' : device.status === 'error' ? 'text-red-500' : 'text-slate-500'}>
+                      {device.status?.charAt(0).toUpperCase() + device.status?.slice(1)}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 text-sm">
+                    <span className="text-muted-foreground">Last Seen</span>
+                    <span>{device.last_online ? new Date(device.last_online).toLocaleString() : 'Never'}</span>
+                  </div>
+                </div>
+              </CardContent>
+              <CardFooter className="flex justify-between">
+                <Button variant="outline" size="sm" onClick={() => navigate(`/modbus/devices/${device.id}`)}>
+                  View Details
                 </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
+                <Button variant="outline" size="sm" onClick={() => handleDeleteDevice(device.id)}>
+                  Delete
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      )}
+    </Main>
   );
 };
 

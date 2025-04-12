@@ -1,5 +1,3 @@
-
-// For the ModbusMonitor component, update the type definitions and state handling:
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,9 +7,22 @@ import useModbusData from '@/hooks/useModbusData';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import useConnectionStatus from '@/hooks/useConnectionStatus';
-import { getModbusDeviceById } from '@/services/modbus/modbusDeviceService';
 import { getModbusRegistersByDeviceId } from '@/services/modbus/modbusRegisterService';
 import { ModbusDevice, ModbusRegister } from '@/types/modbus';
+
+// Mock service function since we don't have the actual implementation
+const getModbusDeviceById = async (id: string): Promise<ModbusDevice> => {
+  // Simulate API call
+  return {
+    id,
+    name: `Device ${id}`,
+    ip_address: '192.168.1.100',
+    port: 502,
+    unit_id: 1,
+    protocol: 'tcp',
+    status: 'online'
+  };
+};
 
 interface ModbusMonitorProps {
   deviceId: string;

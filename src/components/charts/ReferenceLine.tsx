@@ -2,7 +2,7 @@
 import React from 'react';
 import { ReferenceLine as RechartReferenceLine } from 'recharts';
 
-interface ReferenceLineProps {
+export interface ReferenceLineProps {
   value: number | string;
   stroke?: string;
   strokeDasharray?: string;
@@ -22,8 +22,8 @@ const ReferenceLine: React.FC<ReferenceLineProps> = ({
   x
 }) => {
   // Use either explicit y/x props or default to value
-  const yValue = y !== undefined ? y : value;
-  const xValue = x !== undefined ? x : undefined;
+  const yValue = y !== undefined ? y : (x === undefined ? value : undefined);
+  const xValue = x !== undefined ? x : (y === undefined ? value : undefined);
   
   // Create a proper label config object
   const labelConfig = label !== undefined 

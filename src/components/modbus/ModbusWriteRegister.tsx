@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,8 +22,8 @@ const ModbusWriteRegister: React.FC<ModbusWriteRegisterProps> = ({ deviceId }) =
     try {
       // In a real app this would call an actual API
       // Convert dataType to supported modbus register type
-      const regType = dataType === 'boolean' ? 'coil' : 'holding_register';
-      await writeRegister(deviceId, address, value, regType);
+      const regType = dataType === 'boolean' ? 'coil' : 'holding';
+      await writeRegister(deviceId, address, value);
       setResult({ success: true, message: 'Value written successfully' });
       toast.success('Value written successfully');
     } catch (error) {
