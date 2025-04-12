@@ -1,57 +1,27 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'react-hot-toast';
+import { deviceService } from '@/services/deviceService';
+import { 
+  Device, 
+  TelemetryData, 
+  DeviceContextType,
+  DeviceCommand,
+  DeviceError,
+  DeviceNotFoundError,
+  DeviceOperationError,
+  DeviceConnectionError,
+  DeviceContextState,
+  DeviceContextOperations
+} from '@/types/device';
 
-/**
- * Device interface representing a device in the system
- */
-export interface Device {
-  id: string;
-  name: string;
-  type: string;
-  protocol: string;
-  status: 'online' | 'offline';
-  last_seen: string | null;
-  mqtt_topic: string;
-  http_endpoint?: string;
-  ip_address?: string;
-  port?: number;
-  slave_id?: number;
-}
-
-/**
- * TelemetryData interface representing telemetry data from a device
- */
-export interface TelemetryData {
-  timestamp: string;
-  data: Record<string, any>;
-}
-
-/**
- * DeviceContextType interface defining the shape of the device context
- */
-interface DeviceContextType {
-  devices: Device[];
-  loading: boolean;
-  error: string | null;
-  selectedDevice: Device | null;
-  deviceTelemetry: Record<string, TelemetryData[]>;
-  fetchDevices: () => Promise<void>;
-  addDevice: (device: Omit<Device, 'id'>) => Promise<void>;
-  updateDevice: (id: string, updates: Partial<Device>) => Promise<void>;
-  deleteDevice: (id: string) => Promise<void>;
-  sendCommand: (deviceId: string, command: Record<string, any>) => Promise<void>;
-  selectDevice: (device: Device | null) => void;
-  fetchDeviceTelemetry: (deviceId: string) => Promise<void>;
-}
-
-// Create the device context
+// Create the device context with proper typing
 const DeviceContext = createContext<DeviceContextType | undefined>(undefined);
 
 /**
  * DeviceProvider component that provides device data and operations to the application
  */
 export function DeviceProvider({ children }: { children: React.ReactNode }) {
+  // State management with proper typing
   const [devices, setDevices] = useState<Device[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -59,22 +29,36 @@ export function DeviceProvider({ children }: { children: React.ReactNode }) {
   const [deviceTelemetry, setDeviceTelemetry] = useState<Record<string, TelemetryData[]>>({});
 
   /**
+   * Handle device errors and show appropriate toast messages
+   */
+  const handleDeviceError = (error: unknown) => {
+    let errorMessage: string;
+    if (error instanceof DeviceNotFoundError) {
+      errorMessage = error.message;
+    } else if (error instanceof DeviceOperationError) {
+      errorMessage = error.message;
+    } else if (error instanceof DeviceConnectionError) {
+      errorMessage = error.message;
+    } else if (error instanceof DeviceError) {
+      errorMessage = error.message;
+    } else {
+      errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    }
+    toast.error(errorMessage);
+    setError(errorMessage);
+  };
+
+  /**
    * Fetch all devices from the database
    */
-  const fetchDevices = async () => {
+  const fetchDevices = async (): Promise<void> => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('devices')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setDevices(data || []);
+      const data = await deviceService.fetchDevices();
+      setDevices(data);
+      setError(null);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch devices';
-      setError(errorMessage);
-      toast.error(errorMessage);
+      handleDeviceError(err);
     } finally {
       setLoading(false);
     }
@@ -83,137 +67,92 @@ export function DeviceProvider({ children }: { children: React.ReactNode }) {
   /**
    * Add a new device to the database
    */
-  const addDevice = async (device: Omit<Device, 'id'>) => {
+  const addDevice = async (device: Omit<Device, 'id'>): Promise<void> => {
     try {
-      const { data, error } = await supabase
-        .from('devices')
-        .insert([device])
-        .select()
-        .single();
-
-      if (error) throw error;
-      setDevices(prev => [data, ...prev]);
+      const newDevice = await deviceService.addDevice(device);
+      setDevices(prev => [newDevice, ...prev]);
       toast.success('Device added successfully');
+      setError(null);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to add device';
-      setError(errorMessage);
-      toast.error(errorMessage);
+      handleDeviceError(err);
     }
   };
 
   /**
    * Update an existing device in the database
    */
-  const updateDevice = async (id: string, updates: Partial<Device>) => {
+  const updateDevice = async (id: string, updates: Partial<Device>): Promise<void> => {
     try {
-      const { data, error } = await supabase
-        .from('devices')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) throw error;
+      const updatedDevice = await deviceService.updateDevice(id, updates);
       setDevices(prev => prev.map(device => 
-        device.id === id ? { ...device, ...data } : device
+        device.id === id ? updatedDevice : device
       ));
       toast.success('Device updated successfully');
+      setError(null);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to update device';
-      setError(errorMessage);
-      toast.error(errorMessage);
+      handleDeviceError(err);
     }
   };
 
   /**
    * Delete a device from the database
    */
-  const deleteDevice = async (id: string) => {
+  const deleteDevice = async (id: string): Promise<void> => {
     try {
-      const { error } = await supabase
-        .from('devices')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
+      await deviceService.deleteDevice(id);
       setDevices(prev => prev.filter(device => device.id !== id));
       toast.success('Device deleted successfully');
+      setError(null);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to delete device';
-      setError(errorMessage);
-      toast.error(errorMessage);
+      handleDeviceError(err);
     }
   };
 
   /**
    * Send a command to a device
    */
-  const sendCommand = async (deviceId: string, command: Record<string, any>) => {
+  const sendCommand = async (deviceId: string, command: DeviceCommand): Promise<void> => {
     try {
-      const response = await fetch(`/api/devices/${deviceId}/command`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(command),
-      });
-
-      if (!response.ok) throw new Error('Failed to send command');
+      await deviceService.sendCommand(deviceId, command);
       toast.success('Command sent successfully');
+      setError(null);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to send command';
-      setError(errorMessage);
-      toast.error(errorMessage);
+      handleDeviceError(err);
     }
   };
 
   /**
    * Fetch telemetry data for a specific device
    */
-  const fetchDeviceTelemetry = async (deviceId: string) => {
+  const fetchDeviceTelemetry = async (deviceId: string): Promise<void> => {
     try {
-      const { data, error } = await supabase
-        .from('telemetry_log')
-        .select('*')
-        .eq('device_id', deviceId)
-        .order('timestamp', { ascending: false })
-        .limit(100);
-
-      if (error) throw error;
+      const telemetryData = await deviceService.fetchDeviceTelemetry(deviceId);
       setDeviceTelemetry(prev => ({
         ...prev,
-        [deviceId]: data || [],
+        [deviceId]: telemetryData,
       }));
+      setError(null);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch telemetry';
-      setError(errorMessage);
-      toast.error('Failed to fetch telemetry data');
+      handleDeviceError(err);
     }
   };
 
   // Subscribe to real-time device updates
   useEffect(() => {
-    const channel = supabase
-      .channel('devices')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'devices',
-      }, (payload) => {
-        if (payload.eventType === 'INSERT') {
-          setDevices(prev => [payload.new as Device, ...prev]);
-        } else if (payload.eventType === 'UPDATE') {
-          setDevices(prev => prev.map(device => 
-            device.id === payload.new.id ? { ...device, ...payload.new } : device
-          ));
-        } else if (payload.eventType === 'DELETE') {
-          setDevices(prev => prev.filter(device => device.id !== payload.old.id));
-        }
-      })
-      .subscribe();
+    const subscription = deviceService.subscribeToDevices((payload) => {
+      if (payload.eventType === 'INSERT') {
+        setDevices(prev => [payload.new as Device, ...prev]);
+      } else if (payload.eventType === 'UPDATE') {
+        setDevices(prev => prev.map(device => 
+          device.id === payload.new.id ? { ...device, ...payload.new } : device
+        ));
+      } else if (payload.eventType === 'DELETE') {
+        setDevices(prev => prev.filter(device => device.id !== payload.old.id));
+      }
+    });
 
     return () => {
-      supabase.removeChannel(channel);
+      subscription.unsubscribe();
     };
   }, []);
 
@@ -221,52 +160,50 @@ export function DeviceProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!selectedDevice) return;
 
-    const channel = supabase
-      .channel(`telemetry-${selectedDevice.id}`)
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'telemetry_log',
-        filter: `device_id=eq.${selectedDevice.id}`,
-      }, (payload) => {
+    const subscription = deviceService.subscribeToDeviceTelemetry(
+      selectedDevice.id,
+      (payload) => {
         setDeviceTelemetry(prev => ({
           ...prev,
           [selectedDevice.id]: [payload.new as TelemetryData, ...(prev[selectedDevice.id] || [])].slice(0, 100),
         }));
-      })
-      .subscribe();
+      }
+    );
 
     return () => {
-      supabase.removeChannel(channel);
+      subscription.unsubscribe();
     };
   }, [selectedDevice]);
 
+  // Combine state and operations into context value
+  const contextValue: DeviceContextType = {
+    // State
+    devices,
+    loading,
+    error,
+    selectedDevice,
+    deviceTelemetry,
+    // Operations
+    fetchDevices,
+    addDevice,
+    updateDevice,
+    deleteDevice,
+    sendCommand,
+    selectDevice: setSelectedDevice,
+    fetchDeviceTelemetry,
+  };
+
   return (
-    <DeviceContext.Provider
-      value={{
-        devices,
-        loading,
-        error,
-        selectedDevice,
-        deviceTelemetry,
-        fetchDevices,
-        addDevice,
-        updateDevice,
-        deleteDevice,
-        sendCommand,
-        selectDevice: setSelectedDevice,
-        fetchDeviceTelemetry,
-      }}
-    >
+    <DeviceContext.Provider value={contextValue}>
       {children}
     </DeviceContext.Provider>
   );
 }
 
 /**
- * Custom hook to use the device context
+ * Hook for accessing the device context
  */
-export function useDevices() {
+export function useDevices(): DeviceContextType {
   const context = useContext(DeviceContext);
   if (context === undefined) {
     throw new Error('useDevices must be used within a DeviceProvider');

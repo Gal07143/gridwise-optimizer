@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useDevices, Device, TelemetryData } from '@/contexts/DeviceContext';
+import { useDevices } from '@/contexts/DeviceContext';
+import { Device, TelemetryData, DeviceCommand } from '@/types/device';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -41,9 +42,9 @@ interface TelemetryDisplayProps {
 interface DeviceActionsProps {
   device: Device;
   onRefresh: () => void;
-  onTogglePower: () => void;
+  onTogglePower: () => Promise<void>;
   onEdit: () => void;
-  onDelete: () => void;
+  onDelete: () => Promise<void>;
   isRefreshing: boolean;
 }
 

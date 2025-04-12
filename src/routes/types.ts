@@ -8,6 +8,9 @@ export interface RouteMetadata {
 export interface RouteConfig {
   path: string
   element: React.ReactNode
-  metadata?: RouteMetadata
   children?: RouteConfig[]
+  metadata?: {
+    title: string
+    description: string
+  }
 } 
