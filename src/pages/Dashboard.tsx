@@ -26,9 +26,12 @@ import {
 } from 'lucide-react';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { DashboardData } from '@/types/settings';
+import { supabaseService } from '@/services/supabaseService';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Dashboard: React.FC = () => {
   const { setDashboardView, currentSite } = useAppStore();
+  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
@@ -41,22 +44,31 @@ const Dashboard: React.FC = () => {
     const fetchDashboardData = async () => {
       try {
         setIsLoading(true);
-        // TODO: Replace with actual API call
-        const response = await fetch(`/api/dashboard/${currentSite?.id}`);
-        const data = await response.json();
-        setDashboardData(data);
+        if (!user?.id) {
+          throw new Error('User not authenticated');
+        }
+        const data = await supabaseService.getDashboardData(user.id);
+        if (data) {
+          setDashboardData({
+            gridSupply: data.grid_supply,
+            pvProduction: data.pv_production,
+            battery: data.battery,
+            household: data.household,
+            energyFlow: data.energy_flow
+          });
+        }
       } catch (err) {
-        setError('Failed to load dashboard data');
+        setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
         console.error(err);
       } finally {
         setIsLoading(false);
       }
     };
 
-    if (currentSite?.id) {
+    if (user?.id) {
       fetchDashboardData();
     }
-  }, [currentSite?.id]);
+  }, [user?.id]);
 
   if (isLoading) {
     return (

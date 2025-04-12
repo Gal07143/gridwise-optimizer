@@ -10,6 +10,8 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
+import { supabaseService } from '@/services/supabaseService';
+import { useAuth } from '@/contexts/AuthContext';
 
 const securitySettingsSchema = z.object({
   authentication: z.object({
@@ -41,6 +43,7 @@ const securitySettingsSchema = z.object({
 const SecuritySettings: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
   
   const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<SecuritySettingsType>({
     resolver: zodResolver(securitySettingsSchema),
@@ -50,38 +53,46 @@ const SecuritySettings: React.FC = () => {
     const fetchSettings = async () => {
       try {
         setIsLoading(true);
-        // TODO: Replace with actual API call
-        const response = await fetch('/api/security-settings');
-        const data = await response.json();
-        
-        // Set form values
-        Object.entries(data).forEach(([key, value]) => {
-          setValue(key as keyof SecuritySettingsType, value);
-        });
+        if (!user?.id) {
+          throw new Error('User not authenticated');
+        }
+        const data = await supabaseService.getSecuritySettings(user.id);
+        if (data) {
+          setValue('authentication.twoFactorEnabled', data.two_factor_enabled);
+          setValue('authentication.sessionTimeout', data.session_timeout);
+          setValue('authentication.passwordPolicy', data.password_policy);
+          setValue('encryption.enabled', data.encryption_enabled);
+          setValue('encryption.algorithm', data.encryption_algorithm);
+          setValue('encryption.keyRotation', data.key_rotation);
+          setValue('apiSecurity.rateLimiting', data.rate_limiting);
+          setValue('apiSecurity.allowedOrigins', data.allowed_origins);
+          setValue('apiSecurity.tokenExpiration', data.token_expiration);
+          setValue('auditLogging.enabled', data.audit_logging_enabled);
+          setValue('auditLogging.retentionPeriod', data.retention_period);
+          setValue('auditLogging.logLevel', data.log_level);
+        }
       } catch (err) {
-        setError('Failed to load security settings');
+        setError(err instanceof Error ? err.message : 'Failed to load security settings');
         console.error(err);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchSettings();
-  }, [setValue]);
+    if (user?.id) {
+      fetchSettings();
+    }
+  }, [setValue, user?.id]);
 
   const onSubmit = async (data: SecuritySettingsType) => {
     try {
       setIsLoading(true);
-      // TODO: Replace with actual API call
-      await fetch('/api/security-settings', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
+      if (!user?.id) {
+        throw new Error('User not authenticated');
+      }
+      await supabaseService.updateSecuritySettings(user.id, data);
     } catch (err) {
-      setError('Failed to save security settings');
+      setError(err instanceof Error ? err.message : 'Failed to save security settings');
       console.error(err);
     } finally {
       setIsLoading(false);
