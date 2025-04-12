@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { ThemeProvider } from '@/providers/ThemeProvider';
 import { AuthProvider } from '@/contexts/auth/AuthProvider';
@@ -9,6 +8,7 @@ import MicrogridProvider from '@/components/microgrid/MicrogridProvider';
 import { EnergyFlowProvider } from '@/components/dashboard/energy-flow/EnergyFlowContext';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import AppRoutes from '@/Routes';
+import { BrowserRouter } from 'react-router-dom';
 
 const queryClient = new QueryClient({
   defaultOptions: {

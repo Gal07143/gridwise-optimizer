@@ -1,11 +1,22 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Main } from '@/components/ui/main';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAppStore } from '@/store/appStore';
 import { EnergyFlowProvider } from '@/components/dashboard/energy-flow/EnergyFlowContext';
 import HighTechEnergyFlow from '@/components/energy/HighTechEnergyFlow';
 import { Button } from '@/components/ui/button';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { 
+  AreaChart, 
+  Area, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  Legend, 
+  ResponsiveContainer,
+  LineChart,
+  Line
+} from 'recharts';
 import { 
   ArrowDownToLine, 
   ArrowUpFromLine, 
@@ -17,17 +28,21 @@ import {
   Download,
   Gauge,
   Home, 
-  LineChart,
+  LineChart as LineChartIcon,
   RefreshCw, 
   Share2, 
   Sun, 
   Zap,
-  Loader2
+  Loader2,
+  AlertCircle
 } from 'lucide-react';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { DashboardData } from '@/types/settings';
 import { supabaseService } from '@/services/supabaseService';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
+import { useWebSocket } from '@/hooks/useWebSocket';
+import { format } from 'date-fns';
 
 const Dashboard: React.FC = () => {
   const { setDashboardView, currentSite } = useAppStore();
@@ -35,56 +50,89 @@ const Dashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [historicalData, setHistoricalData] = useState<any[]>([]);
+  const [selectedTimeRange, setSelectedTimeRange] = useState<'1h' | '24h' | '7d'>('1h');
   
+  const { lastMessage, sendMessage } = useWebSocket('ws://localhost:3001');
+
   useEffect(() => {
     setDashboardView('energy');
   }, [setDashboardView]);
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        setIsLoading(true);
-        if (!user?.id) {
-          throw new Error('User not authenticated');
-        }
-        const data = await supabaseService.getDashboardData(user.id);
-        if (data) {
-          setDashboardData({
-            gridSupply: data.grid_supply,
-            pvProduction: data.pv_production,
-            battery: data.battery,
-            household: data.household,
-            energyFlow: data.energy_flow
-          });
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
-        console.error(err);
-      } finally {
-        setIsLoading(false);
+  const fetchDashboardData = async () => {
+    try {
+      setIsLoading(true);
+      if (!user?.id) {
+        throw new Error('User not authenticated');
       }
-    };
+      const data = await supabaseService.getDashboardData(user.id);
+      if (data) {
+        setDashboardData({
+          gridSupply: data.grid_supply,
+          pvProduction: data.pv_production,
+          battery: data.battery,
+          household: data.household,
+          energyFlow: data.energy_flow
+        });
+        toast.success('Dashboard data updated successfully');
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load dashboard data';
+      setError(errorMessage);
+      toast.error(errorMessage);
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  };
 
+  useEffect(() => {
     if (user?.id) {
       fetchDashboardData();
     }
   }, [user?.id]);
 
-  if (isLoading) {
+  useEffect(() => {
+    if (lastMessage) {
+      const data = JSON.parse(lastMessage.data);
+      setDashboardData(data);
+      setHistoricalData(prev => [...prev, { ...data, timestamp: new Date() }].slice(-100));
+    }
+  }, [lastMessage]);
+
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    fetchDashboardData();
+  };
+
+  const handleTimeRangeChange = (range: '1h' | '24h' | '7d') => {
+    setSelectedTimeRange(range);
+    sendMessage(JSON.stringify({ type: 'timeRange', value: range }));
+  };
+
+  if (isLoading && !isRefreshing) {
     return (
       <Main>
-        <div className="flex items-center justify-center min-h-[400px]">
-          <Loader2 className="h-8 w-8 animate-spin" />
+        <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Loading dashboard data...</p>
         </div>
       </Main>
     );
   }
 
-  if (error) {
+  if (error && !dashboardData) {
     return (
       <Main>
-        <div className="text-red-500 p-4">
-          {error}
+        <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+          <AlertCircle className="h-8 w-8 text-destructive" />
+          <p className="text-destructive">{error}</p>
+          <Button onClick={handleRefresh} variant="outline">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Try Again
+          </Button>
         </div>
       </Main>
     );
@@ -93,8 +141,12 @@ const Dashboard: React.FC = () => {
   if (!dashboardData) {
     return (
       <Main>
-        <div className="text-gray-500 p-4">
-          No data available
+        <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+          <p className="text-muted-foreground">No data available</p>
+          <Button onClick={handleRefresh} variant="outline">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
         </div>
       </Main>
     );
@@ -112,14 +164,48 @@ const Dashboard: React.FC = () => {
               </p>
             </div>
             <div className="flex gap-2">
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant={selectedTimeRange === '1h' ? 'default' : 'outline'} 
+                  size="sm"
+                  onClick={() => handleTimeRangeChange('1h')}
+                >
+                  1H
+                </Button>
+                <Button 
+                  variant={selectedTimeRange === '24h' ? 'default' : 'outline'} 
+                  size="sm"
+                  onClick={() => handleTimeRangeChange('24h')}
+                >
+                  24H
+                </Button>
+                <Button 
+                  variant={selectedTimeRange === '7d' ? 'default' : 'outline'} 
+                  size="sm"
+                  onClick={() => handleTimeRangeChange('7d')}
+                >
+                  7D
+                </Button>
+              </div>
               <Button variant="outline" size="sm" className="gap-1">
                 <Share2 className="h-4 w-4" /> Share
               </Button>
               <Button variant="outline" size="sm" className="gap-1">
                 <Download className="h-4 w-4" /> Export
               </Button>
-              <Button variant="outline" size="sm" className="gap-1">
-                <RefreshCw className="h-4 w-4" /> Refresh
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="gap-1"
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+              >
+                {isRefreshing ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4" />
+                )}
+                Refresh
               </Button>
             </div>
           </div>
@@ -242,6 +328,53 @@ const Dashboard: React.FC = () => {
               </Card>
             </div>
           </div>
+
+          {/* Energy Flow Chart */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Energy Flow History</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={historicalData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis 
+                      dataKey="timestamp" 
+                      tickFormatter={(value) => format(new Date(value), 'HH:mm')}
+                    />
+                    <YAxis />
+                    <Tooltip 
+                      labelFormatter={(value) => format(new Date(value), 'HH:mm:ss')}
+                      formatter={(value: number) => [`${value} kW`, 'Power']}
+                    />
+                    <Legend />
+                    <Line 
+                      type="monotone" 
+                      dataKey="gridSupply.power" 
+                      name="Grid Supply" 
+                      stroke="#3b82f6" 
+                      strokeWidth={2}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="pvProduction.power" 
+                      name="PV Production" 
+                      stroke="#f59e0b" 
+                      strokeWidth={2}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="household.consumption" 
+                      name="Household" 
+                      stroke="#10b981" 
+                      strokeWidth={2}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
         </Main>
       </EnergyFlowProvider>
     </ErrorBoundary>
