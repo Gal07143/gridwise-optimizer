@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Download, Plus, Filter, RefreshCw } from 'lucide-react';
@@ -13,8 +12,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import DeviceModelsTable from './DeviceModelsTable';
-import { DeviceModel, SupportLevel } from '@/types/device-model';
+import { DeviceModel } from '@/types/device-model';
 import { toast } from 'sonner';
+
+// Define SupportLevel type locally since it's not exported from device-model.ts
+type SupportLevel = 'none' | 'full' | 'partial' | 'beta' | 'community';
 
 // Internal interface that matches what DeviceModelsTable expects
 interface MappedDeviceModel {
@@ -24,17 +26,14 @@ interface MappedDeviceModel {
   model_number: string;
   device_type: string;
   protocol?: string;
-  support_level?: 'none' | 'partial' | 'full' | 'beta' | 'community';
+  support_level?: SupportLevel;
   has_manual?: boolean;
   has_datasheet?: boolean;
   has_video?: boolean;
   category?: string;
   power_rating?: number;
   capacity?: number;
-  release_date?: string;
   description?: string;
-  warranty?: string;
-  certifications?: string[];
 }
 
 interface DeviceModelsCardProps {
@@ -58,7 +57,7 @@ const DeviceModelsCard: React.FC<DeviceModelsCardProps> = ({
     const csvContent = [
       headers.join(','),
       ...deviceModels.map(device => [
-        device.name || `${device.manufacturer} ${device.model_name}`,
+        device.name || `${device.manufacturer} ${device.model_number}`,
         device.manufacturer,
         device.model_number,
         device.device_type
@@ -127,22 +126,19 @@ const DeviceModelsCard: React.FC<DeviceModelsCardProps> = ({
   // Map to DeviceModelsTable's expected DeviceModel type
   const mappedDevices: MappedDeviceModel[] = deviceModels.map(device => ({
     id: device.id,
-    name: device.name || `${device.manufacturer} ${device.model_name || device.model_number}`,
+    name: device.name || `${device.manufacturer} ${device.model_number}`,
     manufacturer: device.manufacturer,
     model_number: device.model_number,
     device_type: device.device_type,
     protocol: device.protocol,
-    support_level: device.support_level as any, // Type assertion to fix compatibility
+    support_level: device.support_level as SupportLevel, // Type assertion to fix compatibility
     has_manual: device.has_manual,
     has_datasheet: device.has_datasheet,
     has_video: device.has_video,
     category: device.category,
     power_rating: device.power_rating,
     capacity: device.capacity,
-    release_date: device.release_date,
     description: device.description,
-    warranty: device.warranty,
-    certifications: device.certifications
   }));
 
   return (

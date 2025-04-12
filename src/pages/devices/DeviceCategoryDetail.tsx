@@ -1,150 +1,70 @@
-
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useParams } from 'react-router-dom';
-import AppLayout from '@/components/layout/AppLayout';
-import PageHeader from '@/components/layout/PageHeader';
-import DeviceModelsCard from '@/components/devices/DeviceModelsCard';
+import { Main } from '@/components/ui/main';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { useDeviceModels } from '@/hooks/useDeviceModels';
-import { Search, X, Settings, Download } from 'lucide-react';
-import { DeviceModelCategory } from '@/types/device-model';
+import { useQuery } from '@tanstack/react-query';
+import { getDeviceModelsByCategory } from '@/services/deviceCatalogService';
+import { DeviceModel } from '@/types/device-model';
+import { Skeleton } from '@/components/ui/skeleton';
+import { DeviceModelCategory } from '@/types/device-model-category';
+import { categoryNames } from '@/types/device-model';
 
-const DeviceCategoryDetail = () => {
+const DeviceCategoryDetail: React.FC = () => {
   const { categoryId } = useParams<{ categoryId: string }>();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortField, setSortField] = useState('name');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
-  const [category, setCategory] = useState<DeviceModelCategory | null>(null);
-  const { models, loadModels } = useDeviceModels();
-  const [filteredModels, setFilteredModels] = useState(models);
-  const [isLoading, setIsLoading] = useState(true);
+  
+  const { data: deviceModels, isLoading, error } = useQuery<DeviceModel[]>({
+    queryKey: ['deviceModels', categoryId],
+    queryFn: () => getDeviceModelsByCategory(categoryId || ''),
+    enabled: !!categoryId,
+  });
 
-  // Load models and simulate API call for category details
-  useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true);
-      loadModels();
-
-      // Simulate API call for category details
-      setTimeout(() => {
-        const mockCategory: DeviceModelCategory = {
-          id: categoryId || 'default',
-          name: categoryId ? 
-            categoryId.charAt(0).toUpperCase() + categoryId.slice(1).replace('-', ' ') : 
-            'All Devices',
-          description: 'Browse and manage compatible device models in this category',
-          device_count: models.length
-        };
-        setCategory(mockCategory);
-        setIsLoading(false);
-      }, 500);
-    };
-    
-    loadData();
-  }, [categoryId, loadModels]);
-
-  // Filter and sort models whenever dependencies change
-  useEffect(() => {
-    let filtered = [...models];
-    
-    // Apply category filter
-    if (categoryId) {
-      filtered = filtered.filter(model => 
-        model.category?.toLowerCase().includes(categoryId.toLowerCase()) ||
-        model.device_type.toLowerCase().includes(categoryId.toLowerCase())
-      );
-    }
-    
-    // Apply search filter
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(model => 
-        model.name.toLowerCase().includes(query) ||
-        model.manufacturer.toLowerCase().includes(query) ||
-        model.model_number.toLowerCase().includes(query)
-      );
-    }
-    
-    // Apply sorting
-    filtered.sort((a, b) => {
-      const aVal = a[sortField as keyof typeof a];
-      const bVal = b[sortField as keyof typeof b];
-      
-      if (typeof aVal === 'string' && typeof bVal === 'string') {
-        return sortDirection === 'asc' 
-          ? aVal.localeCompare(bVal)
-          : bVal.localeCompare(aVal);
-      }
-      
-      return 0;
-    });
-    
-    setFilteredModels(filtered);
-  }, [models, categoryId, searchQuery, sortField, sortDirection]);
-
-  const handleSort = (field: string) => {
-    if (field === sortField) {
-      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
-    }
-  };
-
-  const handleClearSearch = () => {
-    setSearchQuery('');
-  };
+  const categoryName = categoryId ? (categoryNames[categoryId] || categoryId) : '';
 
   return (
-    <AppLayout>
-      <div className="p-6">
-        <PageHeader 
-          title={category?.name || 'Loading...'}
-          description={category?.description}
-          actions={
-            <>
-              <Button variant="outline" size="sm">
-                <Settings className="h-4 w-4 mr-2" />
-                Manage Categories
-              </Button>
-              <Button variant="outline" size="sm">
-                <Download className="h-4 w-4 mr-2" />
-                Export Models
-              </Button>
-            </>
-          }
-        />
-
-        <div className="flex items-center gap-4 mb-6">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search device models..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
-            />
-            {searchQuery && (
-              <button
-                onClick={handleClearSearch}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
-          </div>
+    <Main title={`${categoryName} Devices`}>
+      <div className="container mx-auto py-6">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">{categoryName} Devices</h1>
+          <Button>Add New {categoryName.slice(0, -1)}</Button>
         </div>
 
-        <DeviceModelsCard
-          deviceModels={filteredModels} 
-          sortField={sortField}
-          sortDirection={sortDirection}
-          onSort={handleSort}
-          isLoading={isLoading}
-        />
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <div key={index} className="border rounded-lg p-4">
+                <Skeleton className="h-6 w-3/4 mb-2" />
+                <Skeleton className="h-4 w-1/2 mb-4" />
+                <Skeleton className="h-4 w-full mb-2" />
+                <Skeleton className="h-4 w-2/3" />
+              </div>
+            ))}
+          </div>
+        ) : error ? (
+          <div className="text-red-500">Error loading device models: {(error as Error).message}</div>
+        ) : deviceModels && deviceModels.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {deviceModels.map((device) => (
+              <div key={device.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                <h2 className="text-lg font-semibold">{device.name}</h2>
+                <p className="text-sm text-gray-500 mb-2">{device.manufacturer}</p>
+                <p className="text-sm mb-1">Model: {device.model_number}</p>
+                <p className="text-sm mb-1">Type: {device.device_type}</p>
+                {device.power_rating && (
+                  <p className="text-sm mb-1">Power Rating: {device.power_rating} kW</p>
+                )}
+                {device.capacity && (
+                  <p className="text-sm mb-1">Capacity: {device.capacity} kWh</p>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <p className="text-gray-500">No {categoryName.toLowerCase()} found.</p>
+          </div>
+        )}
       </div>
-    </AppLayout>
+    </Main>
   );
 };
 

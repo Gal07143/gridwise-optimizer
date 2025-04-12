@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { 
@@ -48,6 +49,7 @@ const ForecastTab: React.FC<ForecastTabProps> = ({ siteId }) => {
     queryFn: () => getSiteForecastMetrics(siteId),
   });
 
+  // Add the missing selfConsumptionRate property
   const forecastMetrics: ForecastMetrics = forecastMetricsData || {
     totalGeneration: 0,
     totalConsumption: 0,

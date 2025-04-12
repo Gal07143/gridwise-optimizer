@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Activity, Zap, Thermometer, Battery, AlertTriangle } from 'lucide-react';
@@ -21,14 +22,14 @@ const TelemetryPanel = () => {
   const { activeSite } = useSiteContext();
   const deviceId = activeSite?.id || 'device-1';
 
-  // Fixed the incorrect usage of useLiveTelemetry with a string argument
-  const { telemetry, isLoading, error } = useLiveTelemetry({ deviceId });
+  // Fix the usage of useLiveTelemetry
+  const { reading, error, isConnected } = useLiveTelemetry({ deviceId });
 
   const currentValues = {
-    voltage: telemetry?.voltage || 240.2,
-    current: telemetry?.current || 15.7,
-    power: telemetry?.power || 3.8,
-    temperature: telemetry?.temperature || 42.5
+    voltage: reading?.voltage || 240.2,
+    current: reading?.current || 15.7,
+    power: reading?.power || 3.8,
+    temperature: reading?.temperature || 42.5
   };
 
   useEffect(() => {
@@ -44,7 +45,8 @@ const TelemetryPanel = () => {
     }, 1000);
   };
 
-  if (isLoading) {
+  // Use isConnected instead of isLoading
+  if (!isConnected) {
     return <div className="text-center p-4">Loading telemetry data...</div>;
   }
 

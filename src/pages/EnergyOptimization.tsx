@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import ReferenceLine from '@/components/charts/ReferenceLine';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Button } from '@/components/ui/button';
@@ -20,16 +19,10 @@ const EnergyOptimization = () => {
     { name: '23:59', self: 30, grid: 70, total: 100 },
   ];
 
-  const [objective, setObjective] = React.useState<OptimizationObjective>("cost");
-  const [isControlling, setIsControlling] = React.useState(false);
-
-  const { 
-    optimizationSettings, 
-    setOptimizationSettings, 
-    results, 
-    isLoading 
-  } = useEnergyOptimization({
-    priority: objective,
+  const [objective, setObjective] = useState<OptimizationObjective>("cost");
+  const [isControlling, setIsControlling] = useState(false);
+  const [optimizationSettings, setOptimizationSettings] = useState({
+    priority: "cost" as OptimizationObjective,
     battery_strategy: "time_of_use",
     ev_charging_time: "23:00",
     ev_departure_time: "07:00",
@@ -38,10 +31,13 @@ const EnergyOptimization = () => {
     max_soc: 80,
     time_window_start: "00:00",
     time_window_end: "23:59",
-    objective: objective,
+    objective: "cost" as OptimizationObjective,
     site_id: "site-1",
-    priority_device_ids: []
+    priority_device_ids: [] as string[]
   });
+
+  // Use the proper signature for useEnergyOptimization
+  const energyOptimizationService = useEnergyOptimization("site-1");
 
   const handleObjectiveChange = (value: string) => {
     setObjective(value as OptimizationObjective);
@@ -49,6 +45,12 @@ const EnergyOptimization = () => {
       ...optimizationSettings,
       priority: value as OptimizationObjective,
       objective: value as OptimizationObjective,
+    });
+    
+    // Update settings through the service
+    energyOptimizationService.updateSettings({
+      priority: value as OptimizationObjective,
+      objective: value as OptimizationObjective
     });
   };
 
@@ -164,13 +166,13 @@ const EnergyOptimization = () => {
                   y={80} 
                   stroke="#8884d8" 
                   strokeDasharray="3 3" 
-                  label={{ position: 'top', value: '80%' }}
+                  label="80%"
                 />
                 <ReferenceLine 
                   y={20} 
                   stroke="#82ca9d" 
                   strokeDasharray="3 3"
-                  label={{ position: 'top', value: '20%' }}
+                  label="20%"
                 />
               </LineChart>
             </ResponsiveContainer>

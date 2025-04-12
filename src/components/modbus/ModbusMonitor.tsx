@@ -1,10 +1,9 @@
-
 import React, { useState } from 'react';
 import { useModbusData } from '@/hooks/useModbusData';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { ArrowPathIcon, PauseIcon, PlayIcon } from 'lucide-react'; // Adjust import based on your icon library
+import { RefreshCw, Pause, Play } from 'lucide-react';
 import { ModbusRegister } from '@/types/modbus';
 
 interface ModbusMonitorProps {
@@ -75,7 +74,7 @@ const ModbusMonitor: React.FC<ModbusMonitorProps> = ({
               onClick={togglePause}
               title={isPaused ? 'Resume' : 'Pause'}
             >
-              {isPaused ? <PlayIcon className="h-4 w-4" /> : <PauseIcon className="h-4 w-4" />}
+              {isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
             </Button>
           )}
           {showRefreshButton && (
@@ -86,7 +85,7 @@ const ModbusMonitor: React.FC<ModbusMonitorProps> = ({
               disabled={isLoading}
               title="Refresh"
             >
-              <ArrowPathIcon className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
             </Button>
           )}
         </div>

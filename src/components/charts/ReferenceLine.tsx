@@ -3,10 +3,10 @@ import React from 'react';
 import { ReferenceLine as RechartReferenceLine } from 'recharts';
 
 export interface ReferenceLineProps {
-  value: number | string;
+  value?: number | string;
   stroke?: string;
   strokeDasharray?: string;
-  label?: string | number;
+  label?: string | number | { position: string; value: string };
   position?: 'top' | 'bottom' | 'left' | 'right' | 'middle';
   y?: number | string;
   x?: number | string;
@@ -25,10 +25,19 @@ const ReferenceLine: React.FC<ReferenceLineProps> = ({
   const yValue = y !== undefined ? y : (x === undefined ? value : undefined);
   const xValue = x !== undefined ? x : (y === undefined ? value : undefined);
   
-  // Create a proper label config object
-  const labelConfig = label !== undefined 
-    ? { value: String(label), position } 
-    : undefined;
+  // Format the label correctly based on its type
+  let labelConfig;
+  
+  if (typeof label === 'object' && label !== null) {
+    // If it's already an object, pass it through
+    labelConfig = label;
+  } else if (label !== undefined) {
+    // If it's a string or number, create a label object
+    labelConfig = { 
+      value: String(label), 
+      position: position 
+    };
+  }
   
   return (
     <RechartReferenceLine 

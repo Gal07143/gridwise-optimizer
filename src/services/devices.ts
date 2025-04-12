@@ -1,6 +1,3 @@
-
-// This file needs to be updated to fix the device models with category property
-
 import { toast } from 'sonner';
 import { executeSql } from './sqlExecutor';
 import { DeviceModel } from '@/types/device-model';
@@ -12,7 +9,7 @@ const deviceModels: DeviceModel[] = [
     name: 'SolarEdge Inverter',
     manufacturer: 'SolarEdge',
     model_number: 'SE7600H-US',
-    model_name: 'SE7600H-US',
+    model: 'SE7600H-US',
     device_type: 'inverter',
     category: 'Solar Inverters',
     protocol: 'SunSpec',
@@ -25,7 +22,7 @@ const deviceModels: DeviceModel[] = [
     name: 'Tesla Powerwall',
     manufacturer: 'Tesla',
     model_number: 'Powerwall 2',
-    model_name: 'Powerwall 2',
+    model: 'Powerwall 2',
     device_type: 'battery',
     category: 'Battery Systems',
     protocol: 'Proprietary',
@@ -75,7 +72,7 @@ export const getMockDeviceModels = (): DeviceModel[] => {
       name: 'SolarEdge Inverter',
       manufacturer: 'SolarEdge',
       model_number: 'SE7600H-US',
-      model_name: 'SE7600H-US',
+      model: 'SE7600H-US',
       device_type: 'inverter',
       category: 'Solar Inverters',
       description: 'High-efficiency solar inverter',
@@ -89,7 +86,7 @@ export const getMockDeviceModels = (): DeviceModel[] => {
       name: 'Tesla Powerwall',
       manufacturer: 'Tesla',
       model_number: 'Powerwall 2',
-      model_name: 'Powerwall 2',
+      model: 'Powerwall 2',
       device_type: 'battery',
       category: 'Battery Systems',
       description: 'Home battery storage system',
@@ -103,7 +100,7 @@ export const getMockDeviceModels = (): DeviceModel[] => {
       name: 'Fronius Symo',
       manufacturer: 'Fronius',
       model_number: 'Symo 10.0-3',
-      model_name: 'Symo 10.0-3',
+      model: 'Symo 10.0-3',
       device_type: 'inverter',
       category: 'Solar Inverters',
       description: 'Three-phase inverter for commercial applications',
@@ -117,7 +114,7 @@ export const getMockDeviceModels = (): DeviceModel[] => {
       name: 'Enphase Microinverter',
       manufacturer: 'Enphase',
       model_number: 'IQ7+',
-      model_name: 'IQ7+',
+      model: 'IQ7+',
       device_type: 'inverter',
       category: 'Solar Inverters',
       description: 'Module-level power electronics',
@@ -131,7 +128,7 @@ export const getMockDeviceModels = (): DeviceModel[] => {
       name: 'SMA Sunny Boy',
       manufacturer: 'SMA',
       model_number: 'SB 7.7-US',
-      model_name: 'SB 7.7-US',
+      model: 'SB 7.7-US',
       device_type: 'inverter',
       category: 'Solar Inverters',
       description: 'String inverter for residential applications',
@@ -145,7 +142,7 @@ export const getMockDeviceModels = (): DeviceModel[] => {
       name: 'LG Chem RESU',
       manufacturer: 'LG Chem',
       model_number: 'RESU10H',
-      model_name: 'RESU10H',
+      model: 'RESU10H',
       device_type: 'battery',
       category: 'Battery Systems',
       description: 'Residential energy storage unit',

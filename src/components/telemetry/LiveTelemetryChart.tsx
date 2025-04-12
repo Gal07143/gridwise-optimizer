@@ -14,6 +14,13 @@ export interface LiveTelemetryChartProps {
   showSource?: boolean;
 }
 
+interface TelemetryParams {
+  deviceId: string;
+  parameter: string;
+  timeRange: string;
+  interval: string;
+}
+
 const LiveTelemetryChart: React.FC<LiveTelemetryChartProps> = ({ 
   deviceId, 
   metric, 
@@ -21,12 +28,14 @@ const LiveTelemetryChart: React.FC<LiveTelemetryChartProps> = ({
   height = 200,
   showSource = false
 }) => {
-  const { data: telemetry, isLoading, error, refetch } = useTelemetryHistory({
+  const params: TelemetryParams = {
     deviceId,
     parameter: metric,
     timeRange: '24h',
     interval: '1h'
-  }, {
+  };
+  
+  const { data: telemetry, isLoading, error, refetch } = useTelemetryHistory(params, {
     enabled: true
   });
   
@@ -34,7 +43,7 @@ const LiveTelemetryChart: React.FC<LiveTelemetryChartProps> = ({
   const formattedData = telemetry ? formatTelemetryData(telemetry) : [];
 
   // Convert error to proper Error object if it's a string
-  const errorObject = error ? (typeof error === 'string' ? new Error(error) : error) : undefined;
+  const errorObject = error instanceof Error ? error : error ? new Error(String(error)) : undefined;
   
   return (
     <TelemetryChart
