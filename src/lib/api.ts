@@ -1,3 +1,4 @@
+import { supabase } from './supabase';
 
 // Mock API functions for device data
 
@@ -37,3 +38,53 @@ export const getDeviceHistory = async (deviceId: string, period: string) => {
   
   return dataPoints.reverse();
 };
+
+export type TimeRange = '24h' | '7d' | '30d';
+
+interface DeviceMetric {
+  timestamp: string;
+  temperature?: number;
+  humidity?: number;
+  pressure?: number;
+  voltage?: number;
+}
+
+export async function fetchDeviceMetrics(
+  deviceId: string,
+  timeRange: TimeRange
+): Promise<DeviceMetric[]> {
+  // Calculate the start time based on the time range
+  const now = new Date();
+  const startTime = new Date(now);
+  
+  switch (timeRange) {
+    case '24h':
+      startTime.setHours(now.getHours() - 24);
+      break;
+    case '7d':
+      startTime.setDate(now.getDate() - 7);
+      break;
+    case '30d':
+      startTime.setDate(now.getDate() - 30);
+      break;
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('device_metrics')
+      .select('*')
+      .eq('device_id', deviceId)
+      .gte('timestamp', startTime.toISOString())
+      .lte('timestamp', now.toISOString())
+      .order('timestamp', { ascending: true });
+
+    if (error) {
+      throw new Error(`Error fetching device metrics: ${error.message}`);
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error('Failed to fetch device metrics:', error);
+    throw error;
+  }
+}
