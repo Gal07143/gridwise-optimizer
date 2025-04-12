@@ -8,8 +8,8 @@ interface DeviceDetailsProps {
 }
 
 export function DeviceDetails({ device }: DeviceDetailsProps) {
-  const { telemetryData } = useDevices();
-  const deviceTelemetry = telemetryData[device.id] || [];
+  const { deviceTelemetry } = useDevices();
+  const deviceData = deviceTelemetry[device.id] || [];
 
   return (
     <div className="space-y-4">
@@ -35,14 +35,14 @@ export function DeviceDetails({ device }: DeviceDetailsProps) {
             <div>
               <div className="text-sm font-medium text-gray-500">Last Seen</div>
               <div className="mt-1">
-                {device.lastSeen
-                  ? new Date(device.lastSeen).toLocaleString()
+                {device.last_seen
+                  ? new Date(device.last_seen).toLocaleString()
                   : 'Never'}
               </div>
             </div>
             <div>
               <div className="text-sm font-medium text-gray-500">IP Address</div>
-              <div className="mt-1">{device.ipAddress || 'N/A'}</div>
+              <div className="mt-1">{device.metadata?.ipAddress || 'N/A'}</div>
             </div>
           </div>
         </CardContent>
@@ -53,26 +53,27 @@ export function DeviceDetails({ device }: DeviceDetailsProps) {
           <CardTitle>Recent Telemetry</CardTitle>
         </CardHeader>
         <CardContent>
-          {deviceTelemetry.length === 0 ? (
+          {deviceData.length === 0 ? (
             <div className="text-center text-gray-500 py-4">
               No telemetry data available
             </div>
           ) : (
             <div className="space-y-4">
-              {deviceTelemetry.slice(0, 5).map((data, index) => (
+              {deviceData.slice(0, 5).map((data, index) => (
                 <div
                   key={index}
                   className="flex items-center justify-between p-2 bg-muted rounded-lg"
                 >
                   <div>
-                    <div className="font-medium">{data.type}</div>
+                    <div className="font-medium">{data.source}</div>
                     <div className="text-sm text-gray-500">
                       {new Date(data.timestamp).toLocaleString()}
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="font-medium">{data.value}</div>
-                    <div className="text-sm text-gray-500">{data.unit}</div>
+                    <div className="font-medium">
+                      {JSON.stringify(data.message)}
+                    </div>
                   </div>
                 </div>
               ))}
