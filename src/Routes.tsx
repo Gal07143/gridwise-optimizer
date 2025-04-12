@@ -5,7 +5,7 @@ import Layout from './components/layout/Layout';
 // Pages
 import Dashboard from './pages/Dashboard';
 import Analytics from './pages/Analytics';
-import Devices from './pages/Devices';
+import Devices from './pages/devices/DevicesPage';
 import DeviceDetails from './pages/devices/DeviceDetails';
 import ModbusDevices from './pages/modbus/ModbusDevices';
 import Settings from './pages/settings/Settings';
