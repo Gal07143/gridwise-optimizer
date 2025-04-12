@@ -41,11 +41,19 @@ export interface Device {
  * TelemetryData interface representing telemetry data from a device
  */
 export interface TelemetryData {
-  id?: string;
-  device_id?: string;
-  timestamp: string;
-  data: Record<string, any>;
-  created_at?: string;
+  deviceId: string;
+  timestamp: Date;
+  temperature?: number;
+  voltage?: number;
+  current?: number;
+  powerFactor?: number;
+  frequency?: number;
+  vibration?: number;
+  noiseLevel?: number;
+  errorCount?: number;
+  uptime?: number;
+  loadFactor?: number;
+  [key: string]: any; // Allow for additional properties
 }
 
 /**

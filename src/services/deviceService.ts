@@ -269,4 +269,82 @@ export const deviceService = {
       )
       .subscribe();
   },
+
+  /**
+   * Ping a device to check its connectivity
+   */
+  async pingDevice(deviceId: string): Promise<number> {
+    try {
+      const startTime = Date.now();
+      const { data, error } = await supabase.functions.invoke('device-management', {
+        body: {
+          action: 'ping',
+          deviceId
+        }
+      });
+
+      if (error) throw error;
+      return Date.now() - startTime;
+    } catch (error) {
+      console.error('Error pinging device:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Reset device protocol
+   */
+  async resetDeviceProtocol(deviceId: string): Promise<void> {
+    try {
+      const { error } = await supabase.functions.invoke('device-management', {
+        body: {
+          action: 'reset-protocol',
+          deviceId
+        }
+      });
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error resetting device protocol:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Reconnect device
+   */
+  async reconnectDevice(deviceId: string): Promise<void> {
+    try {
+      const { error } = await supabase.functions.invoke('device-management', {
+        body: {
+          action: 'reconnect',
+          deviceId
+        }
+      });
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error reconnecting device:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Optimize device signal
+   */
+  async optimizeDeviceSignal(deviceId: string): Promise<void> {
+    try {
+      const { error } = await supabase.functions.invoke('device-management', {
+        body: {
+          action: 'optimize-signal',
+          deviceId
+        }
+      });
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error optimizing device signal:', error);
+      throw error;
+    }
+  },
 }; 

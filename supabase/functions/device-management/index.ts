@@ -230,6 +230,38 @@ serve(async (req) => {
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
       
+      case 'ping':
+        // Simulate device ping with random latency
+        await new Promise(resolve => setTimeout(resolve, Math.random() * 100));
+        return new Response(JSON.stringify({ success: true }), {
+          headers: corsHeaders,
+          status: 200
+        });
+
+      case 'reset-protocol':
+        // Simulate protocol reset
+        await new Promise(resolve => setTimeout(resolve, 500));
+        return new Response(JSON.stringify({ success: true }), {
+          headers: corsHeaders,
+          status: 200
+        });
+
+      case 'reconnect':
+        // Simulate device reconnection
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        return new Response(JSON.stringify({ success: true }), {
+          headers: corsHeaders,
+          status: 200
+        });
+
+      case 'optimize-signal':
+        // Simulate signal optimization
+        await new Promise(resolve => setTimeout(resolve, 800));
+        return new Response(JSON.stringify({ success: true }), {
+          headers: corsHeaders,
+          status: 200
+        });
+      
       default:
         return new Response(
           JSON.stringify({ error: 'Invalid operation' }),
