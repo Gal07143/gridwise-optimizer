@@ -35,7 +35,17 @@ import DeviceTableRow from '@/components/DeviceTableRow';
 import AppLayout from '@/components/layout/AppLayout';
 import { toast } from 'sonner';
 
-const DevicesPage = () => {
+interface Device {
+  id: string;
+  name: string;
+  type: string;
+  status: string;
+  location?: string;
+  model?: string;
+  capacity?: string;
+}
+
+const Devices: React.FC = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<string | null>(null);
@@ -269,5 +279,4 @@ const DevicesPage = () => {
   );
 };
 
-export { DevicesPage };
-export default DevicesPage;
+export default Devices;
