@@ -25,11 +25,11 @@ import {
   PlugZap,
   CalendarDays,
   Network,
-  PowerCircuit,
   Blocks,
   Layers,
   DraftingCompass,
   FileDigit,
+  CircuitBoard
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 
@@ -80,7 +80,7 @@ export const Sidebar = ({ className }: SidebarProps) => {
               <p className="px-3 text-xs font-medium text-muted-foreground">SMART GRID</p>
             </div>
           )}
-          <NavItem to="/smart-grid" icon={<PowerCircuit size={18} />} label="Grid Management" expanded={sidebarExpanded} />
+          <NavItem to="/smart-grid" icon={<CircuitBoard size={18} />} label="Grid Management" expanded={sidebarExpanded} />
           <NavItem to="/system-topology" icon={<Network size={18} />} label="System Topology" expanded={sidebarExpanded} />
           <NavItem to="/energy-flow" icon={<Workflow size={18} />} label="Energy Flow" expanded={sidebarExpanded} />
           
