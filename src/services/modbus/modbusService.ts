@@ -1,3 +1,4 @@
+
 import { ModbusDevice, ModbusRegister, ModbusOperationResult } from '@/types/modbus';
 
 // Mock implementation for a Modbus service
@@ -66,7 +67,7 @@ export const createModbusDevice = async (device: Partial<ModbusDevice>): Promise
     name: device.name || 'New Modbus Device',
     ip_address: device.ip_address,
     port: device.port || 502,
-    unit_id: device.slave_id || 1,
+    unit_id: device.unit_id || 1,
     protocol: device.protocol || 'tcp',
     description: device.description,
     created_at: new Date().toISOString(),
@@ -78,9 +79,66 @@ export const createModbusDevice = async (device: Partial<ModbusDevice>): Promise
   return newDevice;
 };
 
-// Get all Modbus registers for a device
-export const getModbusRegisters = async (deviceId: string): Promise<ModbusRegister[]> => {
-  // In a real app, this would fetch from an API or database
+// Get all Modbus devices
+export const getAllModbusDevices = async (): Promise<ModbusDevice[]> => {
+  // In a real app, this would fetch from the database
+  const mockDevices: ModbusDevice[] = [
+    {
+      id: 'device-1',
+      name: 'Inverter',
+      ip_address: '192.168.1.100',
+      port: 502,
+      unit_id: 1,
+      protocol: 'tcp',
+      description: 'Solar inverter',
+      created_at: new Date().toISOString(),
+      status: 'online'
+    },
+    {
+      id: 'device-2',
+      name: 'Battery System',
+      ip_address: '192.168.1.101',
+      port: 502,
+      unit_id: 1,
+      protocol: 'tcp',
+      description: 'Energy storage',
+      created_at: new Date().toISOString(),
+      status: 'offline'
+    }
+  ];
+  
+  return mockDevices;
+};
+
+// Get a specific Modbus device by ID
+export const getModbusDeviceById = async (deviceId: string): Promise<ModbusDevice | null> => {
+  // In a real app, this would fetch from the database
+  const mockDevices = await getAllModbusDevices();
+  const device = mockDevices.find(d => d.id === deviceId);
+  
+  // If the device isn't in our mock data but it's a valid ID, generate one
+  if (!device && deviceId) {
+    return {
+      id: deviceId,
+      name: `Device ${deviceId.substring(0, 5)}`,
+      ip_address: '192.168.1.100',
+      port: 502,
+      unit_id: 1,
+      protocol: 'tcp',
+      description: 'Generated device',
+      created_at: new Date().toISOString(),
+      status: Math.random() > 0.3 ? 'online' : 'offline'
+    };
+  }
+  
+  return device || null;
+};
+
+// Get the registers associated with a specific device ID
+export const getDeviceRegisters = async (deviceId: string): Promise<ModbusRegister[]> => {
+  console.log(`Fetching registers for device ${deviceId}`);
+  
+  // In a real app, this would fetch from a database or device template
   const registers: ModbusRegister[] = [];
   
   // Generate some sample registers
@@ -115,21 +173,8 @@ export const getModbusRegisters = async (deviceId: string): Promise<ModbusRegist
         name = 'State of Charge';
         unit = '%';
         break;
-      case 6:
-        name = 'Energy';
-        unit = 'kWh';
-        break;
-      case 7:
-        name = 'Operating Mode';
-        dataType = 'uint16';
-        break;
-      case 8:
-        name = 'Alarm Status';
-        dataType = 'uint16';
-        break;
-      case 9:
-        name = 'Device Status';
-        dataType = 'uint16';
+      default:
+        name = `Register ${i}`;
         break;
     }
     
@@ -140,7 +185,7 @@ export const getModbusRegisters = async (deviceId: string): Promise<ModbusRegist
       register_name: name,
       register_type: 'holding',
       data_type: dataType as any,
-      register_length: dataType === 'float32' ? 2 : 1,
+      register_length: 2,
       scaleFactor: 1,
       unit,
       description: `${name} register`,
@@ -149,6 +194,16 @@ export const getModbusRegisters = async (deviceId: string): Promise<ModbusRegist
   }
   
   return registers;
+};
+
+// Update a Modbus device
+export const updateModbusDevice = async (device: ModbusDevice): Promise<ModbusDevice> => {
+  console.log(`Updating Modbus device ${device.id}`);
+  // In a real app, this would update the database
+  return {
+    ...device,
+    last_updated: new Date().toISOString()
+  };
 };
 
 // Read multiple registers at once

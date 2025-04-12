@@ -11,6 +11,7 @@ export interface ModbusDevice {
   description?: string;
   created_at?: string;
   last_online?: string;
+  last_updated?: string;
   status?: 'online' | 'offline' | 'error';
 }
 
@@ -52,6 +53,40 @@ export interface ModbusRegisterValue {
 
 export interface ModbusOperationResult {
   success: boolean;
-  value?: number | string | boolean;
+  value?: number | string | boolean | number[];
   error?: string;
+  formattedValue?: string;
+  timestamp?: Date;
+}
+
+export interface ModbusReadingResult {
+  value: number | string | boolean;
+  formattedValue: string;
+  unit?: string;
+  timestamp: Date;
+  status: 'success' | 'error';
+  error?: string;
+}
+
+export interface ModbusDeviceConfig {
+  name: string;
+  ip_address: string;
+  port: number;
+  unit_id: number;
+  protocol: 'tcp' | 'rtu';
+  description?: string;
+}
+
+export interface ConnectionStatusOptions {
+  deviceId: string;
+  timeout?: number;
+  autoReconnect?: boolean;
+}
+
+export interface ConnectionStatusResult {
+  isConnected: boolean;
+  error: Error | null;
+  retryConnection?: () => Promise<void>;
+  lastConnected?: Date;
+  connectionAttempts?: number;
 }
