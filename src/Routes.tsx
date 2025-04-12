@@ -6,7 +6,7 @@ import Layout from './components/layout/Layout';
 import Dashboard from './pages/Dashboard';
 import Analytics from './pages/Analytics';
 import Devices from './pages/devices/DevicesPage';
-import DeviceDetails from './pages/devices/DeviceDetails';
+import DeviceView from './pages/DeviceView';
 import ModbusDevices from './pages/modbus/ModbusDevices';
 import Settings from './pages/settings/Settings';
 import SecuritySettings from './pages/settings/SecuritySettings';
@@ -29,7 +29,7 @@ const AppRoutes: React.FC = () => (
 
       {/* Devices */}
       <Route path="devices" element={<Devices />} />
-      <Route path="devices/:deviceId" element={<DeviceDetails />} />
+      <Route path="devices/:deviceId" element={<DeviceView />} />
       <Route path="modbus/devices" element={<ModbusDevices />} />
 
       {/* Smart Grid */}
