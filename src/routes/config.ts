@@ -1,35 +1,37 @@
-import React from 'react'
-import { RouteConfig } from './types'
+import React, { lazy } from 'react'
+import { type RouteConfig } from '@/types/routes'
 import { DEVICE_CATEGORIES } from '@/types/devices'
 
-// Page imports
-import Dashboard from '@/pages/Dashboard'
-import Analytics from '@/pages/Analytics'
-import Devices from '@/pages/devices'
-import DeviceDetails from '@/pages/devices/DeviceDetails'
-import Settings from '@/pages/settings/Settings'
-import NotFound from '@/pages/NotFound'
-import Layout from '@/components/Layout'
+// Lazy load components for better performance
+const Dashboard = lazy(() => import('@/pages/Dashboard'))
+const Analytics = lazy(() => import('@/pages/Analytics'))
+const Devices = lazy(() => import('@/pages/devices'))
+const DeviceDetails = lazy(() => import('@/pages/devices/DeviceDetails'))
+const Settings = lazy(() => import('@/pages/settings/Settings'))
+const NotFound = lazy(() => import('@/pages/NotFound'))
+const Layout = lazy(() => import('@/components/Layout'))
 
 // Device management components
-import DeviceCategoryOverview from '@/pages/devices/DeviceCategoryOverview'
-import Energy from '@/pages/energy/Energy'
-import EnergyOverview from '@/pages/energy/EnergyOverview'
-import EnergyOptimization from '@/pages/energy/EnergyOptimization'
-import GridManagement from '@/pages/energy/GridManagement'
-import StorageManagement from '@/pages/energy/StorageManagement'
+const DeviceCategoryOverview = lazy(() => import('@/pages/devices/DeviceCategoryOverview'))
+
+// Energy management components
+const Energy = lazy(() => import('@/pages/energy/Energy'))
+const EnergyOverview = lazy(() => import('@/pages/energy/EnergyOverview'))
+const EnergyOptimization = lazy(() => import('@/pages/energy/EnergyOptimization'))
+const GridManagement = lazy(() => import('@/pages/energy/GridManagement'))
+const StorageManagement = lazy(() => import('@/pages/energy/StorageManagement'))
 
 // Analytics components
-import AnalyticsOverview from '@/pages/analytics/AnalyticsOverview'
-import EnergyAnalytics from '@/pages/analytics/EnergyAnalytics'
-import DeviceAnalytics from '@/pages/analytics/DeviceAnalytics'
-import PerformanceAnalytics from '@/pages/analytics/PerformanceAnalytics'
+const AnalyticsOverview = lazy(() => import('@/pages/analytics/AnalyticsOverview'))
+const EnergyAnalytics = lazy(() => import('@/pages/analytics/EnergyAnalytics'))
+const DeviceAnalytics = lazy(() => import('@/pages/analytics/DeviceAnalytics'))
+const PerformanceAnalytics = lazy(() => import('@/pages/analytics/PerformanceAnalytics'))
 
 // Settings components
-import GeneralSettings from '@/pages/settings/GeneralSettings'
-import DeviceSettings from '@/pages/settings/DeviceSettings'
-import UserSettings from '@/pages/settings/UserSettings'
-import SystemSettings from '@/pages/settings/SystemSettings'
+const GeneralSettings = lazy(() => import('@/pages/settings/GeneralSettings'))
+const DeviceSettings = lazy(() => import('@/pages/settings/DeviceSettings'))
+const UserSettings = lazy(() => import('@/pages/settings/UserSettings'))
+const SystemSettings = lazy(() => import('@/pages/settings/SystemSettings'))
 
 // Device management routes
 const deviceRoutes: RouteConfig[] = [
@@ -82,106 +84,106 @@ const deviceRoutes: RouteConfig[] = [
       // Individual device type routes
       {
         path: 'solar',
-        element: 'SolarDevices',
+        element: React.createElement(DeviceDetails, { type: 'solar' }),
         children: [
-          { path: '', element: 'SolarDeviceList' },
-          { path: 'new', element: 'SolarDeviceForm' },
-          { path: ':id', element: 'SolarDeviceDetails' },
-          { path: ':id/edit', element: 'SolarDeviceForm' },
-          { path: ':id/control', element: 'SolarDeviceControl' }
+          { path: '', element: React.createElement(DeviceDetails, { type: 'solar', view: 'list' }) },
+          { path: 'new', element: React.createElement(DeviceDetails, { type: 'solar', view: 'new' }) },
+          { path: ':id', element: React.createElement(DeviceDetails, { type: 'solar', view: 'details' }) },
+          { path: ':id/edit', element: React.createElement(DeviceDetails, { type: 'solar', view: 'edit' }) },
+          { path: ':id/control', element: React.createElement(DeviceDetails, { type: 'solar', view: 'control' }) }
         ]
       },
       {
         path: 'battery',
-        element: 'BatteryDevices',
+        element: React.createElement(DeviceDetails, { type: 'battery' }),
         children: [
-          { path: '', element: 'BatteryDeviceList' },
-          { path: 'new', element: 'BatteryDeviceForm' },
-          { path: ':id', element: 'BatteryDeviceDetails' },
-          { path: ':id/edit', element: 'BatteryDeviceForm' },
-          { path: ':id/control', element: 'BatteryDeviceControl' }
+          { path: '', element: React.createElement(DeviceDetails, { type: 'battery', view: 'list' }) },
+          { path: 'new', element: React.createElement(DeviceDetails, { type: 'battery', view: 'new' }) },
+          { path: ':id', element: React.createElement(DeviceDetails, { type: 'battery', view: 'details' }) },
+          { path: ':id/edit', element: React.createElement(DeviceDetails, { type: 'battery', view: 'edit' }) },
+          { path: ':id/control', element: React.createElement(DeviceDetails, { type: 'battery', view: 'control' }) }
         ]
       },
       {
         path: 'wind',
-        element: 'WindDevices',
+        element: React.createElement(DeviceDetails, { type: 'wind' }),
         children: [
-          { path: '', element: 'WindDeviceList' },
-          { path: 'new', element: 'WindDeviceForm' },
-          { path: ':id', element: 'WindDeviceDetails' },
-          { path: ':id/edit', element: 'WindDeviceForm' },
-          { path: ':id/control', element: 'WindDeviceControl' }
+          { path: '', element: React.createElement(DeviceDetails, { type: 'wind', view: 'list' }) },
+          { path: 'new', element: React.createElement(DeviceDetails, { type: 'wind', view: 'new' }) },
+          { path: ':id', element: React.createElement(DeviceDetails, { type: 'wind', view: 'details' }) },
+          { path: ':id/edit', element: React.createElement(DeviceDetails, { type: 'wind', view: 'edit' }) },
+          { path: ':id/control', element: React.createElement(DeviceDetails, { type: 'wind', view: 'control' }) }
         ]
       },
       {
         path: 'ev-charger',
-        element: 'EVChargerDevices',
+        element: React.createElement(DeviceDetails, { type: 'ev-charger' }),
         children: [
-          { path: '', element: 'EVChargerDeviceList' },
-          { path: 'new', element: 'EVChargerDeviceForm' },
-          { path: ':id', element: 'EVChargerDeviceDetails' },
-          { path: ':id/edit', element: 'EVChargerDeviceForm' },
-          { path: ':id/control', element: 'EVChargerDeviceControl' }
+          { path: '', element: React.createElement(DeviceDetails, { type: 'ev-charger', view: 'list' }) },
+          { path: 'new', element: React.createElement(DeviceDetails, { type: 'ev-charger', view: 'new' }) },
+          { path: ':id', element: React.createElement(DeviceDetails, { type: 'ev-charger', view: 'details' }) },
+          { path: ':id/edit', element: React.createElement(DeviceDetails, { type: 'ev-charger', view: 'edit' }) },
+          { path: ':id/control', element: React.createElement(DeviceDetails, { type: 'ev-charger', view: 'control' }) }
         ]
       },
       {
         path: 'grid',
-        element: 'GridDevices',
+        element: React.createElement(DeviceDetails, { type: 'grid' }),
         children: [
-          { path: '', element: 'GridDeviceList' },
-          { path: 'new', element: 'GridDeviceForm' },
-          { path: ':id', element: 'GridDeviceDetails' },
-          { path: ':id/edit', element: 'GridDeviceForm' },
-          { path: ':id/control', element: 'GridDeviceControl' }
+          { path: '', element: React.createElement(DeviceDetails, { type: 'grid', view: 'list' }) },
+          { path: 'new', element: React.createElement(DeviceDetails, { type: 'grid', view: 'new' }) },
+          { path: ':id', element: React.createElement(DeviceDetails, { type: 'grid', view: 'details' }) },
+          { path: ':id/edit', element: React.createElement(DeviceDetails, { type: 'grid', view: 'edit' }) },
+          { path: ':id/control', element: React.createElement(DeviceDetails, { type: 'grid', view: 'control' }) }
         ]
       },
       {
         path: 'load',
-        element: 'LoadDevices',
+        element: React.createElement(DeviceDetails, { type: 'load' }),
         children: [
-          { path: '', element: 'LoadDeviceList' },
-          { path: 'new', element: 'LoadDeviceForm' },
-          { path: ':id', element: 'LoadDeviceDetails' },
-          { path: ':id/edit', element: 'LoadDeviceForm' },
-          { path: ':id/control', element: 'LoadDeviceControl' }
+          { path: '', element: React.createElement(DeviceDetails, { type: 'load', view: 'list' }) },
+          { path: 'new', element: React.createElement(DeviceDetails, { type: 'load', view: 'new' }) },
+          { path: ':id', element: React.createElement(DeviceDetails, { type: 'load', view: 'details' }) },
+          { path: ':id/edit', element: React.createElement(DeviceDetails, { type: 'load', view: 'edit' }) },
+          { path: ':id/control', element: React.createElement(DeviceDetails, { type: 'load', view: 'control' }) }
         ]
       },
       {
         path: 'hydro',
-        element: 'HydroDevices',
+        element: React.createElement(DeviceDetails, { type: 'hydro' }),
         children: [
-          { path: '', element: 'HydroDeviceList' },
-          { path: 'new', element: 'HydroDeviceForm' },
-          { path: ':id', element: 'HydroDeviceDetails' },
-          { path: ':id/edit', element: 'HydroDeviceForm' },
-          { path: ':id/control', element: 'HydroDeviceControl' }
+          { path: '', element: React.createElement(DeviceDetails, { type: 'hydro', view: 'list' }) },
+          { path: 'new', element: React.createElement(DeviceDetails, { type: 'hydro', view: 'new' }) },
+          { path: ':id', element: React.createElement(DeviceDetails, { type: 'hydro', view: 'details' }) },
+          { path: ':id/edit', element: React.createElement(DeviceDetails, { type: 'hydro', view: 'edit' }) },
+          { path: ':id/control', element: React.createElement(DeviceDetails, { type: 'hydro', view: 'control' }) }
         ]
       },
       {
         path: 'inverter',
-        element: 'InverterDevices',
+        element: React.createElement(DeviceDetails, { type: 'inverter' }),
         children: [
-          { path: '', element: 'InverterDeviceList' },
-          { path: 'new', element: 'InverterDeviceForm' },
-          { path: ':id', element: 'InverterDeviceDetails' },
-          { path: ':id/edit', element: 'InverterDeviceForm' },
-          { path: ':id/control', element: 'InverterDeviceControl' }
+          { path: '', element: React.createElement(DeviceDetails, { type: 'inverter', view: 'list' }) },
+          { path: 'new', element: React.createElement(DeviceDetails, { type: 'inverter', view: 'new' }) },
+          { path: ':id', element: React.createElement(DeviceDetails, { type: 'inverter', view: 'details' }) },
+          { path: ':id/edit', element: React.createElement(DeviceDetails, { type: 'inverter', view: 'edit' }) },
+          { path: ':id/control', element: React.createElement(DeviceDetails, { type: 'inverter', view: 'control' }) }
         ]
       },
       {
         path: 'sensor',
-        element: 'SensorDevices',
+        element: React.createElement(DeviceDetails, { type: 'sensor' }),
         children: [
-          { path: '', element: 'SensorDeviceList' },
-          { path: 'new', element: 'SensorDeviceForm' },
-          { path: ':id', element: 'SensorDeviceDetails' },
-          { path: ':id/edit', element: 'SensorDeviceForm' },
-          { path: ':id/control', element: 'SensorDeviceControl' }
+          { path: '', element: React.createElement(DeviceDetails, { type: 'sensor', view: 'list' }) },
+          { path: 'new', element: React.createElement(DeviceDetails, { type: 'sensor', view: 'new' }) },
+          { path: ':id', element: React.createElement(DeviceDetails, { type: 'sensor', view: 'details' }) },
+          { path: ':id/edit', element: React.createElement(DeviceDetails, { type: 'sensor', view: 'edit' }) },
+          { path: ':id/control', element: React.createElement(DeviceDetails, { type: 'sensor', view: 'control' }) }
         ]
       },
       {
         path: 'generator',
-        element: 'GeneratorDevices',
+        element: React.createElement(DeviceDetails, { type: 'generator' }),
         children: [
           { path: '', element: 'GeneratorDeviceList' },
           { path: 'new', element: 'GeneratorDeviceForm' },

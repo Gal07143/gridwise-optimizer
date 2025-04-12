@@ -1,5 +1,6 @@
 import React from 'react';
-import { Device, useDevices } from '@/contexts/DeviceContext';
+import { useDevices } from '@/contexts/DeviceContext';
+import type { Device } from '@/contexts/DeviceContext'; // Fixed DeviceType to Device
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -12,6 +13,13 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { toast } from 'react-hot-toast';
 import { Power, Settings, Trash2, RefreshCw } from 'lucide-react';
+
+export interface Prediction {
+  timestamp: string;
+  actual: number;
+  predicted: number;
+  confidence: number;
+}
 
 interface DeviceControlsProps {
   device: Device;
