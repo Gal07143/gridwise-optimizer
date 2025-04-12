@@ -1,4 +1,3 @@
-
 version: '3.8'
 
 services:
@@ -7,23 +6,45 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.dev
+      target: development
     volumes:
       - ./src:/app/src
       - ./public:/app/public
+      - /app/node_modules
     ports:
       - "3000:3000"
     environment:
       - NODE_ENV=development
       - VITE_API_URL=http://localhost:8000
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
 
   # Backend FastAPI service
   backend:
     build:
       context: ./backend
+      target: development
     volumes:
       - ./backend/app:/app/app
+      - /app/__pycache__
+      - /app/.pytest_cache
     ports:
       - "8000:8000"
     environment:
@@ -31,9 +52,29 @@ services:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/ems
       - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_KEY=${SUPABASE_KEY}
+      - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+      - WORKERS=2
+      - WORKER_CLASS=uvicorn.workers.UvicornWorker
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
     depends_on:
-      - db
-      - mqtt-broker
+      db:
+        condition: service_healthy
+      mqtt-broker:
+        condition: service_healthy
 
   # PostgreSQL database
   db:
@@ -42,10 +83,43 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=ems
+      - POSTGRES_INITDB_ARGS="--data-checksums"
+      - PGDATA=/var/lib/postgresql/data/pgdata
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ems -t 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    command: >
+      postgres
+      -c shared_buffers=128MB
+      -c effective_cache_size=384MB
+      -c maintenance_work_mem=32MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c work_mem=2621kB
+      -c min_wal_size=512MB
+      -c max_wal_size=2GB
+      -c max_worker_processes=2
+      -c max_parallel_workers_per_gather=1
+      -c max_parallel_workers=2
+      -c max_parallel_maintenance_workers=1
 
   # MQTT broker
   mqtt-broker:
@@ -57,6 +131,21 @@ services:
     ports:
       - "1883:1883"
       - "9001:9001"
+    healthcheck:
+      test: ["CMD", "mosquitto_pub", "-h", "localhost", "-p", "1883", "-t", "$SYS/broker/uptime", "-m", "test", "-q", "1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 256M
+        reservations:
+          cpus: '0.10'
+          memory: 128M
 
 volumes:
   pgdata:
+    driver: local

@@ -6,25 +6,37 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.frontend
+      args:
+        - NODE_ENV=production
     container_name: ems-frontend
-    restart: always
+    restart: unless-stopped
     ports:
       - "80:80"
     environment:
       - NODE_ENV=production
       - VITE_API_URL=http://localhost:8000
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/health"]
       interval: 30s
-      timeout: 10s
+      timeout: 5s
       retries: 3
+      start_period: 10s
     deploy:
       resources:
         limits:
           cpus: '0.50'
           memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     networks:
       - ems-network
 
@@ -32,8 +44,10 @@ services:
   backend:
     build:
       context: ./backend
+      args:
+        - NODE_ENV=production
     container_name: ems-backend
-    restart: always
+    restart: unless-stopped
     ports:
       - "8000:8000"
     environment:
@@ -41,44 +55,68 @@ services:
       - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_KEY=${SUPABASE_KEY}
       - JWT_SECRET=${JWT_SECRET}
+      - WORKERS=4
+      - WORKER_CLASS=uvicorn.workers.UvicornWorker
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8000/health"]
       interval: 30s
-      timeout: 10s
+      timeout: 5s
       retries: 3
+      start_period: 10s
     deploy:
       resources:
         limits:
           cpus: '1.00'
           memory: 1G
+        reservations:
+          cpus: '0.50'
+          memory: 512M
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
     volumes:
       - backend-data:/app/data
     networks:
       - ems-network
     depends_on:
-      - db
-      - mqtt-broker
+      db:
+        condition: service_healthy
+      mqtt-broker:
+        condition: service_healthy
 
   # Modbus Agent for device communication
   modbus-agent:
     build:
       context: ./modbus-agent
+      args:
+        - NODE_ENV=production
     container_name: modbus-agent
     env_file:
       - .env
     ports:
       - "502:502"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
       interval: 30s
-      timeout: 10s
+      timeout: 5s
       retries: 3
+      start_period: 10s
     deploy:
       resources:
         limits:
           cpus: '0.25'
           memory: 256M
-    restart: always
+        reservations:
+          cpus: '0.10'
+          memory: 128M
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    restart: unless-stopped
     networks:
       - ems-network
 
@@ -86,22 +124,34 @@ services:
   mqtt-agent:
     build:
       context: ./mqtt-agent
+      args:
+        - NODE_ENV=production
     container_name: mqtt-agent
     env_file:
       - .env
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/health"]
       interval: 30s
-      timeout: 10s
+      timeout: 5s
       retries: 3
+      start_period: 10s
     deploy:
       resources:
         limits:
           cpus: '0.25'
           memory: 256M
+        reservations:
+          cpus: '0.10'
+          memory: 128M
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
     depends_on:
-      - mqtt-broker
-    restart: always
+      mqtt-broker:
+        condition: service_healthy
+    restart: unless-stopped
     networks:
       - ems-network
 
@@ -119,16 +169,25 @@ services:
       - ./mqtt-broker/log:/mosquitto/log
       - ./mqtt-broker/certs:/mosquitto/certs
     healthcheck:
-      test: ["CMD", "mosquitto_pub", "-h", "localhost", "-p", "1883", "-t", "$SYS/broker/uptime", "-m", "test"]
+      test: ["CMD", "mosquitto_pub", "-h", "localhost", "-p", "1883", "-t", "$SYS/broker/uptime", "-m", "test", "-q", "1"]
       interval: 30s
-      timeout: 10s
+      timeout: 5s
       retries: 3
+      start_period: 10s
     deploy:
       resources:
         limits:
           cpus: '0.50'
           memory: 512M
-    restart: always
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    restart: unless-stopped
     networks:
       - ems-network
 
@@ -140,27 +199,59 @@ services:
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
       - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_INITDB_ARGS="--data-checksums"
+      - PGDATA=/var/lib/postgresql/data/pgdata
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME} -t 1"]
       interval: 30s
-      timeout: 10s
+      timeout: 5s
       retries: 3
+      start_period: 10s
     deploy:
       resources:
         limits:
           cpus: '1.00'
           memory: 2G
+        reservations:
+          cpus: '0.50'
+          memory: 1G
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
     networks:
       - ems-network
+    command: >
+      postgres
+      -c shared_buffers=256MB
+      -c effective_cache_size=768MB
+      -c maintenance_work_mem=64MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c work_mem=5242kB
+      -c min_wal_size=1GB
+      -c max_wal_size=4GB
+      -c max_worker_processes=4
+      -c max_parallel_workers_per_gather=2
+      -c max_parallel_workers=4
+      -c max_parallel_maintenance_workers=2
 
 networks:
   ems-network:
     driver: bridge
+    driver_opts:
+      com.docker.network.driver.mtu: 1450
 
 volumes:
   backend-data:
+    driver: local
   pgdata:
+    driver: local
