@@ -1,44 +1,72 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
-interface WebSocketMessage {
-  data: string;
+export interface WebSocketMessage {
+  type: string;
+  data: any;
 }
 
-export const useWebSocket = (url: string) => {
+export function useWebSocket(url: string) {
+  const [socket, setSocket] = useState<WebSocket | null>(null);
   const [lastMessage, setLastMessage] = useState<WebSocketMessage | null>(null);
-  const ws = useRef<WebSocket | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    ws.current = new WebSocket(url);
+    const ws = new WebSocket(url);
 
-    ws.current.onopen = () => {
+    ws.onopen = () => {
+      setIsConnected(true);
       console.log('WebSocket connected');
     };
 
-    ws.current.onmessage = (event) => {
-      setLastMessage(event);
+    ws.onclose = () => {
+      setIsConnected(false);
+      console.log('WebSocket disconnected');
+      
+      // Attempt to reconnect after 5 seconds
+      setTimeout(() => {
+        if (socket === null) {
+          console.log('Attempting to reconnect...');
+          setSocket(new WebSocket(url));
+        }
+      }, 5000);
     };
 
-    ws.current.onerror = (error) => {
+    ws.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data);
+        setLastMessage(message);
+      } catch (error) {
+        console.error('Failed to parse WebSocket message:', error);
+      }
+    };
+
+    ws.onerror = (error) => {
       console.error('WebSocket error:', error);
     };
 
-    ws.current.onclose = () => {
-      console.log('WebSocket disconnected');
-    };
+    setSocket(ws);
 
     return () => {
-      if (ws.current) {
-        ws.current.close();
-      }
+      ws.close();
     };
   }, [url]);
 
-  const sendMessage = (message: string) => {
-    if (ws.current?.readyState === WebSocket.OPEN) {
-      ws.current.send(message);
-    }
-  };
+  const sendMessage = useCallback(
+    (message: string | object) => {
+      if (socket?.readyState === WebSocket.OPEN) {
+        socket.send(typeof message === 'string' ? message : JSON.stringify(message));
+      } else {
+        console.error('WebSocket is not connected');
+      }
+    },
+    [socket]
+  );
 
-  return { lastMessage, sendMessage };
-}; 
+  return {
+    lastMessage,
+    sendMessage,
+    isConnected,
+  };
+}
+
+export default useWebSocket; 

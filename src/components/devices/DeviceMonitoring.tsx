@@ -2,210 +2,356 @@ import React, { useState, useEffect } from 'react';
 import {
   LineChart,
   Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
+  ResponsiveContainer,
   Legend,
-  ResponsiveContainer
 } from 'recharts';
-import { format, subHours } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Device } from '@/types/device';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Activity, AlertTriangle, Battery, Zap } from 'lucide-react';
+import { format } from 'date-fns';
+import { useWebSocket } from '@/hooks/useWebSocket';
+
+interface DeviceMetrics {
+  timestamp: string;
+  power: number;
+  energy: number;
+  voltage: number;
+  current: number;
+  temperature: number;
+  efficiency: number;
+}
+
+interface DeviceAlert {
+  id: string;
+  deviceId: string;
+  type: 'warning' | 'error' | 'info';
+  message: string;
+  timestamp: string;
+}
 
 interface DeviceMonitoringProps {
-  device: Device;
+  deviceId: string;
 }
 
-interface MetricData {
-  timestamp: string;
-  value: number;
-}
+const DeviceMonitoring: React.FC<DeviceMonitoringProps> = ({ deviceId }) => {
+  const [timeRange, setTimeRange] = useState<'1h' | '24h' | '7d' | '30d'>('1h');
+  const [metrics, setMetrics] = useState<DeviceMetrics[]>([]);
+  const [alerts, setAlerts] = useState<DeviceAlert[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-const DeviceMonitoring: React.FC<DeviceMonitoringProps> = ({ device }) => {
-  const [timeRange, setTimeRange] = useState<'1h' | '6h' | '24h' | '7d'>('1h');
-  const [selectedMetric, setSelectedMetric] = useState<'power' | 'efficiency' | 'temperature'>('power');
-  const [metricData, setMetricData] = useState<MetricData[]>([]);
+  const { lastMessage, sendMessage } = useWebSocket(
+    `ws://your-api-endpoint/devices/${deviceId}/metrics`
+  );
 
-  // Generate mock data for the selected time range
   useEffect(() => {
-    const generateMockData = () => {
-      const now = new Date();
-      const data: MetricData[] = [];
-      const points = 60; // One point per minute for 1h
-      
-      for (let i = points; i >= 0; i--) {
-        const timestamp = subHours(now, i / points).toISOString();
-        let value: number;
-        
-        switch (selectedMetric) {
-          case 'power':
-            // Generate power data between 0 and device capacity
-            value = Math.random() * device.capacity;
-            break;
-          case 'efficiency':
-            // Generate efficiency data between 85% and 98%
-            value = 85 + Math.random() * 13;
-            break;
-          case 'temperature':
-            // Generate temperature data between 25°C and 45°C
-            value = 25 + Math.random() * 20;
-            break;
-          default:
-            value = 0;
-        }
-        
-        data.push({ timestamp, value });
+    // Load historical data based on time range
+    const loadMetrics = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch(
+          `/api/devices/${deviceId}/metrics?timeRange=${timeRange}`
+        );
+        const data = await response.json();
+        setMetrics(data);
+      } catch (err) {
+        setError('Failed to load metrics');
+        console.error(err);
+      } finally {
+        setIsLoading(false);
       }
-      
-      setMetricData(data);
     };
 
-    generateMockData();
-    // Simulate real-time updates
-    const interval = setInterval(generateMockData, 5000);
-    
-    return () => clearInterval(interval);
-  }, [device.capacity, selectedMetric, timeRange]);
+    loadMetrics();
+  }, [deviceId, timeRange]);
 
-  const getMetricUnit = () => {
-    switch (selectedMetric) {
-      case 'power':
-        return 'kW';
-      case 'efficiency':
-        return '%';
-      case 'temperature':
-        return '°C';
-      default:
-        return '';
+  useEffect(() => {
+    if (lastMessage) {
+      try {
+        const data = JSON.parse(lastMessage);
+        setMetrics((prev) => [...prev.slice(-99), data]);
+      } catch (err) {
+        console.error('Failed to parse WebSocket message:', err);
+      }
+    }
+  }, [lastMessage]);
+
+  const getAlertBadge = (type: DeviceAlert['type']) => {
+    switch (type) {
+      case 'error':
+        return <Badge variant="destructive">Error</Badge>;
+      case 'warning':
+        return <Badge variant="warning">Warning</Badge>;
+      case 'info':
+        return <Badge variant="secondary">Info</Badge>;
     }
   };
 
-  const getMetricColor = () => {
-    switch (selectedMetric) {
-      case 'power':
-        return '#3b82f6'; // blue
-      case 'efficiency':
-        return '#10b981'; // green
-      case 'temperature':
-        return '#f59e0b'; // amber
-      default:
-        return '#6b7280'; // gray
-    }
-  };
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="py-6">
+          <div className="text-center text-red-500">
+            <AlertTriangle className="h-8 w-8 mx-auto mb-2" />
+            <p>{error}</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row justify-between gap-4">
-        <Select
-          value={selectedMetric}
-          onValueChange={(value: 'power' | 'efficiency' | 'temperature') => 
-            setSelectedMetric(value)
-          }
-        >
+    <div className="space-y-6">
+      {/* Time Range Selector */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold">Device Monitoring</h2>
+        <Select value={timeRange} onValueChange={(value: any) => setTimeRange(value)}>
           <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Select metric" />
+            <SelectValue placeholder="Select time range" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="power">Power Output</SelectItem>
-            <SelectItem value="efficiency">Efficiency</SelectItem>
-            <SelectItem value="temperature">Temperature</SelectItem>
+            <SelectItem value="1h">Last Hour</SelectItem>
+            <SelectItem value="24h">Last 24 Hours</SelectItem>
+            <SelectItem value="7d">Last 7 Days</SelectItem>
+            <SelectItem value="30d">Last 30 Days</SelectItem>
           </SelectContent>
         </Select>
-
-        <Tabs value={timeRange} onValueChange={(v: '1h' | '6h' | '24h' | '7d') => setTimeRange(v)}>
-          <TabsList>
-            <TabsTrigger value="1h">1H</TabsTrigger>
-            <TabsTrigger value="6h">6H</TabsTrigger>
-            <TabsTrigger value="24h">24H</TabsTrigger>
-            <TabsTrigger value="7d">7D</TabsTrigger>
-          </TabsList>
-        </Tabs>
       </div>
 
+      {/* Real-time Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Power Output</p>
+                <p className="text-2xl font-bold">
+                  {metrics[metrics.length - 1]?.power.toFixed(2)} kW
+                </p>
+              </div>
+              <Zap className="h-8 w-8 text-yellow-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Energy Today</p>
+                <p className="text-2xl font-bold">
+                  {metrics[metrics.length - 1]?.energy.toFixed(2)} kWh
+                </p>
+              </div>
+              <Battery className="h-8 w-8 text-green-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Efficiency</p>
+                <p className="text-2xl font-bold">
+                  {metrics[metrics.length - 1]?.efficiency.toFixed(1)}%
+                </p>
+              </div>
+              <Activity className="h-8 w-8 text-blue-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Temperature</p>
+                <p className="text-2xl font-bold">
+                  {metrics[metrics.length - 1]?.temperature.toFixed(1)}°C
+                </p>
+              </div>
+              <AlertTriangle
+                className={`h-8 w-8 ${
+                  metrics[metrics.length - 1]?.temperature > 75
+                    ? 'text-red-500'
+                    : metrics[metrics.length - 1]?.temperature > 60
+                    ? 'text-yellow-500'
+                    : 'text-green-500'
+                }`}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Charts */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg font-semibold">
-            {selectedMetric === 'power' ? 'Power Output' :
-             selectedMetric === 'efficiency' ? 'System Efficiency' :
-             'System Temperature'}
-          </CardTitle>
+          <CardTitle>Power Output Over Time</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-[400px]">
+          <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={metricData}>
+              <AreaChart data={metrics}>
+                <defs>
+                  <linearGradient id="power" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis
                   dataKey="timestamp"
                   tickFormatter={(value) => format(new Date(value), 'HH:mm')}
                 />
-                <YAxis
-                  domain={selectedMetric === 'power' ? [0, device.capacity] :
-                         selectedMetric === 'efficiency' ? [80, 100] :
-                         [20, 50]}
-                  unit={getMetricUnit()}
-                />
+                <YAxis />
                 <Tooltip
-                  labelFormatter={(value) => format(new Date(value), 'HH:mm:ss')}
-                  formatter={(value: number) => [
-                    `${value.toFixed(2)} ${getMetricUnit()}`,
-                    selectedMetric.charAt(0).toUpperCase() + selectedMetric.slice(1)
-                  ]}
+                  labelFormatter={(value) =>
+                    format(new Date(value), 'yyyy-MM-dd HH:mm:ss')
+                  }
                 />
-                <Legend />
-                <Line
+                <Area
                   type="monotone"
-                  dataKey="value"
-                  name={selectedMetric === 'power' ? 'Power Output' :
-                        selectedMetric === 'efficiency' ? 'Efficiency' :
-                        'Temperature'}
-                  stroke={getMetricColor()}
-                  strokeWidth={2}
-                  dot={false}
+                  dataKey="power"
+                  stroke="#0ea5e9"
+                  fillOpacity={1}
+                  fill="url(#power)"
                 />
-              </LineChart>
+              </AreaChart>
             </ResponsiveContainer>
           </div>
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm font-medium">Current Value</CardTitle>
+            <CardTitle>Voltage & Current</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {metricData[metricData.length - 1]?.value.toFixed(2)} {getMetricUnit()}
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={metrics}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis
+                    dataKey="timestamp"
+                    tickFormatter={(value) => format(new Date(value), 'HH:mm')}
+                  />
+                  <YAxis yAxisId="left" />
+                  <YAxis yAxisId="right" orientation="right" />
+                  <Tooltip
+                    labelFormatter={(value) =>
+                      format(new Date(value), 'yyyy-MM-dd HH:mm:ss')
+                    }
+                  />
+                  <Legend />
+                  <Line
+                    yAxisId="left"
+                    type="monotone"
+                    dataKey="voltage"
+                    stroke="#2563eb"
+                    name="Voltage (V)"
+                  />
+                  <Line
+                    yAxisId="right"
+                    type="monotone"
+                    dataKey="current"
+                    stroke="#16a34a"
+                    name="Current (A)"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm font-medium">Average</CardTitle>
+            <CardTitle>Temperature & Efficiency</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {(metricData.reduce((acc, curr) => acc + curr.value, 0) / metricData.length).toFixed(2)} {getMetricUnit()}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">Peak Value</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {Math.max(...metricData.map(d => d.value)).toFixed(2)} {getMetricUnit()}
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={metrics}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis
+                    dataKey="timestamp"
+                    tickFormatter={(value) => format(new Date(value), 'HH:mm')}
+                  />
+                  <YAxis yAxisId="left" />
+                  <YAxis yAxisId="right" orientation="right" />
+                  <Tooltip
+                    labelFormatter={(value) =>
+                      format(new Date(value), 'yyyy-MM-dd HH:mm:ss')
+                    }
+                  />
+                  <Legend />
+                  <Line
+                    yAxisId="left"
+                    type="monotone"
+                    dataKey="temperature"
+                    stroke="#dc2626"
+                    name="Temperature (°C)"
+                  />
+                  <Line
+                    yAxisId="right"
+                    type="monotone"
+                    dataKey="efficiency"
+                    stroke="#eab308"
+                    name="Efficiency (%)"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Alerts */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Alerts</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {alerts.length === 0 ? (
+              <p className="text-center text-muted-foreground py-4">
+                No recent alerts
+              </p>
+            ) : (
+              alerts.map((alert) => (
+                <div
+                  key={alert.id}
+                  className="flex items-center justify-between border-b py-2 last:border-0"
+                >
+                  <div className="flex items-center gap-2">
+                    {getAlertBadge(alert.type)}
+                    <span>{alert.message}</span>
+                  </div>
+                  <span className="text-sm text-muted-foreground">
+                    {format(new Date(alert.timestamp), 'MMM d, HH:mm')}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

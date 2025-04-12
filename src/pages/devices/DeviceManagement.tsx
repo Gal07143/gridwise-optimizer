@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { DashboardLayout, DashboardCard } from '@/components/ui/dashboard/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -7,11 +6,37 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { 
   Search, Plus, MoreHorizontal, Battery, Sun, Plug, Wifi, Gauge, Signal, 
-  ServerCog, Check, X, AlertCircle, Cable 
+  ServerCog, Check, X, AlertCircle, Cable, Settings, Download, Upload,
+  RefreshCw, Power, Trash2, Users, FolderPlus
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useNavigate } from 'react-router-dom';
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardHeader, 
+  CardTitle 
+} from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { toast } from 'sonner';
 
 // Mock device data
 const mockDevices = [
@@ -62,10 +87,121 @@ const mockDevices = [
   },
 ];
 
+interface Device {
+  id: string;
+  name: string;
+  type: string;
+  status: string;
+  lastSeen: string;
+  firmwareVersion: string;
+  connectivity: string;
+}
+
+interface DeviceGroup {
+  id: string;
+  name: string;
+  description?: string;
+  devices: string[];
+}
+
 const DeviceManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedDevices, setSelectedDevices] = useState<Set<string>>(new Set());
+  const [groups, setGroups] = useState<DeviceGroup[]>([]);
+  const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false);
+  const [newGroupName, setNewGroupName] = useState('');
+  const [newGroupDescription, setNewGroupDescription] = useState('');
   const navigate = useNavigate();
   
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedDevices(new Set(mockDevices.map(d => d.id)));
+    } else {
+      setSelectedDevices(new Set());
+    }
+  };
+
+  const handleSelectDevice = (deviceId: string, checked: boolean) => {
+    const newSelection = new Set(selectedDevices);
+    if (checked) {
+      newSelection.add(deviceId);
+    } else {
+      newSelection.delete(deviceId);
+    }
+    setSelectedDevices(newSelection);
+  };
+
+  const handleCreateGroup = () => {
+    if (!newGroupName) {
+      toast.error('Please enter a group name');
+      return;
+    }
+
+    const newGroup: DeviceGroup = {
+      id: `group-${Date.now()}`,
+      name: newGroupName,
+      description: newGroupDescription,
+      devices: Array.from(selectedDevices),
+    };
+
+    setGroups([...groups, newGroup]);
+    setIsCreateGroupOpen(false);
+    setNewGroupName('');
+    setNewGroupDescription('');
+    toast.success('Device group created successfully');
+  };
+
+  const handleBatchOperation = async (operation: string) => {
+    const selectedCount = selectedDevices.size;
+    
+    switch (operation) {
+      case 'power':
+        toast.promise(
+          new Promise(resolve => setTimeout(resolve, 1500)),
+          {
+            loading: `Toggling power for ${selectedCount} devices...`,
+            success: `Power toggled for ${selectedCount} devices`,
+            error: 'Failed to toggle power',
+          }
+        );
+        break;
+      
+      case 'refresh':
+        toast.promise(
+          new Promise(resolve => setTimeout(resolve, 2000)),
+          {
+            loading: `Refreshing ${selectedCount} devices...`,
+            success: `Refreshed ${selectedCount} devices`,
+            error: 'Failed to refresh devices',
+          }
+        );
+        break;
+      
+      case 'firmware':
+        toast.promise(
+          new Promise(resolve => setTimeout(resolve, 3000)),
+          {
+            loading: `Updating firmware for ${selectedCount} devices...`,
+            success: `Firmware update initiated for ${selectedCount} devices`,
+            error: 'Failed to update firmware',
+          }
+        );
+        break;
+      
+      case 'delete':
+        toast.promise(
+          new Promise(resolve => setTimeout(resolve, 1000)),
+          {
+            loading: `Deleting ${selectedCount} devices...`,
+            success: `Deleted ${selectedCount} devices`,
+            error: 'Failed to delete devices',
+          }
+        );
+        setSelectedDevices(new Set());
+        break;
+    }
+  };
+
   const filteredDevices = mockDevices.filter(device =>
     device.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     device.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -268,6 +404,146 @@ const DeviceManagement = () => {
           </DashboardCard>
         </TabsContent>
       </Tabs>
+
+      {/* Batch Operations */}
+      {selectedDevices.size > 0 && (
+        <Card>
+          <CardContent className="py-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  checked={selectedDevices.size === mockDevices.length}
+                  onCheckedChange={handleSelectAll}
+                />
+                <span className="text-sm text-muted-foreground">
+                  {selectedDevices.size} device(s) selected
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleBatchOperation('power')}
+                >
+                  <Power className="h-4 w-4 mr-2" />
+                  Toggle Power
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleBatchOperation('refresh')}
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Refresh
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleBatchOperation('firmware')}
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  Update Firmware
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => handleBatchOperation('delete')}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Device Groups */}
+      {groups.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Device Groups</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {groups.map((group) => (
+                <Card key={group.id}>
+                  <CardHeader>
+                    <CardTitle>{group.name}</CardTitle>
+                    {group.description && (
+                      <CardDescription>{group.description}</CardDescription>
+                    )}
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">
+                        {group.devices.length} devices
+                      </span>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem>View Devices</DropdownMenuItem>
+                          <DropdownMenuItem>Edit Group</DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem className="text-destructive">
+                            Delete Group
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Create Group Dialog */}
+      <Dialog open={isCreateGroupOpen} onOpenChange={setIsCreateGroupOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create Device Group</DialogTitle>
+            <DialogDescription>
+              Create a new group for the selected devices.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label htmlFor="name" className="text-sm font-medium">
+                Group Name
+              </label>
+              <Input
+                id="name"
+                value={newGroupName}
+                onChange={(e) => setNewGroupName(e.target.value)}
+                placeholder="Enter group name"
+              />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="description" className="text-sm font-medium">
+                Description (optional)
+              </label>
+              <Input
+                id="description"
+                value={newGroupDescription}
+                onChange={(e) => setNewGroupDescription(e.target.value)}
+                placeholder="Enter group description"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCreateGroupOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreateGroup}>Create Group</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
