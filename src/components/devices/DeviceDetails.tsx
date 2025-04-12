@@ -1,179 +1,176 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  Activity,
-  AlertTriangle,
-  Battery,
-  Calendar,
-  Clock,
-  Globe,
-  Info,
-  MapPin,
-  Power,
-  Server,
-  Settings,
-  Tag,
-  Wifi
-} from 'lucide-react';
+  Card,
+  CardHeader,
+  CardContent,
+  Typography,
+  Grid,
+  Button,
+  Chip,
+  Stack,
+  Box,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+} from '@mui/material';
+import { Edit as EditIcon, Delete as DeleteIcon, Refresh as RefreshIcon } from '@mui/icons-material';
 import { Device } from '@/types/device';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { fetchDevice, updateDevice, deleteDevice } from '@/services/api/devices';
+import { format } from 'date-fns';
+import DeviceMetricsChart from './DeviceMetricsChart';
+import DeviceSettingsForm from './DeviceSettingsForm';
 
 interface DeviceDetailsProps {
-  device: Device;
+  deviceId: string;
+  onUpdate?: () => void;
+  onDelete?: () => void;
 }
 
-const DeviceDetails: React.FC<DeviceDetailsProps> = ({ device }) => {
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'online':
-        return 'text-green-500';
-      case 'offline':
-        return 'text-gray-500';
-      case 'warning':
-        return 'text-amber-500';
-      case 'error':
-        return 'text-red-500';
-      default:
-        return 'text-gray-500';
+const DeviceDetails: React.FC<DeviceDetailsProps> = ({ deviceId, onUpdate, onDelete }) => {
+  const [device, setDevice] = useState<Device | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  const loadDevice = async () => {
+    try {
+      setLoading(true);
+      const data = await fetchDevice(deviceId);
+      setDevice(data);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load device');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleString();
+  useEffect(() => {
+    loadDevice();
+  }, [deviceId]);
+
+  const handleUpdate = async (updatedData: Partial<Device>) => {
+    try {
+      const updated = await updateDevice(deviceId, updatedData);
+      setDevice(updated);
+      setIsEditMode(false);
+      onUpdate?.();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update device');
+    }
   };
 
+  const handleDelete = async () => {
+    try {
+      await deleteDevice(deviceId);
+      onDelete?.();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete device');
+    }
+  };
+
+  if (loading) return <Typography>Loading...</Typography>;
+  if (error) return <Typography color="error">{error}</Typography>;
+  if (!device) return <Typography>Device not found</Typography>;
+
   return (
-    <div className="grid gap-4 md:grid-cols-2">
-      {/* Main Info Card */}
-      <Card className="md:col-span-2">
-        <CardHeader>
-          <CardTitle className="text-xl font-semibold flex items-center gap-2">
-            <Server className="h-5 w-5" />
-            Device Information
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Info className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">Name:</span>
-                <span>{device.name}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Tag className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">Type:</span>
-                <span className="capitalize">{device.type}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Activity className={`h-4 w-4 ${getStatusColor(device.status)}`} />
-                <span className="font-medium">Status:</span>
-                <Badge
-                  variant={device.status.toLowerCase() === 'online' ? 'default' : 'secondary'}
-                  className={getStatusColor(device.status)}
-                >
-                  {device.status}
-                </Badge>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">Location:</span>
-                <span>{device.location || 'Not specified'}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Power className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">Capacity:</span>
-                <span>{device.capacity} kW</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Battery className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">Current Output:</span>
-                <span>{device.current_output || 0} kW</span>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+    <Card>
+      <CardHeader
+        title={device.name}
+        subheader={`Type: ${device.type}`}
+        action={
+          <Stack direction="row" spacing={1}>
+            <IconButton onClick={loadDevice} title="Refresh">
+              <RefreshIcon />
+            </IconButton>
+            <IconButton onClick={() => setIsEditMode(true)} title="Edit">
+              <EditIcon />
+            </IconButton>
+            <IconButton onClick={() => setShowDeleteDialog(true)} title="Delete">
+              <DeleteIcon />
+            </IconButton>
+          </Stack>
+        }
+      />
+      <CardContent>
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={6}>
+            <Stack spacing={2}>
+              <Box>
+                <Typography variant="subtitle2">Status</Typography>
+                <Chip
+                  label={device.status}
+                  color={device.status === 'online' ? 'success' : 'error'}
+                />
+              </Box>
+              <Box>
+                <Typography variant="subtitle2">Location</Typography>
+                <Typography>{device.location}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="subtitle2">Last Seen</Typography>
+                <Typography>
+                  {format(new Date(device.lastSeen), 'PPpp')}
+                </Typography>
+              </Box>
+            </Stack>
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <Stack spacing={2}>
+              <Box>
+                <Typography variant="subtitle2">Metadata</Typography>
+                <Stack spacing={1}>
+                  <Typography>
+                    Manufacturer: {device.metadata.manufacturer}
+                  </Typography>
+                  <Typography>
+                    Model: {device.metadata.model}
+                  </Typography>
+                  <Typography>
+                    Serial Number: {device.metadata.serialNumber}
+                  </Typography>
+                  <Typography>
+                    Firmware Version: {device.metadata.firmwareVersion}
+                  </Typography>
+                </Stack>
+              </Box>
+            </Stack>
+          </Grid>
+          <Grid item xs={12}>
+            <DeviceMetricsChart deviceId={deviceId} />
+          </Grid>
+        </Grid>
+      </CardContent>
 
-      {/* Technical Details Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold flex items-center gap-2">
-            <Settings className="h-5 w-5" />
-            Technical Details
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <div className="flex items-center gap-2">
-            <Server className="h-4 w-4 text-muted-foreground" />
-            <span className="font-medium">Model:</span>
-            <span>{device.model || 'N/A'}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Globe className="h-4 w-4 text-muted-foreground" />
-            <span className="font-medium">Protocol:</span>
-            <span>{device.protocol || 'N/A'}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Wifi className="h-4 w-4 text-muted-foreground" />
-            <span className="font-medium">IP Address:</span>
-            <span>{device.ip_address || 'N/A'}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-            <span className="font-medium">Firmware:</span>
-            <span>{device.firmware || 'N/A'}</span>
-          </div>
-        </CardContent>
-      </Card>
+      <Dialog open={isEditMode} onClose={() => setIsEditMode(false)}>
+        <DialogTitle>Edit Device</DialogTitle>
+        <DialogContent>
+          <DeviceSettingsForm
+            device={device}
+            onSubmit={handleUpdate}
+            onCancel={() => setIsEditMode(false)}
+          />
+        </DialogContent>
+      </Dialog>
 
-      {/* Timestamps Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold flex items-center gap-2">
-            <Clock className="h-5 w-5" />
-            Timestamps
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-            <span className="font-medium">Installation Date:</span>
-            <span>{formatDate(device.installation_date)}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-muted-foreground" />
-            <span className="font-medium">Last Updated:</span>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger>
-                  <span className="cursor-help underline decoration-dotted">
-                    {formatDate(device.last_updated)}
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Last time device data was updated</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-muted-foreground" />
-            <span className="font-medium">Created At:</span>
-            <span>{formatDate(device.created_at)}</span>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+      <Dialog open={showDeleteDialog} onClose={() => setShowDeleteDialog(false)}>
+        <DialogTitle>Delete Device</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete this device? This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowDeleteDialog(false)}>Cancel</Button>
+          <Button onClick={handleDelete} color="error">
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Card>
   );
 };
 
