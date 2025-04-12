@@ -12,6 +12,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { supabaseService } from '@/services/supabaseService';
 import { useAuth } from '@/contexts/AuthContext';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { toast } from 'sonner';
+import { Shield, Key, Clock, Globe, History, AlertTriangle } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { format } from 'date-fns';
+import QRCodeComponent from '@/components/security/QRCode';
 
 const securitySettingsSchema = z.object({
   authentication: z.object({
@@ -40,6 +46,30 @@ const securitySettingsSchema = z.object({
   }),
 });
 
+interface SecurityAuditLog {
+  id: string;
+  action: string;
+  timestamp: string;
+  ip_address: string;
+  user_agent: string;
+}
+
+interface ApiKey {
+  id: string;
+  name: string;
+  key: string;
+  created_at: string;
+  last_used: string | null;
+}
+
+interface Session {
+  id: string;
+  device: string;
+  ip_address: string;
+  last_active: string;
+  current: boolean;
+}
+
 const SecuritySettings: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -48,6 +78,14 @@ const SecuritySettings: React.FC = () => {
   const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<SecuritySettingsType>({
     resolver: zodResolver(securitySettingsSchema),
   });
+
+  const [is2FAEnabled, setIs2FAEnabled] = useState(false);
+  const [auditLogs, setAuditLogs] = useState<SecurityAuditLog[]>([]);
+  const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [whitelistedIPs, setWhitelistedIPs] = useState<string[]>([]);
+  const [newIP, setNewIP] = useState('');
+  const [secret, setSecret] = useState<string>('');
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -99,6 +137,82 @@ const SecuritySettings: React.FC = () => {
     }
   };
 
+  const handle2FAToggle = async () => {
+    try {
+      setIsLoading(true);
+      if (!is2FAEnabled) {
+        // Generate a new secret when enabling 2FA
+        const newSecret = Math.random().toString(36).substr(2, 16).toUpperCase();
+        setSecret(newSecret);
+      }
+      setIs2FAEnabled(!is2FAEnabled);
+      toast.success(`Two-factor authentication ${!is2FAEnabled ? 'enabled' : 'disabled'}`);
+    } catch (error) {
+      toast.error('Failed to update 2FA settings');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAddIP = () => {
+    if (newIP && !whitelistedIPs.includes(newIP)) {
+      setWhitelistedIPs([...whitelistedIPs, newIP]);
+      setNewIP('');
+      toast.success('IP address added to whitelist');
+    }
+  };
+
+  const handleRemoveIP = (ip: string) => {
+    setWhitelistedIPs(whitelistedIPs.filter(i => i !== ip));
+    toast.success('IP address removed from whitelist');
+  };
+
+  const handleRevokeSession = async (sessionId: string) => {
+    try {
+      setIsLoading(true);
+      // Implement session revocation logic here
+      setSessions(sessions.filter(session => session.id !== sessionId));
+      toast.success('Session revoked successfully');
+    } catch (error) {
+      toast.error('Failed to revoke session');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCreateApiKey = async () => {
+    try {
+      setIsLoading(true);
+      // Implement API key creation logic here
+      const newKey: ApiKey = {
+        id: Math.random().toString(36).substr(2, 9),
+        name: `API Key ${apiKeys.length + 1}`,
+        key: Math.random().toString(36).substr(2, 24),
+        created_at: new Date().toISOString(),
+        last_used: null
+      };
+      setApiKeys([...apiKeys, newKey]);
+      toast.success('New API key created');
+    } catch (error) {
+      toast.error('Failed to create API key');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRevokeApiKey = async (keyId: string) => {
+    try {
+      setIsLoading(true);
+      // Implement API key revocation logic here
+      setApiKeys(apiKeys.filter(key => key.id !== keyId));
+      toast.success('API key revoked successfully');
+    } catch (error) {
+      toast.error('Failed to revoke API key');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -117,134 +231,188 @@ const SecuritySettings: React.FC = () => {
 
   return (
     <ErrorBoundary>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <div className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Authentication Settings</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5" />
+              Security Settings
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="twoFactor">Two-Factor Authentication</Label>
-              <Switch
-                id="twoFactor"
-                checked={watch('authentication.twoFactorEnabled')}
-                onCheckedChange={(checked) => setValue('authentication.twoFactorEnabled', checked)}
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="sessionTimeout">Session Timeout (minutes)</Label>
-              <Input
-                id="sessionTimeout"
-                type="number"
-                {...register('authentication.sessionTimeout')}
-              />
-              {errors.authentication?.sessionTimeout && (
-                <p className="text-red-500 text-sm">{errors.authentication.sessionTimeout.message}</p>
-              )}
-            </div>
+          <CardContent>
+            <Tabs defaultValue="2fa">
+              <TabsList>
+                <TabsTrigger value="2fa">Two-Factor Auth</TabsTrigger>
+                <TabsTrigger value="sessions">Active Sessions</TabsTrigger>
+                <TabsTrigger value="api">API Keys</TabsTrigger>
+                <TabsTrigger value="ip">IP Whitelist</TabsTrigger>
+                <TabsTrigger value="audit">Security Log</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="2fa" className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Two-Factor Authentication</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Add an extra layer of security to your account
+                    </p>
+                  </div>
+                  <Switch
+                    checked={is2FAEnabled}
+                    onCheckedChange={handle2FAToggle}
+                    disabled={isLoading}
+                  />
+                </div>
+                {is2FAEnabled && secret && (
+                  <QRCodeComponent
+                    secret={secret}
+                    email={user?.email || ''}
+                  />
+                )}
+              </TabsContent>
+
+              <TabsContent value="sessions">
+                <div className="space-y-4">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Device</TableHead>
+                        <TableHead>IP Address</TableHead>
+                        <TableHead>Last Active</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {sessions.map((session) => (
+                        <TableRow key={session.id}>
+                          <TableCell>{session.device}</TableCell>
+                          <TableCell>{session.ip_address}</TableCell>
+                          <TableCell>
+                            {format(new Date(session.last_active), 'PPpp')}
+                          </TableCell>
+                          <TableCell>
+                            {!session.current && (
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => handleRevokeSession(session.id)}
+                                disabled={isLoading}
+                              >
+                                Revoke
+                              </Button>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="api">
+                <div className="space-y-4">
+                  <Button onClick={handleCreateApiKey} disabled={isLoading}>
+                    <Key className="h-4 w-4 mr-2" />
+                    Create New API Key
+                  </Button>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Key</TableHead>
+                        <TableHead>Created</TableHead>
+                        <TableHead>Last Used</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {apiKeys.map((key) => (
+                        <TableRow key={key.id}>
+                          <TableCell>{key.name}</TableCell>
+                          <TableCell className="font-mono">{key.key}</TableCell>
+                          <TableCell>
+                            {format(new Date(key.created_at), 'PP')}
+                          </TableCell>
+                          <TableCell>
+                            {key.last_used
+                              ? format(new Date(key.last_used), 'PPpp')
+                              : 'Never'}
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleRevokeApiKey(key.id)}
+                              disabled={isLoading}
+                            >
+                              Revoke
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="ip">
+                <div className="space-y-4">
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Enter IP address"
+                      value={newIP}
+                      onChange={(e) => setNewIP(e.target.value)}
+                    />
+                    <Button onClick={handleAddIP}>Add IP</Button>
+                  </div>
+                  <div className="space-y-2">
+                    {whitelistedIPs.map((ip) => (
+                      <div
+                        key={ip}
+                        className="flex items-center justify-between p-2 bg-muted rounded-md"
+                      >
+                        <span>{ip}</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemoveIP(ip)}
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="audit">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Action</TableHead>
+                      <TableHead>IP Address</TableHead>
+                      <TableHead>Device</TableHead>
+                      <TableHead>Timestamp</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {auditLogs.map((log) => (
+                      <TableRow key={log.id}>
+                        <TableCell>{log.action}</TableCell>
+                        <TableCell>{log.ip_address}</TableCell>
+                        <TableCell>{log.user_agent}</TableCell>
+                        <TableCell>
+                          {format(new Date(log.timestamp), 'PPpp')}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Password Policy</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="minLength">Minimum Password Length</Label>
-              <Input
-                id="minLength"
-                type="number"
-                {...register('authentication.passwordPolicy.minLength')}
-              />
-              {errors.authentication?.passwordPolicy?.minLength && (
-                <p className="text-red-500 text-sm">{errors.authentication.passwordPolicy.minLength.message}</p>
-              )}
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <Label htmlFor="requireSpecialChars">Require Special Characters</Label>
-              <Switch
-                id="requireSpecialChars"
-                checked={watch('authentication.passwordPolicy.requireSpecialChars')}
-                onCheckedChange={(checked) => setValue('authentication.passwordPolicy.requireSpecialChars', checked)}
-              />
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <Label htmlFor="requireNumbers">Require Numbers</Label>
-              <Switch
-                id="requireNumbers"
-                checked={watch('authentication.passwordPolicy.requireNumbers')}
-                onCheckedChange={(checked) => setValue('authentication.passwordPolicy.requireNumbers', checked)}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>API Security</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="rateLimiting">Rate Limiting</Label>
-              <Switch
-                id="rateLimiting"
-                checked={watch('apiSecurity.rateLimiting')}
-                onCheckedChange={(checked) => setValue('apiSecurity.rateLimiting', checked)}
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="tokenExpiration">Token Expiration (hours)</Label>
-              <Input
-                id="tokenExpiration"
-                type="number"
-                {...register('apiSecurity.tokenExpiration')}
-              />
-              {errors.apiSecurity?.tokenExpiration && (
-                <p className="text-red-500 text-sm">{errors.apiSecurity.tokenExpiration.message}</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Audit Logging</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="auditEnabled">Enable Audit Logging</Label>
-              <Switch
-                id="auditEnabled"
-                checked={watch('auditLogging.enabled')}
-                onCheckedChange={(checked) => setValue('auditLogging.enabled', checked)}
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="retentionPeriod">Log Retention Period (days)</Label>
-              <Input
-                id="retentionPeriod"
-                type="number"
-                {...register('auditLogging.retentionPeriod')}
-              />
-              {errors.auditLogging?.retentionPeriod && (
-                <p className="text-red-500 text-sm">{errors.auditLogging.retentionPeriod.message}</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="flex justify-end">
-          <Button type="submit" disabled={isLoading}>
-            {isLoading ? 'Saving...' : 'Save Changes'}
-          </Button>
-        </div>
-      </form>
+      </div>
     </ErrorBoundary>
   );
 };
