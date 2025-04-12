@@ -1,25 +1,28 @@
-
 export interface Device {
   id: string;
   name: string;
-  type: string;
-  status: string;
-  capacity: number;
-  current_output?: number;
-  location?: string;
-  description?: string;
-  firmware?: string;
-  protocol?: string;
-  site_id: string;
-  metrics?: Record<string, any>;
-  model?: string;
-  installation_date?: string;
-  created_at?: string;
-  updated_at?: string;
-  last_updated?: string;
-  ip_address?: string;
-  tags?: Record<string, any>;
-  enabled?: boolean;
+  type: 'sensor' | 'actuator' | 'controller';
+  status: 'online' | 'offline' | 'maintenance';
+  location: string;
+  lastSeen: string;
+  metadata: {
+    manufacturer: string;
+    model: string;
+    serialNumber: string;
+    firmwareVersion: string;
+    [key: string]: any;
+  };
+  settings: {
+    enabled: boolean;
+    autoUpdate: boolean;
+    alertThresholds?: {
+      min?: number;
+      max?: number;
+    };
+    [key: string]: any;
+  };
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface DeviceModel {
