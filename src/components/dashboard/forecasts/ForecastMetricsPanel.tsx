@@ -1,49 +1,67 @@
 
 import React from 'react';
-
-interface ForecastMetrics {
-  totalGeneration: number;
-  totalConsumption: number;
-  netEnergy: number; // Required here
-  peakGeneration: number;
-  peakConsumption: number;
-  confidence?: number;
-}
+import { Cloud, CloudSun, Droplets, Lightbulb } from 'lucide-react';
+import { ForecastMetrics } from '@/hooks/useForecast';
 
 interface ForecastMetricsPanelProps {
   metrics: ForecastMetrics;
 }
 
+const MetricBox = ({ 
+  icon, 
+  value, 
+  label, 
+  unit = 'kWh',
+  iconColor = 'text-blue-500' 
+}: { 
+  icon: React.ReactNode; 
+  value: number; 
+  label: string; 
+  unit?: string;
+  iconColor?: string;
+}) => (
+  <div className="bg-card border rounded-lg p-3 flex items-center space-x-3">
+    <div className={`p-2 rounded-full bg-muted/50 ${iconColor}`}>
+      {icon}
+    </div>
+    <div>
+      <p className="text-xl font-semibold">
+        {value.toLocaleString(undefined, { maximumFractionDigits: 1 })} 
+        <span className="text-xs ml-1 text-muted-foreground">{unit}</span>
+      </p>
+      <p className="text-xs text-muted-foreground">{label}</p>
+    </div>
+  </div>
+);
+
 const ForecastMetricsPanel = ({ metrics }: ForecastMetricsPanelProps) => {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 mt-2 mb-6">
-      <div className="bg-white dark:bg-gridx-dark-gray/80 p-3 rounded-lg border border-gray-100 dark:border-gray-700/30 transition-all duration-300 hover:shadow-sm">
-        <div className="text-xs text-gridx-gray dark:text-gray-400">Forecast Production</div>
-        <div className="text-lg font-semibold text-gridx-green">{metrics.totalGeneration.toFixed(1)} kWh</div>
-      </div>
-      <div className="bg-white dark:bg-gridx-dark-gray/80 p-3 rounded-lg border border-gray-100 dark:border-gray-700/30 transition-all duration-300 hover:shadow-sm">
-        <div className="text-xs text-gridx-gray dark:text-gray-400">Forecast Consumption</div>
-        <div className="text-lg font-semibold text-gridx-purple">{metrics.totalConsumption.toFixed(1)} kWh</div>
-      </div>
-      <div className="bg-white dark:bg-gridx-dark-gray/80 p-3 rounded-lg border border-gray-100 dark:border-gray-700/30 transition-all duration-300 hover:shadow-sm">
-        <div className="text-xs text-gridx-gray dark:text-gray-400">Net Energy</div>
-        <div className={`text-lg font-semibold ${metrics.netEnergy >= 0 ? 'text-gridx-green' : 'text-gridx-red'}`}>
-          {metrics.netEnergy > 0 ? '+' : ''}{metrics.netEnergy.toFixed(1)} kWh
-        </div>
-      </div>
-      <div className="bg-white dark:bg-gridx-dark-gray/80 p-3 rounded-lg border border-gray-100 dark:border-gray-700/30 transition-all duration-300 hover:shadow-sm">
-        <div className="text-xs text-gridx-gray dark:text-gray-400">Peak Times</div>
-        <div className="flex justify-between">
-          <div className="text-xs">
-            <span className="text-gridx-green">Gen: </span>
-            <span className="font-medium">{metrics.peakGeneration.toFixed(1)} kW</span>
-          </div>
-          <div className="text-xs">
-            <span className="text-gridx-purple">Use: </span>
-            <span className="font-medium">{metrics.peakConsumption.toFixed(1)} kW</span>
-          </div>
-        </div>
-      </div>
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+      <MetricBox
+        icon={<Cloud size={18} />}
+        value={metrics.totalGeneration}
+        label="Generation"
+        iconColor="text-yellow-500"
+      />
+      <MetricBox
+        icon={<Lightbulb size={18} />}
+        value={metrics.totalConsumption}
+        label="Consumption"
+        iconColor="text-green-500"
+      />
+      <MetricBox
+        icon={<CloudSun size={18} />} 
+        value={metrics.selfConsumptionRate}
+        label="Self-Consumption"
+        unit="%"
+        iconColor="text-purple-500"
+      />
+      <MetricBox
+        icon={<Droplets size={18} />}
+        value={Math.abs(metrics.netEnergy)}
+        label={metrics.netEnergy >= 0 ? "Energy Surplus" : "Energy Deficit"}
+        iconColor={metrics.netEnergy >= 0 ? "text-emerald-500" : "text-red-500"}
+      />
     </div>
   );
 };

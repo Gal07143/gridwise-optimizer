@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import AppLayout from '@/components/layout/AppLayout';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Main } from '@/components/ui/main';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
+import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import {
   AreaChart,
   Area,
@@ -16,503 +16,303 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
-  BarChart,
-  Bar,
-  Cell,
+  ReferenceLine
 } from 'recharts';
 import { useAppStore } from '@/store/appStore';
-import { fetchDevices } from '@/services/supabase/supabaseService';
-import { EnergyDevice } from '@/types/energy';
-import { useEnergyOptimization } from '@/hooks/useEnergyOptimization';
 import { OptimizationSettings, OptimizationObjective } from '@/types/optimization';
-import { toast } from 'sonner';
-import ReferenceLine from '@/components/charts/ReferenceLine';
-import LabelComponent from '@/components/charts/Label';
-import Clock from '@/components/ui/Clock';
-import Sun from '@/components/ui/Sun';
+import { EnergyDevice } from '@/types/energy';
 
-interface OptimizationResult {
-  timestamp: string;
-  battery_charge_power: number;
-  grid_power: number;
-  load_power: number;
-  pv_power: number;
-  battery_soc: number;
-}
+const mockDevices: EnergyDevice[] = [
+  {
+    id: 'solar-1',
+    name: 'Solar Array',
+    type: 'solar',
+    status: 'online',
+    capacity: 10,
+    site_id: 'site-1',
+    created_at: new Date().toISOString(),
+    last_updated: new Date().toISOString(),
+  },
+  {
+    id: 'battery-1',
+    name: 'Battery Storage',
+    type: 'battery',
+    status: 'online',
+    capacity: 15,
+    site_id: 'site-1',
+    created_at: new Date().toISOString(),
+    last_updated: new Date().toISOString(),
+  },
+  {
+    id: 'grid-1',
+    name: 'Grid Connection',
+    type: 'grid',
+    status: 'online',
+    capacity: 1000,
+    site_id: 'site-1',
+    created_at: new Date().toISOString(),
+    last_updated: new Date().toISOString(),
+  },
+  {
+    id: 'load-1',
+    name: 'Main Load',
+    type: 'load',
+    status: 'online',
+    capacity: 5,
+    site_id: 'site-1',
+    created_at: new Date().toISOString(),
+    last_updated: new Date().toISOString(),
+  },
+];
 
-const EnergyOptimization = () => {
+const EnergyOptimization: React.FC = () => {
+  const navigate = useNavigate();
   const { currentSite } = useAppStore();
-  const siteId = currentSite?.id || '';
-  const [optimizeEV, setOptimizeEV] = useState(false);
-  const [timeWindowStart, setTimeWindowStart] = useState('00:00');
-  const [timeWindowEnd, setTimeWindowEnd] = useState('23:59');
-  const [evDepartureTime, setEvDepartureTime] = useState('08:00');
-  const [evTargetSoc, setEvTargetSoc] = useState(80);
-  const [priorityDevices, setPriorityDevices] = useState<string[]>([]);
-  const [selectedObjective, setSelectedObjective] = useState<OptimizationObjective>('cost');
-  const [isPeakShavingEnabled, setIsPeakShavingEnabled] = useState(false);
-  const [maxGridPower, setMaxGridPower] = useState<number | undefined>(undefined);
-  const [energyExportLimit, setEnergyExportLimit] = useState<number | undefined>(undefined);
-  const [minBatterySoc, setMinBatterySoc] = useState(20);
-  const [maxBatterySoc, setMaxBatterySoc] = useState(90);
-  const [batteryStrategy, setBatteryStrategy] = useState<string>('time_of_use');
-  const [optimizationResults, setOptimizationResults] = useState<OptimizationResult[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isOptimizing, setIsOptimizing] = useState(false);
-  const [isApplyingRecommendation, setIsApplyingRecommendation] = useState(false);
-  const [recommendations, setRecommendations] = useState<any[]>([]);
-  const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(false);
-  const [optimizationResult, setOptimizationResult] = useState<any>(null);
-
-  const {
-    runOptimization,
-    updateSettings,
-    currentSettings,
-    controlDevice,
-    isControlling: deviceControllingState,
-    applyRecommendation,
-  } = useEnergyOptimization(siteId);
-
-  const { data: devices = [] } = useQuery<EnergyDevice[]>({
-    queryKey: ['devices', siteId],
-    queryFn: () => fetchDevices(siteId),
-    enabled: !!siteId,
+  const [optimizationSettings, setOptimizationSettings] = useState<OptimizationSettings>({
+    priority: 'cost',
+    battery_strategy: 'charge_from_solar',
+    ev_charging_time: '22:00',
+    ev_departure_time: '07:00',
+    peak_shaving_enabled: false,
+    max_grid_power: 50,
+    energy_export_limit: 10,
+    min_soc: 20,
+    max_soc: 90,
+    time_window_start: '06:00',
+    time_window_end: '18:00',
+    objective: 'cost',
+    site_id: currentSite?.id || 'site-1',
+    priority_device_ids: [],
+    evTargetSoc: 80,
   });
+  const [devices, setDevices] = useState<EnergyDevice[]>(mockDevices);
+  const [maxPowerLimit, setMaxPowerLimit] = useState(50);
+  const [minPowerLimit, setMinPowerLimit] = useState(10);
+  const [controlMode, setControlMode] = useState<'manual' | 'auto'>('auto');
+  const isControllingSystem = controlMode === 'manual';
 
-  const batteryDevices = devices.filter(device => device.type === 'battery');
-  const evChargers = devices.filter(device => device.type === 'ev_charger');
-
-  const handleRunOptimization = async () => {
-    setIsOptimizing(true);
-    setError(null);
-
-    try {
-      const deviceIds = [
-        ...batteryDevices.map(d => d.id),
-        ...(optimizeEV ? evChargers.map(d => d.id) : [])
-      ];
-
-      if (deviceIds.length === 0) {
-        toast.warning('No optimizable devices found.');
-        return;
-      }
-
-      const optimizationSettings: OptimizationSettings = {
-        priority: selectedObjective,
-        battery_strategy: batteryStrategy as "charge_from_solar" | "time_of_use" | "backup_only",
-        ev_charging_time: currentSettings.ev_charging_time,
-        ev_departure_time: evDepartureTime,
-        peak_shaving_enabled: isPeakShavingEnabled,
-        max_grid_power: maxGridPower,
-        energy_export_limit: energyExportLimit,
-        min_soc: minBatterySoc,
-        max_soc: maxBatterySoc,
-        time_window_start: timeWindowStart,
-        time_window_end: timeWindowEnd,
-        objective: selectedObjective,
-        site_id: siteId,
-        priority_device_ids: priorityDevices,
-        evTargetSoc: evTargetSoc,
-      };
-
-      updateSettings(optimizationSettings);
-
-      const result = await runOptimization(deviceIds);
-      setOptimizationResult(result);
-
-      if (result) {
-        toast.success('Optimization completed successfully!');
-      } else {
-        toast.error('Optimization failed.');
-      }
-    } catch (err: any) {
-      console.error('Optimization error:', err);
-      setError(err.message || 'Unknown error');
-      toast.error(`Optimization failed: ${err.message || 'Unknown error'}`);
-    } finally {
-      setIsOptimizing(false);
+  const handlePriorityChange = (value: string) => {
+    if (value === 'cost' || value === 'self_consumption' || value === 'carbon' || value === 'peak_shaving') {
+      setOptimizationSettings(prev => ({ ...prev, priority: value }));
     }
   };
 
-  const handleApplyRecommendation = async (recommendationId: string) => {
-    setIsApplyingRecommendation(true);
-    try {
-      const success = await applyRecommendation(recommendationId);
-      if (success) {
-        toast.success('Recommendation applied successfully!');
-      } else {
-        toast.error('Failed to apply recommendation.');
-      }
-    } catch (error: any) {
-      console.error('Error applying recommendation:', error);
-      toast.error(`Failed to apply recommendation: ${error.message || 'Unknown error'}`);
-    } finally {
-      setIsApplyingRecommendation(false);
+  const handleBatteryStrategyChange = (value: string) => {
+    if (value === 'charge_from_solar' || value === 'time_of_use' || value === 'backup_only') {
+      setOptimizationSettings(prev => ({ ...prev, battery_strategy: value }));
     }
   };
 
-  const handleControlDevice = async (deviceId: string, command: string, parameters?: Record<string, any>) => {
-    try {
-      const result = await controlDevice({ deviceId, command, parameters });
-      if (result?.success) {
-        toast.success(`Command "${command}" sent to device.`);
-      } else {
-        toast.error(`Failed to send command "${command}".`);
-      }
-    } catch (error: any) {
-      console.error('Error controlling device:', error);
-      toast.error(`Failed to control device: ${error.message || 'Unknown error'}`);
-    }
+  const handleTimeChange = (field: string, value: string) => {
+    setOptimizationSettings(prev => ({ ...prev, [field]: value }));
   };
 
-  const dailySimulatedData = [
-    { timestamp: '00:00', battery_charge_power: 100, grid_power: 500, load_power: 600, pv_power: 0, battery_soc: 20 },
-    { timestamp: '02:00', battery_charge_power: 200, grid_power: 400, load_power: 600, pv_power: 0, battery_soc: 30 },
-    { timestamp: '04:00', battery_charge_power: 300, grid_power: 300, load_power: 600, pv_power: 0, battery_soc: 40 },
-    { timestamp: '06:00', battery_charge_power: 400, grid_power: 200, load_power: 600, pv_power: 100, battery_soc: 50 },
-    { timestamp: '08:00', battery_charge_power: 500, grid_power: 100, load_power: 600, pv_power: 200, battery_soc: 60 },
-    { timestamp: '10:00', battery_charge_power: 600, grid_power: 0, load_power: 500, pv_power: 300, battery_soc: 70 },
-    { timestamp: '12:00', battery_charge_power: 500, grid_power: 100, load_power: 400, pv_power: 400, battery_soc: 80 },
-    { timestamp: '14:00', battery_charge_power: 400, grid_power: 200, load_power: 300, pv_power: 500, battery_soc: 90 },
-    { timestamp: '16:00', battery_charge_power: 300, grid_power: 300, load_power: 400, pv_power: 400, battery_soc: 80 },
-    { timestamp: '18:00', battery_charge_power: 200, grid_power: 400, load_power: 500, pv_power: 300, battery_soc: 70 },
-    { timestamp: '20:00', battery_charge_power: 100, grid_power: 500, load_power: 600, pv_power: 200, battery_soc: 60 },
-    { timestamp: '22:00', battery_charge_power: 0, grid_power: 600, load_power: 700, pv_power: 100, battery_soc: 50 },
-    { timestamp: '24:00', battery_charge_power: 100, grid_power: 500, load_power: 600, pv_power: 0, battery_soc: 40 },
+  const handlePeakShavingToggle = (checked: boolean) => {
+    setOptimizationSettings(prev => ({ ...prev, peak_shaving_enabled: checked }));
+  };
+
+  const handleSliderChange = (field: string, value: number[]) => {
+    setOptimizationSettings(prev => ({ ...prev, [field]: value[0] }));
+  };
+
+  const handleDeviceSelection = (deviceId: string) => {
+    setOptimizationSettings(prev => {
+      const deviceIndex = prev.priority_device_ids.indexOf(deviceId);
+      if (deviceIndex === -1) {
+        return { ...prev, priority_device_ids: [...prev.priority_device_ids, deviceId] };
+      } else {
+        const newDeviceIds = [...prev.priority_device_ids];
+        newDeviceIds.splice(deviceIndex, 1);
+        return { ...prev, priority_device_ids: newDeviceIds };
+      }
+    });
+  };
+
+  const handleApplyOptimization = () => {
+    console.log('Applying optimization settings:', optimizationSettings);
+    navigate('/dashboard');
+  };
+
+  const chartData = [
+    { time: '00:00', grid: 10, solar: 0, battery: 0 },
+    { time: '02:00', grid: 8, solar: 0, battery: 2 },
+    { time: '04:00', grid: 5, solar: 1, battery: 4 },
+    { time: '06:00', grid: 2, solar: 3, battery: 5 },
+    { time: '08:00', grid: 0, solar: 6, battery: 4 },
+    { time: '10:00', grid: 1, solar: 8, battery: 1 },
+    { time: '12:00', grid: 3, solar: 7, battery: 0 },
+    { time: '14:00', grid: 5, solar: 5, battery: 0 },
+    { time: '16:00', grid: 7, solar: 3, battery: 0 },
+    { time: '18:00', grid: 9, solar: 1, battery: 0 },
+    { time: '20:00', grid: 11, solar: 0, battery: 0 },
+    { time: '22:00', grid: 10, solar: 0, battery: 0 },
   ];
 
-  const generateCustomColor = (data: any): string => {
-    let value = 0;
-    if (typeof data === 'number') {
-      value = data;
-    } else if (typeof data === 'string' && !isNaN(Number(data))) {
-      value = Number(data);
-    }
-    return value >= 30 ? '#8884d8' : '#82ca9d';
-  };
-
   return (
-    <AppLayout>
-      <div className="container mx-auto p-4 md:p-8 space-y-6">
-        <div className="flex flex-col sm:flex-row justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold mb-1">Energy Optimization</h1>
-            <p className="text-muted-foreground">Optimize your energy usage based on forecasts and preferences</p>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              className="flex items-center gap-2"
-              onClick={handleRunOptimization}
-              disabled={isOptimizing}
-            >
-              {isOptimizing ? 'Optimizing...' : 'Run Optimization'}
-            </Button>
-            <Button
-              variant="outline"
-              className="flex items-center gap-2"
-              onClick={() => {
-                // Handle refresh logic here
-              }}
-            >
-              Refresh
-            </Button>
-          </div>
-        </div>
+    <Main title="Energy Optimization">
+      <div className="container mx-auto p-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Optimization Settings</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-6">
+            <div className="space-y-4">
+              <Label htmlFor="priority">Optimization Priority</Label>
+              <Select onValueChange={handlePriorityChange}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cost">Cost</SelectItem>
+                  <SelectItem value="self_consumption">Self Consumption</SelectItem>
+                  <SelectItem value="carbon">Carbon Reduction</SelectItem>
+                  <SelectItem value="peak_shaving">Peak Shaving</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="shadow-sm border border-slate-200 dark:border-slate-800">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Optimization Settings</CardTitle>
-              <CardDescription>Configure your preferences for energy optimization</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4">
-                <div>
-                  <Label htmlFor="objective">Optimization Objective</Label>
-                  <Select onValueChange={setSelectedObjective} defaultValue={selectedObjective}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select objective" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="cost">Cost</SelectItem>
-                      <SelectItem value="self_consumption">Self Consumption</SelectItem>
-                      <SelectItem value="carbon">Carbon Footprint</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+            <div className="space-y-4">
+              <Label htmlFor="battery_strategy">Battery Strategy</Label>
+              <Select onValueChange={handleBatteryStrategyChange}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select strategy" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="charge_from_solar">Charge from Solar</SelectItem>
+                  <SelectItem value="time_of_use">Time of Use</SelectItem>
+                  <SelectItem value="backup_only">Backup Only</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-                <div>
-                  <Label htmlFor="batteryStrategy">Battery Strategy</Label>
-                  <Select onValueChange={setBatteryStrategy} defaultValue={batteryStrategy}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select strategy" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="charge_from_solar">Charge from Solar</SelectItem>
-                      <SelectItem value="time_of_use">Time of Use</SelectItem>
-                      <SelectItem value="backup_only">Backup Only</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="timeWindowStart">Time Window Start</Label>
-                    <Input
-                      type="time"
-                      id="timeWindowStart"
-                      value={timeWindowStart}
-                      onChange={(e) => setTimeWindowStart(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="timeWindowEnd">Time Window End</Label>
-                    <Input
-                      type="time"
-                      id="timeWindowEnd"
-                      value={timeWindowEnd}
-                      onChange={(e) => setTimeWindowEnd(e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Label htmlFor="peakShaving">Peak Shaving</Label>
-                  <Switch id="peakShaving" checked={isPeakShavingEnabled} onCheckedChange={setIsPeakShavingEnabled} />
-                </div>
-
-                {isPeakShavingEnabled && (
-                  <div>
-                    <Label htmlFor="maxGridPower">Max Grid Power (kW)</Label>
-                    <Input
-                      type="number"
-                      id="maxGridPower"
-                      value={maxGridPower || ''}
-                      onChange={(e) => setMaxGridPower(Number(e.target.value))}
-                    />
-                  </div>
-                )}
-
-                <div>
-                  <Label htmlFor="energyExportLimit">Energy Export Limit (kW)</Label>
-                  <Input
-                    type="number"
-                    id="energyExportLimit"
-                    value={energyExportLimit || ''}
-                    onChange={(e) => setEnergyExportLimit(Number(e.target.value))}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="minBatterySoc">Min Battery SoC (%)</Label>
-                    <Slider
-                      id="minBatterySoc"
-                      defaultValue={[minBatterySoc]}
-                      min={0}
-                      max={100}
-                      step={5}
-                      onValueChange={(value) => setMinBatterySoc(value[0])}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="maxBatterySoc">Max Battery SoC (%)</Label>
-                    <Slider
-                      id="maxBatterySoc"
-                      defaultValue={[maxBatterySoc]}
-                      min={0}
-                      max={100}
-                      step={5}
-                      onValueChange={(value) => setMaxBatterySoc(value[0])}
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Label htmlFor="optimizeEV">Optimize EV Charging</Label>
-                  <Switch id="optimizeEV" checked={optimizeEV} onCheckedChange={setOptimizeEV} />
-                </div>
-
-                {optimizeEV && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="evDepartureTime">EV Departure Time</Label>
-                      <Input
-                        type="time"
-                        id="evDepartureTime"
-                        value={evDepartureTime}
-                        onChange={(e) => setEvDepartureTime(e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="evTargetSoc">EV Target SoC (%)</Label>
-                      <Slider
-                        id="evTargetSoc"
-                        defaultValue={[evTargetSoc]}
-                        min={0}
-                        max={100}
-                        step={5}
-                        onValueChange={(value) => setEvTargetSoc(value[0])}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                <div>
-                  <Label htmlFor="priorityDevices">Priority Devices</Label>
-                  <Select onValueChange={(value) => setPriorityDevices(value ? [value] : [])} multiple>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select priority devices" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {devices.map((device) => (
-                        <SelectItem key={device.id} value={device.id}>
-                          {device.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="ev_charging_time">EV Charging Time</Label>
+                <Input
+                  type="time"
+                  id="ev_charging_time"
+                  value={optimizationSettings.ev_charging_time}
+                  onChange={(e) => handleTimeChange('ev_charging_time', e.target.value)}
+                />
               </div>
-            </CardContent>
-          </Card>
+              <div className="space-y-2">
+                <Label htmlFor="ev_departure_time">EV Departure Time</Label>
+                <Input
+                  type="time"
+                  id="ev_departure_time"
+                  value={optimizationSettings.ev_departure_time}
+                  onChange={(e) => handleTimeChange('ev_departure_time', e.target.value)}
+                />
+              </div>
+            </div>
 
-          <Card className="shadow-sm border border-slate-200 dark:border-slate-800">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Simulated Optimization Results</CardTitle>
-              <CardDescription>A simulated view of how your settings would impact energy flow</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <AreaChart data={dailySimulatedData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="peak_shaving">Peak Shaving Enabled</Label>
+              <Switch
+                id="peak_shaving"
+                checked={optimizationSettings.peak_shaving_enabled}
+                onCheckedChange={handlePeakShavingToggle}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="max_grid_power">Max Grid Power (kW)</Label>
+              <Slider
+                id="max_grid_power"
+                defaultValue={[optimizationSettings.max_grid_power || 50]}
+                max={100}
+                step={5}
+                onValueChange={(value) => handleSliderChange('max_grid_power', value)}
+              />
+              <p className="text-sm text-muted-foreground">
+                Current: {optimizationSettings.max_grid_power} kW
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="energy_export_limit">Energy Export Limit (kW)</Label>
+              <Slider
+                id="energy_export_limit"
+                defaultValue={[optimizationSettings.energy_export_limit || 10]}
+                max={50}
+                step={1}
+                onValueChange={(value) => handleSliderChange('energy_export_limit', value)}
+              />
+              <p className="text-sm text-muted-foreground">
+                Current: {optimizationSettings.energy_export_limit} kW
+              </p>
+            </div>
+            
+            <div className="space-y-4">
+              <label>Priority Devices</label>
+              <div className="flex gap-2 flex-wrap">
+                {devices.map(device => (
+                  <div key={device.id} className="border rounded p-2">
+                    <label className="flex items-center gap-2">
+                      <input 
+                        type="checkbox" 
+                        checked={optimizationSettings.priority_device_ids.includes(device.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            handleDeviceSelection(device.id);
+                          } else {
+                            handleDeviceSelection(device.id);
+                          }
+                        }} 
+                      />
+                      {device.name}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <Button onClick={handleApplyOptimization}>Apply Optimization</Button>
+          </CardContent>
+        </Card>
+
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>Real-time Power Flow</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="timestamp" />
+                  <XAxis dataKey="time" />
                   <YAxis />
                   <Tooltip />
-                  <Area type="monotone" dataKey="battery_charge_power" stroke="#8884d8" fill="#8884d8" name="Battery Charge" />
-                  <Area type="monotone" dataKey="grid_power" stroke="#82ca9d" fill="#82ca9d" name="Grid Power" />
-                  <Area type="monotone" dataKey="load_power" stroke="#ffc658" fill="#ffc658" name="Load Power" />
-                  <Area type="monotone" dataKey="pv_power" stroke="#ff7300" fill="#ff7300" name="PV Power" />
+                  <ReferenceLine y={maxPowerLimit} stroke="#FF0000" strokeDasharray="3 3" value={maxPowerLimit}/>
+                  <ReferenceLine y={minPowerLimit} stroke="#0088FE" strokeDasharray="3 3" value={minPowerLimit}/>
+                  <Area type="monotone" dataKey="grid" stroke="#8884d8" fill="#8884d8" />
+                  <Area type="monotone" dataKey="solar" stroke="#82ca9d" fill="#82ca9d" />
+                  <Area type="monotone" dataKey="battery" stroke="#ffc658" fill="#ffc658" />
                 </AreaChart>
               </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="shadow-sm border border-slate-200 dark:border-slate-800">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Optimization Results</CardTitle>
-              <CardDescription>View the results of the latest optimization run</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {optimizationResult ? (
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={dailySimulatedData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="timestamp" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="battery_charge_power" name="Battery Charge">
-                      {dailySimulatedData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={generateCustomColor(entry.battery_charge_power)} />
-                      ))}
-                    </Bar>
-                    <ReferenceLine value={30} y={30} stroke="#A0522D" strokeDasharray="3 3" />
-                    <Bar dataKey="grid_power" name="Grid Power">
-                      {dailySimulatedData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={generateCustomColor(entry.grid_power)} />
-                      ))}
-                    </Bar>
-                    <ReferenceLine value={30} y={30} stroke="#A0522D" strokeDasharray="3 3" />
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="text-center py-4">No optimization results available.</div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-sm border border-slate-200 dark:border-slate-800">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Device Control</CardTitle>
-              <CardDescription>Manually control connected devices</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {devices.map((device) => (
-                <div key={device.id} className="mb-4">
-                  <h3 className="text-md font-semibold">{device.name}</h3>
-                  <Button
-                    variant="outline"
-                    onClick={() => handleControlDevice(device.id, 'start', {})}
-                    disabled={isControlling}
-                  >
-                    Start
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => handleControlDevice(device.id, 'stop', {})}
-                    disabled={isControlling}
-                  >
-                    Stop
-                  </Button>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="shadow-sm border border-slate-200 dark:border-slate-800">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Recommendations</CardTitle>
-              <CardDescription>View and apply system recommendations</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {recommendations.length > 0 ? (
-                recommendations.map((recommendation) => (
-                  <div key={recommendation.id} className="mb-4">
-                    <h3 className="text-md font-semibold">{recommendation.title}</h3>
-                    <p>{recommendation.description}</p>
-                    <Button
-                      variant="outline"
-                      onClick={() => handleApplyRecommendation(recommendation.id)}
-                      disabled={isApplyingRecommendation}
-                    >
-                      Apply Recommendation
-                    </Button>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-4">No recommendations available.</div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-sm border border-slate-200 dark:border-slate-800">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg">System Status</CardTitle>
-              <CardDescription>View the current status of your energy system</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-md font-semibold">Current Time</h3>
-                  <Clock />
-                </div>
-                <div>
-                  <Sun className="h-6 w-6" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <div className="mb-4">
+          <h2 className="text-lg font-medium mb-2">Control Mode</h2>
+          <div className="flex gap-4">
+            <button 
+              className={`px-4 py-2 rounded-md ${!isControllingSystem ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+              onClick={() => setControlMode('auto')}
+            >
+              Auto
+            </button>
+            <button 
+              className={`px-4 py-2 rounded-md ${isControllingSystem ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+              onClick={() => setControlMode('manual')}
+            >
+              Manual
+            </button>
+          </div>
         </div>
       </div>
-    </AppLayout>
+    </Main>
   );
 };
 

@@ -6,7 +6,7 @@ export type { Alert, AlertCountSummary };
 // Get recent alerts with optional count parameter
 export const getRecentAlerts = async (count: number = 20): Promise<Alert[]> => {
   // In a real app this would fetch from an API
-  return [
+  const alerts: Alert[] = [
     {
       id: '1',
       severity: 'critical',
@@ -58,7 +58,9 @@ export const getRecentAlerts = async (count: number = 20): Promise<Alert[]> => {
       resolved: false,
       alert_source: 'System',
     }
-  ].slice(0, count);
+  ];
+  
+  return alerts.slice(0, count);
 };
 
 export const getAlertCounts = async (): Promise<AlertCountSummary> => {

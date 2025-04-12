@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import AppLayout from '@/components/layout/AppLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -12,8 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { useToast } from '@/hooks/useToast';
 import BatteryControlTab from '@/components/devices/controls/battery/BatteryControlTab';
+import { BarChart as BarChartComponent } from '@/components/charts/BarChart';
 
-// Sample data for the battery dashboard
 const batteryHistory = [
   { time: '00:00', soc: 55, power: -2.3, temperature: 23 },
   { time: '02:00', soc: 45, power: -2.4, temperature: 22 },
@@ -59,9 +58,7 @@ const BatteryManagement: React.FC = () => {
     toast.toast.success(`Battery ${action} command sent successfully`);
   };
   
-  // Determine battery status based on current state
   const getBatteryStatus = () => {
-    // Check if battery is charging (positive power)
     const isCharging = batteryHistory[batteryHistory.length - 1].power > 0;
     const currentLevel = batteryLevel;
     
@@ -77,6 +74,19 @@ const BatteryManagement: React.FC = () => {
   };
 
   const batteryStatus = getBatteryStatus();
+
+  const handleOptimize = async () => {
+    try {
+      setIsOptimizing(true);
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      toast.success('Battery optimization complete');
+      setOptimizationResult(mockOptimizationResult);
+    } catch (error) {
+      toast.error('Failed to optimize battery');
+    } finally {
+      setIsOptimizing(false);
+    }
+  };
 
   return (
     <AppLayout>
@@ -558,18 +568,10 @@ const BatteryManagement: React.FC = () => {
               <CardContent>
                 <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
+                    <BarChartComponent
                       data={monthlyUsage}
-                      margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="month" />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Bar dataKey="energyIn" name="Energy In (kWh)" fill="#8884d8" />
-                      <Bar dataKey="energyOut" name="Energy Out (kWh)" fill="#82ca9d" />
-                    </BarChart>
+                      margin={{ top: 20, right: 30, left: 20, bottom: 40 }}
+                    />
                   </ResponsiveContainer>
                 </div>
                 
@@ -798,7 +800,6 @@ const BatteryManagement: React.FC = () => {
                     </h3>
                     
                     <div className="h-48 relative overflow-hidden border rounded-lg bg-card">
-                      {/* This would ideally be a full calendar implementation */}
                       <div className="text-center p-10 text-muted-foreground">
                         <p>Calendar view would be displayed here</p>
                         <p className="text-sm">Time-based visualization of all battery schedules</p>

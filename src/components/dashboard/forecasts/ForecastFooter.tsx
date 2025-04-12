@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { CloudSun, Zap } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 
 interface ForecastFooterProps {
   confidence: number;
@@ -8,15 +8,12 @@ interface ForecastFooterProps {
 
 const ForecastFooter = ({ confidence }: ForecastFooterProps) => {
   return (
-    <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
+    <div className="mt-2 flex justify-between items-center text-xs text-muted-foreground">
       <div className="flex items-center">
-        <CloudSun size={14} className="mr-1" />
-        <span>Weather data updated: {new Date().toLocaleTimeString()}</span>
+        <AlertCircle size={12} className="mr-1" />
+        <span>Forecast Confidence: {confidence}%</span>
       </div>
-      <div className="flex items-center">
-        <Zap size={14} className="mr-1" />
-        <span>AI forecast model: {confidence.toFixed(1)}% accuracy</span>
-      </div>
+      <span>Forecasts update hourly</span>
     </div>
   );
 };

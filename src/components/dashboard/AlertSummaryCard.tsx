@@ -112,8 +112,8 @@ const AlertSummaryCard = () => {
               <div key={alert.id} className="flex items-start gap-3">
                 <div className={`flex-shrink-0 h-2 w-2 mt-2 rounded-full ${getSeverityClass(alert.severity)}`} />
                 <div>
-                  <p className="text-sm font-medium line-clamp-1">{alert.title || 'Alert'}</p>
-                  <p className="text-xs text-muted-foreground line-clamp-1">{alert.message || 'No details'}</p>
+                  <p className="text-sm font-medium line-clamp-1">{alert.message || 'Alert'}</p>
+                  <p className="text-xs text-muted-foreground line-clamp-1">{alert.category || 'No details'}</p>
                 </div>
               </div>
             ))}

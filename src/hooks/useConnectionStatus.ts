@@ -3,16 +3,20 @@ import { useState, useEffect } from 'react';
 import { ConnectionStatusOptions, ConnectionStatusResult } from '@/types/modbus';
 import { toast } from 'sonner';
 
-export const useConnectionStatus = (options: ConnectionStatusOptions = {}): ConnectionStatusResult => {
-  const autoConnect = options.autoConnect ?? false;
-  const retryInterval = options.retryInterval ?? 5000;
-  const maxRetries = options.maxRetries ?? 3;
-  const initialStatus = options.initialStatus ?? false;
-  const reconnectDelay = options.reconnectDelay ?? 3000;
-  const showToasts = options.showToasts ?? true;
-  const deviceId = options.deviceId;
+export const useConnectionStatus = (options: ConnectionStatusOptions): ConnectionStatusResult => {
+  // Default options with proper destructuring
+  const { 
+    deviceId, 
+    autoReconnect = false, 
+    timeout = 5000,
+    retryInterval = 5000,
+    maxRetries = 3,
+    initialStatus = false,
+    reconnectDelay = 3000,
+    showToasts = true
+  } = options;
 
-  const [status, setStatus] = useState<'connected' | 'connecting' | 'disconnected' | 'error' | 'ready'>('disconnected');
+  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'connecting' | 'disconnected' | 'error' | 'ready'>('disconnected');
   const [error, setError] = useState<Error | null>(null);
   const [lastOnline, setLastOnline] = useState<Date | null>(null);
   const [lastOffline, setLastOffline] = useState<Date | null>(null);
@@ -29,7 +33,7 @@ export const useConnectionStatus = (options: ConnectionStatusOptions = {}): Conn
         return;
       }
 
-      setStatus('connecting');
+      setConnectionStatus('connecting');
       setMessage('Connecting...');
 
       // Simulate API call or connection attempt
@@ -42,7 +46,7 @@ export const useConnectionStatus = (options: ConnectionStatusOptions = {}): Conn
         throw new Error('Failed to connect to device');
       }
       
-      setStatus('connected');
+      setConnectionStatus('connected');
       setIsConnected(true);
       setRetryCount(0);
       setLastOnline(new Date());
@@ -56,7 +60,7 @@ export const useConnectionStatus = (options: ConnectionStatusOptions = {}): Conn
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Connection failed';
       
-      setStatus('error');
+      setConnectionStatus('error');
       setError(err instanceof Error ? err : new Error(errorMessage));
       setMessage(errorMessage);
       setIsConnected(false);
@@ -84,7 +88,7 @@ export const useConnectionStatus = (options: ConnectionStatusOptions = {}): Conn
       // Simulate disconnect call
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      setStatus('disconnected');
+      setConnectionStatus('disconnected');
       setIsConnected(false);
       setLastOffline(new Date());
       setMessage('Disconnected successfully');
@@ -95,7 +99,7 @@ export const useConnectionStatus = (options: ConnectionStatusOptions = {}): Conn
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Disconnect failed';
       
-      setStatus('error');
+      setConnectionStatus('error');
       setError(err instanceof Error ? err : new Error(errorMessage));
       setMessage(errorMessage);
       
@@ -116,31 +120,29 @@ export const useConnectionStatus = (options: ConnectionStatusOptions = {}): Conn
 
   // Auto-connect on initialization if requested
   useEffect(() => {
-    if (autoConnect) {
+    if (autoReconnect) {
       connect();
     } else {
-      setStatus('ready');
+      setConnectionStatus('ready');
     }
     
     // Clean up on unmount
     return () => {
       // If needed, perform cleanup operations here
     };
-  }, [autoConnect]);
+  }, [autoReconnect]);
 
   return {
-    status,
-    message,
-    isOnline: isConnected,
     isConnected,
-    isConnecting: status === 'connecting',
-    lastOnline,
-    lastOffline,
+    isOnline: isConnected,
+    error,
+    retryConnection,
+    lastConnected,
     connect,
     disconnect,
-    retryConnection,
-    error,
-    lastConnected
+    connectionAttempts: retryCount,
+    status: connectionStatus,
+    message
   };
 };
 

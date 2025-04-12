@@ -1,86 +1,82 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { readRegister } from '@/services/modbus/modbusService';
-import { ModbusRegister, ModbusReadingResult } from '@/types/modbus';
+import { ModbusRegister } from '@/types/modbus';
 
-interface UseModbusDataOptions {
-  deviceId?: string;
-  register: ModbusRegister;
-  interval?: number;
+interface UseModbusDataParams {
+  deviceId: string;
+  register: ModbusRegister | number;
+  pollingInterval?: number;
   enabled?: boolean;
 }
 
-interface UseModbusDataResult {
-  value: number | string | boolean | null;
-  formattedValue: string | null;
-  lastReadTime: Date | null;
-  isLoading: boolean;
-  error: Error | null;
-  refetch: () => Promise<void>;
-}
-
-/**
- * Hook to read Modbus register data
- */
-const useModbusData = (options: UseModbusDataOptions): UseModbusDataResult => {
-  const { deviceId, register, interval = 30000, enabled = true } = options;
-  
-  const [value, setValue] = useState<number | string | boolean | null>(null);
-  const [formattedValue, setFormattedValue] = useState<string | null>(null);
-  const [lastReadTime, setLastReadTime] = useState<Date | null>(null);
+export const useModbusData = ({
+  deviceId,
+  register,
+  pollingInterval = 5000,
+  enabled = true
+}: UseModbusDataParams) => {
+  const [value, setValue] = useState<string | number | boolean>('');
+  const [formattedValue, setFormattedValue] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<Error | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-  const readModbusRegister = useCallback(async () => {
-    if (!deviceId || !register || isLoading || !enabled) return;
-    
+  const fetchData = async () => {
+    if (!deviceId || !register) {
+      return;
+    }
+
     setIsLoading(true);
+    setError(null);
+
     try {
-      const result = await readRegister(deviceId, register);
+      // Handle both ModbusRegister object and direct address number
+      const registerAddress = typeof register === 'number' 
+        ? register 
+        : register.register_address;
+        
+      const result = await readRegister(deviceId, registerAddress);
       
-      if (!result.success) {
-        throw new Error('Failed to read register');
+      if (result.success) {
+        // Handle array result (multiple registers)
+        if (Array.isArray(result.value)) {
+          setValue(result.value[0]);
+        } else if (result.value !== undefined) {
+          setValue(result.value);
+        }
+        
+        setFormattedValue(result.formattedValue || String(result.value));
+        setLastUpdated(new Date());
+      } else {
+        setError(result.error || 'Unknown error');
       }
-      
-      setValue(result.value);
-      setFormattedValue(result.formattedValue || String(result.value));
-      setLastReadTime(new Date(result.timestamp));
-      setError(null);
-    } catch (err: any) {
-      setError(err instanceof Error ? err : new Error(err?.message || 'Failed to read register'));
-      console.error('Error reading Modbus register:', err);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to read register');
     } finally {
       setIsLoading(false);
     }
-  }, [deviceId, register, isLoading, enabled]);
+  };
 
-  // Read register on mount and when dependencies change
   useEffect(() => {
-    if (deviceId && register && enabled) {
-      readModbusRegister();
-    }
-  }, [deviceId, register, readModbusRegister, enabled]);
+    if (!enabled) return;
 
-  // Set up regular polling if interval is provided
-  useEffect(() => {
-    if (!interval || interval <= 0 || !enabled) return;
+    fetchData();
     
-    const timerId = setInterval(() => {
-      readModbusRegister();
-    }, interval);
+    const intervalId = setInterval(fetchData, pollingInterval);
     
     return () => {
-      clearInterval(timerId);
+      clearInterval(intervalId);
     };
-  }, [interval, readModbusRegister, enabled]);
+  }, [deviceId, register, pollingInterval, enabled]);
 
   return {
     value,
     formattedValue,
-    lastReadTime,
     isLoading,
     error,
-    refetch: readModbusRegister
+    lastUpdated,
+    refresh: fetchData
   };
 };
 

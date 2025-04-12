@@ -14,7 +14,7 @@ interface ModbusDeviceCardProps {
 const ModbusDeviceCard: React.FC<ModbusDeviceCardProps> = ({ device, onClick }) => {
   const { isOnline, isConnected } = useConnectionStatus({
     deviceId: device.id,
-    initialStatus: device.is_active || false
+    initialStatus: device.status === 'online'
   });
 
   const getStatusIcon = () => {

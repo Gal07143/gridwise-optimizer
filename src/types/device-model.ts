@@ -1,4 +1,3 @@
-
 export interface DeviceModel {
   id: string;
   name: string;
@@ -33,6 +32,9 @@ export interface DeviceModel {
   created_at?: string;
   updated_at?: string;
   firmware_versions?: string[];
+  // Add compatibility fields
+  model?: string;
+  supported?: boolean;
 }
 
 export interface DeviceModelListItem {

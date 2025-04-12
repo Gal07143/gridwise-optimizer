@@ -1,4 +1,3 @@
-
 // Extend the existing energy.ts file with SystemRecommendation type
 export type DeviceStatus = 'online' | 'offline' | 'maintenance' | 'error' | 'warning' | 'idle' | 'active' | 'charging' | 'discharging';
 
@@ -28,8 +27,8 @@ export interface EnergyReading {
   id?: string;
   device_id: string;
   timestamp: string;
-  value: number;
-  unit: string;
+  value?: number;
+  unit?: string;
   power?: number;
   energy?: number;
   voltage?: number;
@@ -37,6 +36,7 @@ export interface EnergyReading {
   temperature?: number;
   state_of_charge?: number;
   frequency?: number;
+  created_at?: string;
 }
 
 export interface Prediction {

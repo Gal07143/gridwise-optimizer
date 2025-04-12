@@ -13,6 +13,8 @@ export interface ModbusDevice {
   last_online?: string;
   last_updated?: string;
   status?: 'online' | 'offline' | 'error';
+  is_active?: boolean;
+  enabled?: boolean;
 }
 
 export interface ModbusRegister {
@@ -27,6 +29,7 @@ export interface ModbusRegister {
   unit?: string;
   description?: string;
   access?: 'read' | 'write' | 'read/write';
+  address?: number; // Adding this for compatibility
 }
 
 export interface ModbusRegisterMap {
@@ -63,30 +66,46 @@ export interface ModbusReadingResult {
   value: number | string | boolean;
   formattedValue: string;
   unit?: string;
-  timestamp: Date;
+  timestamp: Date | string;
   status: 'success' | 'error';
   error?: string;
+  success?: boolean;
+  address?: number;
 }
 
 export interface ModbusDeviceConfig {
+  id?: string;
   name: string;
   ip_address: string;
+  ip?: string; // For compatibility
   port: number;
   unit_id: number;
   protocol: 'tcp' | 'rtu';
   description?: string;
+  is_active?: boolean;
+  status?: string;
 }
 
 export interface ConnectionStatusOptions {
   deviceId: string;
   timeout?: number;
   autoReconnect?: boolean;
+  retryInterval?: number;
+  maxRetries?: number;
+  initialStatus?: boolean;
+  reconnectDelay?: number;
+  showToasts?: boolean;
 }
 
 export interface ConnectionStatusResult {
   isConnected: boolean;
+  isOnline?: boolean;
   error: Error | null;
   retryConnection?: () => Promise<void>;
   lastConnected?: Date;
   connectionAttempts?: number;
+  status?: 'connected' | 'connecting' | 'disconnected' | 'error' | 'ready';
+  message?: string;
+  connect?: () => Promise<void>;
+  disconnect?: () => Promise<void>;
 }

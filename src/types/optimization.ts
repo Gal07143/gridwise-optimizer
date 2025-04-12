@@ -1,6 +1,7 @@
 
 export type OptimizationObjective = "cost" | "self_consumption" | "carbon" | "peak_shaving";
 export type BatteryStrategy = "charge_from_solar" | "time_of_use" | "backup_only";
+export type OptimizationPriority = OptimizationObjective; // Add this for compatibility
 
 export interface OptimizationSettings {
   priority: OptimizationObjective;
@@ -12,6 +13,8 @@ export interface OptimizationSettings {
   energy_export_limit?: number;
   min_soc: number;  
   max_soc: number;
+  minBatterySoc?: number; // For compatibility
+  maxBatterySoc?: number; // For compatibility
   time_window_start: string;
   time_window_end: string;
   objective: OptimizationObjective;
@@ -22,7 +25,7 @@ export interface OptimizationSettings {
 
 export interface OptimizationResult {
   id: string;
-  site_id: string;
+  site_id?: string;
   timestamp: string;
   battery_power: number[];
   grid_power: number[];
@@ -33,4 +36,5 @@ export interface OptimizationResult {
   co2_reduction: number;
   self_consumption_rate: number;
   created_at: string;
+  schedule?: any;
 }
