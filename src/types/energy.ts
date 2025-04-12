@@ -1,4 +1,3 @@
-
 export type WeatherCondition = 'Clear' | 'Cloudy' | 'Rainy' | 'Sunny' | 'Partially cloudy' | 'Overcast' | 'Stormy';
 
 export interface WeatherForecast {
@@ -10,6 +9,7 @@ export interface WeatherForecast {
   precipitation?: number;
   humidity?: number;
   pressure?: number;
+  solar_irradiance?: number;
 }
 
 export interface EnergyReading {
