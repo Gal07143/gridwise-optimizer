@@ -1,3 +1,4 @@
+
 export type WeatherCondition = 'Clear' | 'Cloudy' | 'Rainy' | 'Sunny' | 'Partially cloudy' | 'Overcast' | 'Stormy';
 
 export interface WeatherForecast {
@@ -59,7 +60,8 @@ export type DeviceType =
   | 'hydro' 
   | 'home'
   | 'sensor'
-  | 'light';
+  | 'light'
+  | 'heat_pump';
 
 export type DeviceStatus = 
   | 'online' 
@@ -71,7 +73,8 @@ export type DeviceStatus =
   | 'active'
   | 'idle'
   | 'charging'
-  | 'discharging';
+  | 'discharging'
+  | 'curtailed';
 
 export interface EnergyDevice {
   id: string;
@@ -108,11 +111,12 @@ export interface Site {
   created_at?: string;
   updated_at?: string;
   owner_id?: string;
-  status?: string;
+  status?: 'active' | 'inactive' | 'maintenance';
   type?: string;
   image_url?: string;
   description?: string;
   address?: string;
+  contact_person?: string;
 }
 
 export interface TelemetryData {
@@ -149,6 +153,8 @@ export interface Alert {
   resolved_at?: string;
   device_id?: string;
   site_id?: string;
+  timestamp?: string;
+  acknowledged?: boolean;
 }
 
 export interface EnergyForecast {
@@ -162,6 +168,8 @@ export interface EnergyForecast {
   created_at: string;
   weather_condition?: string;
   temperature?: number;
+  generation_forecast?: number;
+  consumption_forecast?: number;
 }
 
 export interface Tariff {
@@ -222,4 +230,83 @@ export interface SystemRecommendation {
   estimated_savings?: number;
   roi_months?: number;
   created_at: string;
+  priority?: 'low' | 'medium' | 'high';
+  potential_savings?: string;
+  implementation_effort?: string;
+  confidence?: number;
+}
+
+export interface DeviceModel {
+  id: string;
+  name: string;
+  model_number: string;
+  manufacturer: string;
+  device_type: DeviceType;
+  capacity?: number;
+  power_rating?: number;
+  description?: string;
+  warranty?: string;
+  dimensions?: string;
+  images?: string[];
+  datasheets?: string[];
+  firmware_version?: string;
+  release_date?: string;
+  support_level?: 'full' | 'partial' | 'limited';
+}
+
+export interface GridSignal {
+  id: string;
+  timestamp: string;
+  signal_type: 'curtailment' | 'demand_response' | 'price_signal' | 'grid_congestion';
+  value: number;
+  unit: string;
+  valid_from: string;
+  valid_until: string;
+  source: string;
+  priority: 'low' | 'medium' | 'high' | 'critical';
+  affected_devices?: string[];
+  area_code?: string;
+  grid_operator?: string;
+}
+
+export interface Device {
+  id: string;
+  name: string;
+  type: string;
+  status: string;
+  location?: string;
+  capacity: number;
+  site_id?: string;
+  firmware?: string;
+  manufacturer?: string;
+  model?: string;
+}
+
+export interface HeatPumpSettings {
+  mode: 'auto' | 'heating' | 'cooling' | 'off';
+  target_temperature: number;
+  min_temperature: number;
+  max_temperature: number;
+  energy_priority: 'comfort' | 'efficiency' | 'balanced';
+  schedule: HeatPumpSchedule[];
+  boost_mode_enabled: boolean;
+  boost_duration_minutes: number;
+}
+
+export interface HeatPumpSchedule {
+  day: 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday' | 'weekday' | 'weekend';
+  start_time: string; // HH:MM format
+  end_time: string; // HH:MM format
+  target_temperature: number;
+}
+
+export interface EVChargingSettings {
+  charging_strategy: 'immediate' | 'scheduled' | 'dynamic' | 'smart';
+  min_soc: number; // Minimum state of charge
+  target_soc: number;
+  max_power: number;
+  ready_by_time: string; // HH:MM format
+  price_threshold: number; // Only charge when price is below this threshold
+  use_solar_surplus: boolean;
+  priority_over_home_battery: boolean;
 }
