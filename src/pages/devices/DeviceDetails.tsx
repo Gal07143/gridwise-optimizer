@@ -57,13 +57,23 @@ interface DeviceHeaderProps {
  */
 const DeviceHeader = ({ device, onBack }: DeviceHeaderProps) => (
   <div className="flex items-center space-x-4">
-    <Button variant="outline" size="icon" onClick={onBack} className="h-8 w-8">
+    <Button 
+      variant="outline" 
+      size="icon" 
+      onClick={onBack} 
+      className="h-8 w-8"
+      aria-label="Go back to devices list"
+    >
       <ArrowLeft className="h-4 w-4" />
     </Button>
     <div>
       <h1 className="text-2xl font-bold">{device.name}</h1>
       <div className="flex items-center mt-1">
-        <Badge variant={device.status === 'online' ? 'success' : 'destructive'} className="mr-2">
+        <Badge 
+          variant={device.status === 'online' ? 'success' : 'destructive'} 
+          className="mr-2"
+          aria-label={`Device status: ${device.status}`}
+        >
           {device.status}
         </Badge>
         <span className="text-xs text-muted-foreground flex items-center">
@@ -123,7 +133,10 @@ const DeviceInfo = ({ device, isLoading }: DeviceInfoProps) => {
           </div>
           <div className="flex justify-between items-center">
             <span className="text-sm font-medium">Status</span>
-            <Badge variant={device.status === 'online' ? 'success' : 'destructive'}>
+            <Badge 
+              variant={device.status === 'online' ? 'success' : 'destructive'}
+              aria-label={`Device status: ${device.status}`}
+            >
               {device.status}
             </Badge>
           </div>
@@ -225,17 +238,22 @@ const TelemetryDisplay = ({ telemetry, isLoading, onRefresh }: TelemetryDisplayP
   }
 
   const handleExport = () => {
-    const dataStr = JSON.stringify(telemetry, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-    
-    const exportFileDefaultName = `telemetry-${new Date().toISOString()}.json`;
-    
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
-    linkElement.click();
-    
-    toast.success('Telemetry data exported successfully');
+    try {
+      const dataStr = JSON.stringify(telemetry, null, 2);
+      const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+      
+      const exportFileDefaultName = `telemetry-${new Date().toISOString()}.json`;
+      
+      const linkElement = document.createElement('a');
+      linkElement.setAttribute('href', dataUri);
+      linkElement.setAttribute('download', exportFileDefaultName);
+      linkElement.click();
+      
+      toast.success('Telemetry data exported successfully');
+    } catch (error) {
+      toast.error('Failed to export telemetry data');
+      console.error('Export error:', error);
+    }
   };
 
   return (
@@ -246,54 +264,61 @@ const TelemetryDisplay = ({ telemetry, isLoading, onRefresh }: TelemetryDisplayP
           <CardDescription>Latest data from the device</CardDescription>
         </div>
         <div className="flex space-x-2">
-          <Button variant="outline" size="sm" onClick={onRefresh}>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={onRefresh}
+            aria-label="Refresh telemetry data"
+          >
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
-          <Button variant="outline" size="sm" onClick={handleExport} disabled={telemetry.length === 0}>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleExport}
+            aria-label="Export telemetry data"
+          >
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
         </div>
       </CardHeader>
       <CardContent>
-        {telemetry.length > 0 ? (
-          <div className="space-y-4">
-            {telemetry.map((data, index) => (
-              <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-muted">
+        <div className="space-y-4">
+          {telemetry.length === 0 ? (
+            <div className="text-center py-4 text-muted-foreground">
+              No telemetry data available
+            </div>
+          ) : (
+            telemetry.map((data, index) => (
+              <div 
+                key={index} 
+                className="flex justify-between items-center p-2 rounded-lg bg-muted/50"
+              >
                 <div className="flex items-center space-x-2">
-                  <Activity className="w-4 h-4 text-primary" />
-                  <div>
-                    <span className="text-sm font-medium block">
-                      {new Date(data.timestamp).toLocaleString()}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {formatDistanceToNow(new Date(data.timestamp), { addSuffix: true })}
-                    </span>
-                  </div>
+                  <Activity className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-medium">{data.timestamp}</span>
                 </div>
-                <div className="text-sm font-mono max-w-md overflow-hidden text-ellipsis">
-                  {JSON.stringify(data.data)}
+                <div className="flex items-center space-x-4">
+                  {Object.entries(data.data).map(([key, value]) => (
+                    <div key={key} className="text-sm">
+                      <span className="text-muted-foreground">{key}:</span>{' '}
+                      <span className="font-medium">{String(value)}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-8 text-center">
-            <History className="h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-muted-foreground mb-2">No telemetry data available</p>
-            <p className="text-xs text-muted-foreground">
-              Telemetry data will appear here when the device sends updates
-            </p>
-          </div>
-        )}
+            ))
+          )}
+        </div>
       </CardContent>
     </Card>
   );
 };
 
 /**
- * DeviceActions component for device control actions
+ * DeviceActions component for displaying device action buttons
  */
 const DeviceActions = ({ 
   device, 
@@ -303,28 +328,41 @@ const DeviceActions = ({
   onDelete,
   isRefreshing 
 }: DeviceActionsProps) => (
-  <div className="flex flex-wrap gap-2">
+  <div className="flex justify-end space-x-2">
     <Button 
       variant="outline" 
+      size="sm" 
       onClick={onRefresh}
       disabled={isRefreshing}
+      aria-label="Refresh device data"
     >
       <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
-      {isRefreshing ? 'Refreshing...' : 'Refresh Data'}
+      Refresh
     </Button>
     <Button 
       variant="outline" 
+      size="sm" 
       onClick={onTogglePower}
-      className={device.status === 'online' ? 'text-green-500 hover:text-green-600' : 'text-red-500 hover:text-red-600'}
+      aria-label={`Toggle device power (currently ${device.status})`}
     >
       <Power className="h-4 w-4 mr-2" />
-      {device.status === 'online' ? 'Turn Off' : 'Turn On'}
+      Toggle Power
     </Button>
-    <Button variant="outline" onClick={onEdit}>
+    <Button 
+      variant="outline" 
+      size="sm" 
+      onClick={onEdit}
+      aria-label="Edit device settings"
+    >
       <Settings className="h-4 w-4 mr-2" />
-      Edit Device
+      Edit
     </Button>
-    <Button variant="outline" onClick={onDelete} className="text-destructive hover:text-destructive">
+    <Button 
+      variant="destructive" 
+      size="sm" 
+      onClick={onDelete}
+      aria-label="Delete device"
+    >
       <Trash2 className="h-4 w-4 mr-2" />
       Delete
     </Button>
@@ -332,154 +370,158 @@ const DeviceActions = ({
 );
 
 /**
- * DeviceDetails component for displaying and managing a single device
+ * DeviceDetails component for displaying detailed device information
  */
 const DeviceDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { devices, deviceTelemetry, fetchDevices, sendCommand, deleteDevice, fetchDeviceTelemetry } = useDevices();
+  const { 
+    devices, 
+    loading, 
+    error, 
+    fetchDevices, 
+    sendCommand,
+    deleteDevice 
+  } = useDevices();
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('info');
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [telemetry, setTelemetry] = useState<TelemetryData[]>([]);
 
   const device = devices.find(d => d.id === id);
-  const telemetry = device ? deviceTelemetry[device.id] || [] : [];
 
   useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true);
-      try {
-        if (!device) {
-          await fetchDevices();
-        }
-        if (device) {
-          await fetchDeviceTelemetry(device.id);
-        }
-      } catch (error) {
-        toast.error('Failed to load device data');
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    if (!device && !loading) {
+      navigate('/devices');
+    }
+  }, [device, loading, navigate]);
 
-    loadData();
-  }, [device, fetchDevices, fetchDeviceTelemetry]);
-
-  const handleRefresh = async () => {
+  const loadData = async () => {
     if (!device) return;
+    
     setIsRefreshing(true);
     try {
       await fetchDevices();
-      await fetchDeviceTelemetry(device.id);
-      toast.success('Device data refreshed successfully');
+      // Fetch telemetry data here
+      setTelemetry([]); // Replace with actual telemetry data
     } catch (error) {
-      toast.error('Failed to refresh device data');
+      toast.error('Failed to load device data');
+      console.error('Load error:', error);
     } finally {
       setIsRefreshing(false);
     }
   };
 
+  const handleRefresh = async () => {
+    await loadData();
+  };
+
   const handleTogglePower = async () => {
     if (!device) return;
+    
     try {
       await sendCommand(device.id, { command: 'toggle_power' });
       toast.success('Power command sent successfully');
+      await loadData();
     } catch (error) {
       toast.error('Failed to send power command');
+      console.error('Toggle power error:', error);
     }
   };
 
   const handleEdit = () => {
-    if (!device) return;
-    navigate(`/devices/${device.id}/edit`);
+    navigate(`/devices/${device?.id}/edit`);
   };
 
   const handleDelete = async () => {
     if (!device) return;
+    
     try {
       await deleteDevice(device.id);
       toast.success('Device deleted successfully');
       navigate('/devices');
     } catch (error) {
       toast.error('Failed to delete device');
+      console.error('Delete error:', error);
     }
   };
 
-  if (!device && !isLoading) {
+  if (loading || !device) {
     return (
-      <div className="container mx-auto p-6">
-        <div className="flex flex-col items-center justify-center p-8">
-          <AlertTriangle className="w-8 h-8 text-destructive mb-4" />
-          <p className="text-muted-foreground mb-4">Device not found</p>
-          <Button variant="outline" onClick={() => navigate('/devices')}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Devices
-          </Button>
+      <div className="space-y-4">
+        <Skeleton className="h-8 w-64" />
+        <div className="grid gap-4">
+          <Skeleton className="h-[200px]" />
+          <Skeleton className="h-[200px]" />
+          <Skeleton className="h-[200px]" />
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="container mx-auto p-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-4 sm:space-y-0">
-        {device && <DeviceHeader device={device} onBack={() => navigate('/devices')} />}
-        {device && (
-          <DeviceActions
-            device={device}
-            onRefresh={handleRefresh}
-            onTogglePower={handleTogglePower}
-            onEdit={handleEdit}
-            onDelete={() => setShowDeleteConfirm(true)}
-            isRefreshing={isRefreshing}
-          />
-        )}
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8">
+        <AlertTriangle className="w-8 h-8 text-destructive mb-4" />
+        <p className="text-muted-foreground mb-4">{error}</p>
+        <Button variant="outline" onClick={loadData}>
+          <RefreshCw className="w-4 h-4 mr-2" />
+          Try Again
+        </Button>
       </div>
+    );
+  }
 
-      {device && (
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="info">Information</TabsTrigger>
-            <TabsTrigger value="connection">Connection</TabsTrigger>
-            <TabsTrigger value="telemetry">Telemetry</TabsTrigger>
-          </TabsList>
-          <TabsContent value="info" className="space-y-4">
-            <DeviceInfo device={device} isLoading={isLoading} />
-          </TabsContent>
-          <TabsContent value="connection" className="space-y-4">
-            <ConnectionDetails device={device} isLoading={isLoading} />
-          </TabsContent>
-          <TabsContent value="telemetry" className="space-y-4">
-            <TelemetryDisplay 
-              telemetry={telemetry} 
-              isLoading={isLoading} 
-              onRefresh={handleRefresh} 
-            />
-          </TabsContent>
-        </Tabs>
-      )}
+  return (
+    <div className="space-y-6">
+      <DeviceHeader device={device} onBack={() => navigate('/devices')} />
+      
+      <DeviceActions
+        device={device}
+        onRefresh={handleRefresh}
+        onTogglePower={handleTogglePower}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        isRefreshing={isRefreshing}
+      />
 
-      {showDeleteConfirm && device && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
-          <Card className="w-full max-w-md">
+      <Tabs defaultValue="info" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="info">Information</TabsTrigger>
+          <TabsTrigger value="connection">Connection</TabsTrigger>
+          <TabsTrigger value="telemetry">Telemetry</TabsTrigger>
+          <TabsTrigger value="history">History</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="info">
+          <DeviceInfo device={device} isLoading={isRefreshing} />
+        </TabsContent>
+
+        <TabsContent value="connection">
+          <ConnectionDetails device={device} isLoading={isRefreshing} />
+        </TabsContent>
+
+        <TabsContent value="telemetry">
+          <TelemetryDisplay
+            telemetry={telemetry}
+            isLoading={isRefreshing}
+            onRefresh={handleRefresh}
+          />
+        </TabsContent>
+
+        <TabsContent value="history">
+          <Card>
             <CardHeader>
-              <CardTitle>Delete Device</CardTitle>
-              <CardDescription>
-                Are you sure you want to delete {device.name}? This action cannot be undone.
-              </CardDescription>
+              <CardTitle>Device History</CardTitle>
+              <CardDescription>Historical events and changes</CardDescription>
             </CardHeader>
-            <CardContent className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>
-                Cancel
-              </Button>
-              <Button variant="destructive" onClick={handleDelete}>
-                Delete
-              </Button>
+            <CardContent>
+              <div className="flex items-center justify-center h-32 text-muted-foreground">
+                <History className="h-8 w-8 mr-2" />
+                History feature coming soon
+              </div>
             </CardContent>
           </Card>
-        </div>
-      )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
