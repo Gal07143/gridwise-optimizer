@@ -33,16 +33,27 @@ export const useDeviceForm = () => {
     try {
       console.log("Creating device with data:", deviceData);
       
+      // Create device data without the last_updated field
+      const { 
+        name,
+        type,
+        status,
+        location,
+        capacity,
+        firmware,
+        description,
+        site_id
+      } = deviceData;
+      
       const newDevice = await createDevice({
-        name: deviceData.name,
-        type: deviceData.type,
-        status: deviceData.status,
-        location: deviceData.location || null,
-        capacity: deviceData.capacity,
-        firmware: deviceData.firmware || null,
-        description: deviceData.description || null,
-        site_id: deviceData.site_id || null,
-        last_updated: new Date().toISOString() // Use last_updated instead of updated_at
+        name,
+        type,
+        status, 
+        location: location || null,
+        capacity,
+        firmware: firmware || null,
+        description: description || null,
+        site_id: site_id || null,
       });
       
       if (newDevice) {

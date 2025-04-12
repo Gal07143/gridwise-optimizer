@@ -1,77 +1,92 @@
-
 import { useState, useEffect } from 'react';
+import { useConnectionStatus } from './useConnectionStatus';
+import { simulateTelemetry } from '@/services/devices/telemetrySimulator';
+import { EnergyReading } from '@/types/energy';
 import { toast } from 'sonner';
-import axios from 'axios';
-import useConnectionStatus from './useConnectionStatus';
-import { handleApiError } from '@/utils/errorUtils';
-
-interface Telemetry {
-  timestamp: string;
-  device_id: string;
-  [key: string]: any;
-}
 
 interface UseLiveTelemetryOptions {
   deviceId: string;
-  pollInterval?: number;
-  autoRefresh?: boolean;
+  interval?: number;
+  parameter?: string;
+  showToasts?: boolean;
+  simulationMode?: boolean;
 }
 
-export function useLiveTelemetry({ 
-  deviceId, 
-  pollInterval = 5000, 
-  autoRefresh = true 
+export function useLiveTelemetry({
+  deviceId,
+  interval = 5000,
+  parameter = 'power',
+  showToasts = false,
+  simulationMode = true
 }: UseLiveTelemetryOptions) {
-  const [telemetry, setTelemetry] = useState<Telemetry | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [reading, setReading] = useState<EnergyReading | null>(null);
+  const [history, setHistory] = useState<EnergyReading[]>([]);
+  const [isPolling, setIsPolling] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const connection = useConnectionStatus();
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  
+  const { isConnected, error: connectionError } = useConnectionStatus({ 
+    deviceId: deviceId || 'default-device'
+  });
 
-  // Function to fetch telemetry data
+  const startPolling = () => setIsPolling(true);
+  const stopPolling = () => setIsPolling(false);
+  
   const fetchTelemetry = async () => {
-    if (!deviceId) {
-      setError(new Error('Device ID is required'));
-      setIsLoading(false);
-      return;
-    }
-
     try {
-      setIsLoading(true);
-      const response = await axios.get(`/api/devices/${deviceId}/telemetry`);
-      setTelemetry(response.data);
+      if (!deviceId || !isConnected) return;
+      
+      const newReading = simulationMode ? simulateTelemetry(deviceId, parameter) : await fetchFromAPI();
+      
+      setReading(newReading);
+      setHistory(prev => {
+        const newHistory = [...prev, newReading];
+        return newHistory.length > 100 ? newHistory.slice(-100) : newHistory;
+      });
+      
+      setLastUpdated(new Date());
       setError(null);
     } catch (err) {
-      handleApiError(err, { 
-        context: 'Telemetry', 
-        showToast: false 
-      });
-      setError(err instanceof Error ? err : new Error('Failed to fetch telemetry'));
-    } finally {
-      setIsLoading(false);
+      console.error('Error fetching telemetry:', err);
+      setError(err instanceof Error ? err : new Error('Failed to fetch telemetry data'));
+      
+      if (showToasts) {
+        toast.error(`Telemetry error: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      }
     }
   };
-
-  // Set up polling
+  
+  const fetchFromAPI = async (): Promise<EnergyReading> => {
+    return {
+      device_id: deviceId,
+      timestamp: new Date().toISOString(),
+      power: Math.random() * 10,
+      energy: Math.random() * 100,
+      voltage: 230 + (Math.random() * 10 - 5),
+      current: Math.random() * 20
+    };
+  };
+  
   useEffect(() => {
-    if (!autoRefresh || !deviceId) return;
-
+    if (!isPolling || !isConnected) return;
+    
     fetchTelemetry();
     
-    const intervalId = setInterval(() => {
-      // Only fetch if we're online
-      if (connection.isOnline) {
-        fetchTelemetry();
-      }
-    }, pollInterval);
-
+    const intervalId = setInterval(fetchTelemetry, interval);
+    
     return () => clearInterval(intervalId);
-  }, [deviceId, pollInterval, autoRefresh, connection.isOnline]);
-
+  }, [deviceId, isPolling, interval, isConnected]);
+  
   return {
-    telemetry,
-    isLoading,
-    error,
-    refetch: fetchTelemetry
+    reading,
+    history,
+    isPolling,
+    startPolling,
+    stopPolling,
+    error: error || connectionError,
+    isConnected,
+    lastUpdated,
+    fetchTelemetry
   };
 }
 

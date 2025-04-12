@@ -55,11 +55,11 @@ export const useForecast = () => {
 
     try {
       const [energyData, weatherData] = await Promise.all([
-        getEnergyForecasts(),
-        getWeatherForecast()
+        getEnergyForecasts('default'),
+        getWeatherForecast('default')
       ]);
       
-      setEnergyForecast(energyData);
+      setEnergyForecast(energyData as unknown as EnergyForecast[]);
       setWeatherForecast(weatherData);
       setLastUpdated(new Date().toISOString());
       setIsUsingLocalData(true); // We're using mock data for now
@@ -74,16 +74,16 @@ export const useForecast = () => {
       
       // Calculate metrics
       const totalGen = energyData.reduce((sum, item) => 
-        sum + (item.generation_forecast || item.forecasted_production || 0), 0);
+        sum + (item.generation_forecast || (item as any).forecasted_production || 0), 0);
       
       const totalCons = energyData.reduce((sum, item) => 
-        sum + (item.consumption_forecast || item.forecasted_consumption || 0), 0);
+        sum + (item.consumption_forecast || (item as any).forecasted_consumption || 0), 0);
       
       const peakGen = Math.max(...energyData.map(item => 
-        item.generation_forecast || item.forecasted_production || 0));
+        item.generation_forecast || (item as any).forecasted_production || 0));
       
       const peakCons = Math.max(...energyData.map(item => 
-        item.consumption_forecast || item.forecasted_consumption || 0));
+        item.consumption_forecast || (item as any).forecasted_consumption || 0));
       
       const netEnergy = totalGen - totalCons;
       const selfConsumptionRate = totalGen > 0 ? 

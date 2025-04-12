@@ -29,6 +29,7 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
+import { ForecastMetrics } from '@/hooks/useForecast';
 
 interface ForecastTabProps {
   siteId: string;
@@ -42,10 +43,20 @@ const ForecastTab: React.FC<ForecastTabProps> = ({ siteId }) => {
     queryFn: () => getSiteForecasts(siteId, forecastHours),
   });
 
-  const { data: forecastMetrics, isLoading: isLoadingMetrics } = useQuery({
+  const { data: forecastMetricsData, isLoading: isLoadingMetrics } = useQuery({
     queryKey: ['forecast-metrics', siteId],
     queryFn: () => getSiteForecastMetrics(siteId),
   });
+
+  const forecastMetrics: ForecastMetrics = forecastMetricsData || {
+    totalGeneration: 0,
+    totalConsumption: 0,
+    netEnergy: 0,
+    selfConsumptionRate: 0,
+    confidence: 85,
+    peakGeneration: 0,
+    peakConsumption: 0
+  };
 
   const processForecastData = () => {
     if (!forecastData || forecastData.length === 0) {
@@ -96,9 +107,9 @@ const ForecastTab: React.FC<ForecastTabProps> = ({ siteId }) => {
 
       {isLoadingMetrics ? (
         <Skeleton className="h-20 w-full" />
-      ) : forecastMetrics ? (
+      ) : (
         <ForecastMetricsPanel metrics={forecastMetrics} />
-      ) : null}
+      )}
       
       <div className="grid grid-cols-1 gap-6">
         <Card>

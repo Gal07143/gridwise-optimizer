@@ -1,77 +1,75 @@
 
-import { WeatherForecast, ForecastDataPoint, ForecastMetrics } from '@/types/forecast';
-import { EnergyForecast } from '@/types/energy';
+import { EnergyForecast } from '@/types/energy-forecast';
+import { WeatherForecast } from '@/types/forecast';
+import { generateMockForecasts, generateWeatherForecasts } from './sampleGenerator';
+import { toast } from 'sonner';
 
-// Get detailed weather forecast by site ID
-export const getWeatherForecast = async (siteId: string): Promise<WeatherForecast[]> => {
-  // In a real app, this would fetch from an API
-  const now = new Date();
-  const forecasts: WeatherForecast[] = [];
-  
-  // Generate 24 hours of forecast data
-  for (let i = 0; i < 24; i++) {
-    const timestamp = new Date(now.getTime() + i * 60 * 60 * 1000);
-    const hour = timestamp.getHours();
+// Fetch energy forecasts (solar and consumption)
+export async function getEnergyForecasts(siteId: string = 'site-1'): Promise<EnergyForecast[]> {
+  try {
+    console.log(`Fetching energy forecasts for site ${siteId}`);
     
-    // Simulate day/night pattern for temperature and irradiance
-    const isDaytime = hour >= 6 && hour <= 18;
-    const temperature = isDaytime ? 
-      20 + Math.sin((hour - 6) * Math.PI / 12) * 8 : // Day: 12-28°C curve
-      12 + Math.sin((hour - 18) * Math.PI / 12) * 4; // Night: 8-16°C curve
+    // In a real app, this would be an API call
+    // For now we'll simulate with mock data
+    const mockForecasts = generateMockForecasts(siteId, 48);
     
-    const irradiance = isDaytime ? 
-      Math.sin((hour - 6) * Math.PI / 12) * 800 : // Peak at noon
-      0; // No solar irradiance at night
-    
-    forecasts.push({
-      site_id: siteId,
-      timestamp: timestamp.toISOString(),
-      temperature: Math.round(temperature * 10) / 10,
-      humidity: Math.floor(50 + Math.random() * 30),
-      wind_speed: Math.floor(5 + Math.random() * 15),
-      cloud_cover: Math.floor(Math.random() * 100),
-      precipitation: Math.random() * 0.3,
-      weather_condition: isDaytime ? 'partly_cloudy' : 'clear',
-      solar_irradiance: Math.max(0, Math.round(irradiance))
-    });
+    return mockForecasts;
+  } catch (error) {
+    console.error('Error fetching energy forecasts:', error);
+    toast.error('Failed to load energy forecasts');
+    return [];
   }
-  
-  return forecasts;
-};
+}
 
-// Alternative name for getWeatherForecast for backward compatibility
-export const fetchWeatherForecast = getWeatherForecast;
-
-// Get energy forecasts (production, consumption, etc.)
-export const getEnergyForecasts = async (siteId: string): Promise<EnergyForecast[]> => {
-  // In a real app, this would fetch from an API
-  const now = new Date();
-  const forecasts: EnergyForecast[] = [];
-  
-  // Generate 24 hours of forecast data
-  for (let i = 0; i < 24; i++) {
-    const timestamp = new Date(now.getTime() + i * 60 * 60 * 1000);
-    const hour = timestamp.getHours();
+// Fetch weather forecasts
+export async function getWeatherForecast(siteId: string = 'site-1'): Promise<WeatherForecast[]> {
+  try {
+    console.log(`Fetching weather forecast for site ${siteId}`);
     
-    // Simulate day/night pattern
-    const isDaytime = hour >= 6 && hour <= 18;
+    // Mock weather data
+    const weatherForecasts = generateWeatherForecasts(siteId, 24);
     
-    // Simulated production (solar)
-    const production = isDaytime ? 
-      Math.sin((hour - 6) * Math.PI / 12) * 10 : // Peak at noon
-      0; // No production at night
-    
-    // Simulated consumption
-    const consumption = 2 + Math.sin((hour) * Math.PI / 12) * 3; // Higher in evening
-    
-    forecasts.push({
-      site_id: siteId,
-      timestamp: timestamp.toISOString(),
-      forecasted_production: Math.round(production * 10) / 10,
-      forecasted_consumption: Math.round(consumption * 10) / 10,
-      confidence: 0.8 - (i / 24 * 0.4), // Confidence decreases over time
-    });
+    return weatherForecasts;
+  } catch (error) {
+    console.error('Error fetching weather forecast:', error);
+    toast.error('Failed to load weather forecast');
+    return [];
   }
-  
-  return forecasts;
-};
+}
+
+// Get forecast for a specific day
+export async function getDailyForecast(siteId: string, date: string): Promise<EnergyForecast[]> {
+  try {
+    console.log(`Fetching forecast for site ${siteId} on ${date}`);
+    
+    // Mock data for specific day
+    const mockForecasts = generateMockForecasts(siteId, 24).map(forecast => {
+      // Adjust the timestamp to match the requested date
+      const forecastDate = new Date(date);
+      const forecastTime = new Date(forecast.forecast_time);
+      forecastDate.setHours(forecastTime.getHours(), forecastTime.getMinutes());
+      
+      return {
+        ...forecast,
+        forecast_time: forecastDate.toISOString(),
+        timestamp: forecastDate.toISOString()
+      };
+    });
+    
+    return mockForecasts;
+  } catch (error) {
+    console.error(`Error fetching forecast for ${date}:`, error);
+    toast.error('Failed to load daily forecast');
+    return [];
+  }
+}
+
+// Enable forecasted_production and forecasted_consumption for compatibility
+export function enrichForecast(forecast: EnergyForecast): EnergyForecast {
+  return {
+    ...forecast,
+    forecasted_production: forecast.generation_forecast,
+    forecasted_consumption: forecast.consumption_forecast,
+    weather_condition: forecast.weather_condition || 'Clear'
+  };
+}

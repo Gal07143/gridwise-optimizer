@@ -41,11 +41,11 @@ export const useEnergyOptimization = (siteId: string) => {
     peak_shaving_enabled: true,
     min_soc: 20,
     max_soc: 90,
-    minBatterySoc: 20,
-    maxBatterySoc: 90,
-    priority_device_ids: [],
     time_window_start: '00:00',
     time_window_end: '23:59',
+    objective: 'cost',
+    site_id: siteId,
+    priority_device_ids: [],
     evTargetSoc: 80
   });
 
@@ -59,10 +59,8 @@ export const useEnergyOptimization = (siteId: string) => {
       const updated = { ...prev, ...settings };
       
       // Keep aliases in sync
-      if (settings.min_soc !== undefined) updated.minBatterySoc = settings.min_soc;
-      if (settings.max_soc !== undefined) updated.maxBatterySoc = settings.max_soc;
-      if (settings.minBatterySoc !== undefined) updated.min_soc = settings.minBatterySoc;
-      if (settings.maxBatterySoc !== undefined) updated.max_soc = settings.maxBatterySoc;
+      if (settings.min_soc !== undefined) updated.min_soc = settings.min_soc;
+      if (settings.max_soc !== undefined) updated.max_soc = settings.max_soc;
       if (settings.priority !== undefined) updated.objective = settings.priority;
       if (settings.objective !== undefined) updated.priority = settings.objective;
       

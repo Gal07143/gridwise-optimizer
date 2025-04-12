@@ -24,15 +24,17 @@ const LiveTelemetryChart: React.FC<LiveTelemetryChartProps> = ({
   const { data: telemetry, isLoading, error, refetch } = useTelemetryHistory({
     deviceId,
     parameter: metric,
-    timeRange: '24h', // Adding the missing required parameter
-    interval: '1h'    // Adding missing required parameter
+    timeRange: '24h',
+    interval: '1h'
+  }, {
+    enabled: true
   });
   
   // Format the data for the chart
   const formattedData = telemetry ? formatTelemetryData(telemetry) : [];
 
   // Convert error to proper Error object if it's a string
-  const errorObject = error ? (error instanceof Error ? error : new Error(String(error))) : undefined;
+  const errorObject = error ? (typeof error === 'string' ? new Error(error) : error) : undefined;
   
   return (
     <TelemetryChart

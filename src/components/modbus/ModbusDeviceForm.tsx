@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -8,7 +7,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { ModbusDevice, ModbusDeviceConfig } from '@/types/modbus';
+import { ModbusDevice } from '@/types/modbus';
 import { createModbusDevice, updateModbusDevice } from '@/services/modbus/modbusDeviceService';
 import { Textarea } from '@/components/ui/textarea';
 
@@ -20,14 +19,15 @@ const modbusDeviceSchema = z.object({
   unit_id: z.coerce.number().int().min(0).max(255).default(1),
   protocol: z.string().default('TCP'),
   description: z.string().optional(),
-  is_active: z.boolean().default(true)
+  is_active: z.boolean().default(true),
+  status: z.enum(['online', 'offline', 'error']).optional().default('offline')
 });
 
 type ModbusDeviceFormValues = z.infer<typeof modbusDeviceSchema>;
 
 interface ModbusDeviceFormProps {
-  initialData?: Partial<ModbusDeviceConfig>;
-  onSuccess?: (device: ModbusDeviceConfig) => void;
+  initialData?: Partial<ModbusDevice>;
+  onSuccess?: (device: ModbusDevice) => void;
 }
 
 const ModbusDeviceForm: React.FC<ModbusDeviceFormProps> = ({ 
@@ -41,12 +41,13 @@ const ModbusDeviceForm: React.FC<ModbusDeviceFormProps> = ({
     resolver: zodResolver(modbusDeviceSchema),
     defaultValues: {
       name: initialData?.name || '',
-      ip: initialData?.ip || '',
+      ip: initialData?.ip_address || initialData?.ip || '',
       port: initialData?.port || 502,
       unit_id: initialData?.unit_id || 1,
       protocol: initialData?.protocol || 'TCP',
       description: initialData?.description || '',
-      is_active: initialData?.is_active ?? true
+      is_active: initialData?.is_active ?? true,
+      status: (initialData?.status as any) || 'offline'
     }
   });
   
@@ -54,13 +55,19 @@ const ModbusDeviceForm: React.FC<ModbusDeviceFormProps> = ({
     try {
       setIsSubmitting(true);
       
+      const deviceData = {
+        ...values,
+        ip_address: values.ip,
+        status: values.status || 'offline'
+      };
+      
       let result;
       if (initialData?.id) {
         // Update existing device
-        result = await updateModbusDevice(initialData.id, values as ModbusDeviceConfig);
+        result = await updateModbusDevice(initialData.id, deviceData as any);
       } else {
         // Create new device
-        result = await createModbusDevice(values as ModbusDeviceConfig);
+        result = await createModbusDevice(deviceData as any);
       }
       
       if (result && onSuccess) {

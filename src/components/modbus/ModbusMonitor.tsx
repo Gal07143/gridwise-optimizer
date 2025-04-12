@@ -1,255 +1,164 @@
-import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import useModbusData from '@/hooks/useModbusData';
-import { AlertCircle, RefreshCw } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import useConnectionStatus from '@/hooks/useConnectionStatus';
-import { getModbusRegistersByDeviceId } from '@/services/modbus/modbusRegisterService';
-import { ModbusDevice, ModbusRegister } from '@/types/modbus';
 
-// Mock service function since we don't have the actual implementation
-const getModbusDeviceById = async (id: string): Promise<ModbusDevice> => {
-  // Simulate API call
-  return {
-    id,
-    name: `Device ${id}`,
-    ip_address: '192.168.1.100',
-    port: 502,
-    unit_id: 1,
-    protocol: 'tcp',
-    status: 'online'
-  };
-};
+import React, { useState } from 'react';
+import { useModbusData } from '@/hooks/useModbusData';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { ArrowPathIcon, PauseIcon, PlayIcon } from 'lucide-react'; // Adjust import based on your icon library
+import { ModbusRegister } from '@/types/modbus';
 
 interface ModbusMonitorProps {
   deviceId: string;
+  register: ModbusRegister;
+  label?: string;
+  refreshInterval?: number;
+  showRefreshButton?: boolean;
+  showPauseButton?: boolean;
+  showTimestamp?: boolean;
+  showRawValue?: boolean;
+  showUnit?: boolean;
+  showTabs?: boolean;
 }
 
-const ModbusMonitor: React.FC<ModbusMonitorProps> = ({ deviceId }) => {
-  const [device, setDevice] = useState<ModbusDevice | null>(null);
-  const [registers, setRegisters] = useState<ModbusRegister[]>([]);
-  const [selectedRegister, setSelectedRegister] = useState<ModbusRegister | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  
-  const connectionStatus = useConnectionStatus({
-    deviceId
-  });
-  
-  const modbusData = useModbusData({
+const ModbusMonitor: React.FC<ModbusMonitorProps> = ({
+  deviceId,
+  register,
+  label,
+  refreshInterval = 5000,
+  showRefreshButton = true,
+  showPauseButton = true,
+  showTimestamp = true,
+  showRawValue = false,
+  showUnit = true,
+  showTabs = true,
+}) => {
+  const [isPaused, setIsPaused] = useState(false);
+  const [activeTab, setActiveTab] = useState<'value' | 'chart' | 'history'>('value');
+  const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
+
+  const {
+    value,
+    formattedValue,
+    isLoading,
+    error,
+    lastUpdated,
+    refresh
+  } = useModbusData({
     deviceId,
-    register: selectedRegister?.register_address || 0
+    register,
+    pollingInterval: refreshInterval,
+    enabled: !isPaused,
   });
-  
-  // Fetch device and register information
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const deviceData = await getModbusDeviceById(deviceId);
-        if (!deviceData) {
-          throw new Error('Device not found');
-        }
-        setDevice(deviceData);
-        
-        const registerData = await getModbusRegistersByDeviceId(deviceId);
-        setRegisters(registerData);
-        
-        if (registerData.length > 0) {
-          setSelectedRegister(registerData[0]);
-        }
-      } catch (err) {
-        console.error('Error loading Modbus monitor data:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load device data');
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchData();
-  }, [deviceId]);
-  
-  const handleRefreshData = () => {
-    if (selectedRegister) {
-      modbusData.refetch();
-    }
+
+  const handleRefresh = async () => {
+    setLastRefreshed(new Date());
+    await refresh();
   };
-  
-  const handleSelectRegister = (register: ModbusRegister) => {
-    setSelectedRegister(register);
+
+  const togglePause = () => {
+    setIsPaused(!isPaused);
   };
-  
-  if (loading) {
-    return (
-      <Card className="w-full">
-        <CardContent className="py-10">
-          <div className="flex justify-center items-center">
-            <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
-            <span className="ml-2">Loading Modbus device...</span>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-  
-  if (error || !device) {
-    return (
-      <Card className="w-full border-destructive/20">
-        <CardContent className="py-10">
-          <div className="flex justify-center items-center text-destructive">
-            <AlertCircle className="h-6 w-6 mr-2" />
-            <span>{error || 'Device not found'}</span>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-  
+
+  const displayValue = showRawValue ? value : formattedValue;
+  const displayUnit = showUnit && register.unit ? register.unit : '';
+  const registerName = label || register.register_name || `Register ${register.register_address}`;
+
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <div className="flex justify-between items-center">
-          <div>
-            <CardTitle>Modbus Monitor: {device.name}</CardTitle>
-            <CardDescription>IP: {device.ip_address || device.ip}:{device.port} - Unit ID: {device.unit_id}</CardDescription>
-          </div>
-          <div>
-            <Badge variant={connectionStatus.isConnected ? "success" : "destructive"}>
-              {connectionStatus.isConnected ? 'Connected' : 'Disconnected'}
-            </Badge>
-          </div>
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="text-md font-medium">{registerName}</CardTitle>
+        <div className="flex items-center space-x-2">
+          {showPauseButton && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={togglePause}
+              title={isPaused ? 'Resume' : 'Pause'}
+            >
+              {isPaused ? <PlayIcon className="h-4 w-4" /> : <PauseIcon className="h-4 w-4" />}
+            </Button>
+          )}
+          {showRefreshButton && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleRefresh}
+              disabled={isLoading}
+              title="Refresh"
+            >
+              <ArrowPathIcon className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+            </Button>
+          )}
         </div>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="registers">
-          <TabsList className="mb-4">
-            <TabsTrigger value="registers">Registers</TabsTrigger>
-            <TabsTrigger value="realtime">Real-time Data</TabsTrigger>
-            <TabsTrigger value="config">Configuration</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="registers">
-            <div className="grid md:grid-cols-5 gap-4">
-              <div className="md:col-span-2 border rounded-md overflow-hidden">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Address</TableHead>
-                      <TableHead>Name</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {registers.map(register => (
-                      <TableRow 
-                        key={register.id}
-                        className={selectedRegister?.id === register.id ? 'bg-muted' : ''}
-                        onClick={() => handleSelectRegister(register)}
-                      >
-                        <TableCell>{register.register_address}</TableCell>
-                        <TableCell>{register.register_name}</TableCell>
-                      </TableRow>
-                    ))}
-                    {registers.length === 0 && (
-                      <TableRow>
-                        <TableCell colSpan={2} className="h-24 text-center">
-                          No registers configured
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-              
-              <div className="md:col-span-3 border rounded-md p-4">
-                {selectedRegister ? (
-                  <div>
-                    <h3 className="font-medium text-lg mb-4">{selectedRegister.register_name}</h3>
-                    <div className="space-y-4">
-                      <div>
-                        <p className="text-muted-foreground text-sm">Register Address</p>
-                        <p className="font-mono">{selectedRegister.register_address}</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground text-sm">Length</p>
-                        <p className="font-mono">{selectedRegister.register_length}</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground text-sm">Scaling Factor</p>
-                        <p className="font-mono">{selectedRegister.scaleFactor}</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground text-sm">Current Value</p>
-                        <div className="flex items-center">
-                          <p className="font-mono text-xl">{modbusData.isLoading ? '...' : modbusData.value}</p>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="ml-2" 
-                            onClick={handleRefreshData}
-                            disabled={modbusData.isLoading}
-                          >
-                            <RefreshCw className={`h-4 w-4 ${modbusData.isLoading ? 'animate-spin' : ''}`} />
-                          </Button>
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          Last updated: {modbusData.lastReadTime?.toLocaleTimeString()}
-                        </p>
-                      </div>
-                    </div>
+        {showTabs ? (
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
+            <TabsList className="mb-2">
+              <TabsTrigger value="value">Current Value</TabsTrigger>
+              <TabsTrigger value="chart">Chart</TabsTrigger>
+              <TabsTrigger value="history">History</TabsTrigger>
+            </TabsList>
+            <TabsContent value="value">
+              <div className="py-2">
+                {error ? (
+                  <div className="text-destructive">Error: {error}</div>
+                ) : isLoading ? (
+                  <div className="animate-pulse flex space-x-2">
+                    <div className="h-6 bg-muted rounded w-12"></div>
+                    <div className="h-6 bg-muted rounded w-8"></div>
                   </div>
                 ) : (
-                  <div className="h-full flex items-center justify-center">
-                    <p className="text-muted-foreground">Select a register to view details</p>
+                  <div className="flex items-baseline">
+                    <span className="text-2xl font-semibold">{displayValue}</span>
+                    {displayUnit && (
+                      <span className="text-sm text-muted-foreground ml-1">{displayUnit}</span>
+                    )}
+                  </div>
+                )}
+                {showTimestamp && lastUpdated && (
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Last updated: {lastUpdated.toLocaleTimeString()}
                   </div>
                 )}
               </div>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="realtime">
-            <div className="text-center py-10">
-              <p className="text-muted-foreground">Real-time monitoring features coming soon</p>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="config">
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-lg font-medium">Connection Settings</h3>
-                <div className="grid md:grid-cols-2 gap-4 mt-2">
-                  <div className="space-y-1">
-                    <p className="text-muted-foreground text-sm">Protocol</p>
-                    <p>{device.protocol}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-muted-foreground text-sm">IP Address</p>
-                    <p>{device.ip_address || device.ip}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-muted-foreground text-sm">Port</p>
-                    <p>{device.port}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-muted-foreground text-sm">Unit ID</p>
-                    <p>{device.unit_id}</p>
-                  </div>
-                </div>
+            </TabsContent>
+            <TabsContent value="chart">
+              <div className="h-40 bg-muted/20 flex items-center justify-center">
+                <span className="text-sm text-muted-foreground">Chart view not implemented</span>
               </div>
-            </div>
-          </TabsContent>
-        </Tabs>
+            </TabsContent>
+            <TabsContent value="history">
+              <div className="h-40 bg-muted/20 flex items-center justify-center">
+                <span className="text-sm text-muted-foreground">History view not implemented</span>
+              </div>
+            </TabsContent>
+          </Tabs>
+        ) : (
+          <div className="py-2">
+            {error ? (
+              <div className="text-destructive">Error: {error}</div>
+            ) : isLoading ? (
+              <div className="animate-pulse flex space-x-2">
+                <div className="h-6 bg-muted rounded w-12"></div>
+                <div className="h-6 bg-muted rounded w-8"></div>
+              </div>
+            ) : (
+              <div className="flex items-baseline">
+                <span className="text-2xl font-semibold">{displayValue}</span>
+                {displayUnit && (
+                  <span className="text-sm text-muted-foreground ml-1">{displayUnit}</span>
+                )}
+              </div>
+            )}
+            {showTimestamp && lastUpdated && (
+              <div className="text-xs text-muted-foreground mt-1">
+                Last updated: {lastUpdated.toLocaleTimeString()}
+              </div>
+            )}
+          </div>
+        )}
       </CardContent>
-      <CardFooter>
-        <div className="w-full flex justify-end">
-          <Button variant="outline" onClick={() => connectionStatus.retryConnection?.()}>
-            Reconnect
-          </Button>
-        </div>
-      </CardFooter>
     </Card>
   );
 };

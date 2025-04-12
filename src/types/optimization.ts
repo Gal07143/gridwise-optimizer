@@ -20,7 +20,7 @@ export interface OptimizationSettings {
   objective: OptimizationObjective;
   site_id: string;
   priority_device_ids: string[];
-  evTargetSoc: number;
+  evTargetSoc?: number;
 }
 
 export interface OptimizationResult {

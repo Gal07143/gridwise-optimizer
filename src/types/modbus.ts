@@ -66,9 +66,9 @@ export interface ModbusReadingResult {
   value: number | string | boolean;
   formattedValue: string;
   unit?: string;
-  timestamp: Date | string;
+  timestamp: string | Date;
   status: 'success' | 'error';
-  error?: string;
+  error?: string | Error;
   success?: boolean;
   address?: number;
 }
@@ -83,7 +83,7 @@ export interface ModbusDeviceConfig {
   protocol: 'tcp' | 'rtu';
   description?: string;
   is_active?: boolean;
-  status?: string;
+  status?: 'online' | 'offline' | 'error';
 }
 
 export interface ConnectionStatusOptions {

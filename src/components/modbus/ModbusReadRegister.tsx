@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,19 +30,21 @@ const ModbusReadRegister: React.FC<ModbusReadRegisterProps> = ({ deviceId, onRea
         value: Math.floor(Math.random() * 1000),
         formattedValue: `${Math.floor(Math.random() * 1000)}`,
         timestamp: new Date().toISOString(),
+        status: 'success',
         success: true
       };
 
       setReadResult(result);
       if (onRead) onRead(result);
-    } catch (error) {
+    } catch (err) {
       const errorResult: ModbusReadingResult = {
         address: registerAddress,
         value: 0,
         formattedValue: "",
         timestamp: new Date().toISOString(),
+        status: 'error',
         success: false,
-        error: error instanceof Error ? error : new Error(String(error))
+        error: err instanceof Error ? err.message : String(err)
       };
       
       setReadResult(errorResult);
@@ -121,16 +122,16 @@ const ModbusReadRegister: React.FC<ModbusReadRegisterProps> = ({ deviceId, onRea
                 <div className="font-mono">{readResult.address}</div>
                 
                 <div>Value:</div>
-                <div className="font-mono">{readResult.success ? readResult.formattedValue : 'Error'}</div>
+                <div className="font-mono">{readResult.status === 'success' ? readResult.formattedValue : 'Error'}</div>
                 
                 <div>Timestamp:</div>
                 <div className="font-mono">{new Date(readResult.timestamp).toLocaleTimeString()}</div>
                 
-                {!readResult.success && readResult.error && (
+                {readResult.status === 'error' && readResult.error && (
                   <>
                     <div>Error:</div>
                     <div className="font-mono text-destructive">
-                      {readResult.error instanceof Error ? readResult.error.message : String(readResult.error)}
+                      {typeof readResult.error === 'string' ? readResult.error : 'Unknown error'}
                     </div>
                   </>
                 )}
