@@ -140,6 +140,13 @@ export type Database = {
             foreignKeyName: "alerts_device_id_fkey"
             columns: ["device_id"]
             isOneToOne: false
+            referencedRelation: "device_efficiency_overview"
+            referencedColumns: ["device_id"]
+          },
+          {
+            foreignKeyName: "alerts_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
             referencedRelation: "device_view"
             referencedColumns: ["id"]
           },
@@ -420,6 +427,42 @@ export type Database = {
         }
         Relationships: []
       }
+      dashboard_data: {
+        Row: {
+          battery: Json | null
+          created_at: string
+          energy_flow: Json | null
+          grid_supply: Json | null
+          household: Json | null
+          id: string
+          pv_production: Json | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          battery?: Json | null
+          created_at?: string
+          energy_flow?: Json | null
+          grid_supply?: Json | null
+          household?: Json | null
+          id?: string
+          pv_production?: Json | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          battery?: Json | null
+          created_at?: string
+          energy_flow?: Json | null
+          grid_supply?: Json | null
+          household?: Json | null
+          id?: string
+          pv_production?: Json | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       device_data: {
         Row: {
           current: number | null
@@ -452,6 +495,13 @@ export type Database = {
           voltage?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "device_data_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "device_efficiency_overview"
+            referencedColumns: ["device_id"]
+          },
           {
             foreignKeyName: "device_data_device_id_fkey"
             columns: ["device_id"]
@@ -686,6 +736,76 @@ export type Database = {
         }
         Relationships: []
       }
+      energy_analytics: {
+        Row: {
+          avg_consumption: number | null
+          carbon_footprint: number | null
+          cost_estimate: number | null
+          created_at: string | null
+          device_id: string | null
+          efficiency_score: number | null
+          id: string
+          interval_type: string
+          min_demand: number | null
+          peak_demand: number | null
+          timestamp: string
+          total_energy: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          avg_consumption?: number | null
+          carbon_footprint?: number | null
+          cost_estimate?: number | null
+          created_at?: string | null
+          device_id?: string | null
+          efficiency_score?: number | null
+          id?: string
+          interval_type: string
+          min_demand?: number | null
+          peak_demand?: number | null
+          timestamp?: string
+          total_energy?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          avg_consumption?: number | null
+          carbon_footprint?: number | null
+          cost_estimate?: number | null
+          created_at?: string | null
+          device_id?: string | null
+          efficiency_score?: number | null
+          id?: string
+          interval_type?: string
+          min_demand?: number | null
+          peak_demand?: number | null
+          timestamp?: string
+          total_energy?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "energy_analytics_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "device_efficiency_overview"
+            referencedColumns: ["device_id"]
+          },
+          {
+            foreignKeyName: "energy_analytics_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "device_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "energy_analytics_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       energy_baselines: {
         Row: {
           baseline_value: number
@@ -720,6 +840,70 @@ export type Database = {
             columns: ["site_id"]
             isOneToOne: false
             referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      energy_efficiency_metrics: {
+        Row: {
+          cost_impact: number | null
+          created_at: string | null
+          device_id: string | null
+          efficiency_score: number
+          id: string
+          losses: number | null
+          power_factor: number | null
+          recommendations: Json | null
+          thd: number | null
+          timestamp: string
+          user_id: string | null
+        }
+        Insert: {
+          cost_impact?: number | null
+          created_at?: string | null
+          device_id?: string | null
+          efficiency_score: number
+          id?: string
+          losses?: number | null
+          power_factor?: number | null
+          recommendations?: Json | null
+          thd?: number | null
+          timestamp?: string
+          user_id?: string | null
+        }
+        Update: {
+          cost_impact?: number | null
+          created_at?: string | null
+          device_id?: string | null
+          efficiency_score?: number
+          id?: string
+          losses?: number | null
+          power_factor?: number | null
+          recommendations?: Json | null
+          thd?: number | null
+          timestamp?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "energy_efficiency_metrics_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "device_efficiency_overview"
+            referencedColumns: ["device_id"]
+          },
+          {
+            foreignKeyName: "energy_efficiency_metrics_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "device_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "energy_efficiency_metrics_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "devices"
             referencedColumns: ["id"]
           },
         ]
@@ -780,6 +964,48 @@ export type Database = {
           },
         ]
       }
+      energy_optimization_rules: {
+        Row: {
+          actions: Json
+          conditions: Json
+          created_at: string | null
+          description: string | null
+          device_type: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          priority: Database["public"]["Enums"]["priority_level"] | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          actions: Json
+          conditions: Json
+          created_at?: string | null
+          description?: string | null
+          device_type?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          priority?: Database["public"]["Enums"]["priority_level"] | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          actions?: Json
+          conditions?: Json
+          created_at?: string | null
+          description?: string | null
+          device_type?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          priority?: Database["public"]["Enums"]["priority_level"] | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       energy_predictions: {
         Row: {
           confidence: number | null
@@ -823,45 +1049,67 @@ export type Database = {
       }
       energy_readings: {
         Row: {
+          apparent_power: number | null
           created_at: string
           current: number | null
           device_id: string
           energy: number
           frequency: number | null
           id: string
+          phase_angle: number | null
           power: number
+          power_factor: number | null
+          reactive_power: number | null
           state_of_charge: number | null
           temperature: number | null
+          thd: number | null
           timestamp: string
           voltage: number | null
         }
         Insert: {
+          apparent_power?: number | null
           created_at?: string
           current?: number | null
           device_id: string
           energy: number
           frequency?: number | null
           id?: string
+          phase_angle?: number | null
           power: number
+          power_factor?: number | null
+          reactive_power?: number | null
           state_of_charge?: number | null
           temperature?: number | null
+          thd?: number | null
           timestamp?: string
           voltage?: number | null
         }
         Update: {
+          apparent_power?: number | null
           created_at?: string
           current?: number | null
           device_id?: string
           energy?: number
           frequency?: number | null
           id?: string
+          phase_angle?: number | null
           power?: number
+          power_factor?: number | null
+          reactive_power?: number | null
           state_of_charge?: number | null
           temperature?: number | null
+          thd?: number | null
           timestamp?: string
           voltage?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "energy_readings_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "device_efficiency_overview"
+            referencedColumns: ["device_id"]
+          },
           {
             foreignKeyName: "energy_readings_device_id_fkey"
             columns: ["device_id"]
@@ -905,6 +1153,13 @@ export type Database = {
             foreignKeyName: "energy_readings_daily_device_id_fkey"
             columns: ["device_id"]
             isOneToOne: false
+            referencedRelation: "device_efficiency_overview"
+            referencedColumns: ["device_id"]
+          },
+          {
+            foreignKeyName: "energy_readings_daily_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
             referencedRelation: "device_view"
             referencedColumns: ["id"]
           },
@@ -916,6 +1171,191 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      energy_recommendations: {
+        Row: {
+          created_at: string | null
+          description: string
+          device_id: string | null
+          id: string
+          implemented_at: string | null
+          potential_savings: number | null
+          priority: string | null
+          recommendation_type: string
+          status: string | null
+          timestamp: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          device_id?: string | null
+          id?: string
+          implemented_at?: string | null
+          potential_savings?: number | null
+          priority?: string | null
+          recommendation_type: string
+          status?: string | null
+          timestamp?: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          device_id?: string | null
+          id?: string
+          implemented_at?: string | null
+          potential_savings?: number | null
+          priority?: string | null
+          recommendation_type?: string
+          status?: string | null
+          timestamp?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "energy_recommendations_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "device_efficiency_overview"
+            referencedColumns: ["device_id"]
+          },
+          {
+            foreignKeyName: "energy_recommendations_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "device_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "energy_recommendations_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      energy_schedules: {
+        Row: {
+          created_at: string | null
+          days_of_week: string[] | null
+          device_id: string | null
+          end_time: string
+          id: string
+          is_active: boolean | null
+          max_power: number | null
+          name: string
+          priority: number | null
+          schedule_type: Database["public"]["Enums"]["device_operation_type"]
+          start_time: string
+          target_soc: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          days_of_week?: string[] | null
+          device_id?: string | null
+          end_time: string
+          id?: string
+          is_active?: boolean | null
+          max_power?: number | null
+          name: string
+          priority?: number | null
+          schedule_type: Database["public"]["Enums"]["device_operation_type"]
+          start_time: string
+          target_soc?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          days_of_week?: string[] | null
+          device_id?: string | null
+          end_time?: string
+          id?: string
+          is_active?: boolean | null
+          max_power?: number | null
+          name?: string
+          priority?: number | null
+          schedule_type?: Database["public"]["Enums"]["device_operation_type"]
+          start_time?: string
+          target_soc?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "energy_schedules_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "device_efficiency_overview"
+            referencedColumns: ["device_id"]
+          },
+          {
+            foreignKeyName: "energy_schedules_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "device_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "energy_schedules_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      energy_tariffs: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          off_peak_hours: Json | null
+          off_peak_rate: number
+          peak_hours: Json | null
+          peak_rate: number
+          shoulder_hours: Json | null
+          shoulder_rate: number | null
+          updated_at: string | null
+          valid_from: string
+          valid_to: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          off_peak_hours?: Json | null
+          off_peak_rate: number
+          peak_hours?: Json | null
+          peak_rate: number
+          shoulder_hours?: Json | null
+          shoulder_rate?: number | null
+          updated_at?: string | null
+          valid_from: string
+          valid_to?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          off_peak_hours?: Json | null
+          off_peak_rate?: number
+          peak_hours?: Json | null
+          peak_rate?: number
+          shoulder_hours?: Json | null
+          shoulder_rate?: number | null
+          updated_at?: string | null
+          valid_from?: string
+          valid_to?: string | null
+        }
+        Relationships: []
       }
       equipment: {
         Row: {
@@ -991,6 +1431,13 @@ export type Database = {
             foreignKeyName: "faults_device_id_fkey"
             columns: ["device_id"]
             isOneToOne: false
+            referencedRelation: "device_efficiency_overview"
+            referencedColumns: ["device_id"]
+          },
+          {
+            foreignKeyName: "faults_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
             referencedRelation: "device_view"
             referencedColumns: ["id"]
           },
@@ -1029,6 +1476,13 @@ export type Database = {
           triggered_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fdd_alarms_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "device_efficiency_overview"
+            referencedColumns: ["device_id"]
+          },
           {
             foreignKeyName: "fdd_alarms_device_id_fkey"
             columns: ["device_id"]
@@ -1170,6 +1624,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "maintenance_records_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "device_efficiency_overview"
+            referencedColumns: ["device_id"]
+          },
           {
             foreignKeyName: "maintenance_records_device_id_fkey"
             columns: ["device_id"]
@@ -1698,6 +2159,93 @@ export type Database = {
           },
         ]
       }
+      security_settings: {
+        Row: {
+          allowed_origins: string[] | null
+          audit_logging_enabled: boolean | null
+          created_at: string
+          encryption_algorithm: string | null
+          encryption_enabled: boolean | null
+          id: string
+          key_rotation: number | null
+          log_level: string | null
+          password_policy: Json | null
+          rate_limiting: boolean | null
+          retention_period: number | null
+          session_timeout: number | null
+          token_expiration: number | null
+          two_factor_enabled: boolean | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          allowed_origins?: string[] | null
+          audit_logging_enabled?: boolean | null
+          created_at?: string
+          encryption_algorithm?: string | null
+          encryption_enabled?: boolean | null
+          id?: string
+          key_rotation?: number | null
+          log_level?: string | null
+          password_policy?: Json | null
+          rate_limiting?: boolean | null
+          retention_period?: number | null
+          session_timeout?: number | null
+          token_expiration?: number | null
+          two_factor_enabled?: boolean | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          allowed_origins?: string[] | null
+          audit_logging_enabled?: boolean | null
+          created_at?: string
+          encryption_algorithm?: string | null
+          encryption_enabled?: boolean | null
+          id?: string
+          key_rotation?: number | null
+          log_level?: string | null
+          password_policy?: Json | null
+          rate_limiting?: boolean | null
+          retention_period?: number | null
+          session_timeout?: number | null
+          token_expiration?: number | null
+          two_factor_enabled?: boolean | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      settings: {
+        Row: {
+          category_description: string | null
+          category_id: string
+          category_name: string
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          category_description?: string | null
+          category_id: string
+          category_name: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          category_description?: string | null
+          category_id?: string
+          category_name?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       sites: {
         Row: {
           created_at: string
@@ -1849,6 +2397,13 @@ export type Database = {
           topic?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "telemetry_log_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "device_efficiency_overview"
+            referencedColumns: ["device_id"]
+          },
           {
             foreignKeyName: "telemetry_log_device_id_fkey"
             columns: ["device_id"]
@@ -2140,6 +2695,17 @@ export type Database = {
       }
     }
     Views: {
+      device_efficiency_overview: {
+        Row: {
+          avg_efficiency: number | null
+          device_id: string | null
+          device_name: string | null
+          device_status: Database["public"]["Enums"]["device_status"] | null
+          device_type: Database["public"]["Enums"]["device_type"] | null
+          last_reading: string | null
+        }
+        Relationships: []
+      }
       device_view: {
         Row: {
           capacity: number | null
@@ -2205,11 +2771,41 @@ export type Database = {
           },
         ]
       }
+      energy_consumption_patterns: {
+        Row: {
+          avg_efficiency_score: number | null
+          hour: string | null
+          reading_count: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      calculate_device_efficiency: {
+        Args: { device_id: string; start_time: string; end_time: string }
+        Returns: {
+          efficiency_score: number
+          energy_loss: number
+          recommendations: Json
+        }[]
+      }
       evaluate_fdd_expression: {
         Args: { expression: string; device_id: string }
         Returns: Json
+      }
+      generate_optimal_charging_schedule: {
+        Args: {
+          device_id: string
+          target_soc: number
+          target_time: string
+          max_power: number
+        }
+        Returns: {
+          start_time: string
+          end_time: string
+          power: number
+          estimated_cost: number
+        }[]
       }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
@@ -2222,6 +2818,14 @@ export type Database = {
       get_user_role: {
         Args: Record<PropertyKey, never> | { user_id: string }
         Returns: string
+      }
+      optimize_energy_cost: {
+        Args: { device_id: string; tariff_id: string; target_date: string }
+        Returns: {
+          hour_of_day: number
+          recommended_usage: number
+          potential_savings: number
+        }[]
       }
       rpc_evaluate_fdd_rules: {
         Args: Record<PropertyKey, never>
@@ -2240,8 +2844,10 @@ export type Database = {
         | "behavioral"
         | "maintenance"
       alert_type: "warning" | "critical" | "info"
+      device_operation_type: "charging" | "discharging" | "operation"
       device_status: "online" | "offline" | "maintenance" | "error"
       device_type: "solar" | "wind" | "battery" | "grid" | "load" | "ev_charger"
+      priority_level: "low" | "medium" | "high"
       theme_preference: "light" | "dark" | "system"
       user_role: "admin" | "operator" | "viewer"
     }
@@ -2367,8 +2973,10 @@ export const Constants = {
         "maintenance",
       ],
       alert_type: ["warning", "critical", "info"],
+      device_operation_type: ["charging", "discharging", "operation"],
       device_status: ["online", "offline", "maintenance", "error"],
       device_type: ["solar", "wind", "battery", "grid", "load", "ev_charger"],
+      priority_level: ["low", "medium", "high"],
       theme_preference: ["light", "dark", "system"],
       user_role: ["admin", "operator", "viewer"],
     },

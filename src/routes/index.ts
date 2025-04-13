@@ -1,6 +1,10 @@
 
-// Export the router directly from Routes.tsx
-import router from '../Routes';
+import { routes as config } from './config';
 
-export { router };
-export default router;
+// Export the routes configuration
+export const routes = config;
+
+// Export the main route for the application
+export const mainRoute = config[0];
+
+export * from './types';

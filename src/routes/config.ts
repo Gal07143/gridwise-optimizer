@@ -1,3 +1,4 @@
+
 import React, { lazy } from 'react'
 import { type RouteConfig } from '@/types/routes'
 import { DEVICE_CATEGORIES } from '@/types/devices'
@@ -341,6 +342,22 @@ export const routes: RouteConfig[] = [
     element: React.createElement(Layout),
     children: [
       {
+        // Add a root path that redirects to dashboard
+        path: '',
+        element: React.createElement(() => {
+          // Use React Router's navigate to redirect
+          const navigate = require('react-router-dom').useNavigate();
+          React.useEffect(() => {
+            navigate('/dashboard');
+          }, [navigate]);
+          return null;
+        }),
+        metadata: {
+          title: 'Home',
+          description: 'Home page with redirect to Dashboard'
+        }
+      },
+      {
         path: 'dashboard',
         element: React.createElement(Dashboard),
         metadata: {
@@ -363,4 +380,4 @@ export const routes: RouteConfig[] = [
       }
     ]
   }
-] 
+]
