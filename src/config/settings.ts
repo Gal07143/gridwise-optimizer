@@ -1,3 +1,4 @@
+
 import { SettingCategory } from '@/types/settings';
 import { 
   Book, 
@@ -13,6 +14,7 @@ import {
   User, 
   Zap
 } from 'lucide-react';
+import React from 'react';
 
 export const settingCategories: SettingCategory[] = [
   {
@@ -171,4 +173,4 @@ export const settingCategories: SettingCategory[] = [
       },
     ]
   },
-]; 
+];
