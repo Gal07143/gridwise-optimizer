@@ -1,4 +1,6 @@
+
 import React, { lazy } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { type RouteConfig } from '@/types/routes'
 import { DEVICE_CATEGORIES } from '@/types/devices'
 import { equipmentRoutes } from './equipment'
@@ -33,6 +35,15 @@ const GeneralSettings = lazy(() => import('@/pages/settings/GeneralSettings'))
 const DeviceSettings = lazy(() => import('@/pages/settings/DeviceSettings'))
 const UserSettings = lazy(() => import('@/pages/settings/UserSettings'))
 const SystemSettings = lazy(() => import('@/pages/settings/SystemSettings'))
+
+// Create a redirect component that uses React Router's useNavigate
+const RedirectToDashboard = () => {
+  const navigate = useNavigate();
+  React.useEffect(() => {
+    navigate('/dashboard');
+  }, [navigate]);
+  return null;
+};
 
 // Device management routes
 const deviceRoutes: RouteConfig[] = [
@@ -343,14 +354,7 @@ export const routes: RouteConfig[] = [
       {
         // Add a root path that redirects to dashboard
         path: '',
-        element: React.createElement(() => {
-          // Use React Router's navigate to redirect
-          const navigate = require('react-router-dom').useNavigate();
-          React.useEffect(() => {
-            navigate('/dashboard');
-          }, [navigate]);
-          return null;
-        }),
+        element: React.createElement(RedirectToDashboard),
         metadata: {
           title: 'Home',
           description: 'Home page with redirect to Dashboard'
