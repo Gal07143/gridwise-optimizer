@@ -1,66 +1,55 @@
 
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useBaseDeviceForm, DeviceFormState } from './useBaseDeviceForm';
+import { useBaseDeviceForm } from './useBaseDeviceForm';
 import { useQueryClient } from '@tanstack/react-query';
-import { EnergyDevice } from '@/types/energy';
 import { toast } from 'sonner';
 import { createDevice } from '@/services/devices/createDevice';
-import { validateDeviceData, formatValidationErrors, ValidationError } from '@/services/devices/mutations/deviceValidation';
+import { validateDeviceData, formatValidationErrors } from '@/services/devices/mutations/deviceValidation';
 
 export const useDeviceForm = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
-  
-  const validateDeviceForm = useCallback((data: DeviceFormState): boolean => {
-    const errors: ValidationError[] = validateDeviceData(data as Partial<EnergyDevice>);
+
+  const validateDeviceForm = useCallback((data: any) => {
+    const errors = validateDeviceData(data);
     const formattedErrors = formatValidationErrors(errors);
-    
     setValidationErrors(formattedErrors);
     return Object.keys(formattedErrors).length === 0;
   }, []);
-  
-  const handleCreateDevice = useCallback(async (deviceData: DeviceFormState) => {
+
+  const handleCreateDevice = useCallback(async (deviceData: any) => {
     if (!validateDeviceForm(deviceData)) {
       toast.error('Please fix the validation errors before saving');
       return null;
     }
-    
+
     setIsSaving(true);
-    
     try {
       console.log("Creating device with data:", deviceData);
       
       // Create device data without the last_updated field
-      const { 
-        name,
-        type,
-        status,
-        location,
-        capacity,
-        firmware,
-        description,
-        site_id
-      } = deviceData;
+      const { name, type, status, location, capacity, firmware, description, site_id } = deviceData;
       
       const newDevice = await createDevice({
         name,
         type,
-        status, 
+        status,
         location: location || null,
         capacity,
         firmware: firmware || null,
         description: description || null,
-        site_id: site_id || null,
+        site_id: site_id || null
       });
       
       if (newDevice) {
         toast.success('Device created successfully');
         // Invalidate and refetch devices
-        queryClient.invalidateQueries({ queryKey: ['devices'] });
-        
+        queryClient.invalidateQueries({
+          queryKey: ['devices']
+        });
         return newDevice;
       } else {
         toast.error('Failed to create device');
@@ -86,7 +75,7 @@ export const useDeviceForm = () => {
     validationErrors,
     validateDeviceForm,
     clearValidationError: (field: string) => {
-      setValidationErrors(prev => {
+      setValidationErrors((prev) => {
         const updated = { ...prev };
         delete updated[field];
         return updated;
