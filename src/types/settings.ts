@@ -1,4 +1,5 @@
-import { LucideIcon } from 'lucide-react';
+import { LucideIcon, LucideProps } from 'lucide-react';
+import { FunctionComponentElement } from 'react';
 
 export interface Setting {
   id: string;
@@ -11,7 +12,7 @@ export interface SettingCategory {
   id: string;
   name: string;
   description: string;
-  icon: React.ReactElement<LucideIcon>;
+  icon: FunctionComponentElement<LucideProps>;
   settings: Setting[];
 }
 
