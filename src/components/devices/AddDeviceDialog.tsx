@@ -15,7 +15,7 @@ interface AddDeviceDialogProps {
 export function AddDeviceDialog({ children }: AddDeviceDialogProps) {
   const [open, setOpen] = useState(false);
   const {
-    formValues,
+    device: formValues,
     handleInputChange,
     handleSelectChange,
     handleSubmit,
@@ -66,6 +66,27 @@ export function AddDeviceDialog({ children }: AddDeviceDialogProps) {
             </div>
 
             <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="location" className="text-right">
+                Location
+              </Label>
+              <Input
+                id="location"
+                name="location"
+                value={formValues.location}
+                onChange={handleInputChange}
+                className="col-span-3"
+                placeholder="Device location"
+                required
+                onFocus={() => clearValidationError('location')}
+              />
+              {validationErrors.location && (
+                <p className="col-span-3 col-start-2 text-sm text-red-500">
+                  {validationErrors.location}
+                </p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="type" className="text-right">
                 Type
               </Label>
@@ -80,8 +101,8 @@ export function AddDeviceDialog({ children }: AddDeviceDialogProps) {
                 <SelectContent>
                   <SelectItem value="inverter">Inverter</SelectItem>
                   <SelectItem value="battery">Battery</SelectItem>
-                  <SelectItem value="solar_panel">Solar Panel</SelectItem>
-                  <SelectItem value="smart_meter">Smart Meter</SelectItem>
+                  <SelectItem value="solar">Solar Panel</SelectItem>
+                  <SelectItem value="meter">Smart Meter</SelectItem>
                   <SelectItem value="ev_charger">EV Charger</SelectItem>
                   <SelectItem value="controller">Controller</SelectItem>
                   <SelectItem value="sensor">Sensor</SelectItem>
@@ -138,6 +159,21 @@ export function AddDeviceDialog({ children }: AddDeviceDialogProps) {
                   {validationErrors.capacity}
                 </p>
               )}
+            </div>
+
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="firmware" className="text-right">
+                Firmware
+              </Label>
+              <Input
+                id="firmware"
+                name="firmware"
+                value={formValues.firmware || ''}
+                onChange={handleInputChange}
+                className="col-span-3"
+                placeholder="Firmware version"
+                onFocus={() => clearValidationError('firmware')}
+              />
             </div>
 
             <div className="grid grid-cols-4 items-center gap-4">
