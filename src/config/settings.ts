@@ -21,7 +21,7 @@ export const settingCategories: SettingCategory[] = [
     id: 'system',
     name: 'System Settings',
     description: 'General system configuration',
-    icon: <Cog className="h-8 w-8 text-primary" />,
+    icon: React.createElement(Cog, { className: "h-8 w-8 text-primary" }),
     settings: [
       { 
         id: 'general', 
@@ -40,14 +40,14 @@ export const settingCategories: SettingCategory[] = [
         name: 'Backup & Restore', 
         description: 'System backup options',
         path: '/settings/backup'
-      },
+      }
     ]
   },
   {
     id: 'users',
     name: 'User Management',
     description: 'User accounts and access control',
-    icon: <User className="h-8 w-8 text-primary" />,
+    icon: React.createElement(User, { className: "h-8 w-8 text-primary" }),
     settings: [
       { 
         id: 'accounts', 
@@ -66,14 +66,14 @@ export const settingCategories: SettingCategory[] = [
         name: 'Permissions', 
         description: 'Fine-grained access control',
         path: '/settings/permissions'
-      },
+      }
     ]
   },
   {
     id: 'security',
     name: 'Security & Compliance',
     description: 'System security settings',
-    icon: <Shield className="h-8 w-8 text-primary" />,
+    icon: React.createElement(Shield, { className: "h-8 w-8 text-primary" }),
     settings: [
       { 
         id: 'auth', 
@@ -92,14 +92,14 @@ export const settingCategories: SettingCategory[] = [
         name: 'Audit Logging', 
         description: 'System activity tracking',
         path: '/settings/audit'
-      },
+      }
     ]
   },
   {
     id: 'integration',
     name: 'Integrations',
     description: 'External system connections',
-    icon: <Globe className="h-8 w-8 text-primary" />,
+    icon: React.createElement(Globe, { className: "h-8 w-8 text-primary" }),
     settings: [
       { 
         id: 'api', 
@@ -118,14 +118,14 @@ export const settingCategories: SettingCategory[] = [
         name: 'Notification Services', 
         description: 'Email, SMS, push notifications',
         path: '/settings/notifications'
-      },
+      }
     ]
   },
   {
     id: 'data',
     name: 'Data Management',
     description: 'Data storage and processing',
-    icon: <Database className="h-8 w-8 text-primary" />,
+    icon: React.createElement(Database, { className: "h-8 w-8 text-primary" }),
     settings: [
       { 
         id: 'storage', 
@@ -144,14 +144,14 @@ export const settingCategories: SettingCategory[] = [
         name: 'Processing Settings', 
         description: 'Configure data processing',
         path: '/settings/processing'
-      },
+      }
     ]
   },
   {
     id: 'energy',
     name: 'Energy Settings',
     description: 'Energy system specific configuration',
-    icon: <Zap className="h-8 w-8 text-primary" />,
+    icon: React.createElement(Zap, { className: "h-8 w-8 text-primary" }),
     settings: [
       { 
         id: 'thresholds', 
@@ -170,7 +170,7 @@ export const settingCategories: SettingCategory[] = [
         name: 'Energy Tariffs', 
         description: 'Pricing and billing configuration',
         path: '/settings/tariffs'
-      },
+      }
     ]
-  },
+  }
 ];
