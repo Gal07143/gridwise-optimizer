@@ -1,4 +1,3 @@
-
 import React, { lazy } from 'react'
 import { type RouteConfig } from '@/types/routes'
 import { DEVICE_CATEGORIES } from '@/types/devices'
@@ -381,3 +380,9 @@ export const routes: RouteConfig[] = [
     ]
   }
 ]
+
+// Export the main route for the application
+export const mainRoute = routes[0];
+
+// Export the type for consistency
+export type { RouteConfig } from '@/types/routes';
