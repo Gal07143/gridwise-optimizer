@@ -1,6 +1,7 @@
+
 import React from 'react';
 import { Route, Routes } from 'react-router-dom';
-import { mainRoute } from './routes/config';
+import { routes } from './routes';
 import { RouteConfig } from './routes/types';
 
 /**
@@ -25,7 +26,7 @@ const renderRoute = (config: RouteConfig): React.ReactNode => {
  * and include metadata for documentation and SEO
  */
 const AppRoutes: React.FC = () => {
-  return <Routes>{renderRoute(mainRoute)}</Routes>;
+  return <Routes>{routes.map(renderRoute)}</Routes>;
 };
 
 export default AppRoutes;

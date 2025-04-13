@@ -1,16 +1,14 @@
-import React from 'react'
+
+import { ReactNode } from 'react';
 
 export interface RouteMetadata {
-  title: string
-  description: string
+  title: string;
+  description: string;
 }
 
 export interface RouteConfig {
-  path: string
-  element: React.ReactNode
-  children?: RouteConfig[]
-  metadata?: {
-    title: string
-    description: string
-  }
-} 
+  path: string;
+  element: ReactNode;
+  children?: RouteConfig[];
+  metadata?: RouteMetadata;
+}

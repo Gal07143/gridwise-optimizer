@@ -6,16 +6,8 @@ import { AppStoreProvider } from '@/store';
 import { DeviceProvider } from '@/contexts/DeviceContext';
 import MicrogridProvider from '@/components/microgrid/MicrogridProvider';
 import { EnergyFlowProvider } from '@/components/dashboard/energy-flow/EnergyFlowContext';
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { BrowserRouter, RouterProvider } from 'react-router-dom';
 import AppRoutes from '@/Routes';
-
-// Create a browser router using the route configuration
-const router = createBrowserRouter([
-  {
-    path: '*',
-    element: <AppRoutes />,
-  },
-]);
 
 /**
  * Main application component that sets up providers and routing
@@ -28,8 +20,7 @@ const router = createBrowserRouter([
  * 5. MicrogridProvider - For microgrid data and operations
  * 6. EnergyFlowProvider - For energy flow visualization and calculations
  * 
- * The RouterProvider is placed last to ensure all context providers
- * are available to the routed components.
+ * BrowserRouter is placed last to establish routing context
  */
 const App: React.FC = () => {
   return (
@@ -39,7 +30,9 @@ const App: React.FC = () => {
           <DeviceProvider>
             <MicrogridProvider>
               <EnergyFlowProvider>
-                <RouterProvider router={router} />
+                <BrowserRouter>
+                  <AppRoutes />
+                </BrowserRouter>
               </EnergyFlowProvider>
             </MicrogridProvider>
           </DeviceProvider>
