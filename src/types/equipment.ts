@@ -252,26 +252,23 @@ export interface DowntimeRecord {
 export interface EnergyBenchmark {
   id: string;
   equipmentId: string;
-  timestamp: Date;
-  benchmarkType: 'industry' | 'similar_equipment' | 'historical' | 'theoretical';
+  metric: string;
   value: number;
   unit: string;
+  industryAverage: number;
   percentile: number;
-  comparison: 'above' | 'below' | 'equal';
-  difference: number;
+  period: string;
+  timestamp: Date;
 }
 
 export interface AutomatedReport {
   id: string;
-  name: string;
-  description?: string;
-  schedule: 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'annually';
+  equipmentId: string;
+  reportType: string;
+  schedule: string;
   lastGenerated: Date;
-  nextGeneration: Date;
-  recipients: string[];
-  metrics: string[];
-  format: 'pdf' | 'excel' | 'csv' | 'html';
-  status: 'active' | 'inactive' | 'error';
+  status: string;
+  parameters: Record<string, any>;
 }
 
 export interface EquipmentGroup {
@@ -302,8 +299,8 @@ export interface EnergySaving {
   savedEnergy: number;
   savedCost: number;
   savedEmissions: number;
-  verificationMethod: 'retrofit' | 'behavioral' | 'operational' | 'other';
-  status: 'proposed' | 'implemented' | 'verified' | 'rejected';
+  verificationMethod: string;
+  status: string;
 }
 
 // 15. Integration with Building Management Systems
@@ -311,14 +308,14 @@ export interface BMSIntegration {
   id: string;
   equipmentId: string;
   bmsType: string;
-  connectionStatus: 'connected' | 'disconnected' | 'error';
+  connectionStatus: string;
   lastSync: Date;
-  syncFrequency: number; // In minutes
+  syncFrequency: string;
   parameters: BMSParameter[];
   credentials?: {
-    endpoint: string;
     username: string;
-    // Password is not stored in plain text
+    password: string;
+    apiKey?: string;
   };
 }
 
@@ -326,11 +323,7 @@ export interface BMSParameter {
   id: string;
   name: string;
   bmsId: string;
-  dataType: 'boolean' | 'number' | 'string';
-  unit?: string;
-  mapping: {
-    source: string;
-    destination: string;
-    transformation?: string;
-  };
+  dataType: string;
+  unit: string;
+  mapping: Record<string, any>;
 } 
