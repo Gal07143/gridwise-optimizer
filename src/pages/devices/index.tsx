@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { AddDeviceDialog } from '@/components/devices/AddDeviceDialog';
 
-export default function DevicesPage() {
+function DevicesPage() {
   const {
     devices,
     loading,
@@ -57,7 +57,6 @@ export default function DevicesPage() {
       </div>
 
       <div className="grid grid-cols-12 gap-4">
-        {/* Device List */}
         <div className="col-span-3">
           <DeviceList
             devices={devices}
@@ -66,7 +65,6 @@ export default function DevicesPage() {
           />
         </div>
 
-        {/* Device Details and Controls */}
         <div className="col-span-9">
           {selectedDevice ? (
             <div className="space-y-4">
@@ -82,4 +80,8 @@ export default function DevicesPage() {
       </div>
     </div>
   );
-} 
+}
+
+// Make sure to export the component as both default and named export
+export { DevicesPage };
+export default DevicesPage; 

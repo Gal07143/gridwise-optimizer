@@ -8,7 +8,10 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
-    hmr: true, // Make sure HMR (Hot Module Replacement) is enabled
+    hmr: {
+      timeout: 5000,
+      overlay: true
+    },
   },
   plugins: [
     react({
@@ -30,6 +33,9 @@ export default defineConfig(({ mode }) => ({
   },
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-router-dom', 'framer-motion'],
+    esbuildOptions: {
+      target: 'esnext'
+    }
   },
   // Increase build performance and manage memory usage
   build: {
@@ -54,5 +60,6 @@ export default defineConfig(({ mode }) => ({
   preview: {
     port: 8080,
     host: true,
+    cors: true
   }
 }));
