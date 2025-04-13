@@ -231,4 +231,6 @@ export const PredictiveMaintenance: React.FC<PredictiveMaintenanceProps> = ({
       </Card>
     </div>
   );
-}; 
+};
+
+export default PredictiveMaintenance; 

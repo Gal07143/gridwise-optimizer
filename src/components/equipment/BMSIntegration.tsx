@@ -228,4 +228,6 @@ export const BMSIntegration: React.FC<BMSIntegrationProps> = ({ equipmentId }) =
       </Card>
     </div>
   );
-}; 
+};
+
+export default BMSIntegration; 

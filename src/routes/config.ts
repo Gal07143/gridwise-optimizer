@@ -1,6 +1,7 @@
 import React, { lazy } from 'react'
 import { type RouteConfig } from '@/types/routes'
 import { DEVICE_CATEGORIES } from '@/types/devices'
+import { equipmentRoutes } from './equipment'
 
 // Lazy load components for better performance
 const Dashboard = lazy(() => import('@/pages/Dashboard'))
@@ -340,14 +341,15 @@ export const routes: RouteConfig[] = [
     element: React.createElement(Layout),
     children: [
       {
-        path: '',
+        path: 'dashboard',
         element: React.createElement(Dashboard),
         metadata: {
           title: 'Dashboard',
-          description: 'System dashboard'
+          description: 'System overview and key metrics'
         }
       },
       ...deviceRoutes,
+      ...equipmentRoutes,
       ...analyticsRoutes,
       ...energyRoutes,
       ...settingsRoutes,

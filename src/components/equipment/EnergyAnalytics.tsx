@@ -203,4 +203,6 @@ export const EnergyAnalytics: React.FC<EnergyAnalyticsProps> = ({ equipmentId })
       </Tabs>
     </div>
   );
-}; 
+};
+
+export default EnergyAnalytics; 

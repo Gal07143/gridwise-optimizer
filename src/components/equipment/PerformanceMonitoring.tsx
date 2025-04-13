@@ -296,4 +296,6 @@ export const PerformanceMonitoring: React.FC<PerformanceMonitoringProps> = ({
       </Card>
     </div>
   );
-}; 
+};
+
+export default PerformanceMonitoring; 

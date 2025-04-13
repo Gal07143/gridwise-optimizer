@@ -22,7 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { EquipmentGroup } from '@/types/equipment';
 import { equipmentService } from '@/services/equipmentService';
 
-export function EquipmentGroups() {
+export const EquipmentGroups: React.FC = () => {
   const [groups, setGroups] = useState<EquipmentGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -211,4 +211,6 @@ export function EquipmentGroups() {
       </div>
     </div>
   );
-} 
+};
+
+export default EquipmentGroups; 
