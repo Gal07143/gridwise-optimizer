@@ -14,14 +14,13 @@ import {
   User, 
   Zap
 } from 'lucide-react';
-import React from 'react';
 
 export const settingCategories: SettingCategory[] = [
   {
     id: 'system',
     name: 'System Settings',
     description: 'General system configuration',
-    icon: React.createElement(Cog, { className: "h-8 w-8 text-primary" }),
+    icon: <Cog className="h-8 w-8 text-primary" />,
     settings: [
       { 
         id: 'general', 
@@ -47,7 +46,7 @@ export const settingCategories: SettingCategory[] = [
     id: 'users',
     name: 'User Management',
     description: 'User accounts and access control',
-    icon: React.createElement(User, { className: "h-8 w-8 text-primary" }),
+    icon: <User className="h-8 w-8 text-primary" />,
     settings: [
       { 
         id: 'accounts', 
@@ -73,7 +72,7 @@ export const settingCategories: SettingCategory[] = [
     id: 'security',
     name: 'Security & Compliance',
     description: 'System security settings',
-    icon: React.createElement(Shield, { className: "h-8 w-8 text-primary" }),
+    icon: <Shield className="h-8 w-8 text-primary" />,
     settings: [
       { 
         id: 'auth', 
@@ -99,7 +98,7 @@ export const settingCategories: SettingCategory[] = [
     id: 'integration',
     name: 'Integrations',
     description: 'External system connections',
-    icon: React.createElement(Globe, { className: "h-8 w-8 text-primary" }),
+    icon: <Globe className="h-8 w-8 text-primary" />,
     settings: [
       { 
         id: 'api', 
@@ -125,7 +124,7 @@ export const settingCategories: SettingCategory[] = [
     id: 'data',
     name: 'Data Management',
     description: 'Data storage and processing',
-    icon: React.createElement(Database, { className: "h-8 w-8 text-primary" }),
+    icon: <Database className="h-8 w-8 text-primary" />,
     settings: [
       { 
         id: 'storage', 
@@ -151,7 +150,7 @@ export const settingCategories: SettingCategory[] = [
     id: 'energy',
     name: 'Energy Settings',
     description: 'Energy system specific configuration',
-    icon: React.createElement(Zap, { className: "h-8 w-8 text-primary" }),
+    icon: <Zap className="h-8 w-8 text-primary" />,
     settings: [
       { 
         id: 'thresholds', 

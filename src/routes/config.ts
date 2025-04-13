@@ -96,123 +96,123 @@ const deviceRoutes: RouteConfig[] = [
       // Individual device type routes
       {
         path: 'solar',
-        element: React.createElement(DeviceDetails, { type: 'solar' }),
+        element: React.createElement(DeviceDetails),
         children: [
-          { path: '', element: React.createElement(DeviceDetails, { type: 'solar', view: 'list' }) },
-          { path: 'new', element: React.createElement(DeviceDetails, { type: 'solar', view: 'new' }) },
-          { path: ':id', element: React.createElement(DeviceDetails, { type: 'solar', view: 'details' }) },
-          { path: ':id/edit', element: React.createElement(DeviceDetails, { type: 'solar', view: 'edit' }) },
-          { path: ':id/control', element: React.createElement(DeviceDetails, { type: 'solar', view: 'control' }) }
+          { path: '', element: React.createElement(DeviceDetails, { view: 'list' }) },
+          { path: 'new', element: React.createElement(DeviceDetails, { view: 'new' }) },
+          { path: ':id', element: React.createElement(DeviceDetails, { view: 'details' }) },
+          { path: ':id/edit', element: React.createElement(DeviceDetails, { view: 'edit' }) },
+          { path: ':id/control', element: React.createElement(DeviceDetails, { view: 'control' }) }
         ]
       },
       {
         path: 'battery',
-        element: React.createElement(DeviceDetails, { type: 'battery' }),
+        element: React.createElement(DeviceDetails),
         children: [
-          { path: '', element: React.createElement(DeviceDetails, { type: 'battery', view: 'list' }) },
-          { path: 'new', element: React.createElement(DeviceDetails, { type: 'battery', view: 'new' }) },
-          { path: ':id', element: React.createElement(DeviceDetails, { type: 'battery', view: 'details' }) },
-          { path: ':id/edit', element: React.createElement(DeviceDetails, { type: 'battery', view: 'edit' }) },
-          { path: ':id/control', element: React.createElement(DeviceDetails, { type: 'battery', view: 'control' }) }
+          { path: '', element: React.createElement(DeviceDetails, { view: 'list' }) },
+          { path: 'new', element: React.createElement(DeviceDetails, { view: 'new' }) },
+          { path: ':id', element: React.createElement(DeviceDetails, { view: 'details' }) },
+          { path: ':id/edit', element: React.createElement(DeviceDetails, { view: 'edit' }) },
+          { path: ':id/control', element: React.createElement(DeviceDetails, { view: 'control' }) }
         ]
       },
       {
         path: 'wind',
-        element: React.createElement(DeviceDetails, { type: 'wind' }),
+        element: React.createElement(DeviceDetails),
         children: [
-          { path: '', element: React.createElement(DeviceDetails, { type: 'wind', view: 'list' }) },
-          { path: 'new', element: React.createElement(DeviceDetails, { type: 'wind', view: 'new' }) },
-          { path: ':id', element: React.createElement(DeviceDetails, { type: 'wind', view: 'details' }) },
-          { path: ':id/edit', element: React.createElement(DeviceDetails, { type: 'wind', view: 'edit' }) },
-          { path: ':id/control', element: React.createElement(DeviceDetails, { type: 'wind', view: 'control' }) }
+          { path: '', element: React.createElement(DeviceDetails, { view: 'list' }) },
+          { path: 'new', element: React.createElement(DeviceDetails, { view: 'new' }) },
+          { path: ':id', element: React.createElement(DeviceDetails, { view: 'details' }) },
+          { path: ':id/edit', element: React.createElement(DeviceDetails, { view: 'edit' }) },
+          { path: ':id/control', element: React.createElement(DeviceDetails, { view: 'control' }) }
         ]
       },
       {
         path: 'ev-charger',
-        element: React.createElement(DeviceDetails, { type: 'ev-charger' }),
+        element: React.createElement(DeviceDetails),
         children: [
-          { path: '', element: React.createElement(DeviceDetails, { type: 'ev-charger', view: 'list' }) },
-          { path: 'new', element: React.createElement(DeviceDetails, { type: 'ev-charger', view: 'new' }) },
-          { path: ':id', element: React.createElement(DeviceDetails, { type: 'ev-charger', view: 'details' }) },
-          { path: ':id/edit', element: React.createElement(DeviceDetails, { type: 'ev-charger', view: 'edit' }) },
-          { path: ':id/control', element: React.createElement(DeviceDetails, { type: 'ev-charger', view: 'control' }) }
+          { path: '', element: React.createElement(DeviceDetails, { view: 'list' }) },
+          { path: 'new', element: React.createElement(DeviceDetails, { view: 'new' }) },
+          { path: ':id', element: React.createElement(DeviceDetails, { view: 'details' }) },
+          { path: ':id/edit', element: React.createElement(DeviceDetails, { view: 'edit' }) },
+          { path: ':id/control', element: React.createElement(DeviceDetails, { view: 'control' }) }
         ]
       },
       {
         path: 'grid',
-        element: React.createElement(DeviceDetails, { type: 'grid' }),
+        element: React.createElement(DeviceDetails),
         children: [
-          { path: '', element: React.createElement(DeviceDetails, { type: 'grid', view: 'list' }) },
-          { path: 'new', element: React.createElement(DeviceDetails, { type: 'grid', view: 'new' }) },
-          { path: ':id', element: React.createElement(DeviceDetails, { type: 'grid', view: 'details' }) },
-          { path: ':id/edit', element: React.createElement(DeviceDetails, { type: 'grid', view: 'edit' }) },
-          { path: ':id/control', element: React.createElement(DeviceDetails, { type: 'grid', view: 'control' }) }
+          { path: '', element: React.createElement(DeviceDetails, { view: 'list' }) },
+          { path: 'new', element: React.createElement(DeviceDetails, { view: 'new' }) },
+          { path: ':id', element: React.createElement(DeviceDetails, { view: 'details' }) },
+          { path: ':id/edit', element: React.createElement(DeviceDetails, { view: 'edit' }) },
+          { path: ':id/control', element: React.createElement(DeviceDetails, { view: 'control' }) }
         ]
       },
       {
         path: 'load',
-        element: React.createElement(DeviceDetails, { type: 'load' }),
+        element: React.createElement(DeviceDetails),
         children: [
-          { path: '', element: React.createElement(DeviceDetails, { type: 'load', view: 'list' }) },
-          { path: 'new', element: React.createElement(DeviceDetails, { type: 'load', view: 'new' }) },
-          { path: ':id', element: React.createElement(DeviceDetails, { type: 'load', view: 'details' }) },
-          { path: ':id/edit', element: React.createElement(DeviceDetails, { type: 'load', view: 'edit' }) },
-          { path: ':id/control', element: React.createElement(DeviceDetails, { type: 'load', view: 'control' }) }
+          { path: '', element: React.createElement(DeviceDetails, { view: 'list' }) },
+          { path: 'new', element: React.createElement(DeviceDetails, { view: 'new' }) },
+          { path: ':id', element: React.createElement(DeviceDetails, { view: 'details' }) },
+          { path: ':id/edit', element: React.createElement(DeviceDetails, { view: 'edit' }) },
+          { path: ':id/control', element: React.createElement(DeviceDetails, { view: 'control' }) }
         ]
       },
       {
         path: 'hydro',
-        element: React.createElement(DeviceDetails, { type: 'hydro' }),
+        element: React.createElement(DeviceDetails),
         children: [
-          { path: '', element: React.createElement(DeviceDetails, { type: 'hydro', view: 'list' }) },
-          { path: 'new', element: React.createElement(DeviceDetails, { type: 'hydro', view: 'new' }) },
-          { path: ':id', element: React.createElement(DeviceDetails, { type: 'hydro', view: 'details' }) },
-          { path: ':id/edit', element: React.createElement(DeviceDetails, { type: 'hydro', view: 'edit' }) },
-          { path: ':id/control', element: React.createElement(DeviceDetails, { type: 'hydro', view: 'control' }) }
+          { path: '', element: React.createElement(DeviceDetails, { view: 'list' }) },
+          { path: 'new', element: React.createElement(DeviceDetails, { view: 'new' }) },
+          { path: ':id', element: React.createElement(DeviceDetails, { view: 'details' }) },
+          { path: ':id/edit', element: React.createElement(DeviceDetails, { view: 'edit' }) },
+          { path: ':id/control', element: React.createElement(DeviceDetails, { view: 'control' }) }
         ]
       },
       {
         path: 'inverter',
-        element: React.createElement(DeviceDetails, { type: 'inverter' }),
+        element: React.createElement(DeviceDetails),
         children: [
-          { path: '', element: React.createElement(DeviceDetails, { type: 'inverter', view: 'list' }) },
-          { path: 'new', element: React.createElement(DeviceDetails, { type: 'inverter', view: 'new' }) },
-          { path: ':id', element: React.createElement(DeviceDetails, { type: 'inverter', view: 'details' }) },
-          { path: ':id/edit', element: React.createElement(DeviceDetails, { type: 'inverter', view: 'edit' }) },
-          { path: ':id/control', element: React.createElement(DeviceDetails, { type: 'inverter', view: 'control' }) }
+          { path: '', element: React.createElement(DeviceDetails, { view: 'list' }) },
+          { path: 'new', element: React.createElement(DeviceDetails, { view: 'new' }) },
+          { path: ':id', element: React.createElement(DeviceDetails, { view: 'details' }) },
+          { path: ':id/edit', element: React.createElement(DeviceDetails, { view: 'edit' }) },
+          { path: ':id/control', element: React.createElement(DeviceDetails, { view: 'control' }) }
         ]
       },
       {
         path: 'sensor',
-        element: React.createElement(DeviceDetails, { type: 'sensor' }),
+        element: React.createElement(DeviceDetails),
         children: [
-          { path: '', element: React.createElement(DeviceDetails, { type: 'sensor', view: 'list' }) },
-          { path: 'new', element: React.createElement(DeviceDetails, { type: 'sensor', view: 'new' }) },
-          { path: ':id', element: React.createElement(DeviceDetails, { type: 'sensor', view: 'details' }) },
-          { path: ':id/edit', element: React.createElement(DeviceDetails, { type: 'sensor', view: 'edit' }) },
-          { path: ':id/control', element: React.createElement(DeviceDetails, { type: 'sensor', view: 'control' }) }
+          { path: '', element: React.createElement(DeviceDetails, { view: 'list' }) },
+          { path: 'new', element: React.createElement(DeviceDetails, { view: 'new' }) },
+          { path: ':id', element: React.createElement(DeviceDetails, { view: 'details' }) },
+          { path: ':id/edit', element: React.createElement(DeviceDetails, { view: 'edit' }) },
+          { path: ':id/control', element: React.createElement(DeviceDetails, { view: 'control' }) }
         ]
       },
       {
         path: 'generator',
-        element: React.createElement(DeviceDetails, { type: 'generator' }),
+        element: React.createElement(DeviceDetails),
         children: [
-          { path: '', element: 'GeneratorDeviceList' },
-          { path: 'new', element: 'GeneratorDeviceForm' },
-          { path: ':id', element: 'GeneratorDeviceDetails' },
-          { path: ':id/edit', element: 'GeneratorDeviceForm' },
-          { path: ':id/control', element: 'GeneratorDeviceControl' }
+          { path: '', element: React.createElement(DeviceDetails, { view: 'list' }) },
+          { path: 'new', element: React.createElement(DeviceDetails, { view: 'new' }) },
+          { path: ':id', element: React.createElement(DeviceDetails, { view: 'details' }) },
+          { path: ':id/edit', element: React.createElement(DeviceDetails, { view: 'edit' }) },
+          { path: ':id/control', element: React.createElement(DeviceDetails, { view: 'control' }) }
         ]
       },
       {
         path: 'meter',
-        element: 'MeterDevices',
+        element: React.createElement(DeviceDetails),
         children: [
-          { path: '', element: 'MeterDeviceList' },
-          { path: 'new', element: 'MeterDeviceForm' },
-          { path: ':id', element: 'MeterDeviceDetails' },
-          { path: ':id/edit', element: 'MeterDeviceForm' },
-          { path: ':id/control', element: 'MeterDeviceControl' }
+          { path: '', element: React.createElement(DeviceDetails, { view: 'list' }) },
+          { path: 'new', element: React.createElement(DeviceDetails, { view: 'new' }) },
+          { path: ':id', element: React.createElement(DeviceDetails, { view: 'details' }) },
+          { path: ':id/edit', element: React.createElement(DeviceDetails, { view: 'edit' }) },
+          { path: ':id/control', element: React.createElement(DeviceDetails, { view: 'control' }) }
         ]
       }
     ]

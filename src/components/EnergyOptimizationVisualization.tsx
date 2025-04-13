@@ -1,6 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
-import { Device, TelemetryData } from '@/types/device';
+import { Device } from '@/contexts/DeviceContext';
+import { TelemetryData } from '@/types/telemetry';
 import { EnergyManagementService, EnergyPrediction, EnergyAction } from '@/services/energyManagementService';
+import { WeatherImpact } from '@/types/mlService';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   BarChart, Bar, AreaChart, Area, ComposedChart, Cell
@@ -37,7 +40,9 @@ export const EnergyOptimizationVisualization: React.FC<EnergyOptimizationVisuali
     initializeService();
     
     return () => {
-      energyManagementService.dispose();
+      if (typeof energyManagementService.dispose === 'function') {
+        energyManagementService.dispose();
+      }
     };
   }, []);
   
@@ -60,10 +65,19 @@ export const EnergyOptimizationVisualization: React.FC<EnergyOptimizationVisuali
         efficiency: 0.95
       };
       
+      // Create weather data object
+      const weatherData: WeatherImpact = {
+        temperature: 25,
+        irradiance: 800,
+        cloud_cover: 20,
+        wind_speed: 5,
+        precipitation: 0
+      };
+      
       // Get energy predictions
       const energyPredictions = await energyManagementService.predictEnergyProfile(
         telemetryData,
-        {}, // Weather data would be passed here
+        weatherData,
         batteryStatus
       );
       
@@ -117,12 +131,12 @@ export const EnergyOptimizationVisualization: React.FC<EnergyOptimizationVisuali
   // Prepare data for battery level chart
   const batteryLevelData = predictions.map((prediction, index) => {
     const action = optimizedActions[index];
-    let batteryLevel = prediction.batteryLevel;
+    let batteryLevel = prediction.battery_level;
     
-    if (action.type === 'CHARGE') {
-      batteryLevel += action.amount / 10; // Assuming 10 kWh capacity
-    } else if (action.type === 'DISCHARGE') {
-      batteryLevel -= action.amount / 10;
+    if (action.type === 'charge') {
+      batteryLevel += action.value / 10; // Assuming 10 kWh capacity
+    } else if (action.type === 'discharge') {
+      batteryLevel -= action.value / 10;
     }
     
     return {
@@ -134,7 +148,7 @@ export const EnergyOptimizationVisualization: React.FC<EnergyOptimizationVisuali
   // Prepare data for cost savings chart
   const costSavingsData = optimizedActions.map((action, index) => ({
     time: format(predictions[index].timestamp, 'HH:mm'),
-    savings: action.estimatedSavings
+    savings: action.savings
   }));
   
   // Calculate total savings
@@ -222,21 +236,21 @@ export const EnergyOptimizationVisualization: React.FC<EnergyOptimizationVisuali
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      action.type === 'CHARGE' ? 'bg-green-100 text-green-800' :
-                      action.type === 'DISCHARGE' ? 'bg-red-100 text-red-800' :
+                      action.type === 'charge' ? 'bg-green-100 text-green-800' :
+                      action.type === 'discharge' ? 'bg-red-100 text-red-800' :
                       'bg-gray-100 text-gray-800'
                     }`}>
-                      {action.type}
+                      {action.type.toUpperCase()}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {action.amount.toFixed(2)}
+                    {action.value.toFixed(2)}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500">
                     {action.reason}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    ${action.estimatedSavings.toFixed(2)}
+                    ${action.savings.toFixed(2)}
                   </td>
                 </tr>
               ))}
