@@ -17,6 +17,10 @@ export interface Equipment {
   energyConsumption?: number;
   carbonEmissions?: number;
   nextMaintenanceDate?: string;
+  serialNumber?: string; // Alias for serial_number
+  installationDate?: string; // Alias for installation_date
+  lastMaintenanceDate?: string; // Alias for last_maintenance_date
+  isRunning?: boolean; // Additional status field
 }
 
 export interface CarbonEmissionsDetail {
@@ -112,7 +116,7 @@ export interface EnergySaving {
   status: string;
 }
 
-// Adding missing interfaces that are referenced in components
+// Add missing interfaces that are referenced in components
 export interface AutomatedReport {
   id: string;
   name: string;
@@ -163,4 +167,22 @@ export interface BMSIntegration {
   syncInterval?: number;
   mappings?: Record<string, string>;
   equipmentId: string;
+}
+
+export type FormData = {
+  id?: string;
+  name: string;
+  type: string;
+  manufacturer: string;
+  model: string;
+  serial_number: string;
+  installation_date: string;
+  last_maintenance_date: string;
+  status: 'operational' | 'maintenance' | 'offline' | 'faulty';
+  location: string;
+  notes?: string;
+  efficiency?: number;
+  load?: number;
+  description?: string;
+  serialNumber?: string; // Alias for serial_number
 }

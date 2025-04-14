@@ -140,7 +140,7 @@ export class MLService {
     console.log('ML Service disposed');
   }
 
-  // Add missing methods needed by components
+  // Added missing methods needed by components
   detectAnomalies(data: any[]): any[] {
     return data.map(item => ({
       ...item,

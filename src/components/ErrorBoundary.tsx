@@ -1,6 +1,5 @@
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { ErrorMessage } from './ui/error-message';
 
 interface Props {
   children: ReactNode;
@@ -33,12 +32,19 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       return (
         <div className="min-h-screen flex items-center justify-center p-4 bg-slate-900">
-          <ErrorMessage
-            title="Something went wrong"
-            message={this.state.error?.message || 
-              "Minified React error #426; visit https://reactjs.org/docs/error-decoder.html?invariant=426 for the full message or use the non-minified dev environment for full errors and additional helpful warnings."}
-            onRetry={this.handleReset}
-          />
+          <div className="bg-slate-800 p-6 rounded-lg shadow-lg max-w-md w-full">
+            <h2 className="text-xl font-bold text-red-500 mb-4">Something went wrong</h2>
+            <p className="text-white mb-4">
+              {this.state.error?.message || 
+                "An unexpected error occurred"}
+            </p>
+            <button
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+              onClick={this.handleReset}
+            >
+              Try again
+            </button>
+          </div>
         </div>
       );
     }
