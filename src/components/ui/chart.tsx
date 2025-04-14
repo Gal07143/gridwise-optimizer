@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { ReactNode } from 'react';
 import {
   ResponsiveContainer,
   LineChart as RechartsLineChart,
@@ -23,7 +23,7 @@ export function ChartContainer({ children, className }: ChartProps) {
   return (
     <div className={cn("w-full h-[300px] p-1", className)}>
       <ResponsiveContainer width="100%" height="100%">
-        {children}
+        {children as React.ReactElement}
       </ResponsiveContainer>
     </div>
   );

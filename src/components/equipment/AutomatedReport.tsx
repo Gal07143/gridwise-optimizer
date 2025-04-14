@@ -32,12 +32,14 @@ const AutomatedReportComponent: React.FC = () => {
   const handleCreateReport = async (type: string) => {
     try {
       if (!id) return;
-      // Add required properties for AutomatedReport creation
       await equipmentService.createAutomatedReport({
         equipmentId: id,
+        name: `${type} Report`,  // Added required name property
         reportType: type,
-        schedule: 'monthly', // Default value
-        parameters: {} // Empty parameters object
+        schedule: 'monthly',
+        format: 'pdf',           // Added required format property
+        recipients: [],          // Added required recipients property
+        parameters: {}
       });
 
       const data = await equipmentService.getAutomatedReports();
@@ -73,7 +75,7 @@ const AutomatedReportComponent: React.FC = () => {
                     <div>
                       <Label>Last Generated</Label>
                       <div className="text-sm font-medium">
-                        {new Date(report.lastGenerated).toLocaleString()}
+                        {new Date(report.lastGenerated || new Date()).toLocaleString()}
                       </div>
                     </div>
                     <div>
@@ -83,7 +85,7 @@ const AutomatedReportComponent: React.FC = () => {
                   </div>
                   <div className="mt-4">
                     <Button
-                      onClick={() => handleCreateReport(report.reportType)}
+                      onClick={() => handleCreateReport(report.reportType || '')}
                     >
                       Generate Now
                     </Button>

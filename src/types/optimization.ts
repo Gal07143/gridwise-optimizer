@@ -1,51 +1,64 @@
 
-export interface OptimizationParams {
-  siteId: string;
-  deviceId?: string;
-  startDate: string;
-  endDate: string;
-  targetMetric: 'cost' | 'self_consumption' | 'carbon' | 'grid_stability';
-  constraints?: OptimizationConstraints;
+export interface OptimizationMetrics {
+  timestamp: string;
+  savings: number;
+  co2Reduction: number;
+  efficiencyGain: number;
+  peakReduction: number;
+  selfConsumption: number;
+  targetMet: boolean;
+  targetValue?: number;
+  unit?: string;
 }
 
-export interface OptimizationConstraints {
-  minBatteryLevel?: number;
-  maxGridImport?: number;
-  evChargingTimes?: {
-    start: string;
-    end: string;
-    targetSoC: number;
+export interface WeatherImpact {
+  temperature: number;
+  irradiance: number;
+  cloud_cover: number;
+  wind_speed: number;
+  precipitation: number;
+  humidity: number;
+  cloudCover: number;
+  forecast: {
+    timestamp: string;
+    temperature: number;
+    cloudCover: number;
+    precipitation: number;
   }[];
-  peakShavingThreshold?: number;
+}
+
+export interface OptimizationRecommendation {
+  id: string;
+  timestamp: string;
+  category: string;
+  title: string;
+  description: string;
+  potentialSavings: number;
+  difficulty: 'easy' | 'medium' | 'hard';
+  implementationTime: string;
+  priority: 'low' | 'medium' | 'high';
+  status: 'pending' | 'in-progress' | 'implemented' | 'rejected';
+}
+
+export interface OptimizationAction {
+  id: string;
+  name: string;
+  description: string;
+  resourceType: string;
+  resourceId: string;
+  status: string;
+  scheduledTime?: string;
+  scheduledEndTime?: string;
+  priority: 'low' | 'medium' | 'high' | 'critical';
+  impact: number;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface OptimizationResult {
   id: string;
-  siteId: string;
-  createdAt: string;
-  status: 'running' | 'completed' | 'failed';
-  targetMetric: string;
-  schedule: SchedulePoint[];
-  metrics: OptimizationMetrics;
-  parameters: Record<string, any>;
-}
-
-export interface SchedulePoint {
   timestamp: string;
-  deviceId?: string;
-  deviceType?: string;
-  power: number; // Positive for discharge/generation, negative for charge/consumption
-  stateOfCharge?: number;
-  gridImport?: number;
-  gridExport?: number;
-}
-
-export interface OptimizationMetrics {
-  totalCost: number;
-  costSavings: number;
-  selfConsumption: number;
-  peakPower: number;
-  carbonEmissions: number;
-  carbonSavings: number;
-  gridStability: number;
+  metrics: OptimizationMetrics;
+  recommendations: OptimizationRecommendation[];
+  actions: OptimizationAction[];
 }

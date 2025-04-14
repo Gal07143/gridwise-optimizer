@@ -87,6 +87,7 @@ export interface TelemetryData {
   device_id: string;
   measurement: string;
   unit: string;
+  data?: any;
   [key: string]: any;
 }
 

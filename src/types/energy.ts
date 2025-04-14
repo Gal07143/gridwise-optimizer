@@ -1,86 +1,55 @@
 
-// Core device types
-export enum DeviceType {
-  BATTERY = 'battery',
-  INVERTER = 'inverter',
-  SOLAR = 'solar',
-  METER = 'meter',
-  CHARGER = 'charger',
-  LOAD = 'load',
-  GENERATOR = 'generator',
-  HVAC = 'hvac',
-  GATEWAY = 'gateway',
-  OTHER = 'other'
-}
+export type DeviceType = 'solar' | 'battery' | 'inverter' | 'meter' | 'ev_charger' | 'load' | 'grid' | 'generator' | 'wind' | 'other';
 
-// Device status enum
-export enum DeviceStatus {
-  ONLINE = 'online',
-  OFFLINE = 'offline',
-  ERROR = 'error',
-  MAINTENANCE = 'maintenance',
-  UNKNOWN = 'unknown'
-}
+export type DeviceStatus = 'online' | 'offline' | 'warning' | 'error' | 'maintenance';
 
-// Energy device interface
 export interface EnergyDevice {
   id: string;
   name: string;
   type: DeviceType;
   status: DeviceStatus;
-  model?: string;
-  manufacturer?: string;
-  serial_number?: string;
-  firmware_version?: string;
-  installation_date?: string;
-  last_communication?: string;
   location?: string;
-  capacity?: number; // Added missing properties
+  capacity?: number;
   firmware?: string;
   description?: string;
-  metadata?: Record<string, any>;
-  isOnline?: boolean;
-  efficiency?: number;
-  load?: number;
+  manufacturer?: string;
+  model?: string;
+  installation_date?: string;
+  last_maintenance?: string;
+  site_id?: string;
+  ip_address?: string;
+  mac_address?: string;
+  last_seen?: string;
+  serial_number?: string;
 }
 
-// Energy reading interface
-export interface EnergyReading {
-  device_id: string;
+export interface ConsumptionData {
   timestamp: string;
+  value: number;
+  unit: string;
+}
+
+export interface DeviceState {
   power: number;
-  energy?: number;
-  voltage?: number;
-  current?: number;
-  frequency?: number;
-  temperature?: number;
+  energy: number;
+  voltage: number;
+  current: number;
+  frequency: number;
+  temperature: number;
   state_of_charge?: number;
-  power_factor?: number;
-  metadata?: Record<string, any>;
+  state_of_health?: number;
 }
 
-// Forecast data
-export interface ProcessedForecastData {
-  timestamps: string[];
-  consumption: number[];
-  generation: number[];
-  net: number[];
-}
-
-// Forecast metrics
-export interface ForecastMetrics {
-  accuracy: number;
-  rmse: number;
-  reliability: number;
-}
-
-// System recommendation
-export interface SystemRecommendation {
+export interface Site {
   id: string;
-  title: string;
-  description: string;
-  impact: string;
-  priority: 'high' | 'medium' | 'low';
-  action_required: boolean;
-  timestamp: string;
+  name: string;
+  address: string;
+  timezone: string;
+  geo_location?: {
+    latitude: number;
+    longitude: number;
+  };
+  active: boolean;
+  created_at: string;
+  updated_at: string;
 }

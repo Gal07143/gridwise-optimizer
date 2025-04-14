@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { equipmentService } from '@/services/equipmentService';
 import { MaintenanceCost } from '@/types/equipment';
-import { Calendar, DollarSign, FileText, Wrench } from 'lucide-react'; // Replace Tool with Wrench which is available
+import { Calendar, DollarSign, FileText, Wrench } from 'lucide-react';
 
 const MaintenanceCostComponent: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -68,7 +68,7 @@ const MaintenanceCostComponent: React.FC = () => {
                         <DollarSign className="h-3 w-3 mr-1" />
                         Cost
                       </Label>
-                      <div className="text-sm font-medium text-primary">${(cost.cost || cost.totalCost).toFixed(2)}</div>
+                      <div className="text-sm font-medium text-primary">${(cost.cost || cost.totalCost || 0).toFixed(2)}</div>
                     </div>
                     <div>
                       <Label className="flex items-center text-xs text-muted-foreground mb-1">
@@ -84,7 +84,7 @@ const MaintenanceCostComponent: React.FC = () => {
                         <FileText className="h-3 w-3 mr-1" />
                         Description
                       </Label>
-                      <div className="text-sm font-medium">{cost.description || `${cost.costCategory} maintenance`}</div>
+                      <div className="text-sm font-medium">{cost.description || `${cost.maintenanceType || cost.costCategory} maintenance`}</div>
                     </div>
                   </div>
                 </CardContent>

@@ -1,17 +1,28 @@
 
 import { useState, useCallback } from 'react';
-import { EnergyDevice } from '@/types/energy';
+import { EnergyDevice, DeviceType, DeviceStatus } from '@/types/energy';
+
+export interface DeviceFormState {
+  name: string;
+  type: DeviceType | string;
+  status: DeviceStatus | string;
+  location: string;
+  capacity: number;
+  firmware: string;
+  description: string;
+  site_id?: string;
+}
 
 interface BaseDeviceFormProps {
   initialDevice: EnergyDevice | null;
-  onSubmit: (deviceData: any) => Promise<EnergyDevice | null>;
+  onSubmit: (deviceData: DeviceFormState) => Promise<EnergyDevice | null>;
 }
 
 export const useBaseDeviceForm = ({ initialDevice, onSubmit }: BaseDeviceFormProps) => {
-  const [device, setDevice] = useState<Partial<EnergyDevice>>(initialDevice || {
+  const [device, setDevice] = useState<DeviceFormState>(initialDevice || {
     name: '',
-    type: '',
-    status: 'offline',
+    type: 'other' as DeviceType,
+    status: 'offline' as DeviceStatus,
     location: '',
     capacity: 0,
     firmware: '',
@@ -40,8 +51,8 @@ export const useBaseDeviceForm = ({ initialDevice, onSubmit }: BaseDeviceFormPro
   const resetForm = useCallback(() => {
     setDevice(initialDevice || {
       name: '',
-      type: '',
-      status: 'offline',
+      type: 'other' as DeviceType,
+      status: 'offline' as DeviceStatus,
       location: '',
       capacity: 0,
       firmware: '',

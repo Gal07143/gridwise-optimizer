@@ -24,6 +24,65 @@ export interface Equipment {
   description?: string;
 }
 
+export interface EquipmentMetrics {
+  id: string;
+  equipmentId: string;
+  timestamp: string;
+  energy_consumption: number;
+  power: number;
+  temperature: number;
+  humidity?: number;
+  efficiency?: number;
+  runtime?: number;
+  vibration?: number;
+  noise_level?: number;
+  load?: number;
+  unit: string;
+  period?: string;
+}
+
+export interface EquipmentMaintenance {
+  id: string;
+  equipmentId: string;
+  type: string;
+  description: string;
+  date: string;
+  technician: string;
+  status: 'scheduled' | 'in-progress' | 'completed' | 'cancelled';
+  notes?: string;
+  cost?: number;
+  parts_replaced?: string[];
+  next_maintenance_date?: string;
+  duration?: number;
+}
+
+export interface EquipmentParameter {
+  id: string;
+  equipmentId: string;
+  name: string;
+  value: number | string;
+  unit: string;
+  min_value?: number;
+  max_value?: number;
+  critical_low?: number;
+  critical_high?: number;
+  last_updated: string;
+  status: 'normal' | 'warning' | 'critical';
+}
+
+export interface EquipmentAlarm {
+  id: string;
+  equipmentId: string;
+  type: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  message: string;
+  timestamp: string;
+  resolved: boolean;
+  resolved_at?: string;
+  resolved_by?: string;
+  notes?: string;
+}
+
 export interface CarbonEmissionsDetail {
   id: string;
   equipmentId: string;
@@ -117,7 +176,6 @@ export interface EnergySaving {
   status: string;
 }
 
-// Add missing interfaces that are referenced in components
 export interface AutomatedReport {
   id: string;
   name: string;
@@ -169,13 +227,134 @@ export interface BMSIntegration {
   username?: string;
   password?: string;
   connectionStatus: 'connected' | 'disconnected' | 'error';
-  lastSync?: string;
+  lastSync: string;
   syncInterval?: number;
   mappings?: Record<string, string>;
   equipmentId: string;
-  bmsType?: string;
-  syncFrequency?: number;
-  parameters?: BMSParameter[];
+  bmsType: string;
+  syncFrequency: number;
+  parameters: BMSParameter[];
+}
+
+export interface LoadForecast {
+  id: string;
+  equipmentId: string;
+  timestamp: string;
+  predictedLoad: number;
+  confidenceInterval: {
+    lower: number;
+    upper: number;
+  };
+  horizon: number;
+  algorithm?: string;
+  accuracy?: number;
+  actualLoad?: number;
+  forecastType?: string;
+  forecastPeriod?: string;
+  value?: number;
+  unit?: string;
+  startTime?: string;
+  endTime?: string;
+  confidence?: number;
+}
+
+export interface LifecycleStage {
+  id: string;
+  equipmentId: string;
+  stage: 'procurement' | 'installation' | 'operation' | 'maintenance' | 'overhaul' | 'decommissioning';
+  startDate: string;
+  endDate?: string;
+  cost?: number;
+  notes?: string;
+  performanceMetrics?: Record<string, number>;
+  status?: string;
+}
+
+export interface PredictiveMaintenance {
+  id: string;
+  equipmentId: string;
+  component: string;
+  predictedFailureDate: string;
+  probability: number;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  recommendedAction: string;
+  estimatedCost?: number;
+  estimatedDowntime?: number;
+  maintenanceHistory?: {
+    date: string;
+    action: string;
+    technician: string;
+  }[];
+  lastUpdated: string;
+}
+
+export interface PerformanceScore {
+  id: string;
+  equipmentId: string;
+  date: string;
+  overall: number;
+  energy_efficiency: number;
+  reliability: number;
+  maintenance: number;
+  operations: number;
+  notes?: string;
+  benchmark?: number;
+  benchmarkSource?: string;
+  recommendations?: string[];
+}
+
+export interface EfficiencyRecommendation {
+  id: string;
+  equipmentId: string;
+  timestamp: string;
+  description: string;
+  potentialSaving: number;
+  unit: string;
+  priority: 'low' | 'medium' | 'high';
+  implementationCost?: number;
+  paybackPeriod?: number;
+  category: string;
+  status: 'pending' | 'in-progress' | 'implemented' | 'rejected';
+  implementedDate?: string;
+  actualSaving?: number;
+}
+
+export interface SparePartInventory {
+  id: string;
+  equipmentId: string;
+  name: string;
+  partNumber?: string;
+  quantity: number;
+  minimumQuantity: number;
+  location: string;
+  supplier?: string;
+  cost?: number;
+  lastOrdered?: string;
+  leadTime?: number;
+  notes?: string;
+  status?: string;
+}
+
+export interface MaintenanceCost {
+  id: string;
+  equipmentId: string;
+  date: string;
+  cost: number;
+  maintenanceType: string;
+  description?: string;
+  invoice?: string;
+  parts?: {
+    name: string;
+    quantity: number;
+    unitCost: number;
+  }[];
+  labor?: {
+    hours: number;
+    rate: number;
+  };
+  vendor?: string;
+  costCategory?: string;
+  totalCost?: number;
 }
 
 export type FormData = {

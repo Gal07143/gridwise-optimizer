@@ -68,7 +68,7 @@ const LoadForecastComponent: React.FC = () => {
                     </div>
                     <div>
                       <Label>Confidence</Label>
-                      <div className="text-sm font-medium">{forecast.confidence || Math.round((1 - forecast.confidenceInterval.upper/forecast.predictedLoad) * 100)}%</div>
+                      <div className="text-sm font-medium">{forecast.confidence || forecast.confidenceInterval?.upper ? Math.round((1 - forecast.confidenceInterval.upper/forecast.predictedLoad) * 100) : 0}%</div>
                     </div>
                   </div>
                 </CardContent>

@@ -1,11 +1,12 @@
 
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useBaseDeviceForm } from './useBaseDeviceForm';
+import { useBaseDeviceForm, DeviceFormState } from './useBaseDeviceForm';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { createDevice } from '@/services/devices/createDevice';
 import { validateDeviceData, formatValidationErrors } from '@/services/devices/mutations/deviceValidation';
+import { EnergyDevice } from '@/types/energy';
 
 export const useDeviceForm = () => {
   const navigate = useNavigate();
@@ -13,14 +14,14 @@ export const useDeviceForm = () => {
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
 
-  const validateDeviceForm = useCallback((data: any) => {
-    const errors = validateDeviceData(data);
+  const validateDeviceForm = useCallback((data: DeviceFormState) => {
+    const errors = validateDeviceData(data as Partial<EnergyDevice>);
     const formattedErrors = formatValidationErrors(errors);
     setValidationErrors(formattedErrors);
     return Object.keys(formattedErrors).length === 0;
   }, []);
 
-  const handleCreateDevice = useCallback(async (deviceData: any) => {
+  const handleCreateDevice = useCallback(async (deviceData: DeviceFormState) => {
     if (!validateDeviceForm(deviceData)) {
       toast.error('Please fix the validation errors before saving');
       return null;
@@ -30,19 +31,25 @@ export const useDeviceForm = () => {
     try {
       console.log("Creating device with data:", deviceData);
       
-      // Create device data without the last_updated field
+      // Create device data with site_id field
       const { name, type, status, location, capacity, firmware, description, site_id } = deviceData;
       
-      const newDevice = await createDevice({
+      const deviceToCreate: any = {
         name,
         type,
         status,
         location: location || null,
         capacity,
         firmware: firmware || null,
-        description: description || null,
-        site_id: site_id || null
-      });
+        description: description || null
+      };
+
+      // Only add site_id if it exists
+      if (site_id) {
+        deviceToCreate.site_id = site_id;
+      }
+      
+      const newDevice = await createDevice(deviceToCreate);
       
       if (newDevice) {
         toast.success('Device created successfully');
