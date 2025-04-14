@@ -19,7 +19,7 @@ export interface GridSignal {
   status: string;
 }
 
-// Add these new interfaces for EnergyOptimizationVisualization
+// EnergyPrediction interface for EnergyOptimizationVisualization
 export interface EnergyPrediction {
   timestamp: Date;
   consumption: number;
@@ -34,7 +34,7 @@ export interface EnergyAction {
   savings: number;
 }
 
-// Add types for WeatherImpact to ensure it's properly typed
+// WeatherImpact interface with all required fields
 export interface WeatherForecast {
   date: string;
   timestamp?: string; // For compatibility

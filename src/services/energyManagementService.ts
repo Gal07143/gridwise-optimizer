@@ -168,4 +168,4 @@ export class EnergyManagementService {
   }
 }
 
-export type { EnergyPrediction, EnergyAction };
+export { EnergyPrediction, EnergyAction };

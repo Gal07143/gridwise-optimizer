@@ -1,146 +1,130 @@
 
-import { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useBaseDeviceForm, DeviceFormState } from './useBaseDeviceForm';
+import { useState, useCallback, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { EnergyDevice, DeviceType, DeviceStatus } from '@/types/energy';
+import { getDeviceById } from '@/services/devices/queries';
+import { updateDevice } from '@/services/devices/mutations';
+import { useBaseDeviceForm, DeviceFormState } from './useBaseDeviceForm';
 import { validateDeviceData, formatValidationErrors } from '@/services/devices/mutations/deviceValidation';
+import { EnergyDevice } from '@/types/energy';
 
-// Temporary mock functions since the import modules don't exist
-const getDeviceById = async (id: string): Promise<EnergyDevice | null> => {
-  // This is a mock implementation
-  console.log(`Getting device with ID: ${id}`);
-  return null;
-};
-
-const updateDevice = async (id: string, data: Partial<EnergyDevice>): Promise<EnergyDevice | null> => {
-  // This is a mock implementation
-  console.log(`Updating device with ID: ${id}`, data);
-  return null;
-};
-
-export const useEditDeviceForm = () => {
-  const { deviceId } = useParams<{ deviceId: string }>();
+export const useEditDeviceForm = (deviceId: string) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
-  const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<Error | null>(null);
+  const [device, setDevice] = useState<EnergyDevice | null>(null);
   
-  const { 
-    data: deviceData, 
-    isLoading,
-    error: fetchError,
-    refetch
-  } = useQuery({
-    queryKey: ['device', deviceId],
-    queryFn: () => deviceId ? getDeviceById(deviceId) : null,
-    enabled: !!deviceId,
-  });
-  
-  // Handle errors
+  // Fetch the device on mount
   useEffect(() => {
-    if (fetchError) {
-      console.error("Error fetching device data:", fetchError);
-      toast.error(`Failed to fetch device: ${fetchError instanceof Error ? fetchError.message : 'Unknown error'}`);
-      
-      // Only navigate away after a short delay so user can see the error
-      setTimeout(() => navigate('/devices'), 2000);
-    }
-  }, [fetchError, navigate]);
+    const fetchDevice = async () => {
+      try {
+        setIsLoading(true);
+        const deviceData = await getDeviceById(deviceId);
+        
+        if (deviceData) {
+          setDevice(deviceData);
+        } else {
+          setLoadError(new Error('Device not found'));
+        }
+      } catch (error) {
+        setLoadError(error instanceof Error ? error : new Error('Failed to load device'));
+        toast.error('Failed to load device details');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchDevice();
+  }, [deviceId]);
   
-  const validateDeviceForm = useCallback((data: DeviceFormState): boolean => {
+  const validateDeviceForm = useCallback((data: DeviceFormState) => {
     const errors = validateDeviceData(data as Partial<EnergyDevice>);
     const formattedErrors = formatValidationErrors(errors);
-    
     setValidationErrors(formattedErrors);
     return Object.keys(formattedErrors).length === 0;
   }, []);
   
   const handleUpdateDevice = useCallback(async (deviceData: DeviceFormState) => {
-    if (!deviceId) {
-      toast.error('Device ID is missing');
-      return null;
-    }
-    
     if (!validateDeviceForm(deviceData)) {
       toast.error('Please fix the validation errors before saving');
       return null;
     }
     
-    setIsSaving(true);
-    
     try {
-      console.log("Updating device with data:", deviceData);
-      
-      // Ensure type is properly cast to DeviceType
-      const updatedDeviceData: Partial<EnergyDevice> = {
-        name: deviceData.name,
-        type: deviceData.type as DeviceType,
-        status: deviceData.status as DeviceStatus,
-        location: deviceData.location,
-        capacity: deviceData.capacity,
-        firmware: deviceData.firmware,
-        description: deviceData.description,
-      };
-
-      // Only add site_id if it exists
-      if (deviceData.site_id) {
-        updatedDeviceData.site_id = deviceData.site_id;
-      }
-      
-      const updatedDevice = await updateDevice(deviceId, updatedDeviceData);
-      
-      if (updatedDevice) {
-        toast.success('Device updated successfully');
-        // Invalidate and refetch device data
-        queryClient.invalidateQueries({ queryKey: ['device', deviceId] });
-        queryClient.invalidateQueries({ queryKey: ['devices'] });
-        return updatedDevice;
-      } else {
-        toast.error('Failed to update device');
+      // Ensure we have an ID to update
+      if (!deviceId) {
+        toast.error('Missing device ID for update');
         return null;
       }
+      
+      console.log("Updating device with data:", deviceData);
+      
+      // Prepare update data
+      const updateData = {
+        id: deviceId,
+        ...deviceData
+      };
+      
+      // Cast type and status to their proper enum values
+      if (updateData.type) {
+        updateData.type = updateData.type as EnergyDevice['type'];
+      }
+      
+      if (updateData.status) {
+        updateData.status = updateData.status as EnergyDevice['status'];
+      }
+      
+      // Handle site_id separately to ensure type safety
+      if ('site_id' in deviceData) {
+        const deviceWithSiteId = { ...updateData } as any;
+        deviceWithSiteId.site_id = deviceData.site_id;
+        
+        const updatedDevice = await updateDevice(deviceWithSiteId);
+        
+        if (updatedDevice) {
+          toast.success('Device updated successfully');
+          queryClient.invalidateQueries({
+            queryKey: ['devices', deviceId]
+          });
+          return updatedDevice;
+        }
+      } else {
+        const updatedDevice = await updateDevice(updateData);
+        
+        if (updatedDevice) {
+          toast.success('Device updated successfully');
+          queryClient.invalidateQueries({
+            queryKey: ['devices', deviceId]
+          });
+          return updatedDevice;
+        }
+      }
+      
+      toast.error('Failed to update device');
+      return null;
     } catch (error: any) {
       console.error("Error updating device:", error);
       toast.error(`Failed to update device: ${error?.message || 'Unknown error'}`);
       return null;
-    } finally {
-      setIsSaving(false);
     }
   }, [deviceId, queryClient, validateDeviceForm]);
-
+  
   const baseFormHook = useBaseDeviceForm({
-    initialDevice: deviceData,
+    initialDevice: device,
     onSubmit: handleUpdateDevice
   });
-
-  useEffect(() => {
-    if (deviceData) {
-      console.log("Setting form data with device:", deviceData);
-      baseFormHook.setDevice({
-        name: deviceData.name,
-        location: deviceData.location || '',
-        type: deviceData.type,
-        status: deviceData.status,
-        capacity: deviceData.capacity || 0,
-        firmware: deviceData.firmware || '',
-        description: deviceData.description || '',
-        site_id: deviceData.site_id,
-      });
-    }
-  }, [deviceData, baseFormHook.setDevice]);
-
+  
   return {
     ...baseFormHook,
     isLoading,
-    isSaving,
+    loadError,
     validationErrors,
     validateDeviceForm,
-    error: fetchError,
-    refetch,
     clearValidationError: (field: string) => {
-      setValidationErrors(prev => {
+      setValidationErrors((prev) => {
         const updated = { ...prev };
         delete updated[field];
         return updated;

@@ -91,5 +91,29 @@ export interface TelemetryData {
   [key: string]: any;
 }
 
-// Also export from telemetry.ts
-export { TelemetryData as TelemetryFromTelemetry } from './telemetry';
+// Add missing types for Dashboard.tsx
+export interface TelemetryStats {
+  deviceId: string;
+  deviceName: string;
+  lastUpdate: string;
+  dataPoints: number;
+}
+
+export type { TelemetryData as TelemetryFromTelemetry } from './telemetry';
+
+// Add types for lib/api/energy.ts
+export interface EnergyMetrics {
+  consumption: number;
+  production: number;
+  grid_import: number;
+  grid_export: number;
+  self_consumption: number;
+  timestamp: string;
+}
+
+export interface ForecastData {
+  timestamp: string;
+  value: number;
+  type: string;
+  confidence: number;
+}

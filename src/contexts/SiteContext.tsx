@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { Site } from '@/types/site';
 import { mockSites } from '@/services/sites/mockSites';

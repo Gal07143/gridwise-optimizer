@@ -31,22 +31,23 @@ export const useDeviceForm = () => {
     try {
       console.log("Creating device with data:", deviceData);
       
-      // Create device data with site_id field
-      const { name, type, status, location, capacity, firmware, description, site_id } = deviceData;
+      // Create device data with site_id field if needed
+      const { name, type, status, location, capacity, firmware, description } = deviceData;
       
       const deviceToCreate: Partial<EnergyDevice> = {
-        name,
-        type,
-        status,
+        name, 
+        // Ensure we cast these to the correct enum types
+        type: type as EnergyDevice['type'],
+        status: status as EnergyDevice['status'],
         location: location || undefined,
         capacity,
         firmware: firmware || undefined,
         description: description || undefined
       };
-
-      // Only add site_id if it exists
-      if (site_id) {
-        deviceToCreate.site_id = site_id;
+      
+      // Only add site_id if it exists in the original data
+      if ('site_id' in deviceData && deviceData.site_id) {
+        deviceToCreate.site_id = deviceData.site_id;
       }
       
       const newDevice = await createDevice(deviceToCreate as Omit<EnergyDevice, 'id'>);

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { ConnectionStatusOptions, ConnectionStatusResult } from '@/types/modbus';
 import { toast } from 'sonner';
@@ -137,16 +138,14 @@ export const useConnectionStatus = (options: ConnectionStatusOptions): Connectio
   // Return values that match ConnectionStatusResult type
   return {
     connected: isConnected,
-    isConnected,
-    isOnline: isConnected,
+    message,
     error,
     retryConnection,
     lastConnected,
     connect,
     disconnect,
     connectionAttempts: retryCount,
-    status: connectionStatus,
-    message
+    status: connectionStatus
   };
 };
 

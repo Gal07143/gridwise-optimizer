@@ -1,94 +1,87 @@
 
 import { useState, useCallback } from 'react';
-import { EnergyDevice, DeviceType, DeviceStatus } from '@/types/energy';
+import { EnergyDevice } from '@/types/energy';
 
-export interface DeviceFormState {
-  name: string;
-  type: DeviceType | string;
-  status: DeviceStatus | string;
-  location: string;
-  capacity: number;
-  firmware: string;
-  description: string;
-  site_id?: string;
-}
+export interface DeviceFormState extends Partial<EnergyDevice> {}
 
-interface BaseDeviceFormProps {
+export interface UseBaseDeviceFormProps {
   initialDevice: EnergyDevice | null;
-  onSubmit: (deviceData: DeviceFormState) => Promise<EnergyDevice | null>;
+  onSubmit: (device: DeviceFormState) => Promise<EnergyDevice | null>;
 }
 
-export const useBaseDeviceForm = ({ initialDevice, onSubmit }: BaseDeviceFormProps) => {
-  const [device, setDevice] = useState<DeviceFormState>(initialDevice ? {
-    name: initialDevice.name,
-    type: initialDevice.type,
-    status: initialDevice.status,
-    location: initialDevice.location || '',
-    capacity: initialDevice.capacity || 0,
-    firmware: initialDevice.firmware || '',
-    description: initialDevice.description || '',
-    site_id: initialDevice.site_id
-  } : {
-    name: '',
-    type: 'other' as DeviceType,
-    status: 'offline' as DeviceStatus,
-    location: '',
-    capacity: 0,
-    firmware: '',
-    description: ''
-  });
+export const useBaseDeviceForm = ({ initialDevice, onSubmit }: UseBaseDeviceFormProps) => {
+  const [device, setDevice] = useState<Partial<EnergyDevice>>(
+    initialDevice || {
+      name: '',
+      type: 'solar' as const,  // Use type assertion to fix the type
+      status: 'offline' as const,  // Use type assertion to fix the type
+      location: '',
+      capacity: 0,
+      firmware: '',
+      description: ''
+    }
+  );
 
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type } = e.target;
-    setDevice(prev => ({
-      ...prev,
-      [name]: type === 'number' ? (value ? parseFloat(value) : '') : value
-    }));
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+  const [isChanged, setIsChanged] = useState(false);
+
+  const handleChange = useCallback((field: keyof EnergyDevice, value: any) => {
+    setDevice(prev => {
+      // Only mark as changed if the value is actually different
+      if (prev[field] !== value) {
+        setIsChanged(true);
+      }
+      return { ...prev, [field]: value };
+    });
   }, []);
 
-  const handleSelectChange = useCallback((field: string, value: string) => {
-    setDevice(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  }, []);
-
-  const handleSubmit = useCallback(async () => {
-    return await onSubmit(device);
-  }, [device, onSubmit]);
-
-  const resetForm = useCallback(() => {
-    if (initialDevice) {
-      setDevice({
-        name: initialDevice.name,
-        type: initialDevice.type,
-        status: initialDevice.status,
-        location: initialDevice.location || '',
-        capacity: initialDevice.capacity || 0,
-        firmware: initialDevice.firmware || '',
-        description: initialDevice.description || '',
-        site_id: initialDevice.site_id
-      });
-    } else {
-      setDevice({
+  const handleReset = useCallback(() => {
+    setDevice(
+      initialDevice || {
         name: '',
-        type: 'other' as DeviceType,
-        status: 'offline' as DeviceStatus,
+        type: 'solar' as const,
+        status: 'offline' as const,
         location: '',
         capacity: 0,
         firmware: '',
         description: ''
-      });
-    }
+      }
+    );
+    setIsChanged(false);
+    setError(null);
   }, [initialDevice]);
+
+  const handleSubmit = useCallback(async () => {
+    try {
+      setError(null);
+      setIsSubmitting(true);
+      
+      const result = await onSubmit(device);
+      
+      if (result) {
+        setDevice(result);
+        setIsChanged(false);
+        return result;
+      }
+      
+      return null;
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('An unknown error occurred'));
+      return null;
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [device, onSubmit]);
 
   return {
     device,
-    setDevice,
-    handleInputChange,
-    handleSelectChange,
+    handleChange,
+    handleReset,
     handleSubmit,
-    resetForm
+    isSubmitting,
+    error,
+    isChanged
   };
 };
 

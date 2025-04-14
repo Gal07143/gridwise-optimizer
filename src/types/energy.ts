@@ -96,6 +96,25 @@ export interface SystemRecommendation {
   category?: string;
 }
 
+// Add EnergyMetrics for lib/api/energy.ts
+export interface EnergyMetrics {
+  consumption: number;
+  production: number;
+  grid_import: number;
+  grid_export: number;
+  self_consumption: number;
+  peak_power: number;
+  timestamp: string;
+}
+
+// Add ForecastData for lib/api/energy.ts
+export interface ForecastData {
+  timestamp: string;
+  value: number;
+  type: string;
+  confidence: number;
+}
+
 // Import Site type from site.ts for compatibility
 import { Site } from './site';
 export { Site };

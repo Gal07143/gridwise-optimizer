@@ -1,8 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { Device } from '@/types/device';
 import { TelemetryData } from '@/types/telemetry';
-import { EnergyManagementService, EnergyPrediction, EnergyAction } from '@/services/energyManagementService';
-import { WeatherImpact } from '@/types/mlService';
+import { EnergyManagementService } from '@/services/energyManagementService';
+import { EnergyPrediction, EnergyAction } from '@/types/energyManagement';
+import { WeatherImpact } from '@/types/energyManagement';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   BarChart, Bar, AreaChart, Area, ComposedChart, Cell
@@ -39,9 +41,7 @@ export const EnergyOptimizationVisualization: React.FC<EnergyOptimizationVisuali
     initializeService();
     
     return () => {
-      if (typeof energyManagementService.dispose === 'function') {
-        energyManagementService.dispose();
-      }
+      energyManagementService.dispose();
     };
   }, []);
   
@@ -67,7 +67,7 @@ export const EnergyOptimizationVisualization: React.FC<EnergyOptimizationVisuali
       // Create weather data object
       const weatherData: WeatherImpact = {
         temperature: 25,
-        humidity: 65, // Added missing property
+        humidity: 65,
         cloudCover: 20,
         cloud_cover: 20, 
         irradiance: 800,

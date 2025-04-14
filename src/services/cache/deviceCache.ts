@@ -1,116 +1,137 @@
 
-// Implementation of device cache
 import { Device } from '@/types/device';
 
-interface CacheEntry<T> {
-  data: T;
-  timestamp: number;
-  expiresAt: number;
+interface DeviceCache {
+  devices: Device[] | null;
+  devicesTimestamp: number | null;
+  deviceDetails: Record<string, Device>;
+  deviceDetailsTimestamp: Record<string, number>;
+  deviceMetrics: Record<string, Record<string, any[]>>;
+  deviceMetricsTimestamp: Record<string, Record<string, number>>;
 }
 
-interface MetricsCache {
-  [deviceId: string]: {
-    [metricType: string]: CacheEntry<any>;
-  };
-}
+// Initialize the cache
+const cache: DeviceCache = {
+  devices: null,
+  devicesTimestamp: null,
+  deviceDetails: {},
+  deviceDetailsTimestamp: {},
+  deviceMetrics: {},
+  deviceMetricsTimestamp: {}
+};
 
-class DeviceCache {
-  private devices: CacheEntry<Device[]> | null = null;
-  private deviceMap: Map<string, CacheEntry<Device>> = new Map();
-  private metrics: MetricsCache = {};
-  private TTL = 5 * 60 * 1000; // 5 minutes default TTL
+// Cache expiration in milliseconds (10 minutes)
+const CACHE_EXPIRY = 10 * 60 * 1000;
 
+export const deviceCache = {
   setDevices(devices: Device[]): void {
-    this.devices = {
-      data: devices,
-      timestamp: Date.now(),
-      expiresAt: Date.now() + this.TTL
-    };
-  }
+    cache.devices = devices;
+    cache.devicesTimestamp = Date.now();
+  },
 
   getDevices(): Device[] | null {
-    if (!this.devices || Date.now() > this.devices.expiresAt) {
+    if (
+      !cache.devices ||
+      !cache.devicesTimestamp ||
+      Date.now() - cache.devicesTimestamp > CACHE_EXPIRY
+    ) {
       return null;
     }
-    return this.devices.data;
-  }
+    return cache.devices;
+  },
 
   setDevice(device: Device): void {
-    this.deviceMap.set(device.id, {
-      data: device,
-      timestamp: Date.now(),
-      expiresAt: Date.now() + this.TTL
-    });
-  }
+    cache.deviceDetails[device.id] = device;
+    cache.deviceDetailsTimestamp[device.id] = Date.now();
+    
+    // If devices are already in cache, update the corresponding device there too
+    if (cache.devices) {
+      const index = cache.devices.findIndex(d => d.id === device.id);
+      if (index >= 0) {
+        cache.devices[index] = device;
+      } else {
+        cache.devices.push(device);
+      }
+    }
+  },
 
   getDevice(id: string): Device | null {
-    const entry = this.deviceMap.get(id);
-    if (!entry || Date.now() > entry.expiresAt) {
+    if (
+      !cache.deviceDetails[id] ||
+      !cache.deviceDetailsTimestamp[id] ||
+      Date.now() - cache.deviceDetailsTimestamp[id] > CACHE_EXPIRY
+    ) {
       return null;
     }
-    return entry.data;
-  }
+    return cache.deviceDetails[id];
+  },
 
-  setDeviceMetrics(deviceId: string, metricType: string, data: any): void {
-    if (!this.metrics[deviceId]) {
-      this.metrics[deviceId] = {};
+  setDeviceMetrics(deviceId: string, metricType: string, metrics: any[]): void {
+    if (!cache.deviceMetrics[deviceId]) {
+      cache.deviceMetrics[deviceId] = {};
+      cache.deviceMetricsTimestamp[deviceId] = {};
     }
+    
+    cache.deviceMetrics[deviceId][metricType] = metrics;
+    cache.deviceMetricsTimestamp[deviceId][metricType] = Date.now();
+  },
 
-    this.metrics[deviceId][metricType] = {
-      data,
-      timestamp: Date.now(),
-      expiresAt: Date.now() + this.TTL
-    };
-  }
-
-  getDeviceMetrics(deviceId: string, metricType: string): any | null {
-    const deviceMetrics = this.metrics[deviceId];
-    if (!deviceMetrics) return null;
-
-    const metricEntry = deviceMetrics[metricType];
-    if (!metricEntry || Date.now() > metricEntry.expiresAt) {
+  getDeviceMetrics(deviceId: string, metricType: string): any[] | null {
+    if (
+      !cache.deviceMetrics[deviceId] ||
+      !cache.deviceMetrics[deviceId][metricType] ||
+      !cache.deviceMetricsTimestamp[deviceId] ||
+      !cache.deviceMetricsTimestamp[deviceId][metricType] ||
+      Date.now() - cache.deviceMetricsTimestamp[deviceId][metricType] > CACHE_EXPIRY
+    ) {
       return null;
     }
-
-    return metricEntry.data;
-  }
+    return cache.deviceMetrics[deviceId][metricType];
+  },
 
   invalidateDevice(id: string): void {
-    this.deviceMap.delete(id);
-    delete this.metrics[id];
-  }
+    delete cache.deviceDetails[id];
+    delete cache.deviceDetailsTimestamp[id];
+    delete cache.deviceMetrics[id];
+    delete cache.deviceMetricsTimestamp[id];
+    
+    // If devices are in cache, remove the corresponding device
+    if (cache.devices) {
+      cache.devices = cache.devices.filter(d => d.id !== id);
+    }
+  },
 
   invalidateDevices(): void {
-    this.devices = null;
-    this.deviceMap.clear();
-  }
+    cache.devices = null;
+    cache.devicesTimestamp = null;
+  },
 
   invalidateDeviceMetrics(deviceId: string, metricType?: string): void {
-    if (!this.metrics[deviceId]) return;
-
-    if (metricType) {
-      delete this.metrics[deviceId][metricType];
-    } else {
-      delete this.metrics[deviceId];
+    if (!metricType) {
+      delete cache.deviceMetrics[deviceId];
+      delete cache.deviceMetricsTimestamp[deviceId];
+    } else if (
+      cache.deviceMetrics[deviceId] &&
+      cache.deviceMetricsTimestamp[deviceId]
+    ) {
+      delete cache.deviceMetrics[deviceId][metricType];
+      delete cache.deviceMetricsTimestamp[deviceId][metricType];
     }
-  }
+  },
 
-  getCacheStats(): {
-    devices: number;
-    individualDevices: number;
-    metrics: number;
+  getCacheStats(): { 
+    devices: boolean; 
+    deviceCount: number; 
+    detailsCount: number; 
+    metricsCount: number 
   } {
-    let metricsCount = 0;
-    Object.values(this.metrics).forEach(deviceMetrics => {
-      metricsCount += Object.keys(deviceMetrics).length;
-    });
-
     return {
-      devices: this.devices ? 1 : 0,
-      individualDevices: this.deviceMap.size,
-      metrics: metricsCount
+      devices: !!cache.devices,
+      deviceCount: cache.devices?.length || 0,
+      detailsCount: Object.keys(cache.deviceDetails).length,
+      metricsCount: Object.keys(cache.deviceMetrics).reduce((count, deviceId) => {
+        return count + Object.keys(cache.deviceMetrics[deviceId]).length;
+      }, 0)
     };
   }
-}
-
-export const deviceCache = new DeviceCache();
+};
