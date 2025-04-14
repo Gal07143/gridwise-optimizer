@@ -1,6 +1,8 @@
+
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { TelemetryData, Device } from '@/types/device';
-import { MLService } from '@/services/mlService';
+import { TelemetryData } from '@/types/telemetry';
+import { Device } from '@/types/device';
+import { MLService, MLServiceConfig } from '@/services/mlService';
 
 // Circular buffer for efficient telemetry storage
 class TelemetryBuffer<T> {
@@ -85,13 +87,15 @@ export function useDeviceTelemetry(device: Device) {
       modelPath: '/models/energy_model.onnx',
       inputShape: [24, 7], // 24 hours of data, 7 features
       outputShape: [24, 1], // 24 hour prediction
-      featureNames: ['consumption', 'generation', 'battery_level', 'temperature', 'time_of_day', 'day_of_week', 'is_holiday']
+      featureNames: ['consumption', 'generation', 'battery_level', 'temperature', 'time_of_day', 'day_of_week', 'is_holiday'],
+      modelType: 'onnx' // Added required modelType
     }),
     battery: new MLService({
       modelPath: '/models/battery_health_model.onnx',
       inputShape: [30, 5], // 30 days of data, 5 features
       outputShape: [1, 3], // health score, degradation rate, days until maintenance
-      featureNames: ['cycles', 'depth_of_discharge', 'temperature', 'charge_rate', 'discharge_rate']
+      featureNames: ['cycles', 'depth_of_discharge', 'temperature', 'charge_rate', 'discharge_rate'],
+      modelType: 'onnx' // Added required modelType
     })
   });
 
@@ -169,4 +173,4 @@ export function useDeviceTelemetry(device: Device) {
     ...state,
     processTelemetry
   };
-} 
+}

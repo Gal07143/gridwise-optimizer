@@ -39,7 +39,7 @@ export const BMSIntegration: React.FC<BMSIntegrationProps> = ({ equipmentId }) =
   const [isEditing, setIsEditing] = useState(false);
   const [editedValues, setEditedValues] = useState({
     bmsType: '',
-    syncFrequency: 0, // Changed to number
+    syncFrequency: 0,
     parameters: [] as BMSParameter[],
   });
 
@@ -51,7 +51,7 @@ export const BMSIntegration: React.FC<BMSIntegrationProps> = ({ equipmentId }) =
     if (bmsIntegration) {
       setEditedValues({
         bmsType: bmsIntegration.bmsType,
-        syncFrequency: bmsIntegration.syncFrequency, // Already a number
+        syncFrequency: bmsIntegration.syncFrequency,
         parameters: bmsIntegration.parameters.map(param => ({
           id: param.id,
           name: param.name,
@@ -69,7 +69,7 @@ export const BMSIntegration: React.FC<BMSIntegrationProps> = ({ equipmentId }) =
     if (bmsIntegration) {
       await updateBMSIntegration(equipmentId, {
         bmsType: editedValues.bmsType,
-        syncFrequency: editedValues.syncFrequency, // Already a number
+        syncFrequency: editedValues.syncFrequency,
         parameters: editedValues.parameters
       });
       setIsEditing(false);
@@ -151,7 +151,7 @@ export const BMSIntegration: React.FC<BMSIntegrationProps> = ({ equipmentId }) =
                     onChange={(e) =>
                       setEditedValues({
                         ...editedValues,
-                        syncFrequency: parseInt(e.target.value) || 0, // Convert to number
+                        syncFrequency: parseInt(e.target.value) || 0,
                       })
                     }
                   />

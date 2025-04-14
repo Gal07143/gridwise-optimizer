@@ -62,3 +62,35 @@ export interface OptimizationResult {
   recommendations: OptimizationRecommendation[];
   actions: OptimizationAction[];
 }
+
+// Add OptimizationSettings interface
+export interface OptimizationSettings {
+  id: string;
+  name: string;
+  priority: 'cost' | 'emissions' | 'reliability' | 'balanced';
+  objectives: {
+    cost_reduction_target?: number;
+    emission_reduction_target?: number;
+    peak_shaving_target?: number;
+    self_consumption_target?: number;
+  };
+  constraints: {
+    battery_min_soc?: number;
+    grid_feed_in_limit?: number;
+    must_run_devices?: string[];
+    time_of_use_preferences?: {
+      start: string;
+      end: string;
+      priority: number;
+    }[];
+  };
+  schedule: {
+    active: boolean;
+    frequency: 'hourly' | 'daily' | 'as_needed';
+    time?: string;
+  };
+  status: 'active' | 'inactive' | 'draft';
+  created_at: string;
+  updated_at: string;
+  site_id: string;
+}

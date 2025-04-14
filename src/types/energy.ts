@@ -16,7 +16,7 @@ export interface EnergyDevice {
   model?: string;
   installation_date?: string;
   last_maintenance?: string;
-  site_id?: string;
+  site_id?: string; // Added site_id
   ip_address?: string;
   mac_address?: string;
   last_seen?: string;
@@ -40,7 +40,8 @@ export interface DeviceState {
   state_of_health?: number;
 }
 
-export interface Site {
+// Define the Site interface to avoid conflicts with site.ts
+export interface SiteEnergy {
   id: string;
   name: string;
   address: string;
@@ -52,4 +53,22 @@ export interface Site {
   active: boolean;
   created_at: string;
   updated_at: string;
+}
+
+// Add these types for useForecast.ts
+export interface ProcessedForecastData {
+  timestamp: string;
+  production: number;
+  consumption: number;
+  balance: number;
+}
+
+export interface ForecastMetrics {
+  totalConsumption: number;
+  totalGeneration?: number;
+  peakLoad: number;
+  minLoad: number;
+  averageProduction: number;
+  selfConsumptionRate: number;
+  gridDependenceRate: number;
 }

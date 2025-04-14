@@ -5,9 +5,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useBaseDeviceForm, DeviceFormState } from './useBaseDeviceForm';
 import { toast } from 'sonner';
 import { EnergyDevice, DeviceType, DeviceStatus } from '@/types/energy';
-import { validateDeviceData, formatValidationErrors, ValidationError } from '@/services/devices/mutations/deviceValidation';
+import { validateDeviceData, formatValidationErrors } from '@/services/devices/mutations/deviceValidation';
 
-// Mock functions since the import modules don't exist
+// Temporary mock functions since the import modules don't exist
 const getDeviceById = async (id: string): Promise<EnergyDevice | null> => {
   // This is a mock implementation
   console.log(`Getting device with ID: ${id}`);
@@ -50,7 +50,7 @@ export const useEditDeviceForm = () => {
   }, [fetchError, navigate]);
   
   const validateDeviceForm = useCallback((data: DeviceFormState): boolean => {
-    const errors: ValidationError[] = validateDeviceData(data as Partial<EnergyDevice>);
+    const errors = validateDeviceData(data as Partial<EnergyDevice>);
     const formattedErrors = formatValidationErrors(errors);
     
     setValidationErrors(formattedErrors);
@@ -86,7 +86,7 @@ export const useEditDeviceForm = () => {
 
       // Only add site_id if it exists
       if (deviceData.site_id) {
-        (updatedDeviceData as any).site_id = deviceData.site_id;
+        updatedDeviceData.site_id = deviceData.site_id;
       }
       
       const updatedDevice = await updateDevice(deviceId, updatedDeviceData);
@@ -126,7 +126,7 @@ export const useEditDeviceForm = () => {
         capacity: deviceData.capacity || 0,
         firmware: deviceData.firmware || '',
         description: deviceData.description || '',
-        site_id: deviceData.site_id || '',
+        site_id: deviceData.site_id,
       });
     }
   }, [deviceData, baseFormHook.setDevice]);

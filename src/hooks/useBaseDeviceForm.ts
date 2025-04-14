@@ -19,7 +19,16 @@ interface BaseDeviceFormProps {
 }
 
 export const useBaseDeviceForm = ({ initialDevice, onSubmit }: BaseDeviceFormProps) => {
-  const [device, setDevice] = useState<DeviceFormState>(initialDevice || {
+  const [device, setDevice] = useState<DeviceFormState>(initialDevice ? {
+    name: initialDevice.name,
+    type: initialDevice.type,
+    status: initialDevice.status,
+    location: initialDevice.location || '',
+    capacity: initialDevice.capacity || 0,
+    firmware: initialDevice.firmware || '',
+    description: initialDevice.description || '',
+    site_id: initialDevice.site_id
+  } : {
     name: '',
     type: 'other' as DeviceType,
     status: 'offline' as DeviceStatus,
@@ -49,15 +58,28 @@ export const useBaseDeviceForm = ({ initialDevice, onSubmit }: BaseDeviceFormPro
   }, [device, onSubmit]);
 
   const resetForm = useCallback(() => {
-    setDevice(initialDevice || {
-      name: '',
-      type: 'other' as DeviceType,
-      status: 'offline' as DeviceStatus,
-      location: '',
-      capacity: 0,
-      firmware: '',
-      description: ''
-    });
+    if (initialDevice) {
+      setDevice({
+        name: initialDevice.name,
+        type: initialDevice.type,
+        status: initialDevice.status,
+        location: initialDevice.location || '',
+        capacity: initialDevice.capacity || 0,
+        firmware: initialDevice.firmware || '',
+        description: initialDevice.description || '',
+        site_id: initialDevice.site_id
+      });
+    } else {
+      setDevice({
+        name: '',
+        type: 'other' as DeviceType,
+        status: 'offline' as DeviceStatus,
+        location: '',
+        capacity: 0,
+        firmware: '',
+        description: ''
+      });
+    }
   }, [initialDevice]);
 
   return {

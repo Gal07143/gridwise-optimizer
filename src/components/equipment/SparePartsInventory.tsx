@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { equipmentService } from '@/services/equipmentService';
-import { SparePartInventory } from '@/types/equipment';
+import { SparePartInventory } from '@/types/equipment'; // Fixed import
 
 const SparePartsInventoryComponent: React.FC = () => {
   const { id } = useParams<{ id: string }>();

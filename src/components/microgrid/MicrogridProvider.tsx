@@ -1,8 +1,8 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useDevices } from '@/contexts/DeviceContext';
-import { TelemetryData } from '@/types/device';
-import { toast } from 'react-hot-toast';
+import { TelemetryData } from '@/types/telemetry'; // Updated import path
+import { toast } from 'sonner'; // Updated to use sonner instead of react-hot-toast
 
 /**
  * Types for microgrid metrics and status

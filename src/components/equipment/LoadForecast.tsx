@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { equipmentService } from '@/services/equipmentService';
-import { LoadForecast } from '@/types/equipment';
+import { LoadForecast } from '@/types/equipment'; // Fixed import
 
 const LoadForecastComponent: React.FC = () => {
   const { id } = useParams<{ id: string }>();

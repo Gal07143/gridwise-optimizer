@@ -33,12 +33,12 @@ const AutomatedReportComponent: React.FC = () => {
     try {
       if (!id) return;
       await equipmentService.createAutomatedReport({
+        name: `${type} Report`,
         equipmentId: id,
-        name: `${type} Report`,  // Added required name property
         reportType: type,
         schedule: 'monthly',
-        format: 'pdf',           // Added required format property
-        recipients: [],          // Added required recipients property
+        format: 'pdf',
+        recipients: [],
         parameters: {}
       });
 

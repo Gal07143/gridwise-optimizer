@@ -29,6 +29,7 @@ export interface EquipmentMetrics {
   equipmentId: string;
   timestamp: string;
   energy_consumption: number;
+  energyConsumption?: number; // Alias for compatibility
   power: number;
   temperature: number;
   humidity?: number;
@@ -49,11 +50,15 @@ export interface EquipmentMaintenance {
   date: string;
   technician: string;
   status: 'scheduled' | 'in-progress' | 'completed' | 'cancelled';
+  status_text?: 'in_progress' | 'overdue'; // For compatibility with existing code
   notes?: string;
   cost?: number;
   parts_replaced?: string[];
   next_maintenance_date?: string;
   duration?: number;
+  scheduledDate?: string; // For compatibility with existing code
+  completedDate?: string; // For compatibility with existing code
+  assignedTo?: string; // For compatibility with existing code
 }
 
 export interface EquipmentParameter {
@@ -67,6 +72,7 @@ export interface EquipmentParameter {
   critical_low?: number;
   critical_high?: number;
   last_updated: string;
+  timestamp?: string; // For compatibility with existing code
   status: 'normal' | 'warning' | 'critical';
 }
 
@@ -81,6 +87,7 @@ export interface EquipmentAlarm {
   resolved_at?: string;
   resolved_by?: string;
   notes?: string;
+  acknowledged?: boolean; // For compatibility with existing code
 }
 
 export interface CarbonEmissionsDetail {
@@ -275,7 +282,10 @@ export interface PredictiveMaintenance {
   equipmentId: string;
   component: string;
   predictedFailureDate: string;
+  predictionDate?: string; // For compatibility with existing code
+  predictedIssue?: string; // For compatibility with existing code
   probability: number;
+  confidence?: number; // For compatibility with existing code
   severity: 'low' | 'medium' | 'high' | 'critical';
   recommendedAction: string;
   estimatedCost?: number;
@@ -293,14 +303,23 @@ export interface PerformanceScore {
   equipmentId: string;
   date: string;
   overall: number;
+  overallScore?: number; // For compatibility with existing code
   energy_efficiency: number;
+  efficiencyScore?: number; // For compatibility with existing code
   reliability: number;
+  reliabilityScore?: number; // For compatibility with existing code
   maintenance: number;
-  operations: number;
+  maintenanceScore?: number; // For compatibility with existing code
   notes?: string;
   benchmark?: number;
   benchmarkSource?: string;
   recommendations?: string[];
+  factors?: Array<{
+    name: string;
+    weight: number;
+    score: number;
+    impact: 'positive' | 'negative' | 'neutral';
+  }>; // For compatibility with existing code
 }
 
 export interface EfficiencyRecommendation {
@@ -308,7 +327,9 @@ export interface EfficiencyRecommendation {
   equipmentId: string;
   timestamp: string;
   description: string;
+  title?: string; // For compatibility with existing code
   potentialSaving: number;
+  potentialSavings?: number; // For compatibility with existing code
   unit: string;
   priority: 'low' | 'medium' | 'high';
   implementationCost?: number;
@@ -355,6 +376,8 @@ export interface MaintenanceCost {
   vendor?: string;
   costCategory?: string;
   totalCost?: number;
+  type?: string; // For compatibility with existing code
+  amount?: number; // For compatibility with existing code
 }
 
 export type FormData = {

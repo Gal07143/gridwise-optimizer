@@ -1,110 +1,47 @@
 
-import { Insight, Prediction } from '../types/mlService';
-
+// Basic implementation of MLService
 export interface MLServiceConfig {
   modelPath: string;
   inputShape: number[];
   outputShape: number[];
   featureNames: string[];
-  modelType: 'regression' | 'classification' | 'timeseries';
+  modelType: 'onnx' | 'tensorflow' | 'pytorch';
 }
 
 export class MLService {
   private config: MLServiceConfig;
-  private initialized: boolean = false;
-
+  
   constructor(config: MLServiceConfig) {
     this.config = config;
   }
-
+  
   async initialize(): Promise<void> {
-    // Initialize the ML service
-    this.initialized = true;
-    console.log('ML Service initialized');
-    return Promise.resolve();
+    console.log('Initializing ML model:', this.config.modelPath);
+    // In a real implementation, this would load the ML model
   }
-
-  async predict(data: any[]): Promise<Prediction[]> {
-    if (!this.initialized) {
-      throw new Error('ML Service not initialized');
-    }
-    
-    // Mock prediction implementation
-    return Array.from({ length: 24 }, (_, i) => ({
-      timestamp: new Date(Date.now() + i * 3600000).toISOString(),
-      actual: Math.random() * 100,
-      predicted: Math.random() * 100,
-      confidence: 0.7 + Math.random() * 0.3
-    }));
+  
+  async predictBehavior(data: any[], horizon: number): Promise<number[]> {
+    console.log(`Predicting behavior for ${horizon} steps ahead`);
+    // Mock implementation that returns random values
+    return Array(horizon).fill(0).map(() => Math.random() * 100);
   }
-
-  async generateInsights(data: any[]): Promise<Insight[]> {
-    if (!this.initialized) {
-      throw new Error('ML Service not initialized');
-    }
-    
-    // Mock insights implementation
-    return [
-      {
-        type: 'energy',
-        title: 'Energy Consumption',
-        description: 'Recent consumption trend is increasing',
-        value: 125.4,
-        unit: 'kWh',
-        trend: 'up',
-        confidence: 0.92,
-        icon: null
-      },
-      {
-        type: 'battery',
-        title: 'Battery Performance',
-        description: 'Battery efficiency is stable',
-        value: 95,
-        unit: '%',
-        trend: 'stable',
-        confidence: 0.87,
-        icon: null
-      },
-      {
-        type: 'weather',
-        title: 'Weather Impact',
-        description: 'Lower consumption due to good weather',
-        value: -12.5,
-        unit: '%',
-        trend: 'down',
-        confidence: 0.75,
-        icon: null
-      },
-      {
-        type: 'cost',
-        title: 'Cost Optimization',
-        description: 'Potential savings from battery usage',
-        value: 32.40,
-        unit: '$',
-        trend: 'down',
-        confidence: 0.83,
-        icon: null
-      }
-    ];
-  }
-
-  calculatePerformanceMetrics(data: any[]): any {
-    // Mock implementation for calculating performance metrics
+  
+  async detectAnomalies(data: any[]): Promise<{
+    prediction: number;
+    anomalyScore: number;
+    confidence: number;
+  }> {
+    console.log(`Detecting anomalies in ${data.length} data points`);
+    // Mock implementation
     return {
-      accuracy: 0.87,
-      precision: 0.85,
-      recall: 0.82,
-      f1Score: 0.83,
-      rmse: 12.5,
-      mae: 8.3
+      prediction: 85 + Math.random() * 15,
+      anomalyScore: Math.random() * 0.5,
+      confidence: 0.7 + Math.random() * 0.3
     };
   }
-
+  
   dispose(): void {
-    // Clean up resources
-    this.initialized = false;
-    console.log('ML Service disposed');
+    console.log('Disposing ML resources');
+    // In a real implementation, this would free up memory used by the model
   }
 }
-
-export default MLService;

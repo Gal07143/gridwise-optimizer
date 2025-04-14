@@ -34,14 +34,14 @@ export const useDeviceForm = () => {
       // Create device data with site_id field
       const { name, type, status, location, capacity, firmware, description, site_id } = deviceData;
       
-      const deviceToCreate: any = {
+      const deviceToCreate: Partial<EnergyDevice> = {
         name,
         type,
         status,
-        location: location || null,
+        location: location || undefined,
         capacity,
-        firmware: firmware || null,
-        description: description || null
+        firmware: firmware || undefined,
+        description: description || undefined
       };
 
       // Only add site_id if it exists
@@ -49,7 +49,7 @@ export const useDeviceForm = () => {
         deviceToCreate.site_id = site_id;
       }
       
-      const newDevice = await createDevice(deviceToCreate);
+      const newDevice = await createDevice(deviceToCreate as Omit<EnergyDevice, 'id'>);
       
       if (newDevice) {
         toast.success('Device created successfully');

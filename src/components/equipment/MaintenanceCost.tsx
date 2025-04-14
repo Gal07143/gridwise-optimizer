@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -61,14 +60,14 @@ const MaintenanceCostComponent: React.FC = () => {
                         <Wrench className="h-3 w-3 mr-1" />
                         Maintenance Type
                       </Label>
-                      <div className="text-sm font-medium">{cost.maintenanceType || cost.costCategory}</div>
+                      <div className="text-sm font-medium">{cost.maintenanceType || cost.costCategory || cost.type}</div>
                     </div>
                     <div>
                       <Label className="flex items-center text-xs text-muted-foreground mb-1">
                         <DollarSign className="h-3 w-3 mr-1" />
                         Cost
                       </Label>
-                      <div className="text-sm font-medium text-primary">${(cost.cost || cost.totalCost || 0).toFixed(2)}</div>
+                      <div className="text-sm font-medium text-primary">${(cost.cost || cost.totalCost || cost.amount || 0).toFixed(2)}</div>
                     </div>
                     <div>
                       <Label className="flex items-center text-xs text-muted-foreground mb-1">
@@ -84,7 +83,7 @@ const MaintenanceCostComponent: React.FC = () => {
                         <FileText className="h-3 w-3 mr-1" />
                         Description
                       </Label>
-                      <div className="text-sm font-medium">{cost.description || `${cost.maintenanceType || cost.costCategory} maintenance`}</div>
+                      <div className="text-sm font-medium">{cost.description || `${cost.maintenanceType || cost.costCategory || cost.type || 'Standard'} maintenance`}</div>
                     </div>
                   </div>
                 </CardContent>
