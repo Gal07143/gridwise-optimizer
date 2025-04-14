@@ -1,95 +1,125 @@
 
 import { useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useBaseDeviceForm, DeviceFormState } from './useBaseDeviceForm';
-import { useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
-import { createDevice } from '@/services/devices/createDevice';
-import { validateDeviceData, formatValidationErrors } from '@/services/devices/mutations/deviceValidation';
 import { EnergyDevice } from '@/types/energy';
+import { validateDeviceData, formatValidationErrors } from '@/services/devices/mutations/deviceValidation';
 
-export const useDeviceForm = () => {
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
+interface UseDeviceFormProps {
+  initialDevice?: Partial<EnergyDevice>;
+  onSave?: (device: Partial<EnergyDevice>) => Promise<any>;
+  onSuccess?: () => void;
+}
+
+export const useDeviceForm = ({ initialDevice = {}, onSave, onSuccess }: UseDeviceFormProps) => {
+  const [device, setDevice] = useState<Partial<EnergyDevice>>(initialDevice);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isChanged, setIsChanged] = useState(false);
 
-  const validateDeviceForm = useCallback((data: DeviceFormState) => {
-    const errors = validateDeviceData(data as Partial<EnergyDevice>);
-    const formattedErrors = formatValidationErrors(errors);
-    setValidationErrors(formattedErrors);
-    return Object.keys(formattedErrors).length === 0;
-  }, []);
-
-  const handleCreateDevice = useCallback(async (deviceData: DeviceFormState) => {
-    if (!validateDeviceForm(deviceData)) {
-      toast.error('Please fix the validation errors before saving');
-      return null;
-    }
-
-    setIsSaving(true);
-    try {
-      console.log("Creating device with data:", deviceData);
-      
-      // Create device data with site_id field if needed
-      const { name, type, status, location, capacity, firmware, description } = deviceData;
-      
-      const deviceToCreate: Partial<EnergyDevice> = {
-        name, 
-        // Ensure we cast these to the correct enum types
-        type: type as EnergyDevice['type'],
-        status: status as EnergyDevice['status'],
-        location: location || undefined,
-        capacity,
-        firmware: firmware || undefined,
-        description: description || undefined
-      };
-      
-      // Only add site_id if it exists in the original data
-      if ('site_id' in deviceData && deviceData.site_id) {
-        deviceToCreate.site_id = deviceData.site_id;
-      }
-      
-      const newDevice = await createDevice(deviceToCreate as Omit<EnergyDevice, 'id'>);
-      
-      if (newDevice) {
-        toast.success('Device created successfully');
-        // Invalidate and refetch devices
-        queryClient.invalidateQueries({
-          queryKey: ['devices']
-        });
-        return newDevice;
-      } else {
-        toast.error('Failed to create device');
-        return null;
-      }
-    } catch (error: any) {
-      console.error("Error creating device:", error);
-      toast.error(`Failed to create device: ${error?.message || 'Unknown error'}`);
-      return null;
-    } finally {
-      setIsSaving(false);
-    }
-  }, [queryClient, validateDeviceForm]);
-
-  const baseFormHook = useBaseDeviceForm({
-    initialDevice: null,
-    onSubmit: handleCreateDevice
-  });
-
-  return {
-    ...baseFormHook,
-    isSaving,
-    validationErrors,
-    validateDeviceForm,
-    clearValidationError: (field: string) => {
-      setValidationErrors((prev) => {
-        const updated = { ...prev };
-        delete updated[field];
-        return updated;
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setDevice(prev => ({ ...prev, [name]: value }));
+    setIsChanged(true);
+    
+    // Clear validation error when field is edited
+    if (validationErrors[name]) {
+      setValidationErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
       });
     }
+  }, [validationErrors]);
+
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    handleChange(e);
+  }, [handleChange]);
+
+  const handleSelectChange = useCallback((name: string, value: string) => {
+    setDevice(prev => ({ ...prev, [name]: value }));
+    setIsChanged(true);
+    
+    // Clear validation error when field is edited
+    if (validationErrors[name]) {
+      setValidationErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
+  }, [validationErrors]);
+
+  const validateDeviceForm = useCallback(() => {
+    const errors = validateDeviceData(device);
+    if (errors.length > 0) {
+      const formattedErrors = formatValidationErrors(errors);
+      setValidationErrors(formattedErrors);
+      return false;
+    }
+    return true;
+  }, [device]);
+
+  const clearValidationError = useCallback((field: string) => {
+    setValidationErrors(prev => {
+      const newErrors = { ...prev };
+      delete newErrors[field];
+      return newErrors;
+    });
+  }, []);
+
+  const handleSubmit = useCallback(async (e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
+    
+    setIsSubmitting(true);
+    setError(null);
+    
+    if (!validateDeviceForm()) {
+      setIsSubmitting(false);
+      return;
+    }
+    
+    if (onSave) {
+      try {
+        setIsSaving(true);
+        await onSave(device);
+        setIsChanged(false);
+        if (onSuccess) {
+          onSuccess();
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to save device');
+      } finally {
+        setIsSaving(false);
+        setIsSubmitting(false);
+      }
+    } else {
+      setIsSubmitting(false);
+    }
+  }, [device, validateDeviceForm, onSave, onSuccess]);
+
+  const handleReset = useCallback(() => {
+    setDevice(initialDevice);
+    setValidationErrors({});
+    setError(null);
+    setIsChanged(false);
+  }, [initialDevice]);
+
+  return {
+    device,
+    handleChange,
+    handleInputChange,
+    handleSelectChange,
+    handleSubmit,
+    handleReset,
+    validationErrors,
+    validateDeviceForm,
+    clearValidationError,
+    isSubmitting,
+    isSaving,
+    error,
+    isChanged
   };
 };
-
-export default useDeviceForm;
