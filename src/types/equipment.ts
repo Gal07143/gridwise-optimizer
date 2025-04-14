@@ -130,8 +130,8 @@ export interface AutomatedReport {
   status: 'active' | 'paused' | 'error';
   templateId?: string;
   parameters?: Record<string, any>;
-  equipmentId?: string; // Missing field
-  reportType?: string; // Missing field
+  equipmentId?: string;
+  reportType?: string;
 }
 
 export interface BMSParameter {
@@ -157,7 +157,7 @@ export interface EquipmentGroup {
   attributes?: Record<string, any>;
   createdAt?: string;
   updatedAt?: string;
-  type?: string; // Added missing field
+  type?: string;
 }
 
 export interface BMSIntegration {
@@ -173,9 +173,9 @@ export interface BMSIntegration {
   syncInterval?: number;
   mappings?: Record<string, string>;
   equipmentId: string;
-  bmsType?: string; // Missing field
-  syncFrequency?: number; // Missing field
-  parameters?: BMSParameter[]; // Missing field
+  bmsType?: string;
+  syncFrequency?: number;
+  parameters?: BMSParameter[];
 }
 
 export type FormData = {

@@ -1,3 +1,4 @@
+
 export interface Device {
   id: string;
   name: string;
@@ -75,3 +76,6 @@ export interface DeviceConfiguration {
   created_at: string;
   applied_at?: string;
 }
+
+// Export TelemetryData from telemetry.ts
+export { TelemetryData } from './telemetry';

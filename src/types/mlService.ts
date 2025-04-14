@@ -11,10 +11,10 @@ export interface WeatherImpact {
   temperature: number;
   humidity: number;
   cloudCover: number;
+  cloud_cover?: number; // Added compatibility field
   precipitation: number;
   irradiance?: number; // Added missing property
   wind_speed?: number; // Added missing property
-  cloud_cover?: number; // Added compatibility field
   forecast: {
     date: string;
     temperature: number;
