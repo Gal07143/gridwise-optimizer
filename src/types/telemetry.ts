@@ -1,42 +1,55 @@
+
+// Basic telemetry data structure
 export interface TelemetryData {
-  timestamp: string;
-  deviceId: string;
-  temperature: number;
-  humidity: number;
-  power: number;
-  voltage: number;
-  current: number;
-  frequency: number;
-  powerFactor: number;
-  energy: number;
-  cost: number;
-  optimizedCost?: number;
-  batteryLevel?: number;
-  batteryHealth?: number;
-  solarGeneration?: number;
-  gridImport?: number;
-  gridExport?: number;
-  status: 'active' | 'inactive' | 'error' | 'maintenance';
-  metadata?: Record<string, any>;
+  id?: string;
+  device_id: string;
+  timestamp: Date | string;
+  value: number;
+  unit: string;
+  parameter: string;
+  [key: string]: any; // Allow additional fields
 }
 
-export interface TelemetryFilter {
-  startTime?: string;
-  endTime?: string;
-  deviceId?: string;
-  status?: string[];
+// Extended telemetry with additional analytics fields
+export interface EnhancedTelemetry extends TelemetryData {
+  trend?: 'rising' | 'falling' | 'stable';
+  anomaly?: boolean;
+  anomaly_score?: number;
+  quality?: 'good' | 'uncertain' | 'bad';
+  delta_value?: number;
+  forecasted_value?: number;
+}
+
+// Batch of telemetry data for bulk operations
+export interface TelemetryBatch {
+  device_id: string;
+  readings: TelemetryData[];
+  batch_id?: string;
+  timestamp?: string | Date;
+}
+
+// Aggregated telemetry for historical analysis
+export interface AggregatedTelemetry {
+  period_start: Date | string;
+  period_end: Date | string;
+  device_id: string;
+  parameter: string;
+  min_value: number;
+  max_value: number;
+  avg_value: number;
+  total_value: number;
+  count: number;
+  unit: string;
+}
+
+// Telemetry query parameters
+export interface TelemetryQueryParams {
+  device_id?: string;
+  parameter?: string | string[];
+  start_date?: Date | string;
+  end_date?: Date | string;
   limit?: number;
   offset?: number;
+  sort?: 'asc' | 'desc';
+  aggregation?: 'none' | 'hourly' | 'daily' | 'weekly' | 'monthly';
 }
-
-export interface TelemetryAggregate {
-  min: number;
-  max: number;
-  avg: number;
-  sum: number;
-  count: number;
-}
-
-export interface TelemetryStats {
-  [key: string]: TelemetryAggregate;
-} 

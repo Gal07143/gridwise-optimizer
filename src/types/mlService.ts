@@ -1,12 +1,5 @@
 
-export interface MLServiceConfig {
-  modelPath: string;
-  inputShape: number[];
-  outputShape: number[];
-  featureNames: string[];
-  modelType: string; // Required parameter
-}
-
+// Weather impact data structure
 export interface WeatherImpact {
   temperature: number;
   irradiance: number;
@@ -15,21 +8,15 @@ export interface WeatherImpact {
   precipitation: number;
 }
 
-export interface EnergyPrediction {
-  timestamp: Date;
-  consumption: number;
-  generation: number;
-  battery_level: number; // Changed from batteryLevel to battery_level
-  net_demand: number;
+// User behavior data for energy predictions
+export interface UserBehavior {
+  occupancy: number;
+  activity_level: number;
+  preferred_temperature: number;
+  schedule: string[];
 }
 
-export interface EnergyAction {
-  type: "charge" | "discharge" | "grid_import" | "grid_export";
-  value: number; // Use value instead of amount
-  reason: string;
-  savings: number; // Use savings instead of estimatedSavings
-}
-
+// Prediction result from ML models
 export interface Prediction {
   timestamp: string;
   actual: number;
@@ -37,8 +24,9 @@ export interface Prediction {
   confidence: number;
 }
 
+// Insight from ML analysis
 export interface Insight {
-  type: 'energy' | 'battery' | 'weather' | 'cost';
+  type: string;
   title: string;
   description: string;
   value: number;
@@ -48,9 +36,10 @@ export interface Insight {
   icon?: React.ReactNode;
 }
 
+// ML service interface
 export interface MLService {
   initialize: () => Promise<void>;
   predict: (data: any[]) => Promise<Prediction[]>;
   generateInsights: (data: any[]) => Promise<Insight[]>;
-  dispose: () => void; // Add dispose method
+  dispose: () => void;
 }

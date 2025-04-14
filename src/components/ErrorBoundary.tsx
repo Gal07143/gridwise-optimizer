@@ -1,3 +1,4 @@
+
 import React, { Component, ErrorInfo, ReactNode } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 import { Button } from './ui/button'
@@ -58,4 +59,4 @@ export class ErrorBoundary extends Component<Props, State> {
 
     return this.props.children
   }
-} 
+}

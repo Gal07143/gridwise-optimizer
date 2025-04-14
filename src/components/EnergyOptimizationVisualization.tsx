@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { Device } from '@/contexts/DeviceContext';
+import { Device } from '@/types/device';
 import { TelemetryData } from '@/types/telemetry';
 import { EnergyManagementService, EnergyPrediction, EnergyAction } from '@/services/energyManagementService';
 import { WeatherImpact } from '@/types/mlService';
@@ -260,4 +259,4 @@ export const EnergyOptimizationVisualization: React.FC<EnergyOptimizationVisuali
       </div>
     </div>
   );
-}; 
+};

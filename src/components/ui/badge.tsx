@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
@@ -58,6 +59,8 @@ export interface BadgeProps
   icon?: React.ReactNode
   /** Whether the badge is interactive (clickable) */
   interactive?: boolean
+  /** Content of the badge */
+  children?: React.ReactNode
 }
 
 /**
@@ -95,4 +98,4 @@ function Badge({
   )
 }
 
-export { Badge, badgeVariants } 
+export { Badge, badgeVariants }
