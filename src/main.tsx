@@ -3,19 +3,8 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { Toaster } from 'sonner';
 import App from './App';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import './index.css';
-
-// Create a query client for React Query
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 60 * 1000,
-      retry: 1
-    }
-  }
-});
 
 // Get the root element
 const rootElement = document.getElementById('root');
@@ -30,14 +19,12 @@ const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
     <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <App />
-        <Toaster 
-          position="top-right"
-          closeButton
-          richColors
-        />
-      </QueryClientProvider>
+      <App />
+      <Toaster 
+        position="top-right"
+        closeButton
+        richColors
+      />
     </ErrorBoundary>
   </React.StrictMode>,
 );

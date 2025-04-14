@@ -4,6 +4,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
 import { EnergyFlowProvider } from '@/components/dashboard/energy-flow/EnergyFlowContext';
+import { DeviceProvider } from '@/contexts/DeviceContext';
 
 // Create Query Client
 const queryClient = new QueryClient({
@@ -25,9 +26,11 @@ export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider defaultTheme="system" storageKey="theme-preference">
-          <EnergyFlowProvider>
-            {children}
-          </EnergyFlowProvider>
+          <DeviceProvider>
+            <EnergyFlowProvider>
+              {children}
+            </EnergyFlowProvider>
+          </DeviceProvider>
         </ThemeProvider>
       </QueryClientProvider>
     </BrowserRouter>

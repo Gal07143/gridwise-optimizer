@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { useDevices, Device, TelemetryData } from '@/contexts/DeviceContext';
+import { useDevices } from '@/contexts/DeviceContext';
 import { toast } from 'react-hot-toast';
 
 /**
@@ -196,4 +196,4 @@ const MicrogridProvider: React.FC<MicrogridProviderProps> = ({
   );
 };
 
-export default MicrogridProvider; 
+export default MicrogridProvider;
