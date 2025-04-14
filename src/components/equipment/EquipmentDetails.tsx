@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { useEquipment } from '../../contexts/EquipmentContext';
 import { Equipment } from '../../types/equipment';
@@ -10,16 +11,14 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 
 const getStatusIcon = (status: Equipment['status']) => {
   switch (status) {
-    case 'active':
+    case 'operational':
       return <CheckCircle className="w-5 h-5 text-green-500" />;
-    case 'inactive':
-      return <XCircle className="w-5 h-5 text-gray-500" />;
-    case 'maintenance':
-      return <AlertTriangle className="w-5 h-5 text-yellow-500" />;
-    case 'fault':
-      return <AlertTriangle className="w-5 h-5 text-red-500" />;
     case 'offline':
       return <XCircle className="w-5 h-5 text-gray-700" />;
+    case 'maintenance':
+      return <AlertTriangle className="w-5 h-5 text-yellow-500" />;
+    case 'faulty':
+      return <AlertTriangle className="w-5 h-5 text-red-500" />;
     default:
       return <XCircle className="w-5 h-5 text-gray-500" />;
   }
@@ -108,8 +107,8 @@ const EquipmentDetails: React.FC<{ equipmentId: string }> = ({ equipmentId }) =>
                 {selectedEquipment.model && (
                   <p><span className="text-gray-500">Model:</span> {selectedEquipment.model}</p>
                 )}
-                {selectedEquipment.serialNumber && (
-                  <p><span className="text-gray-500">Serial Number:</span> {selectedEquipment.serialNumber}</p>
+                {selectedEquipment.serial_number && (
+                  <p><span className="text-gray-500">Serial Number:</span> {selectedEquipment.serial_number}</p>
                 )}
               </div>
             </div>
@@ -133,11 +132,11 @@ const EquipmentDetails: React.FC<{ equipmentId: string }> = ({ equipmentId }) =>
             <div className="space-y-2">
               <h3 className="font-medium">Maintenance Information</h3>
               <div className="space-y-1">
-                {selectedEquipment.installationDate && (
-                  <p><span className="text-gray-500">Installation Date:</span> {new Date(selectedEquipment.installationDate).toLocaleDateString()}</p>
+                {selectedEquipment.installation_date && (
+                  <p><span className="text-gray-500">Installation Date:</span> {new Date(selectedEquipment.installation_date).toLocaleDateString()}</p>
                 )}
-                {selectedEquipment.lastMaintenanceDate && (
-                  <p><span className="text-gray-500">Last Maintenance:</span> {new Date(selectedEquipment.lastMaintenanceDate).toLocaleDateString()}</p>
+                {selectedEquipment.last_maintenance_date && (
+                  <p><span className="text-gray-500">Last Maintenance:</span> {new Date(selectedEquipment.last_maintenance_date).toLocaleDateString()}</p>
                 )}
                 {selectedEquipment.nextMaintenanceDate && (
                   <p><span className="text-gray-500">Next Maintenance:</span> {new Date(selectedEquipment.nextMaintenanceDate).toLocaleDateString()}</p>
@@ -278,4 +277,4 @@ const EquipmentDetails: React.FC<{ equipmentId: string }> = ({ equipmentId }) =>
   );
 };
 
-export default EquipmentDetails; 
+export default EquipmentDetails;

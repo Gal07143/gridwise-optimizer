@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useEquipment } from '../../contexts/EquipmentContext';
 import { Equipment } from '../../types/equipment';
@@ -15,22 +16,29 @@ interface EquipmentFormProps {
   onCancel: () => void;
 }
 
-interface FormData extends Omit<Partial<Equipment>, 'installationDate'> {
-  installationDate: string;
+interface FormData {
+  name: string;
+  type: string;
+  location: string;
+  manufacturer: string;
+  model: string;
+  serial_number: string;
+  installation_date: string;
+  notes?: string;
+  efficiency?: number;
+  load?: number;
 }
 
 const EquipmentForm: React.FC<EquipmentFormProps> = ({ equipmentId, onSubmit, onCancel }) => {
   const { selectedEquipment, loading, selectEquipment } = useEquipment();
   const [formData, setFormData] = useState<FormData>({
     name: '',
-    description: '',
     type: '',
     location: '',
     manufacturer: '',
     model: '',
-    serialNumber: '',
-    installationDate: '',
-    parameters: [],
+    serial_number: '',
+    installation_date: '',
   });
 
   useEffect(() => {
@@ -43,14 +51,14 @@ const EquipmentForm: React.FC<EquipmentFormProps> = ({ equipmentId, onSubmit, on
     if (selectedEquipment) {
       setFormData({
         ...selectedEquipment,
-        installationDate: selectedEquipment.installationDate 
-          ? new Date(selectedEquipment.installationDate).toISOString().split('T')[0] 
+        installation_date: selectedEquipment.installation_date 
+          ? new Date(selectedEquipment.installation_date).toISOString().split('T')[0] 
           : '',
       });
     }
   }, [selectedEquipment]);
 
-  const handleChange = (field: keyof FormData, value: string | number | boolean) => {
+  const handleChange = (field: keyof FormData, value: string | number) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -61,7 +69,7 @@ const EquipmentForm: React.FC<EquipmentFormProps> = ({ equipmentId, onSubmit, on
     e.preventDefault();
     const submissionData: Partial<Equipment> = {
       ...formData,
-      installationDate: formData.installationDate ? new Date(formData.installationDate) : undefined,
+      installation_date: formData.installation_date ? formData.installation_date : undefined,
     };
     await onSubmit(submissionData);
   };
@@ -139,31 +147,31 @@ const EquipmentForm: React.FC<EquipmentFormProps> = ({ equipmentId, onSubmit, on
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="serialNumber">Serial Number</Label>
+              <Label htmlFor="serial_number">Serial Number</Label>
               <Input
-                id="serialNumber"
-                value={formData.serialNumber}
-                onChange={(e) => handleChange('serialNumber', e.target.value)}
+                id="serial_number"
+                value={formData.serial_number}
+                onChange={(e) => handleChange('serial_number', e.target.value)}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="installationDate">Installation Date</Label>
+              <Label htmlFor="installation_date">Installation Date</Label>
               <Input
-                id="installationDate"
+                id="installation_date"
                 type="date"
-                value={formData.installationDate}
-                onChange={(e) => handleChange('installationDate', e.target.value)}
+                value={formData.installation_date}
+                onChange={(e) => handleChange('installation_date', e.target.value)}
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="notes">Notes</Label>
             <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => handleChange('description', e.target.value)}
+              id="notes"
+              value={formData.notes}
+              onChange={(e) => handleChange('notes', e.target.value)}
               rows={4}
             />
           </div>
@@ -182,4 +190,4 @@ const EquipmentForm: React.FC<EquipmentFormProps> = ({ equipmentId, onSubmit, on
   );
 };
 
-export default EquipmentForm; 
+export default EquipmentForm;

@@ -72,7 +72,7 @@ const EnergyCostAnalysis: React.FC = () => {
                     <div>
                       <Label>Effective Date</Label>
                       <div className="text-sm font-medium">
-                        {new Date(structure.effectiveDate).toLocaleDateString()}
+                        {structure.effectiveFrom ? new Date(structure.effectiveFrom).toLocaleDateString() : 'N/A'}
                       </div>
                     </div>
                     <div>

@@ -1,58 +1,71 @@
-import React, { ErrorInfo, Component } from 'react';
-import { Device, TelemetryData } from '@/types/device';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+
+import React, { useState, useEffect, useCallback } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Activity, Clock, AlertTriangle } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { MLService } from '@/services/mlService';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
-import { useMemo, useEffect, useState } from 'react';
-import { deviceService } from '@/services/deviceService';
-import { DeviceConnectivityService } from '@/services/deviceConnectivityService';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { ChartContainer, ChartLegend, AreaChart, LineChart } from '@/components/ui/chart';
+import { AlertTriangle, Activity, Battery, Download, TrendingUp, TrendingDown } from 'lucide-react';
+import { format } from 'date-fns';
+
+import { Device, TelemetryData } from '@/types/device';
+import { MLService, MLServiceConfig } from '@/types/mlService';
+import { ResponsiveContainer, CartesianGrid, XAxis, YAxis, Tooltip, Area, Line } from 'recharts';
+import { ErrorBoundary as DeviceDetailsErrorBoundary } from 'react';
 
 interface DeviceDetailsProps {
-  device: Device;
-  telemetry?: TelemetryData[];
-  isLoading?: boolean;
-  className?: string;
-  onError?: (error: Error) => void;
+  deviceId: string;
 }
 
-interface DeviceDetailsState {
-  hasError: boolean;
-  error: Error | null;
-}
+const sampleTelemetryData = [
+  { timestamp: '2023-04-14T08:00:00', value: 45, parameter: 'power', deviceId: 'demo-device', unit: 'kW' },
+  { timestamp: '2023-04-14T09:00:00', value: 52, parameter: 'power', deviceId: 'demo-device', unit: 'kW' },
+  { timestamp: '2023-04-14T10:00:00', value: 58, parameter: 'power', deviceId: 'demo-device', unit: 'kW' },
+  { timestamp: '2023-04-14T11:00:00', value: 63, parameter: 'power', deviceId: 'demo-device', unit: 'kW' },
+  { timestamp: '2023-04-14T12:00:00', value: 72, parameter: 'power', deviceId: 'demo-device', unit: 'kW' },
+  { timestamp: '2023-04-14T13:00:00', value: 68, parameter: 'power', deviceId: 'demo-device', unit: 'kW' },
+  { timestamp: '2023-04-14T14:00:00', value: 65, parameter: 'power', deviceId: 'demo-device', unit: 'kW' },
+  { timestamp: '2023-04-14T15:00:00', value: 61, parameter: 'power', deviceId: 'demo-device', unit: 'kW' },
+];
 
-/**
- * Error boundary component for DeviceDetails
- */
-class DeviceDetailsErrorBoundary extends Component<{ children: React.ReactNode }, DeviceDetailsState> {
-  constructor(props: { children: React.ReactNode }) {
+const sampleDevice: Device = {
+  id: 'demo-device',
+  name: 'Smart Meter',
+  type: 'meter',
+  status: 'online',
+  manufacturer: 'EnergyTech',
+  model: 'PowerMeter Pro',
+  location: 'Main Building',
+  lastSeen: '2023-04-14T15:30:00',
+  firmware: 'v2.1.5',
+  capacity: 100,
+  description: 'Main power meter for building A'
+};
+
+// Mock class to handle React component error boundary
+class ErrorBoundary extends DeviceDetailsErrorBoundary {
+  constructor(props: any) {
     super(props);
     this.state = { hasError: false, error: null };
   }
 
-  static getDerivedStateFromError(error: Error): DeviceDetailsState {
+  static getDerivedStateFromError(error: any) {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('DeviceDetails Error:', error, errorInfo);
+  componentDidCatch(error: any, errorInfo: any) {
+    console.error("Error in DeviceDetails component:", error, errorInfo);
   }
 
   render() {
     if (this.state.hasError) {
       return (
-        <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>
-            {this.state.error?.message || 'An error occurred while displaying device details'}
-          </AlertDescription>
-        </Alert>
+        <div className="p-4 bg-red-50 text-red-800 rounded-md">
+          <h3 className="font-bold">Something went wrong</h3>
+          <p>{this.state.error?.message || 'An unknown error occurred'}</p>
+          <Button onClick={() => this.setState({ hasError: false, error: null })}>Try again</Button>
+        </div>
       );
     }
 
@@ -60,476 +73,356 @@ class DeviceDetailsErrorBoundary extends Component<{ children: React.ReactNode }
   }
 }
 
-/**
- * DeviceInfo component for displaying basic device information
- */
-const DeviceInfo = ({ device, isLoading }: { device: Device; isLoading?: boolean }) => {
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        <Skeleton className="h-4 w-24" />
-        <Skeleton className="h-4 w-32" />
-        <Skeleton className="h-4 w-28" />
-      </div>
-    );
-  }
+const DeviceDetails: React.FC<DeviceDetailsProps> = ({ deviceId }) => {
+  const [device, setDevice] = useState<Device | null>(null);
+  const [telemetry, setTelemetry] = useState<TelemetryData[]>([]);
+  const [consumermlService, setConsumerMLService] = useState<MLService | null>(null);
+  const [generationmlService, setGenerationMLService] = useState<MLService | null>(null);
+  const [predictions, setPredictions] = useState<any[]>([]);
+  const [anomalies, setAnomalies] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  try {
-    return (
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <span className="text-sm text-muted-foreground">Type</span>
-          <span className="font-medium">{device.type}</span>
-        </div>
-        <div className="flex justify-between items-center">
-          <span className="text-sm text-muted-foreground">Protocol</span>
-          <span className="font-medium">{device.protocol}</span>
-        </div>
-        <div className="flex justify-between items-center">
-          <span className="text-sm text-muted-foreground">MQTT Topic</span>
-          <span className="font-medium font-mono">{device.mqtt_topic}</span>
-        </div>
-        {device.http_endpoint && (
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">HTTP Endpoint</span>
-            <span className="font-medium font-mono">{device.http_endpoint}</span>
-          </div>
-        )}
-      </div>
-    );
-  } catch (error) {
-    console.error('Error in DeviceInfo:', error);
-    return (
-      <Alert variant="destructive">
-        <AlertTriangle className="h-4 w-4" />
-        <AlertTitle>Error</AlertTitle>
-        <AlertDescription>Failed to display device information</AlertDescription>
-      </Alert>
-    );
-  }
-};
+  // Configuration for the ML services
+  const consumerConfig: MLServiceConfig = {
+    modelPath: '/models/consumer-prediction',
+    inputShape: [24, 5],
+    outputShape: [24, 1],
+    featureNames: ['time', 'temperature', 'humidity', 'occupancy', 'day_of_week'],
+    modelType: 'timeseries' // Changed from 'consumption' to a valid model type
+  };
 
-/**
- * ConnectionDetails component for displaying connection information
- */
-const ConnectionDetails = ({ device, isLoading }: { device: Device; isLoading?: boolean }) => {
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        <Skeleton className="h-4 w-24" />
-        <Skeleton className="h-4 w-32" />
-        <Skeleton className="h-4 w-28" />
-      </div>
-    );
-  }
+  const generationConfig: MLServiceConfig = {
+    modelPath: '/models/generation-prediction',
+    inputShape: [24, 7],
+    outputShape: [24, 1],
+    featureNames: ['time', 'solar_irradiance', 'temperature', 'cloud_cover', 'panel_efficiency', 'panel_age', 'day_of_year'],
+    modelType: 'regression'
+  };
 
-  return (
-    <div className="space-y-4">
-      {device.ip_address && (
-        <div className="flex justify-between items-center">
-          <span className="text-sm text-muted-foreground">IP Address</span>
-          <span className="font-medium font-mono">{device.ip_address}</span>
-        </div>
-      )}
-      {device.port && (
-        <div className="flex justify-between items-center">
-          <span className="text-sm text-muted-foreground">Port</span>
-          <span className="font-medium">{device.port}</span>
-        </div>
-      )}
-      {device.slave_id && (
-        <div className="flex justify-between items-center">
-          <span className="text-sm text-muted-foreground">Slave ID</span>
-          <span className="font-medium">{device.slave_id}</span>
-        </div>
-      )}
-    </div>
-  );
-};
-
-interface TelemetryDisplayProps {
-  telemetry?: TelemetryData[];
-  isLoading?: boolean;
-  deviceId: string;
-}
-
-/**
- * TelemetryDisplay component for displaying telemetry data and predictions
- */
-const TelemetryDisplay = ({ telemetry, isLoading, deviceId }: TelemetryDisplayProps) => {
-  const [predictions, setPredictions] = useState<number[]>([]);
-  const [anomalyScore, setAnomalyScore] = useState<number | null>(null);
-  const [mlError, setMlError] = useState<string | null>(null);
-
-  // Initialize ML service
-  const mlService = useMemo(() => new MLService({
-    modelPath: '/models/device_model.onnx',
-    modelType: 'consumption',
-    inputShape: [10, 5], // 10 time steps, 5 features
-    outputShape: [1, 3], // anomaly score, prediction, confidence
-    featureNames: ['temperature', 'humidity', 'pressure', 'voltage', 'current']
-  }), []);
-
-  // Process telemetry data when it changes
+  // Fetch device data
   useEffect(() => {
-    if (!telemetry?.length) return;
+    // Mock API call
+    setTimeout(() => {
+      setDevice(sampleDevice);
+      setTelemetry(sampleTelemetryData);
+      setLoading(false);
+    }, 500);
+  }, [deviceId]);
 
-    const processTelemetry = async () => {
+  // Initialize ML services
+  useEffect(() => {
+    const initML = async () => {
       try {
-        await mlService.initialize();
-        
-        // Detect anomalies
-        const result = await mlService.detectAnomalies(telemetry);
-        setAnomalyScore(result.anomalyScore);
-        
-        // Predict future behavior
-        const futurePredictions = await mlService.predictBehavior(telemetry, 5);
-        setPredictions(futurePredictions);
-        
-        setMlError(null);
+        const consumerService = new MLService(consumerConfig);
+        await consumerService.initialize();
+        setConsumerMLService(consumerService);
+
+        const generationService = new MLService(generationConfig);
+        await generationService.initialize();
+        setGenerationMLService(generationService);
+
+        // Generate sample predictions and anomalies
+        if (telemetry.length > 0) {
+          const anomalyData = consumerService.detectAnomalies(telemetry);
+          setAnomalies(anomalyData.filter(item => item.isAnomaly));
+          
+          const behaviorPredictions = generationService.predictBehavior(telemetry);
+          setPredictions(behaviorPredictions);
+        }
       } catch (error) {
-        console.error('ML processing error:', error);
-        setMlError(error instanceof Error ? error.message : 'Failed to process telemetry data');
+        console.error('Error initializing ML services:', error);
       }
     };
 
-    processTelemetry();
+    if (telemetry.length > 0 && !consumermlService) {
+      initML();
+    }
 
+    // Cleanup function
     return () => {
-      // Clean up ML service resources
-      if (mlService && typeof mlService.cleanup === 'function') {
-        mlService.cleanup();
+      if (consumermlService) {
+        consumermlService.cleanup();
+      }
+      if (generationmlService) {
+        generationmlService.cleanup();
       }
     };
-  }, [telemetry, mlService]);
+  }, [telemetry]);
 
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        <Skeleton className="h-12 w-full" />
-        <Skeleton className="h-12 w-full" />
-        <Skeleton className="h-12 w-full" />
-      </div>
-    );
+  if (loading || !device) {
+    return <div>Loading device details...</div>;
   }
-
-  if (!telemetry || telemetry.length === 0) {
-    return (
-      <div className="text-center py-4 text-muted-foreground">
-        No telemetry data available
-      </div>
-    );
-  }
-
-  // Prepare chart data
-  const chartData = telemetry.map((data, index) => ({
-    timestamp: new Date(data.timestamp).toLocaleTimeString(),
-    ...data.data,
-    prediction: index < predictions.length ? predictions[index] : undefined
-  }));
 
   return (
     <div className="space-y-6">
-      {mlError && (
-        <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>ML Processing Error</AlertTitle>
-          <AlertDescription>{mlError}</AlertDescription>
-        </Alert>
-      )}
-
-      {anomalyScore !== null && (
-        <Alert variant={anomalyScore > 0.7 ? "destructive" : "default"}>
-          <Activity className="h-4 w-4" />
-          <AlertTitle>Anomaly Detection</AlertTitle>
-          <AlertDescription>
-            {anomalyScore > 0.7 
-              ? 'Potential anomaly detected in device behavior'
-              : 'Device behavior is normal'}
-          </AlertDescription>
-        </Alert>
-      )}
-
-      <div className="h-[300px] w-full">
-        <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="timestamp" />
-          <YAxis />
-          <Tooltip />
-          <Legend />
-          {Object.keys(telemetry[0]?.data || {}).map(key => (
-            <Line 
-              key={key}
-              type="monotone"
-              dataKey={key}
-              stroke={`hsl(${Math.random() * 360}, 70%, 50%)`}
-              dot={false}
-            />
-          ))}
-          {predictions.length > 0 && (
-            <Line
-              type="monotone"
-              dataKey="prediction"
-              stroke="#8884d8"
-              strokeDasharray="5 5"
-              dot={false}
-            />
-          )}
-        </LineChart>
-      </div>
-
-      <div className="space-y-4">
-        {telemetry.map((data, index) => (
-          <div 
-            key={index} 
-            className="flex justify-between items-center p-2 rounded-lg bg-muted/50"
-          >
-            <div className="flex items-center space-x-2">
-              <Activity className="h-4 w-4 text-muted-foreground" />
-              <span className="font-medium">
-                {new Date(data.timestamp).toLocaleString()}
-              </span>
-            </div>
-            <div className="flex items-center space-x-4">
-              {Object.entries(data.data).map(([key, value]) => (
-                <div key={key} className="text-sm">
-                  <span className="text-muted-foreground">{key}:</span>{' '}
-                  <span className="font-medium">{String(value)}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-/**
- * DeviceDetails component for displaying detailed device information
- * @param device - The device to display details for
- * @param telemetry - Optional array of telemetry data
- * @param isLoading - Optional flag indicating if data is loading
- * @param className - Optional additional CSS classes
- */
-export function DeviceDetails({ 
-  device, 
-  telemetry, 
-  isLoading = false,
-  className,
-  onError 
-}: DeviceDetailsProps) {
-  const [telemetryData, setTelemetryData] = useState<TelemetryData[]>(telemetry || []);
-  const [connectivityStatus, setConnectivityStatus] = useState<any>(null);
-  const [connectivityMetrics, setConnectivityMetrics] = useState<any[]>([]);
-  const [connectivityIssues, setConnectivityIssues] = useState<any[]>([]);
-  const [isRepairing, setIsRepairing] = useState(false);
-
-  // Subscribe to real-time updates
-  useEffect(() => {
-    const telemetrySubscription = deviceService.subscribeToDeviceTelemetry(device.id, (payload) => {
-      const newData = payload.new as TelemetryData;
-      setTelemetryData(prevData => {
-        const updatedData = [...prevData, newData];
-        // Keep only the most recent 100 data points
-        return updatedData.slice(-100);
-      });
-    });
-
-    return () => {
-      telemetrySubscription.unsubscribe();
-    };
-  }, [device.id]);
-
-  // Initialize connectivity service and fetch data
-  useEffect(() => {
-    const connectivityService = new DeviceConnectivityService();
-    
-    const fetchConnectivityData = async () => {
-      try {
-        await connectivityService.initialize();
-        
-        const status = await connectivityService.getDeviceStatus(device.id);
-        setConnectivityStatus(status);
-        
-        const metrics = await connectivityService.getDeviceMetrics(device.id);
-        setConnectivityMetrics(metrics);
-        
-        const issues = await connectivityService.runDiagnostics(device.id);
-        setConnectivityIssues(issues);
-      } catch (error) {
-        console.error('Error fetching connectivity data:', error);
-        onError?.(error instanceof Error ? error : new Error('Failed to fetch connectivity data'));
-      }
-    };
-    
-    fetchConnectivityData();
-  }, [device.id, onError]);
-
-  // Handle repair attempt
-  const handleRepair = async () => {
-    if (isRepairing) return;
-    
-    setIsRepairing(true);
-    try {
-      const connectivityService = new DeviceConnectivityService();
-      await connectivityService.initialize();
-      const fixed = await connectivityService.attemptRepair(device.id);
-      
-      // Refresh connectivity data
-      const status = await connectivityService.getDeviceStatus(device.id);
-      setConnectivityStatus(status);
-      
-      const issues = await connectivityService.runDiagnostics(device.id);
-      setConnectivityIssues(issues);
-      
-      return fixed;
-    } catch (error) {
-      console.error('Error repairing device:', error);
-      onError?.(error instanceof Error ? error : new Error('Failed to repair device'));
-      return false;
-    } finally {
-      setIsRepairing(false);
-    }
-  };
-
-  try {
-    return (
-      <DeviceDetailsErrorBoundary>
-        <Card className={className}>
+      <ErrorBoundary>
+        <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>{device.name}</CardTitle>
-                <CardDescription>
-                  Device ID: {device.id}
-                </CardDescription>
-              </div>
-              <Badge 
-                variant={device.status === 'online' ? 'success' : 'destructive'}
-                className="ml-2"
-              >
+            <div className="flex justify-between items-center">
+              <CardTitle>{device.name}</CardTitle>
+              <Badge variant={device.status === 'online' ? 'success' : 'destructive'}>
                 {device.status}
               </Badge>
             </div>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="info" className="space-y-4">
-              <TabsList>
-                <TabsTrigger value="info">Information</TabsTrigger>
-                <TabsTrigger value="connection">Connection</TabsTrigger>
-                <TabsTrigger value="telemetry">Telemetry</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="info">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Device Information</CardTitle>
-                    <CardDescription>Basic details about the device</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <DeviceInfo device={device} isLoading={isLoading} />
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="connection">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Connection Details</CardTitle>
-                    <CardDescription>Connection parameters for the device</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <ConnectionDetails device={device} isLoading={isLoading} />
-                    
-                    {connectivityStatus && (
-                      <div className="mt-4 space-y-4">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-muted-foreground">Connection Status</span>
-                          <Badge variant={
-                            connectivityStatus.status === 'healthy' ? 'default' : 
-                            connectivityStatus.status === 'degraded' ? 'default' : 
-                            'destructive'
-                          }>
-                            {connectivityStatus.status}
-                          </Badge>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-muted-foreground">Latency</span>
-                          <span className="font-medium">{connectivityStatus.latency}ms</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-muted-foreground">Signal Strength</span>
-                          <span className="font-medium">{connectivityStatus.signalStrength}%</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-muted-foreground">Last Ping</span>
-                          <span className="font-medium">
-                            {connectivityStatus.lastPing ? formatDistanceToNow(new Date(connectivityStatus.lastPing), { addSuffix: true }) : 'Never'}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {connectivityIssues.length > 0 && (
-                      <div className="mt-4">
-                        <h3 className="text-sm font-medium mb-2">Connection Issues</h3>
-                        <div className="space-y-2">
-                          {connectivityIssues.map((issue, index) => (
-                            <Alert key={index} variant={
-                              issue.severity === 'high' ? 'destructive' : 
-                              issue.severity === 'medium' ? 'warning' : 'default'
-                            }>
-                              <AlertTriangle className="h-4 w-4" />
-                              <AlertTitle>{issue.type}</AlertTitle>
-                              <AlertDescription>
-                                {issue.description}
-                                {issue.autoFixAvailable && (
-                                  <button 
-                                    onClick={handleRepair}
-                                    disabled={isRepairing}
-                                    className="ml-2 text-sm font-medium text-primary hover:underline"
-                                  >
-                                    {isRepairing ? 'Repairing...' : 'Repair'}
-                                  </button>
-                                )}
-                              </AlertDescription>
-                            </Alert>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="telemetry">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Recent Telemetry</CardTitle>
-                    <CardDescription>Latest data from the device</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <TelemetryDisplay telemetry={telemetryData} isLoading={isLoading} deviceId={device.id} />
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p><span className="text-gray-500">Type:</span> {device.type}</p>
+                <p><span className="text-gray-500">Manufacturer:</span> {device.manufacturer}</p>
+                <p><span className="text-gray-500">Model:</span> {device.model}</p>
+              </div>
+              <div>
+                <p><span className="text-gray-500">Location:</span> {device.location}</p>
+                <p><span className="text-gray-500">Firmware:</span> {device.firmware}</p>
+                <p><span className="text-gray-500">Last Seen:</span> {new Date(device.lastSeen || '').toLocaleString()}</p>
+              </div>
+            </div>
           </CardContent>
         </Card>
-      </DeviceDetailsErrorBoundary>
-    );
-  } catch (error) {
-    const err = error instanceof Error ? error : new Error('Unknown error occurred');
-    console.error('Error in DeviceDetails:', err);
-    onError?.(err);
-    
-    return (
-      <Alert variant="destructive">
-        <AlertTriangle className="h-4 w-4" />
-        <AlertTitle>Error</AlertTitle>
-        <AlertDescription>Failed to display device details</AlertDescription>
-      </Alert>
-    );
-  }
-} 
+
+        <Tabs defaultValue="telemetry">
+          <TabsList className="grid grid-cols-4">
+            <TabsTrigger value="telemetry">Telemetry</TabsTrigger>
+            <TabsTrigger value="predictions">Predictions</TabsTrigger>
+            <TabsTrigger value="anomalies">Anomalies</TabsTrigger>
+            <TabsTrigger value="health">Device Health</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="telemetry" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Power Consumption</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={telemetry}>
+                      <defs>
+                        <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#82ca9d" stopOpacity={0.8}/>
+                          <stop offset="95%" stopColor="#82ca9d" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis 
+                        dataKey="timestamp" 
+                        tickFormatter={(value) => {
+                          const date = new Date(value);
+                          return format(date, 'HH:mm');
+                        }}
+                      />
+                      <YAxis />
+                      <Tooltip 
+                        labelFormatter={(value) => {
+                          const date = new Date(value);
+                          return format(date, 'PPpp');
+                        }}
+                      />
+                      <Area type="monotone" dataKey="value" stroke="#82ca9d" fillOpacity={1} fill="url(#colorValue)" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                  <div className="bg-slate-100 dark:bg-slate-800 p-3 rounded-md">
+                    <p className="text-sm text-gray-500">Current Power</p>
+                    <p className="text-xl font-bold">{telemetry[telemetry.length - 1]?.value} kW</p>
+                  </div>
+                  <div className="bg-slate-100 dark:bg-slate-800 p-3 rounded-md">
+                    <p className="text-sm text-gray-500">Daily Average</p>
+                    <p className="text-xl font-bold">
+                      {(telemetry.reduce((sum, item) => sum + item.value, 0) / telemetry.length).toFixed(1)} kW
+                    </p>
+                  </div>
+                  <div className="bg-slate-100 dark:bg-slate-800 p-3 rounded-md">
+                    <p className="text-sm text-gray-500">Peak Power</p>
+                    <p className="text-xl font-bold">
+                      {Math.max(...telemetry.map(item => item.value))} kW
+                    </p>
+                  </div>
+                  <div className="bg-slate-100 dark:bg-slate-800 p-3 rounded-md">
+                    <p className="text-sm text-gray-500">Last Reading</p>
+                    <p className="text-xl font-bold">
+                      {format(new Date(telemetry[telemetry.length - 1]?.timestamp || new Date()), 'HH:mm')}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="predictions" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Energy Forecast</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {predictions.length > 0 ? (
+                  <>
+                    <div className="h-[300px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={predictions}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis 
+                            dataKey="timestamp" 
+                            tickFormatter={(value) => {
+                              const date = new Date(value);
+                              return format(date, 'HH:mm');
+                            }}
+                          />
+                          <YAxis />
+                          <Tooltip 
+                            labelFormatter={(value) => {
+                              const date = new Date(value);
+                              return format(date, 'PPpp');
+                            }}
+                          />
+                          <Line type="monotone" dataKey="prediction" stroke="#8884d8" activeDot={{ r: 8 }} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                    
+                    <div className="bg-slate-100 dark:bg-slate-800 p-3 rounded-md mt-4">
+                      <div className="flex justify-between items-center mb-2">
+                        <p className="font-medium">Expected Energy Pattern</p>
+                        <Badge variant="secondary">AI Generated</Badge>
+                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">
+                        Based on historical data and current conditions, we predict that energy consumption will
+                        peak at {format(new Date(), 'HH:mm')} with an estimated value of 
+                        {Math.max(...predictions.map(p => p.prediction)).toFixed(1)} kW.
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex items-center justify-center h-40">
+                    <p>No prediction data available</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="anomalies" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Detected Anomalies</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {anomalies.length > 0 ? (
+                  <div className="space-y-4">
+                    {anomalies.map((anomaly, index) => (
+                      <div key={index} className="bg-red-50 dark:bg-red-900/20 p-4 rounded-md border-l-4 border-red-500">
+                        <div className="flex items-start">
+                          <AlertTriangle className="h-5 w-5 text-red-500 mt-0.5 mr-2" />
+                          <div>
+                            <h4 className="font-medium">Anomaly Detected</h4>
+                            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                              Unusual value of {anomaly.value} {anomaly.unit} detected at {
+                                format(new Date(anomaly.timestamp), 'PPpp')
+                              }
+                            </p>
+                            <div className="mt-2">
+                              <p className="text-xs text-gray-500">
+                                Confidence: {(anomaly.anomalyScore * 100).toFixed(0)}%
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-md border-l-4 border-green-500">
+                    <div className="flex items-center">
+                      <Activity className="h-5 w-5 text-green-500 mr-2" />
+                      <div>
+                        <h4 className="font-medium">No Anomalies Detected</h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                          Device is operating within expected parameters
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="health" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Device Health Status</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  <div>
+                    <div className="flex justify-between mb-1">
+                      <span>Connectivity</span>
+                      <span className="text-green-500">Excellent</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                      <div className="bg-green-500 h-2.5 rounded-full" style={{ width: '95%' }}></div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <div className="flex justify-between mb-1">
+                      <span>Data Quality</span>
+                      <span className="text-green-500">Good</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                      <div className="bg-green-500 h-2.5 rounded-full" style={{ width: '87%' }}></div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <div className="flex justify-between mb-1">
+                      <span>Battery</span>
+                      <span className="text-amber-500">Fair</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                      <div className="bg-amber-500 h-2.5 rounded-full" style={{ width: '68%' }}></div>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
+                    <div className="bg-slate-100 dark:bg-slate-800 p-3 rounded-md">
+                      <p className="text-sm text-gray-500">Uptime</p>
+                      <p className="text-xl font-bold">99.8%</p>
+                    </div>
+                    <div className="bg-slate-100 dark:bg-slate-800 p-3 rounded-md">
+                      <p className="text-sm text-gray-500">Firmware</p>
+                      <p className="text-xl font-bold">{device.firmware}</p>
+                    </div>
+                    <div className="bg-slate-100 dark:bg-slate-800 p-3 rounded-md">
+                      <p className="text-sm text-gray-500">Signal Strength</p>
+                      <p className="text-xl font-bold">-67 dBm</p>
+                    </div>
+                    <div className="bg-slate-100 dark:bg-slate-800 p-3 rounded-md">
+                      <p className="text-sm text-gray-500">Last Check</p>
+                      <p className="text-xl font-bold">2 mins ago</p>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-md">
+                    <h4 className="font-medium flex items-center">
+                      <Battery className="h-4 w-4 mr-2" />
+                      Maintenance Recommendation
+                    </h4>
+                    <p className="text-sm mt-2">
+                      Battery replacement recommended within the next 3 months. Current degradation is at 32%.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </ErrorBoundary>
+    </div>
+  );
+};
+
+export default DeviceDetails;

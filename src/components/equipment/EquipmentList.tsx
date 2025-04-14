@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useEquipment } from '../../contexts/EquipmentContext';
 import { Equipment } from '../../types/equipment';
@@ -8,16 +9,14 @@ import { Loader2 } from 'lucide-react';
 
 const getStatusColor = (status: Equipment['status']) => {
   switch (status) {
-    case 'active':
+    case 'operational':
       return 'bg-green-500';
-    case 'inactive':
-      return 'bg-gray-500';
-    case 'maintenance':
-      return 'bg-yellow-500';
-    case 'fault':
-      return 'bg-red-500';
     case 'offline':
       return 'bg-gray-700';
+    case 'maintenance':
+      return 'bg-yellow-500';
+    case 'faulty':
+      return 'bg-red-500';
     default:
       return 'bg-gray-500';
   }
@@ -82,17 +81,8 @@ const EquipmentList: React.FC = () => {
                   <Badge variant={item.isOnline ? 'default' : 'secondary'}>
                     {item.isOnline ? 'Online' : 'Offline'}
                   </Badge>
-                  <Badge variant={item.isRunning ? 'default' : 'secondary'}>
-                    {item.isRunning ? 'Running' : 'Stopped'}
-                  </Badge>
                 </div>
               </div>
-              {item.alarms.length > 0 && (
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-500">Active Alarms</span>
-                  <Badge variant="destructive">{item.alarms.length}</Badge>
-                </div>
-              )}
             </div>
             <div className="mt-4 flex justify-end space-x-2">
               <Button
@@ -110,4 +100,4 @@ const EquipmentList: React.FC = () => {
   );
 };
 
-export default EquipmentList; 
+export default EquipmentList;
