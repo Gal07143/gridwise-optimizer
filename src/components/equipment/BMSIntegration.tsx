@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useEquipment } from '@/contexts/EquipmentContext';
 import {
@@ -20,6 +21,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { format } from 'date-fns';
+import { BMSParameter } from '@/types/equipment';
 
 interface BMSIntegrationProps {
   equipmentId: string;
@@ -35,10 +37,11 @@ export const BMSIntegration: React.FC<BMSIntegrationProps> = ({ equipmentId }) =
   } = useEquipment();
 
   const [isEditing, setIsEditing] = useState(false);
+  // Fix: Changed syncFrequency to string to match BMSIntegration type
   const [editedValues, setEditedValues] = useState({
     bmsType: '',
-    syncFrequency: 0,
-    parameters: [] as { id: string; name: string; bmsId: string; mapping: string }[],
+    syncFrequency: '', // Changed from number to string
+    parameters: [] as { id: string; name: string; bmsId: string; mapping: string; status?: string }[],
   });
 
   useEffect(() => {
@@ -50,14 +53,35 @@ export const BMSIntegration: React.FC<BMSIntegrationProps> = ({ equipmentId }) =
       setEditedValues({
         bmsType: bmsIntegration.bmsType,
         syncFrequency: bmsIntegration.syncFrequency,
-        parameters: bmsIntegration.parameters,
+        // Fix: Map BMSParameter objects to the expected shape
+        parameters: bmsIntegration.parameters.map(param => ({
+          id: param.id,
+          name: param.name,
+          bmsId: param.bmsId,
+          // Fix: Convert Record<string, any> to string
+          mapping: typeof param.mapping === 'string' ? param.mapping : JSON.stringify(param.mapping),
+          status: param.status
+        })),
       });
     }
   }, [bmsIntegration]);
 
   const handleSave = async () => {
     if (bmsIntegration) {
-      await updateBMSIntegration(equipmentId, editedValues);
+      // Fix: Convert the edited values to the format expected by updateBMSIntegration
+      await updateBMSIntegration(equipmentId, {
+        bmsType: editedValues.bmsType,
+        syncFrequency: editedValues.syncFrequency,
+        parameters: editedValues.parameters.map(param => ({
+          id: param.id,
+          name: param.name,
+          bmsId: param.bmsId,
+          dataType: 'string', // Default value
+          unit: '',          // Default value
+          mapping: param.mapping,
+          status: param.status
+        }))
+      });
       setIsEditing(false);
     }
   };
@@ -132,12 +156,11 @@ export const BMSIntegration: React.FC<BMSIntegrationProps> = ({ equipmentId }) =
                   <Label htmlFor="syncFrequency">Sync Frequency (minutes)</Label>
                   <Input
                     id="syncFrequency"
-                    type="number"
                     value={editedValues.syncFrequency}
                     onChange={(e) =>
                       setEditedValues({
                         ...editedValues,
-                        syncFrequency: parseInt(e.target.value),
+                        syncFrequency: e.target.value,
                       })
                     }
                   />
@@ -202,12 +225,12 @@ export const BMSIntegration: React.FC<BMSIntegrationProps> = ({ equipmentId }) =
               </TableRow>
             </TableHeader>
             <TableBody>
-              {bmsIntegration.parameters.map((param) => (
+              {bmsIntegration.parameters.map((param: BMSParameter) => (
                 <TableRow key={param.id}>
                   <TableCell>{param.name}</TableCell>
                   <TableCell>{param.bmsId}</TableCell>
                   <TableCell>{param.dataType}</TableCell>
-                  <TableCell>{param.mapping}</TableCell>
+                  <TableCell>{JSON.stringify(param.mapping)}</TableCell>
                   <TableCell>
                     <Badge
                       variant="outline"
@@ -217,7 +240,7 @@ export const BMSIntegration: React.FC<BMSIntegrationProps> = ({ equipmentId }) =
                           : 'bg-yellow-500'
                       }
                     >
-                      {param.status}
+                      {param.status || 'unknown'}
                     </Badge>
                   </TableCell>
                 </TableRow>
@@ -230,4 +253,4 @@ export const BMSIntegration: React.FC<BMSIntegrationProps> = ({ equipmentId }) =
   );
 };
 
-export default BMSIntegration; 
+export default BMSIntegration;

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,7 +16,10 @@ export const DowntimeAnalysisComponent: React.FC = () => {
     const fetchDowntimes = async () => {
       try {
         if (!id) return;
-        const data = await equipmentService.getDowntimeRecords(id);
+        // Fix: Added default dates for the 3-parameter function
+        const now = new Date();
+        const oneYearAgo = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+        const data = await equipmentService.getDowntimeRecords(id, oneYearAgo, now);
         setDowntimes(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch downtime records');
@@ -51,7 +55,7 @@ export const DowntimeAnalysisComponent: React.FC = () => {
                     <div>
                       <Label>End Time</Label>
                       <div className="text-sm font-medium">
-                        {new Date(downtime.endTime).toLocaleString()}
+                        {downtime.endTime ? new Date(downtime.endTime).toLocaleString() : 'Ongoing'}
                       </div>
                     </div>
                     <div>
@@ -75,4 +79,6 @@ export const DowntimeAnalysisComponent: React.FC = () => {
       </Card>
     </div>
   );
-}; 
+};
+
+export default DowntimeAnalysisComponent;

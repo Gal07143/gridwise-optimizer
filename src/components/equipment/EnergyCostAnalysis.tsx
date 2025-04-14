@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,7 +19,8 @@ const EnergyCostAnalysis: React.FC = () => {
     const fetchRateStructures = async () => {
       try {
         if (!id) return;
-        const structures = await equipmentService.getEnergyRateStructures(id);
+        // Fix: Changed to call the method without the id parameter
+        const structures = await equipmentService.getEnergyRateStructures();
         setRateStructures(structures);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch rate structures');
@@ -34,8 +36,8 @@ const EnergyCostAnalysis: React.FC = () => {
     try {
       if (!id) return;
       await equipmentService.applyEnergyRateStructure(id, structureId);
-      // Refresh the list
-      const structures = await equipmentService.getEnergyRateStructures(id);
+      // Fix: Changed to call the method without the id parameter
+      const structures = await equipmentService.getEnergyRateStructures();
       setRateStructures(structures);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to apply rate structure');
@@ -59,11 +61,13 @@ const EnergyCostAnalysis: React.FC = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label>Rate Type</Label>
-                      <div className="text-sm font-medium">{structure.rateType}</div>
+                      <div className="text-sm font-medium">{structure.rateType || structure.name}</div>
                     </div>
                     <div>
                       <Label>Rate Value</Label>
-                      <div className="text-sm font-medium">{structure.rateValue} {structure.unit}</div>
+                      <div className="text-sm font-medium">
+                        {structure.rateValue || (structure.rates.length > 0 ? structure.rates[0].rate : 0)} {structure.unit || (structure.rates.length > 0 ? structure.rates[0].unit : '$')}
+                      </div>
                     </div>
                     <div>
                       <Label>Effective Date</Label>
@@ -73,7 +77,7 @@ const EnergyCostAnalysis: React.FC = () => {
                     </div>
                     <div>
                       <Label>Status</Label>
-                      <div className="text-sm font-medium">{structure.status}</div>
+                      <div className="text-sm font-medium">{structure.status || 'active'}</div>
                     </div>
                   </div>
                   <div className="mt-4">
@@ -94,4 +98,4 @@ const EnergyCostAnalysis: React.FC = () => {
   );
 };
 
-export default EnergyCostAnalysis; 
+export default EnergyCostAnalysis;

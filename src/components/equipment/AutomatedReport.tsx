@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,7 +17,8 @@ const AutomatedReportComponent: React.FC = () => {
     const fetchReports = async () => {
       try {
         if (!id) return;
-        const data = await equipmentService.getAutomatedReports(id);
+        // Fix: getAutomatedReports doesn't expect any arguments
+        const data = await equipmentService.getAutomatedReports();
         setReports(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch automated reports');
@@ -31,9 +33,10 @@ const AutomatedReportComponent: React.FC = () => {
   const handleCreateReport = async (type: string) => {
     try {
       if (!id) return;
-      await equipmentService.createAutomatedReport(id, type);
-      // Refresh the list
-      const data = await equipmentService.getAutomatedReports(id);
+      // Fix: createAutomatedReport expects id and type as separate arguments
+      await equipmentService.createAutomatedReport({ equipmentId: id, reportType: type });
+      // Fix: getAutomatedReports doesn't expect any arguments
+      const data = await equipmentService.getAutomatedReports();
       setReports(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create report');
@@ -91,4 +94,4 @@ const AutomatedReportComponent: React.FC = () => {
   );
 };
 
-export default AutomatedReportComponent; 
+export default AutomatedReportComponent;

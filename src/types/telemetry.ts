@@ -53,3 +53,9 @@ export interface TelemetryQueryParams {
   sort?: 'asc' | 'desc';
   aggregation?: 'none' | 'hourly' | 'daily' | 'weekly' | 'monthly';
 }
+
+// Date range interface for consistency
+export interface DateRange {
+  from: Date;
+  to: Date;
+}

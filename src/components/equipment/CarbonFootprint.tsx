@@ -17,7 +17,10 @@ const CarbonFootprint: React.FC = () => {
     const fetchEmissions = async () => {
       try {
         if (!id) return;
-        const data = await equipmentService.getCarbonEmissionsDetails(id);
+        // Fix: Changed to include default dates for 3-parameter function
+        const now = new Date();
+        const oneMonthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+        const data = await equipmentService.getCarbonEmissionsDetails(id, oneMonthAgo, now);
         setEmissions(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch emissions data');
@@ -56,7 +59,7 @@ const CarbonFootprint: React.FC = () => {
               <Card key={emission.id} className="overflow-hidden tech-card hover:scale-[1.01] transition-transform duration-300">
                 <div className="absolute top-0 right-0 m-1">
                   <span className="text-xs px-2 py-0.5 rounded-full tech-badge-green">
-                    {emission.category}
+                    {emission.category || 'Unknown'}
                   </span>
                 </div>
                 <CardContent className="pt-6">
@@ -74,7 +77,7 @@ const CarbonFootprint: React.FC = () => {
                         Amount
                       </Label>
                       <div className="text-sm font-medium">
-                        <span className="text-primary">{emission.amount}</span> {emission.unit}
+                        <span className="text-primary">{emission.amount || emission.totalEmissions}</span> {emission.unit || 'kg CO2e'}
                       </div>
                     </div>
                     <div>
@@ -83,7 +86,7 @@ const CarbonFootprint: React.FC = () => {
                         Date
                       </Label>
                       <div className="text-sm font-medium">
-                        {new Date(emission.date).toLocaleDateString()}
+                        {new Date(emission.date || emission.timestamp).toLocaleDateString()}
                       </div>
                     </div>
                     <div>
@@ -91,7 +94,7 @@ const CarbonFootprint: React.FC = () => {
                         <FileText className="h-3 w-3 mr-1" />
                         Category
                       </Label>
-                      <div className="text-sm font-medium">{emission.category}</div>
+                      <div className="text-sm font-medium">{emission.category || 'Operational'}</div>
                     </div>
                   </div>
                 </CardContent>

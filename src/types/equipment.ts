@@ -1,3 +1,4 @@
+
 export interface Equipment {
   id: string;
   name: string;
@@ -120,6 +121,10 @@ export interface EnergyRateStructure {
   rates: EnergyRate[];
   effectiveDate: Date;
   expirationDate?: Date;
+  rateType?: string;  // Added to match component usage
+  rateValue?: number; // Added to match component usage
+  unit?: string;      // Added to match component usage
+  status?: string;    // Added to match component usage
 }
 
 export interface EnergyRate {
@@ -141,6 +146,10 @@ export interface CarbonEmissionsDetail {
   embodiedEmissions: number;
   totalEmissions: number;
   source: string;
+  category?: string;  // Added to match component usage
+  amount?: number;    // Added to match component usage
+  unit?: string;      // Added to match component usage
+  date?: Date;        // Added to match component usage
 }
 
 export interface PredictiveMaintenance {
@@ -200,6 +209,13 @@ export interface LoadForecast {
   };
   actualLoad?: number;
   accuracy?: number;
+  // Added fields to match component usage
+  forecastType?: string;
+  value?: number;
+  unit?: string;
+  startTime?: Date;
+  endTime?: Date;
+  confidence?: number;
 }
 
 export interface LifecycleStage {
@@ -259,6 +275,9 @@ export interface EnergyBenchmark {
   percentile: number;
   period: string;
   timestamp: Date;
+  // Added to match component usage
+  actualConsumption?: number;
+  expectedConsumption?: number;
 }
 
 export interface AutomatedReport {
@@ -301,16 +320,17 @@ export interface EnergySaving {
   savedEmissions: number;
   verificationMethod: string;
   status: string;
+  timestamp?: Date; // Added to match component usage
 }
 
-// 15. Integration with Building Management Systems
+// Integration with Building Management Systems
 export interface BMSIntegration {
   id: string;
   equipmentId: string;
   bmsType: string;
   connectionStatus: string;
   lastSync: Date;
-  syncFrequency: string;
+  syncFrequency: string; // Changed to string to match component usage
   parameters: BMSParameter[];
   credentials?: {
     username: string;
@@ -326,4 +346,5 @@ export interface BMSParameter {
   dataType: string;
   unit: string;
   mapping: Record<string, any>;
-} 
+  status?: string; // Added to match component usage
+}

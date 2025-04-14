@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useEquipment } from '@/contexts/EquipmentContext';
 import {
@@ -23,6 +24,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { DatePickerWithRange } from '@/components/ui/date-range-picker';
 import { format } from 'date-fns';
+import { DateRange } from '@/types/telemetry';
 
 interface EnergyAnalyticsProps {
   equipmentId: string;
@@ -40,7 +42,7 @@ export const EnergyAnalytics: React.FC<EnergyAnalyticsProps> = ({ equipmentId })
     error,
   } = useEquipment();
 
-  const [dateRange, setDateRange] = useState({
+  const [dateRange, setDateRange] = useState<DateRange>({
     from: new Date(new Date().setMonth(new Date().getMonth() - 1)),
     to: new Date(),
   });
@@ -58,12 +60,12 @@ export const EnergyAnalytics: React.FC<EnergyAnalyticsProps> = ({ equipmentId })
 
   const consumptionData = energyBenchmarks.map((benchmark) => ({
     date: format(new Date(benchmark.timestamp), 'MMM dd'),
-    actual: benchmark.actualConsumption,
-    expected: benchmark.expectedConsumption,
+    actual: benchmark.actualConsumption || benchmark.value,
+    expected: benchmark.expectedConsumption || benchmark.industryAverage,
   }));
 
   const savingsData = energySavings.map((saving) => ({
-    date: format(new Date(saving.timestamp), 'MMM dd'),
+    date: format(new Date(saving.timestamp || saving.reportingPeriod.end), 'MMM dd'),
     energySaved: saving.savedEnergy,
     costSaved: saving.savedCost,
     emissions: saving.savedEmissions,
@@ -77,6 +79,16 @@ export const EnergyAnalytics: React.FC<EnergyAnalyticsProps> = ({ equipmentId })
     }))
   );
 
+  // Fix: Ensure date handling is robust
+  const handleDateRangeChange = (newRange: DateRange) => {
+    if (newRange.from && (newRange.to || newRange.to === null)) {
+      setDateRange({
+        from: newRange.from,
+        to: newRange.to || new Date()
+      });
+    }
+  };
+
   if (loading) return <div>Loading energy analytics...</div>;
   if (error) return <div>Error loading energy analytics: {error}</div>;
 
@@ -86,7 +98,7 @@ export const EnergyAnalytics: React.FC<EnergyAnalyticsProps> = ({ equipmentId })
         <h2 className="text-2xl font-bold">Energy Analytics</h2>
         <DatePickerWithRange
           value={dateRange}
-          onChange={(range) => setDateRange(range)}
+          onChange={handleDateRangeChange}
         />
       </div>
 
@@ -205,4 +217,4 @@ export const EnergyAnalytics: React.FC<EnergyAnalyticsProps> = ({ equipmentId })
   );
 };
 
-export default EnergyAnalytics; 
+export default EnergyAnalytics;

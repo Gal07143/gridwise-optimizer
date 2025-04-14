@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,7 +16,8 @@ const LoadForecastComponent: React.FC = () => {
     const fetchForecasts = async () => {
       try {
         if (!id) return;
-        const data = await equipmentService.getLoadForecasts(id);
+        // Fix: Added default parameters for proper function call
+        const data = await equipmentService.getLoadForecasts(id, 'daily', 7);
         setForecasts(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch load forecasts');
@@ -44,27 +46,29 @@ const LoadForecastComponent: React.FC = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label>Forecast Type</Label>
-                      <div className="text-sm font-medium">{forecast.forecastType}</div>
+                      <div className="text-sm font-medium">{forecast.forecastType || forecast.forecastPeriod}</div>
                     </div>
                     <div>
                       <Label>Value</Label>
-                      <div className="text-sm font-medium">{forecast.value} {forecast.unit}</div>
+                      <div className="text-sm font-medium">{forecast.value || forecast.predictedLoad} {forecast.unit || 'kWh'}</div>
                     </div>
                     <div>
                       <Label>Start Time</Label>
                       <div className="text-sm font-medium">
-                        {new Date(forecast.startTime).toLocaleString()}
+                        {new Date(forecast.startTime || forecast.timestamp).toLocaleString()}
                       </div>
                     </div>
                     <div>
                       <Label>End Time</Label>
                       <div className="text-sm font-medium">
-                        {new Date(forecast.endTime).toLocaleString()}
+                        {forecast.endTime ? 
+                          new Date(forecast.endTime).toLocaleString() : 
+                          new Date(new Date(forecast.timestamp).getTime() + 24*60*60*1000).toLocaleString()}
                       </div>
                     </div>
                     <div>
                       <Label>Confidence</Label>
-                      <div className="text-sm font-medium">{forecast.confidence}%</div>
+                      <div className="text-sm font-medium">{forecast.confidence || Math.round((1 - forecast.confidenceInterval.upper/forecast.predictedLoad) * 100)}%</div>
                     </div>
                   </div>
                 </CardContent>
@@ -77,4 +81,4 @@ const LoadForecastComponent: React.FC = () => {
   );
 };
 
-export default LoadForecastComponent; 
+export default LoadForecastComponent;
