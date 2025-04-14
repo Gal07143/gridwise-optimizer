@@ -1,22 +1,6 @@
 
-// Weather impact data structure
-export interface WeatherImpact {
-  temperature: number;
-  irradiance: number;
-  cloud_cover: number;
-  wind_speed: number;
-  precipitation: number;
-}
+import { ReactNode } from 'react';
 
-// User behavior data for energy predictions
-export interface UserBehavior {
-  occupancy: number;
-  activity_level: number;
-  preferred_temperature: number;
-  schedule: string[];
-}
-
-// Prediction result from ML models
 export interface Prediction {
   timestamp: string;
   actual: number;
@@ -24,7 +8,6 @@ export interface Prediction {
   confidence: number;
 }
 
-// Insight from ML analysis
 export interface Insight {
   type: string;
   title: string;
@@ -33,13 +16,29 @@ export interface Insight {
   unit: string;
   trend: 'up' | 'down' | 'stable';
   confidence: number;
-  icon?: React.ReactNode;
+  icon: ReactNode | null;
 }
 
-// ML service interface
-export interface MLService {
-  initialize: () => Promise<void>;
-  predict: (data: any[]) => Promise<Prediction[]>;
-  generateInsights: (data: any[]) => Promise<Insight[]>;
-  dispose: () => void;
+export interface WeatherImpact {
+  temperature: number;
+  irradiance: number;
+  cloud_cover: number;
+  wind_speed: number;
+  precipitation: number;
+}
+
+export interface MLServiceConfig {
+  modelPath: string;
+  inputShape: number[];
+  outputShape: number[];
+  featureNames: string[];
+  modelType: 'regression' | 'classification' | 'timeseries';
+}
+
+export interface TelemetryData {
+  timestamp: string;
+  value: number;
+  device: string;
+  measurement: string;
+  [key: string]: any;
 }
