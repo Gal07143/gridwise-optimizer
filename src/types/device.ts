@@ -6,6 +6,11 @@ export interface Device {
   model?: string;
   manufacturer?: string;
   status: 'online' | 'offline' | 'error' | 'maintenance';
+  lastSeen?: string;
+  location?: string;
+  firmware?: string;
+  capacity?: number;
+  description?: string;
   [key: string]: any;
 }
 
@@ -14,6 +19,8 @@ export interface TelemetryData {
   value: number;
   parameter: string;
   deviceId: string;
+  device_id: string; // Added for compatibility
+  unit: string;
   [key: string]: any;
 }
 

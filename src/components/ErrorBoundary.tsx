@@ -1,62 +1,48 @@
 
-import React, { Component, ErrorInfo, ReactNode } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
-import { Button } from './ui/button'
-import { AlertCircle } from 'lucide-react'
+import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { ErrorMessage } from './ui/error-message';
 
 interface Props {
-  children: ReactNode
+  children: ReactNode;
 }
 
 interface State {
-  hasError: boolean
-  error: Error | null
+  hasError: boolean;
+  error: Error | null;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
   public state: State = {
     hasError: false,
     error: null,
-  }
+  };
 
   public static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error }
+    return { hasError: true, error };
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Uncaught error:', error, errorInfo)
+    console.error('Uncaught error:', error, errorInfo);
   }
 
   private handleReset = () => {
-    this.setState({ hasError: false, error: null })
-  }
+    this.setState({ hasError: false, error: null });
+  };
 
   public render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen flex items-center justify-center p-4">
-          <Card className="w-full max-w-md">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-destructive">
-                <AlertCircle className="h-5 w-5" />
-                Something went wrong
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  {this.state.error?.message || 'An unexpected error occurred'}
-                </p>
-                <Button onClick={this.handleReset} variant="outline">
-                  Try again
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="min-h-screen flex items-center justify-center p-4 bg-slate-900">
+          <ErrorMessage
+            title="Something went wrong"
+            message={this.state.error?.message || 
+              "Minified React error #426; visit https://reactjs.org/docs/error-decoder.html?invariant=426 for the full message or use the non-minified dev environment for full errors and additional helpful warnings."}
+            onRetry={this.handleReset}
+          />
         </div>
-      )
+      );
     }
 
-    return this.props.children
+    return this.props.children;
   }
 }

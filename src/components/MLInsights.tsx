@@ -1,246 +1,240 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+
+import React, { useEffect, useState } from 'react';
+import { MLService } from '@/services/mlService';
+import { Insight } from '@/types/mlService';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { 
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  AreaChart, Area, BarChart, Bar
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  AreaChart,
+  Area,
 } from 'recharts';
-import { 
-  TrendingUp, AlertTriangle, Zap, Battery, 
-  Sun, Cloud, Droplets, Wind
+import {
+  AlertCircle,
+  ArrowDown,
+  ArrowUp,
+  Battery,
+  BatteryCharging,
+  Brain,
+  Lightbulb,
+  Minus,
+  MousePointerClick,
+  Thermometer,
+  TrendingDown,
+  TrendingUp,
+  Zap,
 } from 'lucide-react';
-import { TelemetryData } from '@/types/telemetry';
-import { MLService, Prediction, Insight } from '@/types/mlService';
 
 interface MLInsightsProps {
-  telemetryData: TelemetryData[];
+  telemetryData: any[];
 }
 
-export function MLInsights({ telemetryData }: MLInsightsProps) {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [predictions, setPredictions] = useState<Prediction[]>([]);
+export const MLInsights: React.FC<MLInsightsProps> = ({ telemetryData }) => {
   const [insights, setInsights] = useState<Insight[]>([]);
-  const [selectedTimeRange, setSelectedTimeRange] = useState<'1h' | '6h' | '24h' | '7d'>('24h');
-
-  // Initialize ML service
-  const [mlService] = useState<MLService>(() => {
-    // This is a mock implementation, in a real app you would import the actual service
-    return {
-      initialize: async () => {
-        console.log("ML Service initialized");
-      },
-      predict: async (data) => {
-        // Mock predictions
-        return Array.from({ length: 24 }, (_, i) => ({
-          timestamp: new Date(Date.now() + i * 3600000).toISOString(),
-          actual: Math.random() * 100,
-          predicted: Math.random() * 100,
-          confidence: 0.7 + Math.random() * 0.3
-        }));
-      },
-      generateInsights: async (data) => {
-        // Mock insights
-        return [
-          {
-            type: 'energy',
-            title: 'Energy Consumption',
-            description: 'Recent consumption trend is increasing',
-            value: 125.4,
-            unit: 'kWh',
-            trend: 'up',
-            confidence: 0.92,
-            icon: <Zap className="h-4 w-4" />
-          },
-          {
-            type: 'battery',
-            title: 'Battery Performance',
-            description: 'Battery efficiency is stable',
-            value: 95,
-            unit: '%',
-            trend: 'stable',
-            confidence: 0.87,
-            icon: <Battery className="h-4 w-4" />
-          },
-          {
-            type: 'weather',
-            title: 'Weather Impact',
-            description: 'Lower consumption due to good weather',
-            value: -12.5,
-            unit: '%',
-            trend: 'down',
-            confidence: 0.75,
-            icon: <Sun className="h-4 w-4" />
-          },
-          {
-            type: 'cost',
-            title: 'Cost Optimization',
-            description: 'Potential savings from battery usage',
-            value: 32.40,
-            unit: '$',
-            trend: 'down',
-            confidence: 0.83,
-            icon: <TrendingUp className="h-4 w-4" />
-          }
-        ];
-      },
-      dispose: () => {
-        console.log("ML Service disposed");
-      }
-    };
-  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadInsights = async () => {
+    const generateInsights = async () => {
       try {
-        setLoading(true);
+        setIsLoading(true);
         
         // Initialize ML service
+        const mlService = new MLService({
+          modelPath: '/models/energy_prediction',
+          inputShape: [24, 10],
+          outputShape: [24],
+          featureNames: ['consumption', 'temperature', 'time', 'day_of_week'],
+          modelType: 'regression'
+        });
+        
         await mlService.initialize();
         
-        // Use the telemetryData as is without type conversion
-        // The mock implementations above handle this gracefully
-        const generatedPredictions = await mlService.predict(telemetryData);
-        setPredictions(generatedPredictions);
-        
+        // Generate insights from telemetry data
         const generatedInsights = await mlService.generateInsights(telemetryData);
-        setInsights(generatedInsights);
         
-        setLoading(false);
+        // Add icons to insights based on type
+        const insightsWithIcons = generatedInsights.map(insight => {
+          let icon = null;
+          
+          switch (insight.type) {
+            case 'energy':
+              icon = <Lightbulb />;
+              break;
+            case 'battery':
+              icon = insight.trend === 'up' ? <BatteryCharging /> : <Battery />;
+              break;
+            case 'weather':
+              icon = <Thermometer />;
+              break;
+            case 'cost':
+              icon = <Zap />;
+              break;
+            default:
+              icon = <Brain />;
+          }
+          
+          return {
+            ...insight,
+            icon,
+          };
+        });
+        
+        setInsights(insightsWithIcons);
+        setError(null);
       } catch (err) {
-        console.error('Error loading ML insights:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load ML insights');
-        setLoading(false);
+        console.error('Error generating ML insights:', err);
+        setError(err instanceof Error ? err.message : 'Failed to generate insights');
+      } finally {
+        setIsLoading(false);
       }
     };
     
-    loadInsights();
-    
-    return () => {
-      mlService.dispose();
-    };
-  }, [mlService, telemetryData, selectedTimeRange]);
+    if (telemetryData.length > 0) {
+      generateInsights();
+    }
+  }, [telemetryData]);
 
-  if (loading) {
+  const renderTrendIcon = (trend: 'up' | 'down' | 'stable') => {
+    switch (trend) {
+      case 'up':
+        return <TrendingUp className="h-4 w-4 text-green-500" />;
+      case 'down':
+        return <TrendingDown className="h-4 w-4 text-red-500" />;
+      case 'stable':
+      default:
+        return <Minus className="h-4 w-4 text-amber-500" />;
+    }
+  };
+
+  if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex justify-center items-center h-40">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
   if (error) {
     return (
-      <Alert variant="destructive">
-        <AlertTriangle className="h-4 w-4" />
-        <AlertTitle>Error</AlertTitle>
-        <AlertDescription>{error}</AlertDescription>
-      </Alert>
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex items-center justify-center h-40 text-red-500">
+            <AlertCircle className="h-5 w-5 mr-2" />
+            <span>Error: {error}</span>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
+  // Sample prediction data for the chart
+  const predictionData = Array.from({ length: 24 }, (_, i) => ({
+    hour: i,
+    actual: 20 + Math.random() * 10 + (i < 12 ? i : 24 - i),
+    predicted: 22 + Math.random() * 8 + (i < 12 ? i : 24 - i),
+  }));
+
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {insights.map((insight, index) => (
-          <Card key={index}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
+          <Card key={index} className="overflow-hidden">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <div className="p-2 rounded-full bg-blue-50 dark:bg-blue-900/20">
+                  {React.cloneElement(insight.icon as React.ReactElement, { className: "h-4 w-4 text-blue-500" })}
+                </div>
                 {insight.title}
               </CardTitle>
-              <div className="h-4 w-4 text-muted-foreground">
-                {insight.icon}
-              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                {insight.value.toFixed(1)}{insight.unit}
-              </div>
-              <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-                <TrendingUp className={`h-4 w-4 ${
-                  insight.trend === 'up' ? 'text-green-500' : 
-                  insight.trend === 'down' ? 'text-red-500' : 
-                  'text-yellow-500'
-                }`} />
-                <span>
-                  {insight.trend === 'up' ? 'Increasing' : 
-                   insight.trend === 'down' ? 'Decreasing' : 
-                   'Stable'}
-                </span>
-                <Badge variant="outline" className="ml-2">
-                  {(insight.confidence * 100).toFixed(0)}% confidence
+              <div className="flex justify-between items-center">
+                <div>
+                  <div className="text-2xl font-bold flex items-center gap-1">
+                    {insight.value}
+                    <span className="text-sm font-normal text-muted-foreground">{insight.unit}</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{insight.description}</p>
+                </div>
+                <Badge
+                  variant={insight.trend === 'up' ? 'success' : 
+                          insight.trend === 'down' ? 'danger' : 
+                          'warning'}
+                  className="flex items-center gap-1"
+                >
+                  {renderTrendIcon(insight.trend)}
+                  {insight.trend}
                 </Badge>
               </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                {insight.description}
-              </p>
+              <div className="text-xs mt-2 text-muted-foreground">
+                Confidence: {(insight.confidence * 100).toFixed(0)}%
+              </div>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Energy Consumption Prediction</CardTitle>
-          <CardDescription>Actual vs. predicted energy consumption</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={predictions}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="timestamp" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line 
-                  type="monotone" 
-                  dataKey="actual" 
-                  stroke="#2563eb" 
-                  name="Actual" 
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="predicted" 
-                  stroke="#dc2626" 
-                  name="Predicted" 
-                  strokeDasharray="5 5"
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Weather Impact</CardTitle>
-            <CardDescription>Weather conditions affecting energy consumption</CardDescription>
+            <CardTitle>Energy Consumption Forecast</CardTitle>
+            <CardDescription>Predicted vs. Actual Energy Consumption</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
+          <CardContent className="p-0">
+            <div className="h-72 pt-4 px-2">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={telemetryData}>
+                <AreaChart data={predictionData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                  <defs>
+                    <linearGradient id="colorActual" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="colorPredicted" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="timestamp" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Area 
-                    type="monotone" 
-                    dataKey="temperature" 
-                    stroke="#f59e0b" 
-                    fill="#fef3c7" 
-                    name="Temperature (°C)" 
+                  <XAxis
+                    dataKey="hour"
+                    label={{ value: 'Hour', position: 'insideBottomRight', offset: -10 }}
+                    tickFormatter={(hour) => `${hour}:00`}
                   />
-                  <Area 
-                    type="monotone" 
-                    dataKey="humidity" 
-                    stroke="#3b82f6" 
-                    fill="#dbeafe" 
-                    name="Humidity (%)" 
+                  <YAxis label={{ value: 'kWh', angle: -90, position: 'insideLeft' }} />
+                  <Tooltip
+                    formatter={(value) => [`${value} kWh`, 'Consumption']}
+                    labelFormatter={(hour) => `${hour}:00`}
+                  />
+                  <Legend />
+                  <Area
+                    type="monotone"
+                    dataKey="actual"
+                    name="Actual"
+                    stroke="#3b82f6"
+                    fillOpacity={1}
+                    fill="url(#colorActual)"
+                    strokeWidth={2}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="predicted"
+                    name="Predicted"
+                    stroke="#10b981"
+                    fillOpacity={1}
+                    fill="url(#colorPredicted)"
+                    strokeWidth={2}
                   />
                 </AreaChart>
               </ResponsiveContainer>
@@ -250,34 +244,62 @@ export function MLInsights({ telemetryData }: MLInsightsProps) {
 
         <Card>
           <CardHeader>
-            <CardTitle>Cost Optimization</CardTitle>
-            <CardDescription>Potential cost savings from optimization</CardDescription>
+            <CardTitle>ML Recommendations</CardTitle>
+            <CardDescription>AI-powered energy optimization suggestions</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={telemetryData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="timestamp" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar 
-                    dataKey="cost" 
-                    fill="#2563eb" 
-                    name="Current Cost ($)" 
-                  />
-                  <Bar 
-                    dataKey="optimizedCost" 
-                    fill="#059669" 
-                    name="Optimized Cost ($)" 
-                  />
-                </BarChart>
-              </ResponsiveContainer>
+            <div className="space-y-4">
+              <div className="flex items-start gap-3 pb-3 border-b">
+                <div className="p-2 rounded-full bg-blue-50 dark:bg-blue-900/20 flex-shrink-0 mt-1">
+                  <BatteryCharging className="h-4 w-4 text-blue-500" />
+                </div>
+                <div>
+                  <div className="font-medium">Adjust Battery Charging Schedule</div>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Shifting battery charging to 01:00-05:00 could save 12% on energy costs based on your time-of-use tariff pattern.
+                  </p>
+                  <div className="flex items-center gap-2 mt-2">
+                    <Badge variant="success">High Impact</Badge>
+                    <span className="text-xs text-muted-foreground">Estimated savings: €18.50/month</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 pb-3 border-b">
+                <div className="p-2 rounded-full bg-amber-50 dark:bg-amber-900/20 flex-shrink-0 mt-1">
+                  <MousePointerClick className="h-4 w-4 text-amber-500" />
+                </div>
+                <div>
+                  <div className="font-medium">Optimize EV Charging Time</div>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Based on your driving patterns, scheduling EV charging during solar peak hours could increase self-consumption by 15%.
+                  </p>
+                  <div className="flex items-center gap-2 mt-2">
+                    <Badge variant="warning">Medium Impact</Badge>
+                    <span className="text-xs text-muted-foreground">Estimated savings: €12.30/month</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-full bg-green-50 dark:bg-green-900/20 flex-shrink-0 mt-1">
+                  <Lightbulb className="h-4 w-4 text-green-500" />
+                </div>
+                <div>
+                  <div className="font-medium">Load Shifting Opportunity</div>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Moving dishwasher and washing machine usage to periods of excess solar generation could reduce grid imports.
+                  </p>
+                  <div className="flex items-center gap-2 mt-2">
+                    <Badge variant="info">Low Impact</Badge>
+                    <span className="text-xs text-muted-foreground">Estimated savings: €7.80/month</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
       </div>
     </div>
   );
-}
+};

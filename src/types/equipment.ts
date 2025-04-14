@@ -1,77 +1,83 @@
 
-// Add necessary types for equipment management
 export interface Equipment {
   id: string;
   name: string;
   type: string;
-  model: string;
   manufacturer: string;
+  model: string;
   serial_number: string;
   installation_date: string;
-  warranty_expiry?: string;
-  location: string;
+  last_maintenance_date: string;
   status: 'operational' | 'maintenance' | 'offline' | 'faulty';
-  next_maintenance_date?: string;
-  created_at: string;
-  updated_at: string;
-  description?: string;
+  location: string;
   notes?: string;
+  efficiency?: number;
+  load?: number;
+  isOnline?: boolean;
 }
 
-// BMS Parameter interface with all required fields
-export interface BMSParameter {
-  id: string;
-  name: string;
-  bmsId: string;
-  dataType: string; // Added missing field
-  unit: string;    // Added missing field
-  mapping: Record<string, any>;
-  status?: string;
-}
-
-export interface BMSIntegration {
-  id: string;
-  equipmentId: string;
-  bmsType: string;
-  syncFrequency: string;
-  connectionStatus: string;
-  lastSync: string;
-  nextGeneration: string;
-  parameters: BMSParameter[];
-}
-
-export interface MaintenanceCost {
+export interface CarbonEmissionsDetail {
   id: string;
   equipmentId: string;
   date: string;
-  maintenanceId?: string;
-  costCategory: string;
-  maintenanceType?: string; // Added as it's used in the component
-  totalCost: number;
-  cost?: number; // Added as it's used in the component
-  description?: string; // Added as it's used in the component
-  type?: string;  // Added as it's used in component
-  amount?: number;  // Added as it's used in component
+  emissions: number;
+  energyConsumed: number;
+  emissionFactor: number;
+  source: string;
 }
 
-export interface SparePartInventory {
+export interface DowntimeRecord {
   id: string;
   equipmentId: string;
+  startTime: string;
+  endTime?: string;
+  duration?: number;
+  reason: string;
+  impact: 'high' | 'medium' | 'low';
+  resolution?: string;
+  cost?: number;
+}
+
+export interface EnergyBenchmark {
+  id: string;
+  equipmentId: string;
+  timestamp: string;
+  value: number;
+  industryAverage: number;
+  bestInClass: number;
+  unit: string;
+  actualConsumption?: number;
+  expectedConsumption?: number;
+}
+
+export interface EnergyRateStructure {
+  id: string;
   name: string;
-  quantity: number;
-  minimumQuantity: number;
-  location: string;
-  partNumber?: string; // Added as it's used in the component
-  status?: string;    // Added as it's used in the component
+  provider: string;
+  effectiveFrom: string;
+  effectiveTo?: string;
+  rates: Array<{
+    type: 'peak' | 'off-peak' | 'standard' | 'time-of-use';
+    rate: number;
+    startTime?: string;
+    endTime?: string;
+    dayType?: 'weekday' | 'weekend' | 'holiday' | 'all';
+  }>;
 }
 
-export interface AutomatedReport {
+export interface EnergySaving {
   id: string;
   equipmentId: string;
-  reportType: string;
-  schedule: string;
-  lastGenerated: string;
-  nextGeneration: string;
-  status: string;
-  parameters: Record<string, any>;
+  timestamp?: string;
+  reportingPeriod: {
+    start: string;
+    end: string;
+  };
+  savedEnergy: number;
+  savedCost: number;
+  savedEmissions: number;
+  implementationCost?: number;
+  paybackPeriod?: number;
+  measureType: 'operational' | 'retrofit' | 'replacement' | 'behavioral';
+  description: string;
 }

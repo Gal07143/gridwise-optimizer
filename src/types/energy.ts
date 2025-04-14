@@ -35,7 +35,13 @@ export interface EnergyDevice {
   installation_date?: string;
   last_communication?: string;
   location?: string;
+  capacity?: number; // Added missing properties
+  firmware?: string;
+  description?: string;
   metadata?: Record<string, any>;
+  isOnline?: boolean;
+  efficiency?: number;
+  load?: number;
 }
 
 // Energy reading interface

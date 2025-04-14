@@ -1,28 +1,31 @@
 
+import React from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
-import AppRoutes from './Routes';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { DeviceProvider } from './contexts/DeviceContext';
+import { Toaster } from 'react-hot-toast';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import Routes from './Routes';
+import './index.css';
 
-// Create a client
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false,
-      staleTime: 5 * 60 * 1000,
+      retry: 1,
     },
   },
 });
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <DeviceProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
         <Router>
-          <AppRoutes />
+          <Routes />
+          <Toaster position="top-right" />
         </Router>
-      </DeviceProvider>
-    </QueryClientProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 
