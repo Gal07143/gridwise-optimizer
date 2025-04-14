@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { ConnectionStatusOptions, ConnectionStatusResult } from '@/types/modbus';
 import { toast } from 'sonner';
@@ -6,9 +5,12 @@ import { toast } from 'sonner';
 export const useConnectionStatus = (options: ConnectionStatusOptions): ConnectionStatusResult => {
   // Default options with proper destructuring
   const { 
+    host,
+    port,
+    timeout = 5000,
+    retries = 3,
     deviceId, 
     autoReconnect = false, 
-    timeout = 5000,
     retryInterval = 5000,
     maxRetries = 3,
     initialStatus = false,
@@ -132,7 +134,9 @@ export const useConnectionStatus = (options: ConnectionStatusOptions): Connectio
     };
   }, [autoReconnect]);
 
+  // Return values that match ConnectionStatusResult type
   return {
+    connected: isConnected,
     isConnected,
     isOnline: isConnected,
     error,

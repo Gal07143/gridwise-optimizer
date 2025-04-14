@@ -1,7 +1,5 @@
-
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { Site } from '@/types/energy';
-// Fix the import to use named import instead of default import
+import { Site } from '@/types/site';
 import { mockSites } from '@/services/sites/mockSites';
 
 interface SiteContextType {
@@ -28,20 +26,15 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
 
-  // Load sites on component mount
   useEffect(() => {
     const loadSites = async () => {
       try {
-        // In a real app, we would fetch sites from an API
-        // For now, use mock data
         setIsLoading(true);
         
-        // Simulate API delay
         await new Promise(resolve => setTimeout(resolve, 500));
         
         setSites(mockSites);
         
-        // Set the first site as the current site by default
         if (mockSites.length > 0 && !currentSite) {
           setCurrentSite(mockSites[0]);
         }

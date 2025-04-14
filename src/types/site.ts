@@ -18,3 +18,6 @@ export interface Site {
   area?: number;
   area_unit?: string;
 }
+
+// Add this alias type for compatibility with energy.ts
+export type { Site as EnergySite };

@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { TelemetryData } from '@/types/telemetry';
 import { Device } from '@/types/device';

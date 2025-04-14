@@ -1,5 +1,5 @@
 
-// Basic implementation of MLService
+// Enhanced implementation of MLService
 export interface MLServiceConfig {
   modelPath: string;
   inputShape: number[];

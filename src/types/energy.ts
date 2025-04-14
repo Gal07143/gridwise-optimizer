@@ -16,7 +16,7 @@ export interface EnergyDevice {
   model?: string;
   installation_date?: string;
   last_maintenance?: string;
-  site_id?: string; // Added site_id
+  site_id?: string;
   ip_address?: string;
   mac_address?: string;
   last_seen?: string;
@@ -71,4 +71,31 @@ export interface ForecastMetrics {
   averageProduction: number;
   selfConsumptionRate: number;
   gridDependenceRate: number;
+  netEnergy?: number;
 }
+
+// Add EnergyReading interface for useLiveTelemetry
+export interface EnergyReading {
+  timestamp: string;
+  value: number;
+  type: string;
+  deviceId: string;
+  unit: string;
+}
+
+// Add SystemRecommendation for usePredictions
+export interface SystemRecommendation {
+  id: string;
+  timestamp: string;
+  type: string;
+  description: string;
+  priority: 'high' | 'medium' | 'low';
+  impact: number;
+  implemented: boolean;
+  savings?: number;
+  category?: string;
+}
+
+// Import Site type from site.ts for compatibility
+import { Site } from './site';
+export { Site };
