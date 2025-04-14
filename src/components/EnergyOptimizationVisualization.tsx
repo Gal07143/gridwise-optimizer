@@ -67,10 +67,26 @@ export const EnergyOptimizationVisualization: React.FC<EnergyOptimizationVisuali
       // Create weather data object
       const weatherData: WeatherImpact = {
         temperature: 25,
+        humidity: 65, // Added missing property
+        cloudCover: 20,
+        cloud_cover: 20, 
         irradiance: 800,
-        cloud_cover: 20,
         wind_speed: 5,
-        precipitation: 0
+        precipitation: 0,
+        forecast: [
+          {
+            date: new Date().toISOString(),
+            temperature: 25,
+            conditions: "Sunny",
+            solarIrradiance: 800
+          },
+          {
+            date: new Date(Date.now() + 86400000).toISOString(), // Next day
+            temperature: 23,
+            conditions: "Partly Cloudy",
+            solarIrradiance: 650
+          }
+        ]
       };
       
       // Get energy predictions

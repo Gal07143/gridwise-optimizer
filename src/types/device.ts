@@ -77,5 +77,18 @@ export interface DeviceConfiguration {
   applied_at?: string;
 }
 
-// Export TelemetryData from telemetry.ts
-export { TelemetryData } from './telemetry';
+// Export TelemetryData directly
+export interface TelemetryData {
+  id: string;
+  timestamp: string;
+  value: number;
+  parameter: string;
+  deviceId: string;
+  device_id: string;
+  measurement: string;
+  unit: string;
+  [key: string]: any;
+}
+
+// Also export from telemetry.ts
+export { TelemetryData as TelemetryFromTelemetry } from './telemetry';
