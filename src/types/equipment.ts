@@ -21,6 +21,7 @@ export interface Equipment {
   installationDate?: string; // Alias for installation_date
   lastMaintenanceDate?: string; // Alias for last_maintenance_date
   isRunning?: boolean; // Additional status field
+  description?: string;
 }
 
 export interface CarbonEmissionsDetail {
@@ -129,6 +130,8 @@ export interface AutomatedReport {
   status: 'active' | 'paused' | 'error';
   templateId?: string;
   parameters?: Record<string, any>;
+  equipmentId?: string; // Missing field
+  reportType?: string; // Missing field
 }
 
 export interface BMSParameter {
@@ -139,6 +142,8 @@ export interface BMSParameter {
   status?: string;
   dataType: string;
   unit: string;
+  value?: any;
+  timestamp?: string;
 }
 
 export interface EquipmentGroup {
@@ -152,6 +157,7 @@ export interface EquipmentGroup {
   attributes?: Record<string, any>;
   createdAt?: string;
   updatedAt?: string;
+  type?: string; // Missing field
 }
 
 export interface BMSIntegration {
@@ -167,6 +173,9 @@ export interface BMSIntegration {
   syncInterval?: number;
   mappings?: Record<string, string>;
   equipmentId: string;
+  bmsType?: string; // Missing field
+  syncFrequency?: number; // Missing field
+  parameters?: BMSParameter[]; // Missing field
 }
 
 export type FormData = {

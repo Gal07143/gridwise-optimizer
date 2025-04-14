@@ -33,8 +33,8 @@ export const EquipmentGroups: React.FC = () => {
     parentId: null,
     type: 'FUNCTIONAL',
     equipmentIds: [],
-    createdAt: new Date(),
-    updatedAt: new Date()
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   });
 
   useEffect(() => {
@@ -65,8 +65,8 @@ export const EquipmentGroups: React.FC = () => {
         parentId: null,
         type: 'FUNCTIONAL',
         equipmentIds: [],
-        createdAt: new Date(),
-        updatedAt: new Date()
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       });
     } catch (err) {
       setError('Failed to create equipment group');
@@ -213,4 +213,4 @@ export const EquipmentGroups: React.FC = () => {
   );
 };
 
-export default EquipmentGroups; 
+export default EquipmentGroups;

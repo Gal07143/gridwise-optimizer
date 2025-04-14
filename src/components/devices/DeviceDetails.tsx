@@ -8,25 +8,24 @@ import { Badge } from '@/components/ui/badge';
 import { ChartContainer, ChartLegend, AreaChart, LineChart } from '@/components/ui/chart';
 import { AlertTriangle, Activity, Battery, Download, TrendingUp, TrendingDown } from 'lucide-react';
 import { format } from 'date-fns';
-
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Device, TelemetryData } from '@/types/device';
 import { MLService, MLServiceConfig } from '@/types/mlService';
 import { ResponsiveContainer, CartesianGrid, XAxis, YAxis, Tooltip, Area, Line } from 'recharts';
-import { ErrorBoundary as DeviceDetailsErrorBoundary } from 'react';
 
 interface DeviceDetailsProps {
   deviceId: string;
 }
 
 const sampleTelemetryData = [
-  { timestamp: '2023-04-14T08:00:00', value: 45, parameter: 'power', deviceId: 'demo-device', unit: 'kW' },
-  { timestamp: '2023-04-14T09:00:00', value: 52, parameter: 'power', deviceId: 'demo-device', unit: 'kW' },
-  { timestamp: '2023-04-14T10:00:00', value: 58, parameter: 'power', deviceId: 'demo-device', unit: 'kW' },
-  { timestamp: '2023-04-14T11:00:00', value: 63, parameter: 'power', deviceId: 'demo-device', unit: 'kW' },
-  { timestamp: '2023-04-14T12:00:00', value: 72, parameter: 'power', deviceId: 'demo-device', unit: 'kW' },
-  { timestamp: '2023-04-14T13:00:00', value: 68, parameter: 'power', deviceId: 'demo-device', unit: 'kW' },
-  { timestamp: '2023-04-14T14:00:00', value: 65, parameter: 'power', deviceId: 'demo-device', unit: 'kW' },
-  { timestamp: '2023-04-14T15:00:00', value: 61, parameter: 'power', deviceId: 'demo-device', unit: 'kW' },
+  { id: "1", device_id: "demo-device", timestamp: '2023-04-14T08:00:00', measurement: 'power', value: 45, parameter: 'power', deviceId: 'demo-device', unit: 'kW' },
+  { id: "2", device_id: "demo-device", timestamp: '2023-04-14T09:00:00', measurement: 'power', value: 52, parameter: 'power', deviceId: 'demo-device', unit: 'kW' },
+  { id: "3", device_id: "demo-device", timestamp: '2023-04-14T10:00:00', measurement: 'power', value: 58, parameter: 'power', deviceId: 'demo-device', unit: 'kW' },
+  { id: "4", device_id: "demo-device", timestamp: '2023-04-14T11:00:00', measurement: 'power', value: 63, parameter: 'power', deviceId: 'demo-device', unit: 'kW' },
+  { id: "5", device_id: "demo-device", timestamp: '2023-04-14T12:00:00', measurement: 'power', value: 72, parameter: 'power', deviceId: 'demo-device', unit: 'kW' },
+  { id: "6", device_id: "demo-device", timestamp: '2023-04-14T13:00:00', measurement: 'power', value: 68, parameter: 'power', deviceId: 'demo-device', unit: 'kW' },
+  { id: "7", device_id: "demo-device", timestamp: '2023-04-14T14:00:00', measurement: 'power', value: 65, parameter: 'power', deviceId: 'demo-device', unit: 'kW' },
+  { id: "8", device_id: "demo-device", timestamp: '2023-04-14T15:00:00', measurement: 'power', value: 61, parameter: 'power', deviceId: 'demo-device', unit: 'kW' },
 ];
 
 const sampleDevice: Device = {
@@ -37,41 +36,16 @@ const sampleDevice: Device = {
   manufacturer: 'EnergyTech',
   model: 'PowerMeter Pro',
   location: 'Main Building',
-  lastSeen: '2023-04-14T15:30:00',
+  last_seen: '2023-04-14T15:30:00',
+  lastSeen: '2023-04-14T15:30:00', // Added both versions for compatibility
   firmware: 'v2.1.5',
+  firmware_version: 'v2.1.5', // Added both versions for compatibility
   capacity: 100,
-  description: 'Main power meter for building A'
+  description: 'Main power meter for building A',
+  created_at: '2023-01-01T00:00:00',
+  updated_at: '2023-04-14T15:30:00',
+  protocol: 'MQTT'
 };
-
-// Mock class to handle React component error boundary
-class ErrorBoundary extends DeviceDetailsErrorBoundary {
-  constructor(props: any) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
-
-  static getDerivedStateFromError(error: any) {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error: any, errorInfo: any) {
-    console.error("Error in DeviceDetails component:", error, errorInfo);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="p-4 bg-red-50 text-red-800 rounded-md">
-          <h3 className="font-bold">Something went wrong</h3>
-          <p>{this.state.error?.message || 'An unknown error occurred'}</p>
-          <Button onClick={() => this.setState({ hasError: false, error: null })}>Try again</Button>
-        </div>
-      );
-    }
-
-    return this.props.children;
-  }
-}
 
 const DeviceDetails: React.FC<DeviceDetailsProps> = ({ deviceId }) => {
   const [device, setDevice] = useState<Device | null>(null);
@@ -123,11 +97,21 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ deviceId }) => {
 
         // Generate sample predictions and anomalies
         if (telemetry.length > 0) {
-          const anomalyData = consumerService.detectAnomalies(telemetry);
-          setAnomalies(anomalyData.filter(item => item.isAnomaly));
+          // Mock the anomaly detection and predictions
+          const mockAnomalies = telemetry.map(item => ({
+            ...item,
+            isAnomaly: Math.random() > 0.8,
+            anomalyScore: Math.random()
+          })).filter(item => item.isAnomaly);
           
-          const behaviorPredictions = generationService.predictBehavior(telemetry);
-          setPredictions(behaviorPredictions);
+          setAnomalies(mockAnomalies);
+          
+          const mockPredictions = telemetry.map(item => ({
+            timestamp: item.timestamp,
+            prediction: item.value * (1 + (Math.random() * 0.4 - 0.2))  // Vary by ±20%
+          }));
+          
+          setPredictions(mockPredictions);
         }
       } catch (error) {
         console.error('Error initializing ML services:', error);
@@ -140,12 +124,8 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ deviceId }) => {
 
     // Cleanup function
     return () => {
-      if (consumermlService) {
-        consumermlService.cleanup();
-      }
-      if (generationmlService) {
-        generationmlService.cleanup();
-      }
+      // Mock cleanup
+      console.log('Cleaning up ML services');
     };
   }, [telemetry]);
 
@@ -174,8 +154,8 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ deviceId }) => {
               </div>
               <div>
                 <p><span className="text-gray-500">Location:</span> {device.location}</p>
-                <p><span className="text-gray-500">Firmware:</span> {device.firmware}</p>
-                <p><span className="text-gray-500">Last Seen:</span> {new Date(device.lastSeen || '').toLocaleString()}</p>
+                <p><span className="text-gray-500">Firmware:</span> {device.firmware || device.firmware_version}</p>
+                <p><span className="text-gray-500">Last Seen:</span> {new Date(device.lastSeen || device.last_seen || '').toLocaleString()}</p>
               </div>
             </div>
           </CardContent>
@@ -394,7 +374,7 @@ const DeviceDetails: React.FC<DeviceDetailsProps> = ({ deviceId }) => {
                     </div>
                     <div className="bg-slate-100 dark:bg-slate-800 p-3 rounded-md">
                       <p className="text-sm text-gray-500">Firmware</p>
-                      <p className="text-xl font-bold">{device.firmware}</p>
+                      <p className="text-xl font-bold">{device.firmware || device.firmware_version}</p>
                     </div>
                     <div className="bg-slate-100 dark:bg-slate-800 p-3 rounded-md">
                       <p className="text-sm text-gray-500">Signal Strength</p>

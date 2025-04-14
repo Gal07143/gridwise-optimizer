@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -194,7 +193,6 @@ export function DeviceOverview({ deviceId, deviceName }: DeviceOverviewProps) {
                       <div className="text-4xl font-bold">{(usageMeter / 1000000).toFixed(1)}</div>
                       <div className="text-xs text-muted-foreground">million units</div>
                     </div>
-                    {/* This would be replaced with a proper gauge component */}
                     <div className="absolute inset-0">
                       <svg viewBox="0 0 100 100" className="rotate-180">
                         <circle 
@@ -340,7 +338,7 @@ export function DeviceOverview({ deviceId, deviceName }: DeviceOverviewProps) {
                         <div className="text-sm font-medium flex items-center">
                           <Battery className="h-4 w-4 mr-1 text-green-500" />
                           {batteryLevel}%
-                          <Progress value={batteryLevel} className="ml-2 w-16 h-2" indicatorClassName="bg-green-500" />
+                          <Progress value={batteryLevel} className="ml-2 w-16 h-2" variant="success" />
                         </div>
                       </div>
                     </div>

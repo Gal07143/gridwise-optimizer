@@ -23,6 +23,15 @@ export interface Device {
   group_id?: string;
   site_id?: string;
   parent_id?: string;
+  // Additional properties needed
+  firmware?: string;
+  lastSeen?: string;
+  last_seen?: string;
+  mqtt_topic?: string;
+  http_endpoint?: string;
+  port?: number;
+  slave_id?: number;
+  capacity?: number;
 }
 
 export interface TelemetryData {
@@ -35,6 +44,10 @@ export interface TelemetryData {
   quality?: 'good' | 'questionable' | 'bad';
   source?: string;
   tags?: Record<string, string>;
+  // Additional compatibility fields
+  parameter?: string;
+  deviceId?: string;
+  data?: Record<string, any>;
   [key: string]: any;
 }
 
