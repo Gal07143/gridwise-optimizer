@@ -12,12 +12,29 @@ export interface WeatherImpact {
   humidity: number;
   cloudCover: number;
   precipitation: number;
+  irradiance?: number; // Added missing property
+  wind_speed?: number; // Added missing property
+  cloud_cover?: number; // Added compatibility field
   forecast: {
     date: string;
     temperature: number;
     conditions: string;
     solarIrradiance: number;
   }[];
+}
+
+export interface Insight {
+  id: string;
+  title: string;
+  description: string;
+  type: 'energy' | 'battery' | 'weather' | 'cost';
+  value: number;
+  unit: string;
+  trend: 'up' | 'down' | 'stable';
+  confidence: number;
+  timestamp: string;
+  source?: string;
+  impact?: 'high' | 'medium' | 'low';
 }
 
 export class MLService {
@@ -67,11 +84,83 @@ export class MLService {
     return Promise.resolve();
   }
 
+  // Add missing methods
+  async generateInsights(data: any[]): Promise<Insight[]> {
+    // Mock insights generation
+    return [
+      {
+        id: '1',
+        title: 'Energy Usage Spike',
+        description: 'Detected abnormal energy consumption pattern',
+        type: 'energy',
+        value: 35,
+        unit: 'kWh',
+        trend: 'up',
+        confidence: 0.87,
+        timestamp: new Date().toISOString(),
+        impact: 'high'
+      },
+      {
+        id: '2',
+        title: 'Optimal Solar Generation',
+        description: 'Solar panels performing above expectations',
+        type: 'energy',
+        value: 12.5,
+        unit: 'kWh',
+        trend: 'up',
+        confidence: 0.92,
+        timestamp: new Date().toISOString(),
+        impact: 'medium'
+      },
+      {
+        id: '3',
+        title: 'Battery Efficiency',
+        description: 'Battery discharge rate improving',
+        type: 'battery',
+        value: 8,
+        unit: '%',
+        trend: 'down',
+        confidence: 0.78,
+        timestamp: new Date().toISOString(),
+        impact: 'low'
+      },
+      {
+        id: '4',
+        title: 'Weather Impact',
+        description: 'Upcoming weather will reduce solar generation',
+        type: 'weather',
+        value: 15,
+        unit: '%',
+        trend: 'down',
+        confidence: 0.85,
+        timestamp: new Date().toISOString(),
+        impact: 'medium'
+      }
+    ];
+  }
+
+  calculatePerformanceMetrics(): any {
+    // Mock performance metrics
+    return {
+      accuracy: 0.92,
+      precision: 0.88,
+      recall: 0.90,
+      f1Score: 0.89,
+      rmse: 2.34,
+      mae: 1.87
+    };
+  }
+
   cleanup(): void {
     // Mock cleanup
     console.log('Cleaning up ML service resources');
     this.model = null;
     this.isInitialized = false;
+  }
+
+  dispose(): void {
+    // Alias for cleanup
+    this.cleanup();
   }
 
   isReady(): boolean {

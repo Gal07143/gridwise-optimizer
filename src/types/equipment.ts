@@ -6,8 +6,11 @@ export interface Equipment {
   manufacturer: string;
   model: string;
   serial_number: string;
+  serialNumber?: string; // Alias for serial_number
   installation_date: string;
+  installationDate?: string; // Alias for installation_date
   last_maintenance_date: string;
+  lastMaintenanceDate?: string; // Alias for last_maintenance_date
   status: 'operational' | 'maintenance' | 'offline' | 'faulty';
   location: string;
   notes?: string;
@@ -17,9 +20,6 @@ export interface Equipment {
   energyConsumption?: number;
   carbonEmissions?: number;
   nextMaintenanceDate?: string;
-  serialNumber?: string; // Alias for serial_number
-  installationDate?: string; // Alias for installation_date
-  lastMaintenanceDate?: string; // Alias for last_maintenance_date
   isRunning?: boolean; // Additional status field
   description?: string;
 }
@@ -157,7 +157,7 @@ export interface EquipmentGroup {
   attributes?: Record<string, any>;
   createdAt?: string;
   updatedAt?: string;
-  type?: string; // Missing field
+  type?: string; // Added missing field
 }
 
 export interface BMSIntegration {
@@ -185,6 +185,7 @@ export type FormData = {
   manufacturer: string;
   model: string;
   serial_number: string;
+  serialNumber?: string; // Alias for serial_number
   installation_date: string;
   last_maintenance_date: string;
   status: 'operational' | 'maintenance' | 'offline' | 'faulty';
@@ -193,5 +194,4 @@ export type FormData = {
   efficiency?: number;
   load?: number;
   description?: string;
-  serialNumber?: string; // Alias for serial_number
 }

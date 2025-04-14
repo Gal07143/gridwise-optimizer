@@ -1,4 +1,3 @@
-
 export interface Device {
   id: string;
   name: string;
@@ -32,23 +31,6 @@ export interface Device {
   port?: number;
   slave_id?: number;
   capacity?: number;
-}
-
-export interface TelemetryData {
-  id: string;
-  device_id: string;
-  timestamp: string;
-  measurement: string;
-  value: number;
-  unit?: string;
-  quality?: 'good' | 'questionable' | 'bad';
-  source?: string;
-  tags?: Record<string, string>;
-  // Additional compatibility fields
-  parameter?: string;
-  deviceId?: string;
-  data?: Record<string, any>;
-  [key: string]: any;
 }
 
 export interface DeviceCredentials {

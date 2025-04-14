@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
@@ -191,11 +190,11 @@ const StatusMonitor = () => {
                       item.efficiency > 75 ? "bg-yellow-500/20" : 
                       "bg-red-500/20"
                     )}
-                    indicatorClassName={cn(
-                      item.efficiency > 90 ? "bg-green-500" : 
-                      item.efficiency > 75 ? "bg-yellow-500" : 
-                      "bg-red-500"
-                    )}
+                    variant={
+                      item.efficiency > 90 ? "success" : 
+                      item.efficiency > 75 ? "warning" : 
+                      "danger"
+                    }
                   />
                 </div>
                 <div>
@@ -214,7 +213,7 @@ const StatusMonitor = () => {
                     Details
                   </Button>
                   {item.alerts > 0 && (
-                    <Badge variant="outline" className="bg-red-500/10 text-red-500 border-red-500/20">
+                    <Badge variant="danger">
                       <AlertTriangle className="h-3 w-3 mr-1" />
                       {item.alerts} {item.alerts === 1 ? 'Alert' : 'Alerts'}
                     </Badge>
@@ -229,7 +228,6 @@ const StatusMonitor = () => {
   );
 };
 
-// Helper function for className merging
 function cn(...classes: (string | undefined)[]) {
   return classes.filter(Boolean).join(' ');
 }
