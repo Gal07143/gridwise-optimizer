@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { useEquipment } from '@/contexts/EquipmentContext';
 import {
@@ -69,8 +70,9 @@ export const PredictiveMaintenance: React.FC<PredictiveMaintenanceProps> = ({
   if (error) return <div>Error loading predictive maintenance data: {error}</div>;
 
   const latestScore = performanceScores[0];
+  // Fix: Use totalCost if amount is not available
   const totalMaintenanceCost = maintenanceCosts.reduce(
-    (sum, cost) => sum + cost.amount,
+    (sum, cost) => sum + (cost.amount || cost.totalCost || 0),
     0
   );
 
@@ -138,9 +140,9 @@ export const PredictiveMaintenance: React.FC<PredictiveMaintenanceProps> = ({
               <TableBody>
                 {maintenanceCosts.map((cost) => (
                   <TableRow key={cost.id}>
-                    <TableCell>{cost.type}</TableCell>
+                    <TableCell>{cost.type || cost.costCategory || cost.maintenanceType || 'Standard'}</TableCell>
                     <TableCell className="text-right">
-                      ${cost.amount.toFixed(2)}
+                      ${(cost.amount || cost.totalCost || 0).toFixed(2)}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -233,4 +235,4 @@ export const PredictiveMaintenance: React.FC<PredictiveMaintenanceProps> = ({
   );
 };
 
-export default PredictiveMaintenance; 
+export default PredictiveMaintenance;

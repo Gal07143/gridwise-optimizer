@@ -121,10 +121,10 @@ export interface EnergyRateStructure {
   rates: EnergyRate[];
   effectiveDate: Date;
   expirationDate?: Date;
-  rateType?: string;  // Added to match component usage
-  rateValue?: number; // Added to match component usage
-  unit?: string;      // Added to match component usage
-  status?: string;    // Added to match component usage
+  rateType?: string;
+  rateValue?: number;
+  unit?: string;
+  status?: string;
 }
 
 export interface EnergyRate {
@@ -146,10 +146,10 @@ export interface CarbonEmissionsDetail {
   embodiedEmissions: number;
   totalEmissions: number;
   source: string;
-  category?: string;  // Added to match component usage
-  amount?: number;    // Added to match component usage
-  unit?: string;      // Added to match component usage
-  date?: Date;        // Added to match component usage
+  category?: string;
+  amount?: number;
+  unit?: string;
+  date?: Date;
 }
 
 export interface PredictiveMaintenance {
@@ -209,7 +209,6 @@ export interface LoadForecast {
   };
   actualLoad?: number;
   accuracy?: number;
-  // Added fields to match component usage
   forecastType?: string;
   value?: number;
   unit?: string;
@@ -239,6 +238,8 @@ export interface SparePartInventory {
   supplier?: string;
   lastRestocked: Date;
   nextRestockDate?: Date;
+  partNumber?: string; // Added to match component usage
+  status?: string; // Added to match component usage
 }
 
 export interface MaintenanceCost {
@@ -251,6 +252,11 @@ export interface MaintenanceCost {
   otherCosts: number;
   totalCost: number;
   costCategory: 'preventive' | 'corrective' | 'predictive' | 'emergency';
+  maintenanceType?: string; // Added to match component usage
+  cost?: number; // Added to match component usage
+  description?: string; // Added to match component usage
+  amount?: number; // Added to match component usage
+  type?: string; // Added to match component usage
 }
 
 export interface DowntimeRecord {
@@ -275,9 +281,8 @@ export interface EnergyBenchmark {
   percentile: number;
   period: string;
   timestamp: Date;
-  // Added to match component usage
-  actualConsumption?: number;
-  expectedConsumption?: number;
+  actualConsumption?: number; // Added to match component usage
+  expectedConsumption?: number; // Added to match component usage
 }
 
 export interface AutomatedReport {

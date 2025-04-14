@@ -59,3 +59,11 @@ export interface DateRange {
   from: Date;
   to: Date;
 }
+
+// Telemetry statistics interface
+export interface TelemetryStats {
+  deviceId: string;
+  deviceName: string;
+  lastUpdate: string; // Make sure this is a string, not a Date
+  dataPoints: number;
+}

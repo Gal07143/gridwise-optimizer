@@ -17,7 +17,6 @@ const AutomatedReportComponent: React.FC = () => {
     const fetchReports = async () => {
       try {
         if (!id) return;
-        // Fix: getAutomatedReports doesn't expect any arguments
         const data = await equipmentService.getAutomatedReports();
         setReports(data);
       } catch (err) {
@@ -33,9 +32,14 @@ const AutomatedReportComponent: React.FC = () => {
   const handleCreateReport = async (type: string) => {
     try {
       if (!id) return;
-      // Fix: createAutomatedReport expects id and type as separate arguments
-      await equipmentService.createAutomatedReport({ equipmentId: id, reportType: type });
-      // Fix: getAutomatedReports doesn't expect any arguments
+      // Add required properties for AutomatedReport creation
+      await equipmentService.createAutomatedReport({
+        equipmentId: id,
+        reportType: type,
+        schedule: 'monthly', // Default value
+        parameters: {} // Empty parameters object
+      });
+
       const data = await equipmentService.getAutomatedReports();
       setReports(data);
     } catch (err) {

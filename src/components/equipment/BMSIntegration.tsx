@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useEquipment } from '@/contexts/EquipmentContext';
 import {
@@ -37,11 +36,10 @@ export const BMSIntegration: React.FC<BMSIntegrationProps> = ({ equipmentId }) =
   } = useEquipment();
 
   const [isEditing, setIsEditing] = useState(false);
-  // Fix: Changed syncFrequency to string to match BMSIntegration type
   const [editedValues, setEditedValues] = useState({
     bmsType: '',
-    syncFrequency: '', // Changed from number to string
-    parameters: [] as { id: string; name: string; bmsId: string; mapping: string; status?: string }[],
+    syncFrequency: '',
+    parameters: [] as { id: string; name: string; bmsId: string; mapping: Record<string, any>; status?: string }[],
   });
 
   useEffect(() => {
@@ -53,13 +51,11 @@ export const BMSIntegration: React.FC<BMSIntegrationProps> = ({ equipmentId }) =
       setEditedValues({
         bmsType: bmsIntegration.bmsType,
         syncFrequency: bmsIntegration.syncFrequency,
-        // Fix: Map BMSParameter objects to the expected shape
         parameters: bmsIntegration.parameters.map(param => ({
           id: param.id,
           name: param.name,
           bmsId: param.bmsId,
-          // Fix: Convert Record<string, any> to string
-          mapping: typeof param.mapping === 'string' ? param.mapping : JSON.stringify(param.mapping),
+          mapping: param.mapping,
           status: param.status
         })),
       });
@@ -68,19 +64,10 @@ export const BMSIntegration: React.FC<BMSIntegrationProps> = ({ equipmentId }) =
 
   const handleSave = async () => {
     if (bmsIntegration) {
-      // Fix: Convert the edited values to the format expected by updateBMSIntegration
       await updateBMSIntegration(equipmentId, {
         bmsType: editedValues.bmsType,
         syncFrequency: editedValues.syncFrequency,
-        parameters: editedValues.parameters.map(param => ({
-          id: param.id,
-          name: param.name,
-          bmsId: param.bmsId,
-          dataType: 'string', // Default value
-          unit: '',          // Default value
-          mapping: param.mapping,
-          status: param.status
-        }))
+        parameters: editedValues.parameters
       });
       setIsEditing(false);
     }
@@ -230,7 +217,7 @@ export const BMSIntegration: React.FC<BMSIntegrationProps> = ({ equipmentId }) =
                   <TableCell>{param.name}</TableCell>
                   <TableCell>{param.bmsId}</TableCell>
                   <TableCell>{param.dataType}</TableCell>
-                  <TableCell>{JSON.stringify(param.mapping)}</TableCell>
+                  <TableCell>{typeof param.mapping === 'object' ? JSON.stringify(param.mapping) : String(param.mapping)}</TableCell>
                   <TableCell>
                     <Badge
                       variant="outline"

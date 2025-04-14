@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,7 +32,8 @@ const SparePartsInventoryComponent: React.FC = () => {
   const handleUpdatePart = async (partId: string, quantity: number) => {
     try {
       if (!id) return;
-      await equipmentService.updateSparePart(id, partId, quantity);
+      // Fix: Pass a proper SparePartInventory object with quantity property
+      await equipmentService.updateSparePart(id, partId, { quantity });
       // Refresh the list
       const data = await equipmentService.getSparePartsInventory(id);
       setParts(data);
@@ -61,7 +63,7 @@ const SparePartsInventoryComponent: React.FC = () => {
                     </div>
                     <div>
                       <Label>Part Number</Label>
-                      <div className="text-sm font-medium">{part.partNumber}</div>
+                      <div className="text-sm font-medium">{part.partNumber || 'N/A'}</div>
                     </div>
                     <div>
                       <Label>Quantity</Label>
@@ -77,7 +79,7 @@ const SparePartsInventoryComponent: React.FC = () => {
                     </div>
                     <div>
                       <Label>Status</Label>
-                      <div className="text-sm font-medium">{part.status}</div>
+                      <div className="text-sm font-medium">{part.status || 'Active'}</div>
                     </div>
                   </div>
                   <div className="mt-4">
@@ -97,4 +99,4 @@ const SparePartsInventoryComponent: React.FC = () => {
   );
 };
 
-export default SparePartsInventoryComponent; 
+export default SparePartsInventoryComponent;

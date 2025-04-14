@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { equipmentService } from '@/services/equipmentService';
 import { MaintenanceCost } from '@/types/equipment';
-import { Calendar, DollarSign, FileText, Tool } from 'lucide-react';
+import { Calendar, DollarSign, FileText, Wrench } from 'lucide-react'; // Replace Tool with Wrench which is available
 
 const MaintenanceCostComponent: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -46,7 +46,7 @@ const MaintenanceCostComponent: React.FC = () => {
       <Card className="shadow-sm hover:shadow-md transition-all border-border/50 backdrop-blur-sm bg-card/90">
         <CardHeader className="bg-gradient-to-r from-background to-background/90 rounded-t-lg border-b border-border/20">
           <CardTitle className="flex items-center">
-            <Tool className="h-5 w-5 mr-2 text-primary" />
+            <Wrench className="h-5 w-5 mr-2 text-primary" />
             Maintenance Costs
           </CardTitle>
         </CardHeader>
@@ -58,17 +58,17 @@ const MaintenanceCostComponent: React.FC = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label className="flex items-center text-xs text-muted-foreground mb-1">
-                        <Tool className="h-3 w-3 mr-1" />
+                        <Wrench className="h-3 w-3 mr-1" />
                         Maintenance Type
                       </Label>
-                      <div className="text-sm font-medium">{cost.maintenanceType}</div>
+                      <div className="text-sm font-medium">{cost.maintenanceType || cost.costCategory}</div>
                     </div>
                     <div>
                       <Label className="flex items-center text-xs text-muted-foreground mb-1">
                         <DollarSign className="h-3 w-3 mr-1" />
                         Cost
                       </Label>
-                      <div className="text-sm font-medium text-primary">${cost.cost.toFixed(2)}</div>
+                      <div className="text-sm font-medium text-primary">${(cost.cost || cost.totalCost).toFixed(2)}</div>
                     </div>
                     <div>
                       <Label className="flex items-center text-xs text-muted-foreground mb-1">
@@ -84,7 +84,7 @@ const MaintenanceCostComponent: React.FC = () => {
                         <FileText className="h-3 w-3 mr-1" />
                         Description
                       </Label>
-                      <div className="text-sm font-medium">{cost.description}</div>
+                      <div className="text-sm font-medium">{cost.description || `${cost.costCategory} maintenance`}</div>
                     </div>
                   </div>
                 </CardContent>
