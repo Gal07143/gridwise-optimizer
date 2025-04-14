@@ -1,30 +1,57 @@
+
 export interface Asset {
-    id: string;
-    name: string;
-    type: 'solar' | 'wind' | 'battery' | 'grid';
-    capacity: number;
-    location: string;
-    status: 'active' | 'inactive' | 'maintenance';
-    created_at: string;
-    updated_at: string;
+  id: string;
+  name: string;
+  type: string;
+  capacity: number;
+  status: string;
+  location: string;
+  [key: string]: any;
 }
 
 export interface GridSignal {
-    id: string;
-    type: 'price' | 'demand' | 'generation' | 'frequency';
-    value: number;
-    timestamp: string;
-    source: string;
-    created_at: string;
+  id: string;
+  type: string;
+  value: string;
+  source: string;
+  timestamp: string;
+  priority: 'low' | 'medium' | 'high';
+  details?: any;
 }
 
-export interface EnergyData {
-    id: string;
-    asset_id: string;
-    timestamp: string;
-    power: number;
-    voltage: number;
-    current: number;
-    frequency: number;
-    created_at: string;
-} 
+export interface EnergyForecast {
+  timestamp: string;
+  generation_forecast: number;
+  consumption_forecast: number;
+  net_forecast: number;
+  confidence: number;
+}
+
+export interface OptimizationPlan {
+  id: string;
+  name: string;
+  description: string;
+  assets: string[];
+  schedule: OptimizationAction[];
+  savings: number;
+  created_at: string;
+  status: 'active' | 'scheduled' | 'completed' | 'cancelled';
+}
+
+export interface OptimizationAction {
+  asset_id: string;
+  time_start: string;
+  time_end: string;
+  action: 'charge' | 'discharge' | 'curtail' | 'export' | 'import';
+  power: number;
+  reason: string;
+}
+
+export interface FeedinTariff {
+  id: string;
+  rate: number;
+  start_time?: string;
+  end_time?: string;
+  date_effective: string;
+  date_expiry?: string;
+}

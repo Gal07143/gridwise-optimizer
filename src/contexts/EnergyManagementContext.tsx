@@ -1,6 +1,10 @@
+
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import { energyManagementService } from '../services/energyManagementService';
+import { EnergyManagementService } from '../services/energyManagementService';
 import { Asset, GridSignal } from '../types/energyManagement';
+
+// Create an instance of the service
+const energyManagementService = new EnergyManagementService();
 
 interface EnergyManagementContextType {
     assets: Asset[];
@@ -105,4 +109,7 @@ export const useEnergyManagement = () => {
         throw new Error('useEnergyManagement must be used within an EnergyManagementProvider');
     }
     return context;
-}; 
+};
+
+// Export the service instance for direct use
+export { energyManagementService };

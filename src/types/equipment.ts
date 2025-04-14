@@ -1,288 +1,68 @@
 
+// Add necessary types for equipment management
 export interface Equipment {
   id: string;
   name: string;
-  description?: string;
   type: string;
-  status: EquipmentStatus;
-  parameters: EquipmentParameter[];
-  location?: string;
-  manufacturer?: string;
-  model?: string;
-  serialNumber?: string;
-  installationDate?: Date;
-  lastMaintenanceDate?: Date;
-  nextMaintenanceDate?: Date;
-  efficiency?: number;
-  load?: number;
-  carbonEmissions?: number;
-  cost?: number;
-  energyConsumption?: number;
-  isOnline: boolean;
-  isRunning: boolean;
-  alarms: EquipmentAlarm[];
-  createdAt: Date;
-  updatedAt: Date;
-  parentEquipmentId?: string;
-  groupId?: string;
-  performanceScore?: number;
-  procurementDate?: Date;
-  warrantyExpirationDate?: Date;
-  expectedLifespan?: number;
-  disposalDate?: Date;
-  energyRateStructure?: EnergyRateStructure;
-  sparePartsInventory?: SparePartInventory[];
-  maintenanceCosts?: MaintenanceCost[];
-  downtimeRecords?: DowntimeRecord[];
-  energyBenchmarks?: EnergyBenchmark[];
-  energySavings?: EnergySaving[];
-  bmsIntegration?: BMSIntegration;
-}
-
-export type EquipmentStatus = 'active' | 'inactive' | 'maintenance' | 'fault' | 'offline';
-
-export interface EquipmentParameter {
-  id: string;
-  name: string;
-  value: number;
-  unit: string;
-  timestamp: Date;
-  minValue?: number;
-  maxValue?: number;
-  threshold?: number;
-}
-
-export interface EquipmentAlarm {
-  id: string;
-  type: AlarmType;
-  message: string;
-  severity: AlarmSeverity;
-  timestamp: Date;
-  acknowledged: boolean;
-  acknowledgedBy?: string;
-  acknowledgedAt?: Date;
-}
-
-export type AlarmType = 
-  | 'temperature_high'
-  | 'temperature_low'
-  | 'pressure_high'
-  | 'pressure_low'
-  | 'vibration_high'
-  | 'efficiency_low'
-  | 'load_high'
-  | 'maintenance_required'
-  | 'fault_detected'
-  | 'offline';
-
-export type AlarmSeverity = 'info' | 'warning' | 'error' | 'critical';
-
-export interface EquipmentMetrics {
-  efficiency: number;
-  load: number;
-  carbonEmissions: number;
-  cost: number;
-  energyConsumption: number;
-  timestamp: Date;
-}
-
-export interface EquipmentMaintenance {
-  id: string;
-  equipmentId: string;
-  type: MaintenanceType;
-  description: string;
-  scheduledDate: Date;
-  completedDate?: Date;
-  status: MaintenanceStatus;
-  assignedTo?: string;
-  notes?: string;
-  cost?: number;
-  partsUsed?: string[];
-  predictiveMaintenanceScore?: number;
-}
-
-export type MaintenanceType = 
-  | 'preventive'
-  | 'corrective'
-  | 'predictive'
-  | 'emergency';
-
-export type MaintenanceStatus = 
-  | 'scheduled'
-  | 'in_progress'
-  | 'completed'
-  | 'cancelled'
-  | 'overdue';
-
-export interface EnergyRateStructure {
-  id: string;
-  name: string;
+  model: string;
+  manufacturer: string;
+  serial_number: string;
+  installation_date: string;
+  warranty_expiry?: string;
+  location: string;
+  status: 'operational' | 'maintenance' | 'offline' | 'faulty';
+  next_maintenance_date?: string;
+  created_at: string;
+  updated_at: string;
   description?: string;
-  rates: EnergyRate[];
-  effectiveDate: Date;
-  expirationDate?: Date;
-  rateType?: string;
-  rateValue?: number;
-  unit?: string;
+  notes?: string;
+}
+
+// BMS Parameter interface with all required fields
+export interface BMSParameter {
+  id: string;
+  name: string;
+  bmsId: string;
+  dataType: string; // Added missing field
+  unit: string;    // Added missing field
+  mapping: Record<string, any>;
   status?: string;
 }
 
-export interface EnergyRate {
-  id: string;
-  type: 'peak' | 'off-peak' | 'shoulder' | 'base';
-  rate: number;
-  unit: string;
-  startTime?: string;
-  endTime?: string;
-  daysOfWeek?: number[];
-}
-
-export interface CarbonEmissionsDetail {
+export interface BMSIntegration {
   id: string;
   equipmentId: string;
-  timestamp: Date;
-  directEmissions: number;
-  indirectEmissions: number;
-  embodiedEmissions: number;
-  totalEmissions: number;
-  source: string;
-  category?: string;
-  amount?: number;
-  unit?: string;
-  date?: Date;
-}
-
-export interface PredictiveMaintenance {
-  id: string;
-  equipmentId: string;
-  parameterId: string;
-  algorithm: string;
-  predictionDate: Date;
-  confidence: number;
-  predictedIssue: string;
-  recommendedAction: string;
-  historicalAccuracy: number;
-}
-
-export interface PerformanceScore {
-  id: string;
-  equipmentId: string;
-  timestamp: Date;
-  overallScore: number;
-  efficiencyScore: number;
-  reliabilityScore: number;
-  maintenanceScore: number;
-  energyScore: number;
-  factors: PerformanceFactor[];
-}
-
-export interface PerformanceFactor {
-  name: string;
-  weight: number;
-  score: number;
-  impact: 'positive' | 'negative' | 'neutral';
-}
-
-export interface EfficiencyRecommendation {
-  id: string;
-  equipmentId: string;
-  title: string;
-  description: string;
-  potentialSavings: number;
-  implementationCost: number;
-  paybackPeriod: number;
-  priority: 'low' | 'medium' | 'high';
-  category: 'operational' | 'technical' | 'behavioral';
-  status: 'proposed' | 'approved' | 'implemented' | 'rejected';
-}
-
-export interface LoadForecast {
-  id: string;
-  equipmentId: string;
-  timestamp: Date;
-  forecastPeriod: 'hourly' | 'daily' | 'weekly' | 'monthly';
-  forecastHorizon: number;
-  predictedLoad: number;
-  confidenceInterval: {
-    lower: number;
-    upper: number;
-  };
-  actualLoad?: number;
-  accuracy?: number;
-  forecastType?: string;
-  value?: number;
-  unit?: string;
-  startTime?: Date;
-  endTime?: Date;
-  confidence?: number;
-}
-
-export interface LifecycleStage {
-  id: string;
-  equipmentId: string;
-  stage: 'procurement' | 'installation' | 'operation' | 'maintenance' | 'upgrade' | 'disposal';
-  startDate: Date;
-  endDate?: Date;
-  cost: number;
-  notes?: string;
-}
-
-export interface SparePartInventory {
-  id: string;
-  name: string;
-  description?: string;
-  quantity: number;
-  minimumQuantity: number;
-  location: string;
-  cost: number;
-  supplier?: string;
-  lastRestocked: Date;
-  nextRestockDate?: Date;
-  partNumber?: string; // Added to match component usage
-  status?: string; // Added to match component usage
+  bmsType: string;
+  syncFrequency: string;
+  connectionStatus: string;
+  lastSync: string;
+  nextGeneration: string;
+  parameters: BMSParameter[];
 }
 
 export interface MaintenanceCost {
   id: string;
   equipmentId: string;
-  maintenanceId: string;
-  date: Date;
-  laborCost: number;
-  partsCost: number;
-  otherCosts: number;
+  date: string;
+  maintenanceId?: string;
+  costCategory: string;
+  maintenanceType?: string; // Added as it's used in the component
   totalCost: number;
-  costCategory: 'preventive' | 'corrective' | 'predictive' | 'emergency';
-  maintenanceType?: string; // Added to match component usage
-  cost?: number; // Added to match component usage
-  description?: string; // Added to match component usage
-  amount?: number; // Added to match component usage
-  type?: string; // Added to match component usage
+  cost?: number; // Added as it's used in the component
+  description?: string; // Added as it's used in the component
+  type?: string;  // Added as it's used in component
+  amount?: number;  // Added as it's used in component
 }
 
-export interface DowntimeRecord {
+export interface SparePartInventory {
   id: string;
   equipmentId: string;
-  startTime: Date;
-  endTime?: Date;
-  duration: number;
-  reason: string;
-  category: 'planned' | 'unplanned' | 'maintenance' | 'failure';
-  impact: 'low' | 'medium' | 'high' | 'critical';
-  resolvedBy?: string;
-}
-
-export interface EnergyBenchmark {
-  id: string;
-  equipmentId: string;
-  metric: string;
-  value: number;
-  unit: string;
-  industryAverage: number;
-  percentile: number;
-  period: string;
-  timestamp: Date;
-  actualConsumption?: number; // Added to match component usage
-  expectedConsumption?: number; // Added to match component usage
+  name: string;
+  quantity: number;
+  minimumQuantity: number;
+  location: string;
+  partNumber?: string; // Added as it's used in the component
+  status?: string;    // Added as it's used in the component
 }
 
 export interface AutomatedReport {
@@ -290,66 +70,8 @@ export interface AutomatedReport {
   equipmentId: string;
   reportType: string;
   schedule: string;
-  lastGenerated: Date;
+  lastGenerated: string;
+  nextGeneration: string;
   status: string;
   parameters: Record<string, any>;
-}
-
-export interface EquipmentGroup {
-  id: string;
-  name: string;
-  description: string;
-  parentId: string | null;
-  equipmentIds: string[];
-  type: 'FUNCTIONAL' | 'LOCATION' | 'SYSTEM';
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface EnergySaving {
-  id: string;
-  equipmentId: string;
-  measureId: string;
-  baselinePeriod: {
-    start: Date;
-    end: Date;
-  };
-  reportingPeriod: {
-    start: Date;
-    end: Date;
-  };
-  baselineConsumption: number;
-  reportingConsumption: number;
-  savedEnergy: number;
-  savedCost: number;
-  savedEmissions: number;
-  verificationMethod: string;
-  status: string;
-  timestamp?: Date; // Added to match component usage
-}
-
-// Integration with Building Management Systems
-export interface BMSIntegration {
-  id: string;
-  equipmentId: string;
-  bmsType: string;
-  connectionStatus: string;
-  lastSync: Date;
-  syncFrequency: string; // Changed to string to match component usage
-  parameters: BMSParameter[];
-  credentials?: {
-    username: string;
-    password: string;
-    apiKey?: string;
-  };
-}
-
-export interface BMSParameter {
-  id: string;
-  name: string;
-  bmsId: string;
-  dataType: string;
-  unit: string;
-  mapping: Record<string, any>;
-  status?: string; // Added to match component usage
 }

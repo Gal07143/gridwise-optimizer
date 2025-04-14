@@ -67,3 +67,42 @@ export interface TelemetryStats {
   lastUpdate: string; // Make sure this is a string, not a Date
   dataPoints: number;
 }
+
+// ML service configuration
+export interface MLServiceConfig {
+  modelPath: string;
+  inputShape: number[];
+  outputShape: number[];
+  featureNames: string[];
+  modelType: string; // Adding the missing property
+}
+
+// Definition for MLService interface to include dispose method
+export interface MLService {
+  initialize: () => Promise<void>;
+  predict: (data: any[]) => Promise<Prediction[]>;
+  generateInsights: (data: any[]) => Promise<Insight[]>;
+  dispose: () => void; // Adding the missing method
+  calculatePerformanceMetrics?: (data: any[]) => Promise<any>; // Adding method used in ml-dashboard
+}
+
+// Types needed for MLService methods
+export interface Prediction {
+  timestamp: string;
+  actual: number;
+  predicted: number;
+  confidence: number;
+}
+
+export interface Insight {
+  type: string;
+  title: string;
+  description: string;
+  value: number;
+  unit: string;
+  trend: 'up' | 'down' | 'stable';
+  confidence: number;
+}
+
+// Type for TelemetryMetric used in useTelemetryHistory
+export type TelemetryMetric = 'power' | 'energy' | 'voltage' | 'current' | 'temperature' | string;

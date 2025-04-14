@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { energyManagementService } from '../../services/energyManagementService';
 import { GridSignal } from '../../types/energyManagement';
@@ -78,4 +79,4 @@ const SignalsPage = () => {
     );
 };
 
-export default SignalsPage; 
+export default SignalsPage;

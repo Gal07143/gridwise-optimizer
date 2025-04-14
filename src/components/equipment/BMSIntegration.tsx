@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useEquipment } from '@/contexts/EquipmentContext';
 import {
@@ -39,7 +40,7 @@ export const BMSIntegration: React.FC<BMSIntegrationProps> = ({ equipmentId }) =
   const [editedValues, setEditedValues] = useState({
     bmsType: '',
     syncFrequency: '',
-    parameters: [] as { id: string; name: string; bmsId: string; mapping: Record<string, any>; status?: string }[],
+    parameters: [] as BMSParameter[],
   });
 
   useEffect(() => {
@@ -55,6 +56,8 @@ export const BMSIntegration: React.FC<BMSIntegrationProps> = ({ equipmentId }) =
           id: param.id,
           name: param.name,
           bmsId: param.bmsId,
+          dataType: param.dataType,
+          unit: param.unit,
           mapping: param.mapping,
           status: param.status
         })),
