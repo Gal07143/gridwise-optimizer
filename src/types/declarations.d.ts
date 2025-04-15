@@ -17,11 +17,13 @@ declare module 'react-hot-toast' {
   export const useToaster: () => any;
   
   // Add missing methods
-  toast.success = (message: string, options?: any) => void;
-  toast.error = (message: string, options?: any) => void;
-  toast.loading = (message: string, options?: any) => void;
-  toast.custom = (message: React.ReactNode, options?: any) => void;
-  toast.dismiss = (toastId?: string) => void;
+  namespace toast {
+    function success(message: string, options?: any): void;
+    function error(message: string, options?: any): void;
+    function loading(message: string, options?: any): void;
+    function custom(message: React.ReactNode, options?: any): void;
+    function dismiss(toastId?: string): void;
+  }
   
   export default toast;
 }
