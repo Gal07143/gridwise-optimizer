@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
@@ -66,7 +65,7 @@ interface DeviceContextOperations {
 // Define the context type
 type DeviceContextType = DeviceContextState & DeviceContextOperations;
 
-// Create the context
+// Create the context with a meaningful default value to help with type checking
 const DeviceContext = createContext<DeviceContextType | null>(null);
 
 // Create the provider component

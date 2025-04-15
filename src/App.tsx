@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Toaster } from 'react-hot-toast';
+import { Toaster } from 'sonner';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import Routes from './Routes';
 import { AppProviders } from './providers/AppProviders';

@@ -19,3 +19,9 @@ export interface EnergyFlowState {
     consumption: number;
   };
 }
+
+export interface EnergyFlowContextType {
+  flow: EnergyFlowState;
+  history: EnergyFlowState[];
+  updateFlow: (newFlow: EnergyFlowState) => void;
+}

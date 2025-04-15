@@ -1,8 +1,9 @@
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { EnergyFlowState } from './types';
+import React, { createContext, useContext, useState } from 'react';
+import { EnergyFlowState, EnergyFlowContextType } from './types';
 
-export const defaultFlowState: EnergyFlowState = {
+// Initial state
+const initialFlow: EnergyFlowState = {
   timestamp: new Date(),
   grid: {
     powerImport: 0,
@@ -20,55 +21,40 @@ export const defaultFlowState: EnergyFlowState = {
   },
   home: {
     consumption: 0,
-  }
+  },
 };
 
-export interface EnergyFlowContextType {
-  flow: EnergyFlowState;
-  history: EnergyFlowState[];
-  updateFlow: (newFlow: Partial<EnergyFlowState>) => void;
-}
+// Create context
+const EnergyFlowContext = createContext<EnergyFlowContextType | null>(null);
 
-const EnergyFlowContext = createContext<EnergyFlowContextType | undefined>(undefined);
+// Provider component
+export const EnergyFlowProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [flow, setFlow] = useState<EnergyFlowState>(initialFlow);
+  const [history, setHistory] = useState<EnergyFlowState[]>([]);
 
+  const updateFlow = (newFlow: EnergyFlowState) => {
+    setFlow(newFlow);
+    setHistory((prev) => [...prev, newFlow].slice(-48)); // Keep last 48 entries (24 hours if updated every 30min)
+  };
+
+  return (
+    <EnergyFlowContext.Provider
+      value={{
+        flow,
+        history,
+        updateFlow,
+      }}
+    >
+      {children}
+    </EnergyFlowContext.Provider>
+  );
+};
+
+// Hook for using energy flow context
 export const useEnergyFlow = () => {
   const context = useContext(EnergyFlowContext);
   if (!context) {
     throw new Error('useEnergyFlow must be used within an EnergyFlowProvider');
   }
   return context;
-};
-
-interface EnergyFlowProviderProps {
-  children: ReactNode;
-  initialState?: EnergyFlowState;
-}
-
-export const EnergyFlowProvider: React.FC<EnergyFlowProviderProps> = ({ 
-  children, 
-  initialState = defaultFlowState 
-}) => {
-  const [flow, setFlow] = useState<EnergyFlowState>(initialState);
-  const [history, setHistory] = useState<EnergyFlowState[]>([initialState]);
-
-  const updateFlow = (newFlow: Partial<EnergyFlowState>) => {
-    const updatedFlow = {
-      ...flow,
-      ...newFlow,
-      timestamp: new Date(),
-    };
-    
-    setFlow(updatedFlow);
-    setHistory(prev => [...prev, updatedFlow].slice(-100)); // Keep last 100 entries
-  };
-
-  return (
-    <EnergyFlowContext.Provider value={{
-      flow,
-      history,
-      updateFlow
-    }}>
-      {children}
-    </EnergyFlowContext.Provider>
-  );
 };

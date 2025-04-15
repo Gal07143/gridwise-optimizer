@@ -1,6 +1,6 @@
 
 declare module 'lucide-react' {
-  import { SVGProps, FC } from 'react';
+  import { SVGProps, FC, ReactElement } from 'react';
 
   export interface IconProps extends SVGProps<SVGSVGElement> {
     color?: string;
@@ -93,4 +93,5 @@ declare module 'lucide-react' {
   export const X: LucideIcon;
   export const XCircle: LucideIcon;
   export const Zap: LucideIcon;
+  export const AlertCircle: LucideIcon;
 }

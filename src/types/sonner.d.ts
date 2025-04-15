@@ -39,6 +39,8 @@ declare module 'sonner' {
     dir?: 'rtl' | 'ltr' | 'auto';
   }
 
+  export function Toaster(props?: ToasterProps): JSX.Element;
+
   export interface Toast {
     id: string;
     title?: ReactNode;
@@ -86,6 +88,5 @@ declare module 'sonner' {
     ) => void;
   }
 
-  export const Toaster: React.FC<ToasterProps>;
   export const toast: ToastT;
 }

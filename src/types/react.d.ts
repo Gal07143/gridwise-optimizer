@@ -1,5 +1,6 @@
+
 declare module 'react' {
-  // React types
+  // Core types
   export type Key = string | number;
   export type ReactNode = 
     | React.ReactElement 
@@ -10,6 +11,7 @@ declare module 'react' {
     | undefined 
     | Iterable<React.ReactNode>;
   
+  // Component types
   export interface FC<P = {}> {
     (props: P): ReactElement<any, any> | null;
     displayName?: string;
@@ -57,14 +59,6 @@ declare module 'react' {
     | ((props: P) => ReactElement<P, any> | null) 
     | (new (props: P) => Component<P, any>);
   
-  export namespace JSX {
-    interface Element extends ReactElement<any, any> {}
-    interface ElementAttributesProperty { props: {}; }
-    interface ElementChildrenAttribute { children: {}; }
-    type LibraryManagedAttributes<C, P> = C extends new (props: infer CP) => Component<infer P, any> ? 
-      Omit<P, keyof CP> & CP : P;
-  }
-
   // Basic hooks
   export function useState<T>(initialState: T | (() => T)): [T, (newState: T | ((prevState: T) => T)) => void];
   export function useEffect(effect: () => void | (() => void), deps?: ReadonlyArray<any>): void;
@@ -112,11 +106,12 @@ declare module 'react' {
   }
   export function createContext<T>(defaultValue: T): Context<T>;
 
-  // Add missing types
+  // forwardRef
   export function forwardRef<T, P = {}>(
     render: (props: P, ref: React.Ref<T>) => React.ReactNode
   ): (props: P & { ref?: React.Ref<T> }) => React.ReactNode;
   
+  // Ref types
   export type Ref<T> = RefCallback<T> | RefObject<T> | null;
   export type RefCallback<T> = (instance: T | null) => void;
   export interface RefObject<T> {
@@ -130,11 +125,11 @@ declare module 'react' {
   
   export type ComponentProps<T> = T extends React.ComponentType<infer P> ? P : never;
 
+  // HTML attributes
   export interface HTMLAttributes<T> extends AriaAttributes, DOMAttributes<T> {
     className?: string;
     style?: CSSProperties;
     id?: string;
-    // ... other HTML attributes
   }
 
   export interface DOMAttributes<T> {
@@ -142,10 +137,8 @@ declare module 'react' {
     dangerouslySetInnerHTML?: {
       __html: string;
     };
-    // ... event handlers
     onClick?: (event: MouseEvent<T>) => void;
     onKeyDown?: (event: KeyboardEvent<T>) => void;
-    // ... other event handlers
   }
 
   export interface CSSProperties {
@@ -153,11 +146,9 @@ declare module 'react' {
   }
 
   export interface AriaAttributes {
-    // ARIA attributes
     'aria-label'?: string;
     'aria-labelledby'?: string;
     'aria-hidden'?: boolean | 'false' | 'true';
-    // ... other ARIA attributes
   }
   
   export interface ButtonHTMLAttributes<T> extends HTMLAttributes<T> {
@@ -177,7 +168,6 @@ declare module 'react' {
   export type SVGAttributes<T> = HTMLAttributes<T> & {
     viewBox?: string;
     xmlns?: string;
-    // ... other SVG attributes
   };
 
   // Types for internal use
@@ -202,10 +192,11 @@ declare module 'react' {
   }
   export type ReactInstance = Component<any> | Element;
 
-  // Add Fragment support
+  // Fragment support
   export const Fragment: unique symbol;
   export interface SVGProps<T> extends SVGAttributes<T> {}
   
+  // Event types
   export interface MouseEvent<T = Element> extends SyntheticEvent<T> {}
   export interface KeyboardEvent<T = Element> extends SyntheticEvent<T> {
     altKey: boolean;
