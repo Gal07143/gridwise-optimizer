@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useEquipment } from '../../contexts/EquipmentContext';
 import { Equipment } from '../../types/equipment';
@@ -17,6 +16,7 @@ const getStatusIcon = (status: Equipment['status']) => {
       return <XCircle className="w-5 h-5 text-gray-700" />;
     case 'maintenance':
       return <AlertTriangle className="w-5 h-5 text-yellow-500" />;
+    case 'fault':
     case 'faulty':
       return <AlertTriangle className="w-5 h-5 text-red-500" />;
     default:
@@ -55,6 +55,13 @@ const EquipmentDetails: React.FC<{ equipmentId: string }> = ({ equipmentId }) =>
       fetchMaintenance(equipmentId);
     }
   }, [equipmentId, fetchMetrics, fetchParameters, fetchAlarms, fetchMaintenance]);
+
+  const handleSeverityDisplay = (severity: string) => {
+    if (severity === 'critical') return 'text-red-500';
+    if (severity === 'error' || severity === 'high') return 'text-orange-500';
+    if (severity === 'warning' || severity === 'medium') return 'text-yellow-500';
+    return 'text-blue-500';
+  };
 
   if (loading) {
     return (
@@ -209,20 +216,15 @@ const EquipmentDetails: React.FC<{ equipmentId: string }> = ({ equipmentId }) =>
                 {alarms.map((alarm) => (
                   <div key={alarm.id} className="flex items-center justify-between p-4 border rounded-lg">
                     <div className="flex items-center space-x-4">
-                      <AlertTriangle className={`w-5 h-5 ${
-                        alarm.severity === 'critical' ? 'text-red-500' :
-                        alarm.severity === 'error' ? 'text-orange-500' :
-                        alarm.severity === 'warning' ? 'text-yellow-500' :
-                        'text-blue-500'
-                      }`} />
+                      <AlertTriangle className={`w-5 h-5 ${handleSeverityDisplay(alarm.severity)}`} />
                       <div>
                         <p className="font-medium">{alarm.message}</p>
                         <p className="text-sm text-gray-500">
-                          {new Date(alarm.timestamp).toLocaleString()}
+                          {new Date(alarm.timestamp || alarm.triggered_at).toLocaleString()}
                         </p>
                       </div>
                     </div>
-                    {!alarm.acknowledged && (
+                    {!alarm.acknowledged && !alarm.acknowledged_by && (
                       <Button variant="outline" size="sm">
                         Acknowledge
                       </Button>
@@ -245,12 +247,12 @@ const EquipmentDetails: React.FC<{ equipmentId: string }> = ({ equipmentId }) =>
                   <div key={record.id} className="p-4 border rounded-lg">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h4 className="font-medium">{record.type} Maintenance</h4>
+                        <h4 className="font-medium">{record.type || record.maintenance_type} Maintenance</h4>
                         <p className="text-sm text-gray-500">{record.description}</p>
                       </div>
                       <Badge variant={
                         record.status === 'completed' ? 'default' :
-                        record.status === 'in_progress' ? 'secondary' :
+                        record.status === 'in-progress' || record.status === 'in_progress' ? 'secondary' :
                         record.status === 'overdue' ? 'destructive' :
                         'outline'
                       }>
@@ -258,12 +260,12 @@ const EquipmentDetails: React.FC<{ equipmentId: string }> = ({ equipmentId }) =>
                       </Badge>
                     </div>
                     <div className="mt-2 text-sm text-gray-500">
-                      <p>Scheduled: {new Date(record.scheduledDate).toLocaleDateString()}</p>
-                      {record.completedDate && (
-                        <p>Completed: {new Date(record.completedDate).toLocaleDateString()}</p>
+                      <p>Scheduled: {new Date(record.scheduledDate || record.scheduled_date).toLocaleDateString()}</p>
+                      {(record.completedDate || record.completed_date) && (
+                        <p>Completed: {new Date(record.completedDate || record.completed_date).toLocaleDateString()}</p>
                       )}
-                      {record.assignedTo && (
-                        <p>Assigned to: {record.assignedTo}</p>
+                      {(record.assignedTo || record.technician) && (
+                        <p>Assigned to: {record.assignedTo || record.technician}</p>
                       )}
                     </div>
                   </div>

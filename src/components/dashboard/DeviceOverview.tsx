@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { EquipmentParameter } from '@/types/equipment';
@@ -48,7 +49,12 @@ export const DeviceOverview: React.FC<DeviceOverviewProps> = ({ deviceId, device
         <div className="text-lg font-semibold mb-4">Device Parameters</div>
         <div className="divide-y divide-border">
           {mockParameters.map((param, index) => (
-            <DeviceParameter key={index} name={param.name} value={formatValue(param.value)} unit={param.unit} />
+            <DeviceParameter 
+              key={index} 
+              name={param.name} 
+              value={formatValue(param.value)} 
+              unit={param.unit} 
+            />
           ))}
         </div>
       </CardContent>

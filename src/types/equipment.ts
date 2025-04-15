@@ -37,6 +37,10 @@ export interface EquipmentMetrics {
   humidity?: number;
   pressure?: number;
   flow_rate?: number;
+  // Additional properties needed by components
+  efficiency?: number;
+  load?: number;
+  energyConsumption?: number;
 }
 
 export interface EquipmentMaintenance {
@@ -125,6 +129,14 @@ export interface LoadForecast {
   confidence: number;
   actual_load?: number;
   deviation?: number;
+  // Additional properties needed by components
+  forecastType?: string;
+  forecastPeriod?: string;
+  value?: number;
+  unit?: string;
+  startTime?: string;
+  endTime?: string;
+  confidenceInterval?: { upper: number; lower: number };
 }
 
 export interface LifecycleStage {
@@ -160,6 +172,14 @@ export interface MaintenanceCost {
   parts_cost: number;
   downtime_cost: number;
   total_cost: number;
+  // Additional properties needed by components
+  maintenanceType?: string;
+  costCategory?: string;
+  type?: string;
+  cost?: number;
+  amount?: number;
+  date?: string;
+  description?: string;
 }
 
 export interface AutomatedReport {
@@ -205,6 +225,10 @@ export interface EnergyBenchmark {
   industryAverage: number;
   percentile: number;
   period: string;
+  // Additional properties needed by components
+  timestamp?: string;
+  actualConsumption?: number;
+  expectedConsumption?: number;
 }
 
 export interface EnergyRateStructure {
@@ -219,6 +243,9 @@ export interface EnergyRateStructure {
     rate: number;
     unit: string;
     timeOfUse?: string;
+    type?: string;
+    startTime?: string;
+    endTime?: string;
   }>;
 }
 
@@ -231,6 +258,17 @@ export interface EnergySaving {
   implementationDate: string;
   paybackPeriod?: number;
   status: string;
+  // Additional properties needed by components
+  timestamp?: string;
+  reportingPeriod?: { start: string; end: string };
+  savedEnergy?: number;
+  savedCost?: number;
+  savedEmissions?: number;
+  measureId?: string;
+  baselinePeriod?: { start: string; end: string };
+  baselineConsumption?: number;
+  reportingConsumption?: number;
+  verificationMethod?: string;
 }
 
 export interface BMSParameter {
@@ -244,4 +282,33 @@ export interface BMSParameter {
   };
   timestamp?: string;
   status?: string;
+  // Additional properties needed by components
+  bmsId?: string;
+  dataType?: string;
+  mapping?: any;
+}
+
+export interface BMSIntegration {
+  id: string;
+  equipmentId: string;
+  bmsType: string;
+  connectionStatus: string;
+  lastSync: string;
+  syncFrequency: number;
+  parameters: BMSParameter[];
+  connectionDetails?: Record<string, any>;
+  apiKey?: string;
+  ipAddress?: string;
+}
+
+export interface EquipmentGroup {
+  id: string;
+  name: string;
+  description?: string;
+  equipmentIds: string[];
+  type?: string;
+  location?: string;
+  tags?: string[];
+  createdAt?: string;
+  updatedAt?: string;
 }

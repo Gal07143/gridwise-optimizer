@@ -97,6 +97,7 @@ declare module 'lucide-react' {
   export const TrendingUp: LucideIcon;
   export const User: LucideIcon;
   export const WifiIcon: LucideIcon;
+  export const Wrench: LucideIcon;
   export const X: LucideIcon;
   export const XCircle: LucideIcon;
   export const Zap: LucideIcon;
