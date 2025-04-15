@@ -9,6 +9,16 @@ declare module 'react' {
         [K in keyof JSX.IntrinsicElements]: P extends JSX.IntrinsicElements[K] ? K : never
       }[keyof JSX.IntrinsicElements]
     | ComponentType<P>;
+  
+  // Fix ReactNode type
+  export type ReactNode = 
+    | ReactElement<any, any>
+    | string 
+    | number 
+    | boolean 
+    | null 
+    | undefined 
+    | Iterable<ReactNode>;
 }
 
 // React Router DOM declarations
@@ -54,14 +64,17 @@ declare module 'react-hot-toast' {
     }, options?: ToastOptions): Promise<T>;
   }
   
-  export const Toaster: React.FC<{
+  export interface ToasterProps {
     position?: ToasterPosition;
     toastOptions?: ToastOptions;
     reverseOrder?: boolean;
     gutter?: number;
     containerStyle?: React.CSSProperties;
     containerClassName?: string;
-  }>;
+    children?: (toast: any) => JSX.Element;
+  }
+  
+  export const Toaster: React.FC<ToasterProps>;
   
   export const useToaster: () => any;
   
@@ -80,7 +93,7 @@ declare module 'lucide-react' {
     className?: string;
   }
 
-  export type LucideIcon = React.FC<IconProps>;
+  export type LucideIcon = FC<IconProps>;
 
   // Export all icon components
   export const Activity: LucideIcon;
@@ -163,22 +176,23 @@ declare module 'date-fns' {
 
 // Recharts declarations
 declare module 'recharts' {
-  export const LineChart: React.FC<any>;
-  export const Line: React.FC<any>;
-  export const XAxis: React.FC<any>;
-  export const YAxis: React.FC<any>;
-  export const CartesianGrid: React.FC<any>;
-  export const Tooltip: React.FC<any>;
-  export const Legend: React.FC<any>;
-  export const ResponsiveContainer: React.FC<any>;
-  export const PieChart: React.FC<any>;
-  export const Pie: React.FC<any>;
-  export const Cell: React.FC<any>;
-  export const BarChart: React.FC<any>;
-  export const Bar: React.FC<any>;
-  export const AreaChart: React.FC<any>;
-  export const Area: React.FC<any>;
-  export const ComposedChart: React.FC<any>;
+  import { FC } from 'react';
+  export const LineChart: FC<any>;
+  export const Line: FC<any>;
+  export const XAxis: FC<any>;
+  export const YAxis: FC<any>;
+  export const CartesianGrid: FC<any>;
+  export const Tooltip: FC<any>;
+  export const Legend: FC<any>;
+  export const ResponsiveContainer: FC<any>;
+  export const PieChart: FC<any>;
+  export const Pie: FC<any>;
+  export const Cell: FC<any>;
+  export const BarChart: FC<any>;
+  export const Bar: FC<any>;
+  export const AreaChart: FC<any>;
+  export const Area: FC<any>;
+  export const ComposedChart: FC<any>;
 }
 
 // Sonner declarations
@@ -206,19 +220,6 @@ declare module '@heroicons/react/24/outline' {
   export const MenuIcon: FC<SVGProps<SVGSVGElement>>;
   export const XIcon: FC<SVGProps<SVGSVGElement>>;
   export const SearchIcon: FC<SVGProps<SVGSVGElement>>;
-}
-
-// Fix Badge component props
-declare module '@/components/ui/badge' {
-  import { VariantProps } from 'class-variance-authority';
-  import { HTMLAttributes } from 'react';
-
-  export interface BadgeProps extends HTMLAttributes<HTMLDivElement>, VariantProps<any> {
-    variant?: 'default' | 'secondary' | 'destructive' | 'outline' | 'success';
-    className?: string;
-  }
-
-  export const Badge: React.FC<BadgeProps>;
 }
 
 // Add JSX namespace

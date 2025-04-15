@@ -10,7 +10,7 @@ declare module 'lucide-react' {
     className?: string;
   }
 
-  export type LucideIcon = React.FC<IconProps>;
+  export type LucideIcon = FC<IconProps>;
 
   // Core icon components
   export const Activity: LucideIcon;

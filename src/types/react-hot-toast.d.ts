@@ -1,6 +1,6 @@
 
 declare module 'react-hot-toast' {
-  import { ReactNode } from 'react';
+  import { ReactNode, FC } from 'react';
 
   export type ToastPosition =
     | 'top-left'
@@ -63,9 +63,16 @@ declare module 'react-hot-toast' {
     error(message: ReactNode, options?: ToastOptions): string;
     loading(message: ReactNode, options?: ToastOptions): string;
     custom(component: ReactNode, options?: ToastOptions): string;
+    dismiss(toastId?: string): void;
+    remove(toastId?: string): void;
+    promise<T>(promise: Promise<T>, msgs: {
+      loading: ReactNode;
+      success: ReactNode | ((data: T) => ReactNode);
+      error: ReactNode | ((err: any) => ReactNode);
+    }, opts?: ToastOptions): Promise<T>;
   }
 
-  export const Toaster: React.FC<ToasterProps>;
+  export const Toaster: FC<ToasterProps>;
   export const toast: ToastHandler;
   export const useToasterStore: () => {
     toasts: Toast[];

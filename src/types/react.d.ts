@@ -2,15 +2,25 @@
 declare module 'react' {
   // React types
   export type Key = string | number;
-  export type ReactNode = string | number | boolean | ReactElement | ReactFragment | ReactPortal | null | undefined;
+  export type ReactNode = 
+    | React.ReactElement 
+    | string 
+    | number 
+    | boolean 
+    | null 
+    | undefined 
+    | Iterable<React.ReactNode>;
+  
   export interface FC<P = {}> {
-    (props: P): ReactElement | null;
+    (props: P): ReactElement<any, any> | null;
     displayName?: string;
   }
+  
   export interface FunctionComponent<P = {}> {
-    (props: P): ReactElement | null;
+    (props: P): ReactElement<any, any> | null;
     displayName?: string;
   }
+  
   export type PropsWithChildren<P = unknown> = P & { children?: ReactNode | undefined };
   export type ComponentType<P = {}> = FC<P> | ClassType<P, any, any>;
   export type ElementType<P = any> = {
@@ -21,6 +31,7 @@ declare module 'react' {
   export interface FormEvent<T = Element> extends SyntheticEvent<T> {
     target: EventTarget & T;
   }
+  
   export interface SyntheticEvent<T = Element, E = Event> {
     bubbles: boolean;
     cancelable: boolean;
@@ -42,10 +53,17 @@ declare module 'react' {
     props: P;
     key: Key | null;
   }
-  export type JSXElementConstructor<P> = ((props: P) => ReactElement | null) | (new (props: P) => Component<P, any>);
+  
+  export type JSXElementConstructor<P> = 
+    | ((props: P) => ReactElement<P, any> | null) 
+    | (new (props: P) => Component<P, any>);
   
   export namespace JSX {
-    interface Element extends ReactElement {}
+    interface Element extends ReactElement<any, any> {}
+    interface ElementAttributesProperty { props: {}; }
+    interface ElementChildrenAttribute { children: {}; }
+    type LibraryManagedAttributes<C, P> = C extends new (props: infer CP) => Component<infer P, any> ? 
+      Omit<P, keyof CP> & CP : P;
   }
 
   // Basic hooks
