@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Outlet, Link } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
+import { Toaster as HotToaster } from 'react-hot-toast';
 import { 
   Home, 
   Settings, 
@@ -102,7 +102,15 @@ export const Layout: React.FC = () => {
         </main>
       </div>
       
-      <Toaster position="top-right" />
+      <HotToaster 
+        position="top-right"
+        toastOptions={{
+          duration: 3000,
+          className: "bg-background text-foreground border border-border",
+        }}
+      />
     </div>
   );
 };
+
+export default Layout;

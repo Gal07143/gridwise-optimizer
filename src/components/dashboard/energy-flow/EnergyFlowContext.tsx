@@ -1,75 +1,74 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useMicrogrid } from '@/components/microgrid/MicrogridProvider';
 
-interface EnergyFlowState {
-  direction: 'import' | 'export' | 'neutral';
-  power: number;
-  efficiency: number;
-  timestamp: string;
-}
+import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { EnergyFlowState } from './types';
 
-interface EnergyFlowContextType {
+export const defaultFlowState: EnergyFlowState = {
+  timestamp: new Date(),
+  grid: {
+    powerImport: 0,
+    powerExport: 0,
+  },
+  solar: {
+    production: 0,
+    curtailment: 0,
+  },
+  battery: {
+    charging: 0,
+    discharging: 0,
+    stateOfCharge: 50,
+    capacity: 10,
+  },
+  home: {
+    consumption: 0,
+  }
+};
+
+export interface EnergyFlowContextType {
   flow: EnergyFlowState;
   history: EnergyFlowState[];
   updateFlow: (newFlow: Partial<EnergyFlowState>) => void;
 }
 
-const EnergyFlowContext = createContext<EnergyFlowContextType>({
-  flow: {
-    direction: 'neutral',
-    power: 0,
-    efficiency: 1,
-    timestamp: new Date().toISOString(),
-  },
-  history: [],
-  updateFlow: () => {},
-});
+const EnergyFlowContext = createContext<EnergyFlowContextType | undefined>(undefined);
 
-export const useEnergyFlow = () => useContext(EnergyFlowContext);
+export const useEnergyFlow = () => {
+  const context = useContext(EnergyFlowContext);
+  if (!context) {
+    throw new Error('useEnergyFlow must be used within an EnergyFlowProvider');
+  }
+  return context;
+};
 
 interface EnergyFlowProviderProps {
-  children: React.ReactNode;
+  children: ReactNode;
+  initialState?: EnergyFlowState;
 }
 
-/**
- * Provider component for energy flow visualization
- * Manages power flow direction, magnitude, and historical data
- */
-export const EnergyFlowProvider: React.FC<EnergyFlowProviderProps> = ({ children }) => {
-  const { totalPower, gridStatus } = useMicrogrid();
-  const [flow, setFlow] = useState<EnergyFlowState>({
-    direction: 'neutral',
-    power: 0,
-    efficiency: 1,
-    timestamp: new Date().toISOString(),
-  });
-  const [history, setHistory] = useState<EnergyFlowState[]>([]);
-
-  useEffect(() => {
-    // Update flow based on microgrid state
-    const direction: EnergyFlowState['direction'] = totalPower > 0 ? 'export' : totalPower < 0 ? 'import' : 'neutral';
-    const newFlow: EnergyFlowState = {
-      direction,
-      power: Math.abs(totalPower),
-      efficiency: 0.95, // Example efficiency value
-      timestamp: new Date().toISOString(),
-    };
-
-    setFlow(newFlow);
-    setHistory(prev => [...prev.slice(-9), newFlow]); // Keep last 10 readings
-  }, [totalPower]);
+export const EnergyFlowProvider: React.FC<EnergyFlowProviderProps> = ({ 
+  children, 
+  initialState = defaultFlowState 
+}) => {
+  const [flow, setFlow] = useState<EnergyFlowState>(initialState);
+  const [history, setHistory] = useState<EnergyFlowState[]>([initialState]);
 
   const updateFlow = (newFlow: Partial<EnergyFlowState>) => {
-    setFlow(prev => ({
-      ...prev,
+    const updatedFlow = {
+      ...flow,
       ...newFlow,
-      timestamp: new Date().toISOString(),
-    }));
+      timestamp: new Date(),
+    };
+    
+    setFlow(updatedFlow);
+    setHistory(prev => [...prev, updatedFlow].slice(-100)); // Keep last 100 entries
   };
 
   return (
-    <EnergyFlowContext.Provider value={{ flow, history, updateFlow }}>
+    <EnergyFlowContext.Provider value={{
+      flow,
+      history,
+      updateFlow
+    }}>
       {children}
     </EnergyFlowContext.Provider>
   );
-}; 
+};

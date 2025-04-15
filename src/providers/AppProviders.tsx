@@ -17,7 +17,7 @@ const queryClient = new QueryClient({
   },
 });
 
-interface AppProvidersProps {
+export interface AppProvidersProps {
   children: React.ReactNode;
 }
 

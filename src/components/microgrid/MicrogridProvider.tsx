@@ -1,8 +1,8 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useDevices } from '@/contexts/DeviceContext';
-import { TelemetryData } from '@/types/telemetry'; // Updated import path
-import { toast } from 'sonner'; // Updated to use sonner instead of react-hot-toast
+import { TelemetryData } from '@/types/telemetry';
+import { toast } from 'sonner';
 
 /**
  * Types for microgrid metrics and status
@@ -86,7 +86,18 @@ const MicrogridProvider: React.FC<MicrogridProviderProps> = ({
    */
   const getLatestTelemetry = useCallback((deviceId: string): TelemetryData | null => {
     const telemetry = deviceTelemetry[deviceId];
-    return telemetry && telemetry.length > 0 ? telemetry[0] : null;
+    if (telemetry && telemetry.length > 0) {
+      return {
+        id: telemetry[0].id || '',
+        device_id: telemetry[0].device_id || '',
+        timestamp: telemetry[0].timestamp || new Date(),
+        parameter: telemetry[0].parameter || '',
+        value: telemetry[0].value || 0,
+        unit: telemetry[0].unit || '',
+        data: telemetry[0].data || {}
+      };
+    }
+    return null;
   }, [deviceTelemetry]);
 
   /**

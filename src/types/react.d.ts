@@ -134,4 +134,26 @@ declare module 'react' {
     children: ReactNode;
   }
   export type ReactInstance = Component<any> | Element;
+
+  // Add Fragment support
+  export const Fragment: unique symbol;
+  export interface SVGProps<T> extends SVGAttributes<T> {}
+  export interface SVGAttributes<T> extends HTMLAttributes<T> {
+    // SVG specific attributes
+    accentHeight?: number | string;
+    // ...and other SVG attributes
+  }
+  export interface HTMLAttributes<T> extends DOMAttributes<T> {
+    // HTML attributes
+    className?: string;
+    // ...and other HTML attributes
+  }
+  export interface DOMAttributes<T> {
+    // DOM event handlers
+    onClick?: (event: MouseEvent<T>) => void;
+    // ...and other event handlers
+  }
+  export interface MouseEvent<T = Element> extends SyntheticEvent<T> {
+    // Mouse event specific properties
+  }
 }

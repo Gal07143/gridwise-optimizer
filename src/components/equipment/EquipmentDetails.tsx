@@ -252,7 +252,7 @@ const EquipmentDetails: React.FC<{ equipmentId: string }> = ({ equipmentId }) =>
                       </div>
                       <Badge variant={
                         record.status === 'completed' ? 'default' :
-                        record.status === 'in-progress' || record.status === 'in_progress' ? 'secondary' :
+                        record.status === 'in_progress' || record.status === 'in_progress' ? 'secondary' :
                         record.status === 'overdue' ? 'destructive' :
                         'outline'
                       }>

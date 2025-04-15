@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { Fragment } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import {
@@ -344,7 +343,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ isCollapsed, onToggle }) => {
           )}
           <div className="space-y-1">
             {section.items.map((item) => (
-              <React.Fragment key={item.href}>
+              <Fragment key={item.href}>
                 <SidebarItem
                   icon={item.icon}
                   label={item.label}
@@ -377,7 +376,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({ isCollapsed, onToggle }) => {
                     ))}
                   </div>
                 )}
-              </React.Fragment>
+              </Fragment>
             ))}
           </div>
         </div>

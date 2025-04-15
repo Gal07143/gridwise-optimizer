@@ -19,6 +19,22 @@ declare module 'react' {
     | null 
     | undefined 
     | Iterable<ReactNode>;
+
+  // Add Fragment support
+  export const Fragment: unique symbol;
+  export interface SVGProps<T> extends SVGAttributes<T> {}
+  export interface SVGAttributes<T> extends HTMLAttributes<T> {
+    // SVG specific attributes
+  }
+  export interface HTMLAttributes<T> extends DOMAttributes<T> {
+    // HTML attributes
+    className?: string;
+  }
+  export interface DOMAttributes<T> {
+    // DOM event handlers
+    onClick?: (event: MouseEvent<T>) => void;
+  }
+  export interface MouseEvent<T = Element> extends SyntheticEvent<T> {}
 }
 
 // React Router DOM declarations
@@ -37,6 +53,20 @@ declare module 'react-hot-toast' {
     position?: ToasterPosition;
     className?: string;
     style?: React.CSSProperties;
+    success?: {
+      className?: string;
+      iconTheme?: {
+        primary: string;
+        secondary: string;
+      };
+    };
+    error?: {
+      className?: string;
+      iconTheme?: {
+        primary: string;
+        secondary: string;
+      };
+    };
   }
   
   export type ToasterPosition = 
@@ -105,9 +135,11 @@ declare module 'lucide-react' {
   export const BarChart2: LucideIcon;
   export const BarChart3: LucideIcon;
   export const BarChart4: LucideIcon;
+  export const BarChartHorizontal: LucideIcon;
   export const Battery: LucideIcon;
   export const BatteryCharging: LucideIcon;
   export const Bell: LucideIcon;
+  export const Binary: LucideIcon;
   export const Book: LucideIcon;
   export const Brain: LucideIcon;
   export const Building2: LucideIcon;
@@ -121,6 +153,7 @@ declare module 'lucide-react' {
   export const ChevronRight: LucideIcon;
   export const ChevronUp: LucideIcon;
   export const Clock: LucideIcon;
+  export const Cpu: LucideIcon;
   export const Database: LucideIcon;
   export const DollarSign: LucideIcon;
   export const Download: LucideIcon;
@@ -133,6 +166,8 @@ declare module 'lucide-react' {
   export const Home: LucideIcon;
   export const Inbox: LucideIcon;
   export const Info: LucideIcon;
+  export const Key: LucideIcon;
+  export const Layers: LucideIcon;
   export const LayoutDashboard: LucideIcon;
   export const LayoutGrid: LucideIcon;
   export const Leaf: LucideIcon;
@@ -145,14 +180,18 @@ declare module 'lucide-react' {
   export const PanelLeftClose: LucideIcon;
   export const PanelLeftOpen: LucideIcon;
   export const Percent: LucideIcon;
+  export const PieChart: LucideIcon;
+  export const Plug: LucideIcon;
   export const Plus: LucideIcon;
   export const Power: LucideIcon;
   export const RefreshCw: LucideIcon;
+  export const ResponsiveContainer: LucideIcon;
   export const Search: LucideIcon;
   export const Settings: LucideIcon;
   export const SignalIcon: LucideIcon;
   export const Sun: LucideIcon;
   export const Tag: LucideIcon;
+  export const Terminal: LucideIcon;
   export const ThumbsDown: LucideIcon;
   export const ThumbsUp: LucideIcon;
   export const Trash: LucideIcon;
@@ -162,6 +201,7 @@ declare module 'lucide-react' {
   export const User: LucideIcon;
   export const Users: LucideIcon;
   export const WifiIcon: LucideIcon;
+  export const Workflow: LucideIcon;
   export const Wrench: LucideIcon;
   export const X: LucideIcon;
   export const XCircle: LucideIcon;
