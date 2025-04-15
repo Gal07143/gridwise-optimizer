@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from "@/lib/utils";
@@ -38,6 +37,7 @@ interface NavLinkProps {
     item: NavItem;
     isMobile?: boolean;
     onClick?: () => void;
+    key?: string;
 }
 
 /**
@@ -151,7 +151,7 @@ const navItems: NavItem[] = [
 /**
  * Navigation link component with support for child items
  */
-const NavLink = ({ item, isMobile, onClick }: NavLinkProps) => {
+const NavLink: React.FC<NavLinkProps> = ({ item, isMobile, onClick }) => {
     const location = useLocation();
     const isActive = location.pathname === item.path || location.pathname.startsWith(item.path + '/');
     const Icon = item.icon;

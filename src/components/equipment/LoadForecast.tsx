@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { equipmentService } from '@/services/equipmentService';
-import { LoadForecast } from '@/types/equipment'; // Fixed import
+import { LoadForecast } from '@/types/equipment';
 
 const LoadForecastComponent: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -16,7 +16,6 @@ const LoadForecastComponent: React.FC = () => {
     const fetchForecasts = async () => {
       try {
         if (!id) return;
-        // Fix: Added default parameters for proper function call
         const data = await equipmentService.getLoadForecasts(id, 'daily', 7);
         setForecasts(data);
       } catch (err) {
@@ -50,7 +49,9 @@ const LoadForecastComponent: React.FC = () => {
                     </div>
                     <div>
                       <Label>Value</Label>
-                      <div className="text-sm font-medium">{forecast.value || forecast.predictedLoad} {forecast.unit || 'kWh'}</div>
+                      <div className="text-sm font-medium">
+                        {forecast.value || forecast.predicted_load || forecast.predictedLoad} {forecast.unit || 'kWh'}
+                      </div>
                     </div>
                     <div>
                       <Label>Start Time</Label>
@@ -68,7 +69,14 @@ const LoadForecastComponent: React.FC = () => {
                     </div>
                     <div>
                       <Label>Confidence</Label>
-                      <div className="text-sm font-medium">{forecast.confidence || forecast.confidenceInterval?.upper ? Math.round((1 - forecast.confidenceInterval.upper/forecast.predictedLoad) * 100) : 0}%</div>
+                      <div className="text-sm font-medium">
+                        {forecast.confidence || 
+                          (forecast.confidenceInterval?.upper ? 
+                            Math.round((1 - forecast.confidenceInterval.upper/
+                              (forecast.predicted_load || forecast.predictedLoad || 0)) * 100) : 0
+                          )
+                        }%
+                      </div>
                     </div>
                   </div>
                 </CardContent>

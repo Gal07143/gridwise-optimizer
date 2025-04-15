@@ -55,6 +55,7 @@ export const BMSIntegration: React.FC<BMSIntegrationProps> = ({ equipmentId }) =
         parameters: bmsIntegration.parameters.map(param => ({
           id: param.id,
           name: param.name,
+          value: param.value,
           bmsId: param.bmsId,
           dataType: param.dataType,
           unit: param.unit,
@@ -219,9 +220,9 @@ export const BMSIntegration: React.FC<BMSIntegrationProps> = ({ equipmentId }) =
               {bmsIntegration.parameters.map((param: BMSParameter) => (
                 <TableRow key={param.id}>
                   <TableCell>{param.name}</TableCell>
-                  <TableCell>{param.bmsId}</TableCell>
-                  <TableCell>{param.dataType}</TableCell>
-                  <TableCell>{typeof param.mapping === 'object' ? JSON.stringify(param.mapping) : String(param.mapping)}</TableCell>
+                  <TableCell>{param.bmsId || 'N/A'}</TableCell>
+                  <TableCell>{param.dataType || 'N/A'}</TableCell>
+                  <TableCell>{typeof param.mapping === 'object' ? JSON.stringify(param.mapping) : (param.mapping ? String(param.mapping) : 'N/A')}</TableCell>
                   <TableCell>
                     <Badge
                       variant="outline"

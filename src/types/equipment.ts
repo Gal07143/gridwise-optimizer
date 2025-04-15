@@ -95,8 +95,13 @@ export interface PredictiveMaintenance {
   failure_probability: number;
   estimated_time_to_failure: number; // in hours
   recommendation: string;
+  recommendedAction?: string; // For backward compatibility
   impact_level: 'high' | 'medium' | 'low';
   last_updated: string;
+  // Additional properties needed by components
+  predictedIssue?: string;
+  confidence?: number;
+  predictionDate?: string;
 }
 
 export interface PerformanceScore {
@@ -108,6 +113,17 @@ export interface PerformanceScore {
   maintenance_score: number;
   overall_score: number;
   benchmark: number;
+  // Aliases for backward compatibility
+  efficiencyScore?: number;
+  reliabilityScore?: number;
+  maintenanceScore?: number;
+  overallScore?: number;
+  factors?: Array<{
+    name: string;
+    weight: number;
+    score: number;
+    impact: string;
+  }>;
 }
 
 export interface EfficiencyRecommendation {
@@ -119,6 +135,11 @@ export interface EfficiencyRecommendation {
   payback_period: number;
   difficulty: 'easy' | 'medium' | 'hard';
   priority: 'high' | 'medium' | 'low';
+  // Additional properties needed by components
+  title?: string;
+  description?: string;
+  potentialSavings?: number;
+  paybackPeriod?: number;
 }
 
 export interface LoadForecast {
@@ -136,6 +157,7 @@ export interface LoadForecast {
   unit?: string;
   startTime?: string;
   endTime?: string;
+  predictedLoad?: number; // Alias for backward compatibility
   confidenceInterval?: { upper: number; lower: number };
 }
 
@@ -161,6 +183,10 @@ export interface SparePartInventory {
   supplier: string;
   last_ordered?: string;
   location: string;
+  // Additional properties needed by components
+  partNumber?: string; // Alias for backward compatibility
+  minimumQuantity?: number;
+  status?: string;
 }
 
 export interface MaintenanceCost {
@@ -180,41 +206,50 @@ export interface MaintenanceCost {
   amount?: number;
   date?: string;
   description?: string;
+  totalCost?: number; // Alias for backward compatibility
 }
 
-export interface AutomatedReport {
+export interface EquipmentGroup {
   id: string;
   name: string;
-  equipmentId: string;
-  reportType: string;
-  format: string;
-  schedule: string;
-  parameters: Record<string, any>;
-  recipients: string[];
-  status?: 'scheduled' | 'generating' | 'sent' | 'failed';
-  lastGenerated?: string;
-  nextGeneration?: string;
+  description?: string;
+  equipmentIds: string[];
+  type?: string;
+  location?: string;
+  tags?: string[];
+  parentId?: string; // Added parentId
+  createdAt?: string;
+  updatedAt?: string;
 }
 
-// Missing types that were referenced in error messages
-export interface CarbonEmissionsDetail {
+export interface BMSParameter {
   id: string;
-  source: string;
-  amount?: number;
-  totalEmissions?: number;
+  name: string;
+  value: string | number;
   unit?: string;
-  date?: string;
+  normal_range?: {
+    min?: number;
+    max?: number;
+  };
   timestamp?: string;
-  category?: string;
+  status?: string;
+  // Additional properties needed by components
+  bmsId?: string;
+  dataType?: string;
+  mapping?: any;
 }
 
-export interface DowntimeRecord {
+export interface BMSIntegration {
   id: string;
-  startTime: string;
-  endTime?: string;
-  duration: number;
-  reason: string;
-  impact: string;
+  equipmentId: string;
+  bmsType: string;
+  connectionStatus: string;
+  lastSync: string;
+  syncFrequency: number;
+  parameters: BMSParameter[];
+  connectionDetails?: Record<string, any>;
+  apiKey?: string;
+  ipAddress?: string;
 }
 
 export interface EnergyBenchmark {
@@ -271,44 +306,37 @@ export interface EnergySaving {
   verificationMethod?: string;
 }
 
-export interface BMSParameter {
+// Missing types that were referenced in error messages
+export interface CarbonEmissionsDetail {
   id: string;
-  name: string;
-  value: string | number;
+  source: string;
+  amount?: number;
+  totalEmissions?: number;
   unit?: string;
-  normal_range?: {
-    min?: number;
-    max?: number;
-  };
+  date?: string;
   timestamp?: string;
-  status?: string;
-  // Additional properties needed by components
-  bmsId?: string;
-  dataType?: string;
-  mapping?: any;
+  category?: string;
 }
 
-export interface BMSIntegration {
+export interface DowntimeRecord {
   id: string;
-  equipmentId: string;
-  bmsType: string;
-  connectionStatus: string;
-  lastSync: string;
-  syncFrequency: number;
-  parameters: BMSParameter[];
-  connectionDetails?: Record<string, any>;
-  apiKey?: string;
-  ipAddress?: string;
+  startTime: string;
+  endTime?: string;
+  duration: number;
+  reason: string;
+  impact: string;
 }
 
-export interface EquipmentGroup {
+export interface AutomatedReport {
   id: string;
   name: string;
-  description?: string;
-  equipmentIds: string[];
-  type?: string;
-  location?: string;
-  tags?: string[];
-  createdAt?: string;
-  updatedAt?: string;
+  equipmentId: string;
+  reportType: string;
+  format: string;
+  schedule: string;
+  parameters: Record<string, any>;
+  recipients: string[];
+  status?: 'scheduled' | 'generating' | 'sent' | 'failed';
+  lastGenerated?: string;
+  nextGeneration?: string;
 }

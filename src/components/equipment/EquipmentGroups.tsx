@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -30,7 +31,7 @@ export const EquipmentGroups: React.FC = () => {
   const [newGroup, setNewGroup] = useState<Partial<EquipmentGroup>>({
     name: '',
     description: '',
-    parentId: null,
+    parentId: undefined,
     type: 'FUNCTIONAL',
     equipmentIds: [],
     createdAt: new Date().toISOString(),
@@ -62,7 +63,7 @@ export const EquipmentGroups: React.FC = () => {
       setNewGroup({
         name: '',
         description: '',
-        parentId: null,
+        parentId: undefined,
         type: 'FUNCTIONAL',
         equipmentIds: [],
         createdAt: new Date().toISOString(),
@@ -74,7 +75,7 @@ export const EquipmentGroups: React.FC = () => {
     }
   };
 
-  const renderGroupHierarchy = (parentId: string | null = null, level: number = 0) => {
+  const renderGroupHierarchy = (parentId: string | null | undefined = null, level: number = 0) => {
     const childGroups = groups.filter(group => group.parentId === parentId);
     
     if (childGroups.length === 0) return null;
@@ -152,7 +153,7 @@ export const EquipmentGroups: React.FC = () => {
                 <Label htmlFor="parentId">Parent Group</Label>
                 <Select
                   value={newGroup.parentId || ''}
-                  onValueChange={value => setNewGroup(prev => ({ ...prev, parentId: value || null }))}
+                  onValueChange={value => setNewGroup(prev => ({ ...prev, parentId: value || undefined }))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select parent group" />

@@ -38,6 +38,14 @@ const formatValue = (value: number | string): string => {
   return value;
 };
 
+// Convert boolean values to string to match the expected type
+const formatForDisplay = (value: number | string | boolean): string => {
+  if (typeof value === 'boolean') {
+    return value ? 'Yes' : 'No';
+  }
+  return formatValue(value as number | string);
+};
+
 export const DeviceOverview: React.FC<DeviceOverviewProps> = ({ deviceId, deviceName }) => {
   return (
     <Card>
@@ -50,9 +58,9 @@ export const DeviceOverview: React.FC<DeviceOverviewProps> = ({ deviceId, device
         <div className="divide-y divide-border">
           {mockParameters.map((param, index) => (
             <DeviceParameter 
-              key={index} 
+              key={param.id} 
               name={param.name} 
-              value={formatValue(param.value)} 
+              value={formatForDisplay(param.value)} 
               unit={param.unit} 
             />
           ))}

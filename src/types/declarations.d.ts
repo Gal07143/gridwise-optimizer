@@ -2,6 +2,9 @@
 // React declarations
 declare module 'react' {
   export * from 'react/index';
+
+  // Add ElementType which is needed by Navigation.tsx
+  export type ElementType<P = any> = React.ComponentType<P> | keyof JSX.IntrinsicElements;
 }
 
 // React Router DOM declarations
@@ -11,19 +14,52 @@ declare module 'react-router-dom' {
 
 // React Hot Toast declarations
 declare module 'react-hot-toast' {
-  export function toast(message: string, options?: any): void;
-  export function toast(options: any): void;
-  export const Toaster: React.ComponentType<any>;
-  export const useToaster: () => any;
-  
-  // Add missing methods
-  namespace toast {
-    function success(message: string, options?: any): void;
-    function error(message: string, options?: any): void;
-    function loading(message: string, options?: any): void;
-    function custom(message: React.ReactNode, options?: any): void;
-    function dismiss(toastId?: string): void;
+  import { ReactNode } from 'react';
+
+  export interface ToastOptions {
+    id?: string;
+    icon?: ReactNode;
+    duration?: number;
+    position?: ToasterPosition;
+    className?: string;
+    style?: React.CSSProperties;
   }
+  
+  export type ToasterPosition = 
+    | 'top-left'
+    | 'top-center'
+    | 'top-right'
+    | 'bottom-left'
+    | 'bottom-center'
+    | 'bottom-right';
+
+  export function toast(message: string, options?: ToastOptions): string;
+  export function toast(options: { message: string } & ToastOptions): string;
+  
+  // Fix missing methods
+  export namespace toast {
+    export function success(message: string, options?: ToastOptions): string;
+    export function error(message: string, options?: ToastOptions): string;
+    export function loading(message: string, options?: ToastOptions): string;
+    export function custom(message: ReactNode, options?: ToastOptions): string;
+    export function dismiss(toastId?: string): void;
+    export function promise<T>(promise: Promise<T>, messages: {
+      loading: string;
+      success: string | ((data: T) => string);
+      error: string | ((err: any) => string);
+    }, options?: ToastOptions): Promise<T>;
+  }
+  
+  export const Toaster: React.FC<{
+    position?: ToasterPosition;
+    toastOptions?: ToastOptions;
+    reverseOrder?: boolean;
+    gutter?: number;
+    containerStyle?: React.CSSProperties;
+    containerClassName?: string;
+  }>;
+  
+  export const useToaster: () => any;
   
   export default toast;
 }
@@ -55,7 +91,10 @@ declare module 'lucide-react' {
   export const Battery: LucideIcon;
   export const BatteryCharging: LucideIcon;
   export const Bell: LucideIcon;
+  export const Book: LucideIcon;
   export const Brain: LucideIcon;
+  export const Building2: LucideIcon;
+  export const Cable: LucideIcon;
   export const Calendar: LucideIcon;
   export const CalendarClock: LucideIcon;
   export const Check: LucideIcon;
@@ -65,21 +104,29 @@ declare module 'lucide-react' {
   export const ChevronRight: LucideIcon;
   export const ChevronUp: LucideIcon;
   export const Clock: LucideIcon;
+  export const Database: LucideIcon;
   export const DollarSign: LucideIcon;
   export const Download: LucideIcon;
+  export const Factory: LucideIcon;
   export const FileText: LucideIcon;
   export const Filter: LucideIcon;
   export const Gauge: LucideIcon;
+  export const Globe: LucideIcon;
   export const Grid: LucideIcon;
   export const Home: LucideIcon;
   export const Inbox: LucideIcon;
   export const Info: LucideIcon;
+  export const LayoutDashboard: LucideIcon;
   export const LayoutGrid: LucideIcon;
   export const Leaf: LucideIcon;
+  export const Lightbulb: LucideIcon;
+  export const LineChart: LucideIcon;
   export const Loader2: LucideIcon;
   export const Menu: LucideIcon;
   export const MoreHorizontal: LucideIcon;
   export const MoreVertical: LucideIcon;
+  export const PanelLeftClose: LucideIcon;
+  export const PanelLeftOpen: LucideIcon;
   export const Percent: LucideIcon;
   export const Plus: LucideIcon;
   export const Power: LucideIcon;
@@ -96,6 +143,7 @@ declare module 'lucide-react' {
   export const TrendingDown: LucideIcon;
   export const TrendingUp: LucideIcon;
   export const User: LucideIcon;
+  export const Users: LucideIcon;
   export const WifiIcon: LucideIcon;
   export const Wrench: LucideIcon;
   export const X: LucideIcon;
