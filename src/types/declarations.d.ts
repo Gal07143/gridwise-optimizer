@@ -4,7 +4,11 @@ declare module 'react' {
   export * from 'react/index';
 
   // Add ElementType which is needed by Navigation.tsx
-  export type ElementType<P = any> = React.ComponentType<P> | keyof JSX.IntrinsicElements;
+  export type ElementType<P = any> = 
+    | {
+        [K in keyof JSX.IntrinsicElements]: P extends JSX.IntrinsicElements[K] ? K : never
+      }[keyof JSX.IntrinsicElements]
+    | ComponentType<P>;
 }
 
 // React Router DOM declarations
@@ -33,17 +37,17 @@ declare module 'react-hot-toast' {
     | 'bottom-center'
     | 'bottom-right';
 
-  export function toast(message: string, options?: ToastOptions): string;
-  export function toast(options: { message: string } & ToastOptions): string;
+  export const toast: Toast;
   
-  // Fix missing methods
-  export namespace toast {
-    export function success(message: string, options?: ToastOptions): string;
-    export function error(message: string, options?: ToastOptions): string;
-    export function loading(message: string, options?: ToastOptions): string;
-    export function custom(message: ReactNode, options?: ToastOptions): string;
-    export function dismiss(toastId?: string): void;
-    export function promise<T>(promise: Promise<T>, messages: {
+  interface Toast {
+    (message: string, options?: ToastOptions): string;
+    (options: { message: string } & ToastOptions): string;
+    success(message: string, options?: ToastOptions): string;
+    error(message: string, options?: ToastOptions): string;
+    loading(message: string, options?: ToastOptions): string;
+    custom(message: ReactNode, options?: ToastOptions): string;
+    dismiss(toastId?: string): void;
+    promise<T>(promise: Promise<T>, messages: {
       loading: string;
       success: string | ((data: T) => string);
       error: string | ((err: any) => string);

@@ -1,8 +1,8 @@
 
 declare module 'lucide-react' {
-  import React from 'react';
+  import { SVGProps, FC } from 'react';
 
-  export interface IconProps extends React.SVGProps<SVGSVGElement> {
+  export interface IconProps extends SVGProps<SVGSVGElement> {
     color?: string;
     size?: string | number;
     strokeWidth?: string | number;
@@ -12,7 +12,7 @@ declare module 'lucide-react' {
 
   export type LucideIcon = React.FC<IconProps>;
 
-  // Export all icon components
+  // Core icon components
   export const Activity: LucideIcon;
   export const AlertTriangle: LucideIcon;
   export const ArrowDown: LucideIcon;
@@ -25,7 +25,10 @@ declare module 'lucide-react' {
   export const Battery: LucideIcon;
   export const BatteryCharging: LucideIcon;
   export const Bell: LucideIcon;
+  export const Book: LucideIcon;
   export const Brain: LucideIcon;
+  export const Building2: LucideIcon;
+  export const Cable: LucideIcon;
   export const Calendar: LucideIcon;
   export const CalendarClock: LucideIcon;
   export const Check: LucideIcon;
@@ -35,21 +38,29 @@ declare module 'lucide-react' {
   export const ChevronRight: LucideIcon;
   export const ChevronUp: LucideIcon;
   export const Clock: LucideIcon;
+  export const Database: LucideIcon;
   export const DollarSign: LucideIcon;
   export const Download: LucideIcon;
+  export const Factory: LucideIcon;
   export const FileText: LucideIcon;
   export const Filter: LucideIcon;
   export const Gauge: LucideIcon;
+  export const Globe: LucideIcon;
   export const Grid: LucideIcon;
   export const Home: LucideIcon;
   export const Inbox: LucideIcon;
   export const Info: LucideIcon;
+  export const LayoutDashboard: LucideIcon;
   export const LayoutGrid: LucideIcon;
   export const Leaf: LucideIcon;
+  export const Lightbulb: LucideIcon;
+  export const LineChart: LucideIcon;
   export const Loader2: LucideIcon;
   export const Menu: LucideIcon;
   export const MoreHorizontal: LucideIcon;
   export const MoreVertical: LucideIcon;
+  export const PanelLeftClose: LucideIcon;
+  export const PanelLeftOpen: LucideIcon;
   export const Percent: LucideIcon;
   export const Plus: LucideIcon;
   export const Power: LucideIcon;
@@ -66,7 +77,9 @@ declare module 'lucide-react' {
   export const TrendingDown: LucideIcon;
   export const TrendingUp: LucideIcon;
   export const User: LucideIcon;
+  export const Users: LucideIcon;
   export const WifiIcon: LucideIcon;
+  export const Wrench: LucideIcon;
   export const X: LucideIcon;
   export const XCircle: LucideIcon;
   export const Zap: LucideIcon;

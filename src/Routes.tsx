@@ -5,7 +5,7 @@ import { Layout } from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import { DeviceOverview } from './components/dashboard/DeviceOverview';
 
-const AppRoutes = () => {
+const AppRoutes: React.FC = () => {
   return (
     <Routes>
       <Route path="/" element={<Layout />}>

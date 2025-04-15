@@ -1,7 +1,8 @@
 
 declare module 'react' {
   // React types
-  export type ReactNode = string | number | boolean | React.ReactElement | React.ReactFragment | React.ReactPortal | null | undefined;
+  export type Key = string | number;
+  export type ReactNode = string | number | boolean | ReactElement | ReactFragment | ReactPortal | null | undefined;
   export interface FC<P = {}> {
     (props: P): ReactElement | null;
     displayName?: string;
@@ -12,7 +13,10 @@ declare module 'react' {
   }
   export type PropsWithChildren<P = unknown> = P & { children?: ReactNode | undefined };
   export type ComponentType<P = {}> = FC<P> | ClassType<P, any, any>;
-
+  export type ElementType<P = any> = {
+    [K in keyof JSX.IntrinsicElements]: P extends JSX.IntrinsicElements[K] ? K : never
+  }[keyof JSX.IntrinsicElements] | ComponentType<P>;
+  
   // Form event types
   export interface FormEvent<T = Element> extends SyntheticEvent<T> {
     target: EventTarget & T;
@@ -38,9 +42,11 @@ declare module 'react' {
     props: P;
     key: Key | null;
   }
-  export type JSX = {
-    Element: ReactElement;
-  };
+  export type JSXElementConstructor<P> = ((props: P) => ReactElement | null) | (new (props: P) => Component<P, any>);
+  
+  export namespace JSX {
+    interface Element extends ReactElement {}
+  }
 
   // Basic hooks
   export function useState<T>(initialState: T | (() => T)): [T, (newState: T | ((prevState: T) => T)) => void];
@@ -69,11 +75,11 @@ declare module 'react' {
     ): void;
     forceUpdate(callback?: () => void): void;
     render(): ReactNode;
-    readonly props: Readonly<P>;
+    readonly props: Readonly<P> & Readonly<{ children?: ReactNode }>;
     state: Readonly<S>;
     context: any;
     refs: {
-      [key: string]: React.ReactInstance
+      [key: string]: ReactInstance
     };
   }
 
@@ -98,18 +104,16 @@ declare module 'react' {
     current: T;
   }
   export interface Provider<T> {
-    (props: { value: T; children: ReactNode }): React.ReactElement | null;
+    (props: { value: T; children: ReactNode }): ReactElement | null;
   }
   export interface Consumer<T> {
-    (props: { children: (value: T) => ReactNode }): React.ReactElement | null;
+    (props: { children: (value: T) => ReactNode }): ReactElement | null;
   }
   export type ClassType<P, T, C> = new (props: P, context?: C) => T;
-  export type Key = string | number;
-  export type JSXElementConstructor<P> = ((props: P) => ReactElement<any, any> | null) | (new (props: P) => Component<any, any>);
-  export type ReactFragment = {} | Iterable<ReactNode>;
+  export type ReactFragment = Iterable<ReactNode>;
   export interface ReactPortal extends ReactElement {
     key: Key | null;
     children: ReactNode;
   }
-  export type React$Element<T> = ReactElement<T>;
+  export type ReactInstance = Component<any> | Element;
 }

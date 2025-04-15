@@ -1,6 +1,6 @@
 
 declare module 'react/jsx-runtime' {
-  import { ReactElement } from 'react';
+  import { ReactElement, Key, JSXElementConstructor } from 'react';
   
   export namespace JSX {
     interface Element extends ReactElement {}
@@ -10,15 +10,15 @@ declare module 'react/jsx-runtime' {
   }
   
   export function jsx(
-    type: any,
+    type: string | JSXElementConstructor<any>,
     props: any,
-    key?: string | number | null
+    key?: Key | null
   ): JSX.Element;
   
   export function jsxs(
-    type: any,
+    type: string | JSXElementConstructor<any>,
     props: any,
-    key?: string | number | null
+    key?: Key | null
   ): JSX.Element;
 }
 

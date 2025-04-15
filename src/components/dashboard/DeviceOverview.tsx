@@ -56,7 +56,7 @@ export const DeviceOverview: React.FC<DeviceOverviewProps> = ({ deviceId, device
       <CardContent className="p-4">
         <div className="text-lg font-semibold mb-4">Device Parameters</div>
         <div className="divide-y divide-border">
-          {mockParameters.map((param, index) => (
+          {mockParameters.map((param) => (
             <DeviceParameter 
               key={param.id} 
               name={param.name} 
