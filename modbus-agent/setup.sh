@@ -40,4 +40,23 @@ fi
 echo "Installing dependencies..."
 npm install
 
+# Create .env file if it doesn't exist
+if [ ! -f .env ]; then
+    echo "Creating sample .env file..."
+    cat > .env << EOF
+# Modbus Configuration
+MODBUS_PORT=/dev/ttyUSB0
+MODBUS_BAUDRATE=9600
+MODBUS_DATABITS=8
+MODBUS_PARITY=none
+MODBUS_STOPBITS=1
+MODBUS_DEVICE_ID=1
+POLLING_INTERVAL=5000
+MODBUS_REGISTERS=[{"address": 0, "name": "voltage", "length": 1, "type": "holding"}]
+
+# Application Configuration
+LOG_LEVEL=info
+EOF
+fi
+
 echo "Setup completed successfully!"

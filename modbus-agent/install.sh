@@ -13,4 +13,4 @@ npm install
 # Make the modbusReader.js executable
 chmod +x modbusReader.js
 
-echo "Setup complete! You can now run the modbus-agent with 'npm start'"
+echo "Setup complete! You can now run the modbus-agent with 'npm start' or 'node modbusReader.js'"

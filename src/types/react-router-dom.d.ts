@@ -20,6 +20,7 @@ declare module 'react-router-dom' {
     replace?: boolean;
     state?: any;
     className?: string;
+    key?: number | string;
     children?: React.ReactNode;
     onClick?: (event: React.MouseEvent<HTMLAnchorElement>) => void;
   }

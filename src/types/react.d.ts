@@ -10,6 +10,25 @@ declare module 'react' {
   export type PropsWithChildren<P = unknown> = P & { children?: ReactNode | undefined };
   export type ComponentType<P = {}> = FC<P> | ClassType<P, any, any>;
 
+  // Form event types
+  export interface FormEvent<T = Element> extends SyntheticEvent<T> {
+    target: EventTarget & T;
+  }
+  export interface SyntheticEvent<T = Element, E = Event> {
+    bubbles: boolean;
+    cancelable: boolean;
+    currentTarget: T;
+    defaultPrevented: boolean;
+    eventPhase: number;
+    isTrusted: boolean;
+    nativeEvent: E;
+    preventDefault(): void;
+    stopPropagation(): void;
+    target: EventTarget & T;
+    timeStamp: number;
+    type: string;
+  }
+
   // Basic hooks
   export function useState<T>(initialState: T | (() => T)): [T, (newState: T | ((prevState: T) => T)) => void];
   export function useEffect(effect: () => void | (() => void), deps?: ReadonlyArray<any>): void;

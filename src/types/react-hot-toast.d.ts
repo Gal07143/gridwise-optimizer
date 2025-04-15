@@ -59,28 +59,14 @@ declare module 'react-hot-toast' {
 
   export interface ToastHandler {
     (message: ReactNode, options?: ToastOptions): string;
-  }
-
-  export interface ToastHandlers {
-    success: ToastHandler;
-    error: ToastHandler;
-    loading: ToastHandler;
-    custom: ToastHandler;
-    dismiss(toastId?: string): void;
-    remove(toastId?: string): void;
-    promise<T>(
-      promise: Promise<T>,
-      msgs: {
-        loading: ReactNode;
-        success: ReactNode | ((data: T) => ReactNode);
-        error: ReactNode | ((err: any) => ReactNode);
-      },
-      opts?: DefaultToastOptions
-    ): Promise<T>;
+    success(message: ReactNode, options?: ToastOptions): string;
+    error(message: ReactNode, options?: ToastOptions): string;
+    loading(message: ReactNode, options?: ToastOptions): string;
+    custom(component: ReactNode, options?: ToastOptions): string;
   }
 
   export const Toaster: React.FC<ToasterProps>;
-  export const toast: ToastHandler & ToastHandlers;
+  export const toast: ToastHandler;
   export const useToasterStore: () => {
     toasts: Toast[];
     pausedAt: number | undefined;
