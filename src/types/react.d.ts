@@ -2,9 +2,12 @@
 declare module 'react' {
   // React types
   export type ReactNode = string | number | boolean | React.ReactElement | React.ReactFragment | React.ReactPortal | null | undefined;
-  export type FC<P = {}> = FunctionComponent<P>;
+  export interface FC<P = {}> {
+    (props: P): ReactElement | null;
+    displayName?: string;
+  }
   export interface FunctionComponent<P = {}> {
-    (props: P, context?: any): ReactElement<any, any> | null;
+    (props: P): ReactElement | null;
     displayName?: string;
   }
   export type PropsWithChildren<P = unknown> = P & { children?: ReactNode | undefined };
@@ -28,6 +31,16 @@ declare module 'react' {
     timeStamp: number;
     type: string;
   }
+
+  // Define Element and ReactElement properly
+  export interface ReactElement<P = any, T extends string | JSXElementConstructor<any> = string | JSXElementConstructor<any>> {
+    type: T;
+    props: P;
+    key: Key | null;
+  }
+  export type JSX = {
+    Element: ReactElement;
+  };
 
   // Basic hooks
   export function useState<T>(initialState: T | (() => T)): [T, (newState: T | ((prevState: T) => T)) => void];
@@ -91,11 +104,6 @@ declare module 'react' {
     (props: { children: (value: T) => ReactNode }): React.ReactElement | null;
   }
   export type ClassType<P, T, C> = new (props: P, context?: C) => T;
-  export interface ReactElement<P = any, T extends string | JSXElementConstructor<any> = string | JSXElementConstructor<any>> {
-    type: T;
-    props: P;
-    key: Key | null;
-  }
   export type Key = string | number;
   export type JSXElementConstructor<P> = ((props: P) => ReactElement<any, any> | null) | (new (props: P) => Component<any, any>);
   export type ReactFragment = {} | Iterable<ReactNode>;

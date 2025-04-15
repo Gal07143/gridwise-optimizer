@@ -1,7 +1,9 @@
 
 declare module 'react/jsx-runtime' {
+  import { ReactElement } from 'react';
+  
   export namespace JSX {
-    interface Element {}
+    interface Element extends ReactElement {}
     interface IntrinsicElements {
       [elemName: string]: any;
     }

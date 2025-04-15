@@ -9,13 +9,21 @@ export interface Equipment {
   serial_number: string;
   installation_date: string;
   last_maintenance_date: string;
-  status: 'operational' | 'maintenance' | 'fault' | 'offline';
+  status: 'operational' | 'maintenance' | 'fault' | 'offline' | 'faulty';
   location: string;
   notes?: string;
   capacity?: number;
   efficiency?: number;
   operational_hours?: number;
   warranty_expiry?: string;
+  // Additional properties needed by components
+  isOnline?: boolean;
+  load?: number;
+  energyConsumption?: number;
+  carbonEmissions?: number;
+  warningThreshold?: number;
+  criticalThreshold?: number;
+  nextMaintenanceDate?: string;
 }
 
 export interface EquipmentMetrics {
@@ -35,10 +43,14 @@ export interface EquipmentMaintenance {
   id: string;
   equipment_id: string;
   maintenance_type: 'routine' | 'repair' | 'overhaul' | 'inspection';
+  type?: string; // Added for backward compatibility
   status: 'scheduled' | 'in-progress' | 'completed' | 'cancelled' | 'overdue';
   scheduled_date: string;
+  scheduledDate?: string; // For backward compatibility
   completed_date?: string;
+  completedDate?: string; // For backward compatibility
   technician?: string;
+  assignedTo?: string; // For backward compatibility
   cost?: number;
   description: string;
   parts_replaced?: string[];
@@ -53,6 +65,7 @@ export interface EquipmentParameter {
   min_value?: number;
   max_value?: number;
   is_critical: boolean;
+  timestamp?: string; // Added timestamp
 }
 
 export interface EquipmentAlarm {
@@ -62,10 +75,12 @@ export interface EquipmentAlarm {
   threshold: number;
   condition: 'above' | 'below' | 'equal' | 'not_equal';
   status: 'active' | 'cleared' | 'acknowledged';
-  severity: 'high' | 'medium' | 'low';
+  severity: 'high' | 'medium' | 'low' | 'critical' | 'warning' | 'error';
   triggered_at: string;
+  timestamp?: string; // Added timestamp for compatibility
   cleared_at?: string;
   acknowledged_by?: string;
+  acknowledged?: boolean; // For backward compatibility
   message: string;
 }
 
@@ -159,4 +174,74 @@ export interface AutomatedReport {
   status?: 'scheduled' | 'generating' | 'sent' | 'failed';
   lastGenerated?: string;
   nextGeneration?: string;
+}
+
+// Missing types that were referenced in error messages
+export interface CarbonEmissionsDetail {
+  id: string;
+  source: string;
+  amount?: number;
+  totalEmissions?: number;
+  unit?: string;
+  date?: string;
+  timestamp?: string;
+  category?: string;
+}
+
+export interface DowntimeRecord {
+  id: string;
+  startTime: string;
+  endTime?: string;
+  duration: number;
+  reason: string;
+  impact: string;
+}
+
+export interface EnergyBenchmark {
+  id: string;
+  metric: string;
+  value: number;
+  unit: string;
+  industryAverage: number;
+  percentile: number;
+  period: string;
+}
+
+export interface EnergyRateStructure {
+  id: string;
+  name: string;
+  rateType?: string;
+  rateValue?: number;
+  effectiveFrom?: string;
+  status?: string;
+  unit?: string;
+  rates: Array<{
+    rate: number;
+    unit: string;
+    timeOfUse?: string;
+  }>;
+}
+
+export interface EnergySaving {
+  id: string;
+  name: string;
+  description: string;
+  savingsAmount: number;
+  savingsUnit: string;
+  implementationDate: string;
+  paybackPeriod?: number;
+  status: string;
+}
+
+export interface BMSParameter {
+  id: string;
+  name: string;
+  value: string | number;
+  unit?: string;
+  normal_range?: {
+    min?: number;
+    max?: number;
+  };
+  timestamp?: string;
+  status?: string;
 }
