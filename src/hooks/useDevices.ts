@@ -1,9 +1,10 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { EnergyDevice } from '@/types/energy';
+import { useDevices as useDevicesContext } from '@/contexts/DeviceContext';
 
 export function useDevices(siteId?: string) {
+  const deviceContext = useDevicesContext();
   const [devices, setDevices] = useState<EnergyDevice[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -37,6 +38,12 @@ export function useDevices(siteId?: string) {
     fetchDevices();
   }, [siteId]);
 
+  // If we have access to the device context, use it instead
+  if (deviceContext) {
+    return deviceContext;
+  }
+
+  // Otherwise, return our local state
   return {
     devices,
     loading,

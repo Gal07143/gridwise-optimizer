@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
 import { EnergyFlowProvider } from '@/components/dashboard/energy-flow/EnergyFlowContext';
 import { DeviceProvider } from '@/contexts/DeviceContext';
+import MicrogridProvider from '@/components/microgrid/MicrogridProvider';
 
 // Create Query Client
 const queryClient = new QueryClient({
@@ -27,9 +28,11 @@ export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
       <QueryClientProvider client={queryClient}>
         <ThemeProvider defaultTheme="system" storageKey="theme-preference">
           <DeviceProvider>
-            <EnergyFlowProvider>
-              {children}
-            </EnergyFlowProvider>
+            <MicrogridProvider>
+              <EnergyFlowProvider>
+                {children}
+              </EnergyFlowProvider>
+            </MicrogridProvider>
           </DeviceProvider>
         </ThemeProvider>
       </QueryClientProvider>

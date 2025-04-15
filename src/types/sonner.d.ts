@@ -1,7 +1,6 @@
 
-// Type definitions for sonner
 declare module 'sonner' {
-  import { ReactNode, CSSProperties } from 'react';
+  import { ReactNode, CSSProperties, FC, ReactElement } from 'react';
 
   export type ToastTypes = 'normal' | 'success' | 'error' | 'loading';
 
@@ -75,7 +74,7 @@ declare module 'sonner' {
     containerAriaLabel?: string;
   }
 
-  export const Toaster: (props: ToasterProps) => JSX.Element;
+  export const Toaster: FC<ToasterProps>;
 
   export const toast: {
     (message: ReactNode, options?: ToastOptions): string | number;

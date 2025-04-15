@@ -56,8 +56,11 @@ declare module 'react' {
   }
   
   export type JSXElementConstructor<P> = 
-    | ((props: P) => ReactElement<P, any> | null) 
+    | ((props: P) => ReactElement<any, any> | null) 
     | (new (props: P) => Component<P, any>);
+
+  // Fix the Element/ReactNode type compatibility
+  export type ReactPortal = ReactElement;
   
   // Add missing forwardRef declaration
   export function forwardRef<T, P = {}>(
@@ -192,10 +195,10 @@ declare module 'react' {
     current: T;
   }
   export interface Provider<T> {
-    (props: { value: T; children: ReactNode }): ReactElement | null;
+    (props: { value: T; children: ReactNode }): ReactElement<any, any> | null;
   }
   export interface Consumer<T> {
-    (props: { children: (value: T) => ReactNode }): ReactElement | null;
+    (props: { children: (value: T) => ReactNode }): ReactElement<any, any> | null;
   }
   export type ClassType<P, T, C> = new (props: P, context?: C) => T;
   export type ReactInstance = Component<any> | Element;
