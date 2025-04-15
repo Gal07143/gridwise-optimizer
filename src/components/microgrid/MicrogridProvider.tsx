@@ -1,8 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useDevices } from '@/contexts/DeviceContext';
-import { TelemetryData } from '@/types/telemetry';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 
 /**
  * Types for microgrid metrics and status
@@ -67,6 +66,17 @@ interface MicrogridProviderProps {
   refreshInterval?: number; // in milliseconds
 }
 
+// Helper interface for telemetry data
+interface TelemetryData {
+  id?: string;
+  device_id?: string;
+  timestamp?: Date;
+  parameter?: string;
+  value?: number;
+  unit?: string;
+  data?: Record<string, any>;
+}
+
 /**
  * Provider component for microgrid-related data and state
  * Manages connection status, power metrics, and grid status
@@ -87,15 +97,7 @@ const MicrogridProvider: React.FC<MicrogridProviderProps> = ({
   const getLatestTelemetry = useCallback((deviceId: string): TelemetryData | null => {
     const telemetry = deviceTelemetry[deviceId];
     if (telemetry && telemetry.length > 0) {
-      return {
-        id: telemetry[0].id || '',
-        device_id: telemetry[0].device_id || '',
-        timestamp: telemetry[0].timestamp || new Date(),
-        parameter: telemetry[0].parameter || '',
-        value: telemetry[0].value || 0,
-        unit: telemetry[0].unit || '',
-        data: telemetry[0].data || {}
-      };
+      return telemetry[0];
     }
     return null;
   }, [deviceTelemetry]);
@@ -107,12 +109,13 @@ const MicrogridProvider: React.FC<MicrogridProviderProps> = ({
     const typeDevices = devices.filter(device => device.type === type && device.status === 'online');
     const totalPower = typeDevices.reduce((sum, device) => {
       const telemetry = getLatestTelemetry(device.id);
-      return sum + (telemetry?.data.power || 0);
+      return sum + (telemetry?.data?.power || 0);
     }, 0);
-    const averageEfficiency = typeDevices.reduce((sum, device) => {
-      const telemetry = getLatestTelemetry(device.id);
-      return sum + (telemetry?.data.efficiency || 0);
-    }, 0) / typeDevices.length || 0;
+    const averageEfficiency = typeDevices.length > 0 ? 
+      (typeDevices.reduce((sum, device) => {
+        const telemetry = getLatestTelemetry(device.id);
+        return sum + (telemetry?.data?.efficiency || 0);
+      }, 0) / typeDevices.length) : 0;
 
     return {
       count: typeDevices.length,
@@ -131,7 +134,7 @@ const MicrogridProvider: React.FC<MicrogridProviderProps> = ({
       const connectedDevices = devices.filter(device => device.status === 'online');
       const totalPower = connectedDevices.reduce((sum, device) => {
         const telemetry = getLatestTelemetry(device.id);
-        return sum + (telemetry?.data.power || 0);
+        return sum + (telemetry?.data?.power || 0);
       }, 0);
 
       const batteryMetrics = calculateDeviceMetrics('battery');
@@ -143,16 +146,17 @@ const MicrogridProvider: React.FC<MicrogridProviderProps> = ({
       const gridStatus = gridDevices.length > 0
         ? gridDevices.some(device => {
             const telemetry = getLatestTelemetry(device.id);
-            return telemetry?.data.gridConnected;
+            return telemetry?.data?.gridConnected;
           })
           ? 'connected'
           : 'disconnected'
         : 'unknown';
 
-      const efficiency = connectedDevices.reduce((sum, device) => {
-        const telemetry = getLatestTelemetry(device.id);
-        return sum + (telemetry?.data.efficiency || 0);
-      }, 0) / connectedDevices.length || 0;
+      const efficiency = connectedDevices.length > 0 ? 
+        (connectedDevices.reduce((sum, device) => {
+          const telemetry = getLatestTelemetry(device.id);
+          return sum + (telemetry?.data?.efficiency || 0);
+        }, 0) / connectedDevices.length) : 0;
 
       setState({
         isConnected: connectedDevices.length > 0,

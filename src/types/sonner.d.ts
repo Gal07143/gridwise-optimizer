@@ -1,92 +1,98 @@
 
+// Type definitions for sonner
 declare module 'sonner' {
-  import React from 'react';
+  import { ReactNode, CSSProperties } from 'react';
 
-  export interface ToastOptions {
-    id?: string;
-    duration?: number;
-    icon?: React.ReactNode;
-    description?: React.ReactNode;
-    action?: {
-      label: string;
-      onClick: () => void;
-    };
-    cancel?: {
-      label: string;
-      onClick: () => void;
-    };
-    onDismiss?: () => void;
-    onAutoClose?: () => void;
-    className?: string;
-    style?: React.CSSProperties;
-    position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'top-center' | 'bottom-center';
-    important?: boolean;
+  export type ToastTypes = 'normal' | 'success' | 'error' | 'loading';
+
+  export interface ToastClassnames {
+    toast?: string;
+    title?: string;
+    description?: string;
+    loader?: string;
+    closeButton?: string;
+    cancelButton?: string;
+    actionButton?: string;
+    success?: string;
+    error?: string;
+    info?: string;
+    warning?: string;
   }
 
+  export interface ToastOptions {
+    id?: string | number;
+    icon?: ReactNode;
+    title?: ReactNode;
+    description?: ReactNode;
+    duration?: number;
+    dismissible?: boolean;
+    cancel?: {
+      label: string;
+      onClick?: () => void;
+    };
+    action?: {
+      label: string;
+      onClick?: () => void;
+    };
+    onDismiss?: (toast: ToastOptions) => void;
+    onAutoClose?: (toast: ToastOptions) => void;
+    className?: string;
+    style?: CSSProperties;
+    position?: Position;
+    important?: boolean;
+    unstyled?: boolean;
+    classNames?: ToastClassnames;
+    actionButtonStyle?: CSSProperties;
+    cancelButtonStyle?: CSSProperties;
+    closeButtonStyle?: CSSProperties;
+    descriptionStyle?: CSSProperties;
+    loaderStyle?: CSSProperties;
+    titleStyle?: CSSProperties;
+  }
+
+  export type Position =
+    | 'top-left'
+    | 'top-center'
+    | 'top-right'
+    | 'bottom-left'
+    | 'bottom-center'
+    | 'bottom-right';
+
   export interface ToasterProps {
-    position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'top-center' | 'bottom-center';
-    hotkey?: string;
+    position?: Position;
+    hotkey?: string | string[];
     richColors?: boolean;
     expand?: boolean;
     duration?: number;
     visibleToasts?: number;
     closeButton?: boolean;
-    theme?: 'light' | 'dark' | 'system';
     toastOptions?: ToastOptions;
-    className?: string;
-    style?: React.CSSProperties;
-    offset?: string | number;
+    theme?: 'light' | 'dark' | 'system';
     dir?: 'rtl' | 'ltr' | 'auto';
+    offset?: string | number;
+    gap?: number;
+    loadingIcon?: ReactNode;
+    containerAriaLabel?: string;
   }
 
-  export const Toaster: React.FC<ToasterProps>;
+  export const Toaster: (props: ToasterProps) => JSX.Element;
 
-  export interface Toast {
-    id: string;
-    title?: React.ReactNode;
-    description?: React.ReactNode;
-    icon?: React.ReactNode;
-    duration?: number;
-    promise?: Promise<any>;
-    cancel?: () => void;
-    onDismiss?: () => void;
-    onAutoClose?: () => void;
-    action?: {
-      label: string;
-      onClick: () => void;
-    };
-    cancel?: {
-      label: string;
-      onClick: () => void;
-    };
-    type?: 'success' | 'error' | 'loading' | 'default';
-    position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'top-center' | 'bottom-center';
-    important?: boolean;
-  }
-
-  export interface ToastT {
-    (message: React.ReactNode, data?: ToastOptions): string;
-    success: (message: React.ReactNode, data?: ToastOptions) => string;
-    error: (message: React.ReactNode, data?: ToastOptions) => string;
-    info: (message: React.ReactNode, data?: ToastOptions) => string;
-    warning: (message: React.ReactNode, data?: ToastOptions) => string;
-    loading: (message: React.ReactNode, data?: ToastOptions) => string;
-    custom: (component: (id: string) => JSX.Element, data?: ToastOptions) => string;
-    dismiss: (id?: string) => void;
-    promise: <T>(
-      promise: Promise<T>,
-      msgs: {
-        loading: React.ReactNode;
-        success: React.ReactNode | ((data: T) => React.ReactNode);
-        error: React.ReactNode | ((error: Error) => React.ReactNode);
-      },
-      options?: ToastOptions
-    ) => Promise<T>;
-    update: (
-      id: string,
-      data: { message?: React.ReactNode; description?: React.ReactNode } & ToastOptions
-    ) => void;
-  }
-
-  export const toast: ToastT;
+  export const toast: {
+    (message: ReactNode, options?: ToastOptions): string | number;
+    success: (message: ReactNode, options?: ToastOptions) => string | number;
+    error: (message: ReactNode, options?: ToastOptions) => string | number;
+    info: (message: ReactNode, options?: ToastOptions) => string | number;
+    warning: (message: ReactNode, options?: ToastOptions) => string | number;
+    loading: (message: ReactNode, options?: ToastOptions) => string | number;
+    dismiss: (id?: string | number) => void;
+    custom: (component: ReactNode, options?: ToastOptions) => string | number;
+    message: (message: ReactNode, options?: ToastOptions) => string | number;
+    promise: <T>(promise: Promise<T>, options?: {
+      loading?: ReactNode;
+      success?: ReactNode | ((data: T) => ReactNode);
+      error?: ReactNode | ((error: any) => ReactNode);
+      finally?: () => void;
+      id?: string | number;
+    }) => Promise<T>;
+  };
 }

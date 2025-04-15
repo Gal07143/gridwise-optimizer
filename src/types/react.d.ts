@@ -59,6 +59,43 @@ declare module 'react' {
     | ((props: P) => ReactElement<P, any> | null) 
     | (new (props: P) => Component<P, any>);
   
+  // Add missing forwardRef declaration
+  export function forwardRef<T, P = {}>(
+    render: (props: P, ref: React.Ref<T>) => React.ReactElement | null
+  ): (props: P & { ref?: React.Ref<T> }) => React.ReactElement | null;
+  
+  // Add missing Ref types
+  export type Ref<T> = RefCallback<T> | RefObject<T> | null;
+  export type RefCallback<T> = (instance: T | null) => void;
+  export interface RefObject<T> {
+    readonly current: T | null;
+  }
+  
+  // Add missing ElementRef
+  export type ElementRef<C extends React.ElementType> = 
+    C extends React.ComponentClass<any> 
+      ? InstanceType<C> 
+      : C extends React.ForwardRefExoticComponent<infer P> 
+        ? P extends { ref?: infer R } 
+          ? R 
+          : never 
+        : never;
+  
+  // Add missing ComponentProps types
+  export type ComponentPropsWithoutRef<T extends ElementType> = 
+    T extends new (props: infer P) => any 
+      ? P 
+      : T extends (props: infer P) => any 
+        ? P 
+        : never;
+  
+  export type ComponentPropsWithRef<T extends ElementType> = 
+    T extends React.ComponentClass<infer P> 
+      ? P & { ref?: Ref<InstanceType<T>> } 
+      : T extends React.ForwardRefExoticComponent<infer P> 
+        ? P 
+        : ComponentPropsWithoutRef<T>;
+  
   // Basic hooks
   export function useState<T>(initialState: T | (() => T)): [T, (newState: T | ((prevState: T) => T)) => void];
   export function useEffect(effect: () => void | (() => void), deps?: ReadonlyArray<any>): void;
@@ -105,27 +142,22 @@ declare module 'react' {
     displayName?: string | undefined;
   }
   export function createContext<T>(defaultValue: T): Context<T>;
-
-  // forwardRef
-  export function forwardRef<T, P = {}>(
-    render: (props: P, ref: React.Ref<T>) => React.ReactNode
-  ): (props: P & { ref?: React.Ref<T> }) => React.ReactNode;
   
-  // Ref types
-  export type Ref<T> = RefCallback<T> | RefObject<T> | null;
-  export type RefCallback<T> = (instance: T | null) => void;
-  export interface RefObject<T> {
-    readonly current: T | null;
+  // Add HTML attribute types
+  export interface ButtonHTMLAttributes<T> extends HTMLAttributes<T> {
+    autoFocus?: boolean;
+    disabled?: boolean;
+    form?: string;
+    formAction?: string;
+    formEncType?: string;
+    formMethod?: string;
+    formNoValidate?: boolean;
+    formTarget?: string;
+    name?: string;
+    type?: 'submit' | 'reset' | 'button';
+    value?: string | ReadonlyArray<string> | number;
   }
-  
-  export type ElementRef<C> = C extends React.ComponentClass<any> ? InstanceType<C> : C extends React.ForwardRefExoticComponent<infer P> ? P extends { ref?: infer R } ? R : never : never;
 
-  export type ComponentPropsWithoutRef<T> = T extends React.ComponentType<infer P> ? P : never;
-  export type ComponentPropsWithRef<T> = T extends React.ComponentType<infer P> ? P : never;
-  
-  export type ComponentProps<T> = T extends React.ComponentType<infer P> ? P : never;
-
-  // HTML attributes
   export interface HTMLAttributes<T> extends AriaAttributes, DOMAttributes<T> {
     className?: string;
     style?: CSSProperties;
@@ -151,25 +183,6 @@ declare module 'react' {
     'aria-hidden'?: boolean | 'false' | 'true';
   }
   
-  export interface ButtonHTMLAttributes<T> extends HTMLAttributes<T> {
-    autoFocus?: boolean;
-    disabled?: boolean;
-    form?: string;
-    formAction?: string;
-    formEncType?: string;
-    formMethod?: string;
-    formNoValidate?: boolean;
-    formTarget?: string;
-    name?: string;
-    type?: 'submit' | 'reset' | 'button';
-    value?: string | ReadonlyArray<string> | number;
-  }
-
-  export type SVGAttributes<T> = HTMLAttributes<T> & {
-    viewBox?: string;
-    xmlns?: string;
-  };
-
   // Types for internal use
   export type Reducer<S, A> = (prevState: S, action: A) => S;
   export type ReducerState<R extends Reducer<any, any>> = R extends Reducer<infer S, any> ? S : never;
@@ -202,6 +215,8 @@ declare module 'react' {
     shiftKey: boolean;
   }
   
-  // Fix ElementRef
-  export type ElementRef<C extends React.ElementType> = C extends typeof Element ? Element : C extends React.ComponentClass<any> ? InstanceType<C> : C extends React.ForwardRefExoticComponent<infer P> ? P extends { ref?: infer R } ? R : never : never;
+  export interface SVGAttributes<T> extends HTMLAttributes<T> {
+    viewBox?: string;
+    xmlns?: string;
+  }
 }

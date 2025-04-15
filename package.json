@@ -91,7 +91,7 @@
   "devDependencies": {
     "@eslint/js": "^8.57.0",
     "@tailwindcss/typography": "^0.5.10",
-    "@types/node": "^20.11.26",
+    "@types/node": "^22.14.1",
     "@types/react": "^18.3.20",
     "@types/react-dom": "^19.1.2",
     "@vitejs/plugin-react-swc": "^3.6.0",

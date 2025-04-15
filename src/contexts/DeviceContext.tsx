@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { toast } from 'sonner';
 
 // Export these types so they can be used elsewhere
@@ -69,7 +70,7 @@ type DeviceContextType = DeviceContextState & DeviceContextOperations;
 const DeviceContext = createContext<DeviceContextType | null>(null);
 
 // Create the provider component
-export const DeviceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const DeviceProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [devices, setDevices] = useState<Device[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -306,9 +307,76 @@ export const DeviceProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     deviceTelemetry,
     fetchDevices,
     addDevice,
-    updateDevice,
-    deleteDevice,
-    sendCommand,
+    updateDevice: async (id, updates) => {
+      try {
+        setLoading(true);
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        
+        setDevices((prev) =>
+          prev.map((device) =>
+            device.id === id
+              ? { ...device, ...updates, updated_at: new Date().toISOString() }
+              : device
+          )
+        );
+        
+        if (selectedDevice && selectedDevice.id === id) {
+          setSelectedDevice((prev) =>
+            prev ? { ...prev, ...updates, updated_at: new Date().toISOString() } : null
+          );
+        }
+        
+        toast.success('Device updated successfully');
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to update device';
+        setError(errorMessage);
+        toast.error('Failed to update device', {
+          description: errorMessage,
+        });
+      } finally {
+        setLoading(false);
+      }
+    },
+    deleteDevice: async (id) => {
+      try {
+        setLoading(true);
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        
+        setDevices((prev) => prev.filter((device) => device.id !== id));
+        
+        if (selectedDevice && selectedDevice.id === id) {
+          setSelectedDevice(null);
+        }
+        
+        toast.success('Device deleted successfully');
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to delete device';
+        setError(errorMessage);
+        toast.error('Failed to delete device', {
+          description: errorMessage,
+        });
+      } finally {
+        setLoading(false);
+      }
+    },
+    sendCommand: async (deviceId, command) => {
+      try {
+        setLoading(true);
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        
+        console.log(`Sending command to device ${deviceId}:`, command);
+        
+        toast.success('Command sent successfully');
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to send command';
+        setError(errorMessage);
+        toast.error('Failed to send command', {
+          description: errorMessage,
+        });
+      } finally {
+        setLoading(false);
+      }
+    },
     selectDevice,
     fetchDeviceTelemetry,
   };
