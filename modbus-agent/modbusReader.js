@@ -1,11 +1,20 @@
 
+#!/usr/bin/env node
+
 import ModbusRTU from "modbus-serial";
 import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from 'url';
 
 // Load environment variables
 dotenv.config();
+
+// Get directory name in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+console.log("Starting Modbus Reader...");
 
 // Configuration
 const config = {
@@ -18,6 +27,8 @@ const config = {
   pollingInterval: parseInt(process.env.POLLING_INTERVAL || "5000", 10),
   registers: JSON.parse(process.env.MODBUS_REGISTERS || '[{"address": 0, "name": "voltage", "length": 1, "type": "holding"}]'),
 };
+
+console.log("Configuration loaded:", JSON.stringify(config, null, 2));
 
 // Initialize Modbus client
 const client = new ModbusRTU();
@@ -92,7 +103,7 @@ async function readRegisters() {
 // Save data to file (for demo purposes)
 function saveReadings(readings) {
   try {
-    const dataDir = path.join(process.cwd(), "data");
+    const dataDir = path.join(__dirname, "data");
     
     // Create data directory if it doesn't exist
     if (!fs.existsSync(dataDir)) {

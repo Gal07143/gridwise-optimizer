@@ -20,9 +20,7 @@ if [ ! -f package.json ]; then
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
+    "dev": "node modbusReader.js",
     "start": "node modbusReader.js"
   },
   "dependencies": {
@@ -33,13 +31,6 @@ if [ ! -f package.json ]; then
     "modbus-serial": "^8.0.16",
     "morgan": "^1.10.0",
     "winston": "^3.8.2"
-  },
-  "devDependencies": {
-    "@types/cors": "^2.8.13",
-    "@types/express": "^4.17.17",
-    "@types/morgan": "^1.9.4",
-    "@types/node": "^18.15.11",
-    "vite": "^5.0.0"
   }
 }
 EOF
