@@ -1,10 +1,21 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { EnergyDevice } from '@/types/energy';
-import { useDevices as useDevicesContext } from '@/contexts/DeviceContext';
 
 export function useDevices(siteId?: string) {
-  const deviceContext = useDevicesContext();
+  let deviceContext;
+  
+  // Try to import the context if available, but handle the potential circular dependency
+  try {
+    // Using dynamic import to avoid circular dependency
+    const { useDevices: useDevicesContext } = require('@/contexts/DeviceContext');
+    deviceContext = useDevicesContext();
+  } catch (error) {
+    // Context not available or circular dependency, proceed with local implementation
+    deviceContext = null;
+  }
+
   const [devices, setDevices] = useState<EnergyDevice[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -48,6 +59,7 @@ export function useDevices(siteId?: string) {
     devices,
     loading,
     error,
-    refetch: fetchDevices
+    refetch: fetchDevices,
+    deviceTelemetry: {}  // Provide an empty default for deviceTelemetry
   };
 }

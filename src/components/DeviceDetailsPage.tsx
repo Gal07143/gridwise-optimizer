@@ -1,5 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
-import { Device, TelemetryData } from '@/types/device';
+import { Device } from '@/types/device';
+import { TelemetryData } from '@/types/telemetry';
 import { DeviceHealthVisualization } from './DeviceHealthVisualization';
 import { EnergyOptimizationVisualization } from './EnergyOptimizationVisualization';
 import { deviceService } from '@/services/deviceService';

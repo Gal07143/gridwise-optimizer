@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { useDevices } from '@/contexts/DeviceContext';
+import { useDevices } from '@/hooks/useDevices';
 import { toast } from 'sonner';
 
 /**
@@ -85,7 +85,7 @@ const MicrogridProvider: React.FC<MicrogridProviderProps> = ({
   children,
   refreshInterval = 30000, // 30 seconds default
 }) => {
-  const { devices, deviceTelemetry } = useDevices();
+  const { devices, deviceTelemetry = {} } = useDevices();
   const [state, setState] = useState<MicrogridState>({
     ...defaultContext,
     isLoading: true,
@@ -106,7 +106,7 @@ const MicrogridProvider: React.FC<MicrogridProviderProps> = ({
    * Calculate metrics for a specific device type
    */
   const calculateDeviceMetrics = useCallback((type: DeviceType) => {
-    const typeDevices = devices.filter(device => device.type === type && device.status === 'online');
+    const typeDevices = (devices || []).filter(device => device.type === type && device.status === 'online');
     const totalPower = typeDevices.reduce((sum, device) => {
       const telemetry = getLatestTelemetry(device.id);
       return sum + (telemetry?.data?.power || 0);
@@ -131,7 +131,7 @@ const MicrogridProvider: React.FC<MicrogridProviderProps> = ({
     try {
       setState(prev => ({ ...prev, isLoading: true, error: null }));
 
-      const connectedDevices = devices.filter(device => device.status === 'online');
+      const connectedDevices = (devices || []).filter(device => device.status === 'online');
       const totalPower = connectedDevices.reduce((sum, device) => {
         const telemetry = getLatestTelemetry(device.id);
         return sum + (telemetry?.data?.power || 0);
