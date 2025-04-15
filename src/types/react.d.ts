@@ -185,11 +185,6 @@ declare module 'react' {
     (props: { children: (value: T) => ReactNode }): ReactElement | null;
   }
   export type ClassType<P, T, C> = new (props: P, context?: C) => T;
-  export type ReactFragment = Iterable<ReactNode>;
-  export interface ReactPortal extends ReactElement {
-    key: Key | null;
-    children: ReactNode;
-  }
   export type ReactInstance = Component<any> | Element;
 
   // Fragment support
@@ -206,4 +201,7 @@ declare module 'react' {
     metaKey: boolean;
     shiftKey: boolean;
   }
+  
+  // Fix ElementRef
+  export type ElementRef<C extends React.ElementType> = C extends typeof Element ? Element : C extends React.ComponentClass<any> ? InstanceType<C> : C extends React.ForwardRefExoticComponent<infer P> ? P extends { ref?: infer R } ? R : never : never;
 }

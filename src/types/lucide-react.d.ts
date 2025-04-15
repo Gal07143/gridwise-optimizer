@@ -14,6 +14,7 @@ declare module 'lucide-react' {
 
   // Core icon components
   export const Activity: LucideIcon;
+  export const AlertCircle: LucideIcon;
   export const AlertTriangle: LucideIcon;
   export const ArrowDown: LucideIcon;
   export const ArrowUp: LucideIcon;
@@ -93,5 +94,4 @@ declare module 'lucide-react' {
   export const X: LucideIcon;
   export const XCircle: LucideIcon;
   export const Zap: LucideIcon;
-  export const AlertCircle: LucideIcon;
 }

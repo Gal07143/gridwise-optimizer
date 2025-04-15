@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { EnergyFlowState, EnergyFlowContextType } from './types';
 
 // Initial state
@@ -27,8 +27,12 @@ const initialFlow: EnergyFlowState = {
 // Create context
 const EnergyFlowContext = createContext<EnergyFlowContextType | null>(null);
 
+interface EnergyFlowProviderProps {
+  children: ReactNode;
+}
+
 // Provider component
-export const EnergyFlowProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const EnergyFlowProvider: React.FC<EnergyFlowProviderProps> = ({ children }) => {
   const [flow, setFlow] = useState<EnergyFlowState>(initialFlow);
   const [history, setHistory] = useState<EnergyFlowState[]>([]);
 

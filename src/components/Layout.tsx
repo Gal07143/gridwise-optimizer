@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Outlet, Link } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
+import { Toaster } from 'sonner';
 import { 
   Home, 
   Settings, 

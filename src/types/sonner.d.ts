@@ -1,12 +1,12 @@
 
 declare module 'sonner' {
-  import { ReactNode } from 'react';
+  import React from 'react';
 
   export interface ToastOptions {
     id?: string;
     duration?: number;
-    icon?: ReactNode;
-    description?: ReactNode;
+    icon?: React.ReactNode;
+    description?: React.ReactNode;
     action?: {
       label: string;
       onClick: () => void;
@@ -39,13 +39,13 @@ declare module 'sonner' {
     dir?: 'rtl' | 'ltr' | 'auto';
   }
 
-  export function Toaster(props?: ToasterProps): JSX.Element;
+  export const Toaster: React.FC<ToasterProps>;
 
   export interface Toast {
     id: string;
-    title?: ReactNode;
-    description?: ReactNode;
-    icon?: ReactNode;
+    title?: React.ReactNode;
+    description?: React.ReactNode;
+    icon?: React.ReactNode;
     duration?: number;
     promise?: Promise<any>;
     cancel?: () => void;
@@ -65,26 +65,26 @@ declare module 'sonner' {
   }
 
   export interface ToastT {
-    (message: ReactNode, data?: ToastOptions): string;
-    success: (message: ReactNode, data?: ToastOptions) => string;
-    error: (message: ReactNode, data?: ToastOptions) => string;
-    info: (message: ReactNode, data?: ToastOptions) => string;
-    warning: (message: ReactNode, data?: ToastOptions) => string;
-    loading: (message: ReactNode, data?: ToastOptions) => string;
+    (message: React.ReactNode, data?: ToastOptions): string;
+    success: (message: React.ReactNode, data?: ToastOptions) => string;
+    error: (message: React.ReactNode, data?: ToastOptions) => string;
+    info: (message: React.ReactNode, data?: ToastOptions) => string;
+    warning: (message: React.ReactNode, data?: ToastOptions) => string;
+    loading: (message: React.ReactNode, data?: ToastOptions) => string;
     custom: (component: (id: string) => JSX.Element, data?: ToastOptions) => string;
     dismiss: (id?: string) => void;
     promise: <T>(
       promise: Promise<T>,
       msgs: {
-        loading: ReactNode;
-        success: ReactNode | ((data: T) => ReactNode);
-        error: ReactNode | ((error: Error) => ReactNode);
+        loading: React.ReactNode;
+        success: React.ReactNode | ((data: T) => React.ReactNode);
+        error: React.ReactNode | ((error: Error) => React.ReactNode);
       },
       options?: ToastOptions
     ) => Promise<T>;
     update: (
       id: string,
-      data: { message?: ReactNode; description?: ReactNode } & ToastOptions
+      data: { message?: React.ReactNode; description?: React.ReactNode } & ToastOptions
     ) => void;
   }
 
