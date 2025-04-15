@@ -283,7 +283,7 @@ export function DeviceOverview({ deviceId, deviceName }: DeviceOverviewProps) {
                       <h3 className="font-medium mb-1">Basic Information</h3>
                       <div className="grid grid-cols-2 gap-2">
                         <div className="text-sm text-muted-foreground">Device ID</div>
-                        <div className="text-sm font-medium">{deviceId}</div>
+                        <div className="text-sm font-medium">{deviceId.toString()}</div>
                         <div className="text-sm text-muted-foreground">Name</div>
                         <div className="text-sm font-medium">{deviceName}</div>
                         <div className="text-sm text-muted-foreground">Type</div>

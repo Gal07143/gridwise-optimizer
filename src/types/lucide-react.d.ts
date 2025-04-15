@@ -46,6 +46,7 @@ declare module 'lucide-react' {
   export const Info: LucideIcon;
   export const LayoutGrid: LucideIcon;
   export const Leaf: LucideIcon;
+  export const Loader2: LucideIcon;
   export const Menu: LucideIcon;
   export const MoreHorizontal: LucideIcon;
   export const MoreVertical: LucideIcon;
