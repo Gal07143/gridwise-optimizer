@@ -1,17 +1,40 @@
 
 export interface TelemetryData {
   id: string;
-  timestamp: string;
-  value: number;
+  device_id: string;
+  timestamp: Date;
   parameter: string;
-  deviceId: string;
-  device_id: string; // Added for compatibility
-  measurement: string;
+  value: number;
   unit: string;
-  [key: string]: any;
+  data: {
+    [key: string]: any;
+  };
 }
 
-export interface DateRange {
-  from: Date;
-  to: Date | null;
+export interface TelemetryResponse {
+  data: TelemetryData[];
+  error: any | null;
+}
+
+export interface HistoricalTelemetryFilter {
+  deviceId: string;
+  parameters?: string[];
+  startDate?: Date;
+  endDate?: Date;
+  limit?: number;
+  aggregation?: 'hour' | 'day' | 'week' | 'month' | 'none';
+}
+
+export interface AggregatedTelemetry {
+  timestamp: Date;
+  value: number;
+  min: number;
+  max: number;
+  avg: number;
+  count: number;
+  unit: string;
+}
+
+export interface DeviceTelemetryMap {
+  [deviceId: string]: TelemetryData[];
 }

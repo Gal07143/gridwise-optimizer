@@ -58,7 +58,7 @@ export const DeviceOverview: React.FC<DeviceOverviewProps> = ({ deviceId, device
         <div className="divide-y divide-border">
           {mockParameters.map((param) => (
             <DeviceParameter 
-              key={param.id} // Use key prop separately from component props
+              key={param.id} 
               name={param.name} 
               value={formatForDisplay(param.value)} 
               unit={param.unit} 

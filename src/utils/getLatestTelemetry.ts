@@ -1,43 +1,48 @@
 
-import { supabase } from '@/integrations/supabase/client';
+import { TelemetryData } from '@/types/telemetry';
 
-export async function getLatestTelemetry(deviceId: string) {
-  try {
-    const { data, error } = await supabase
-      .from('telemetry_log')
-      .select('*')
-      .eq('device_id', deviceId)
-      .order('timestamp', { ascending: false })
-      .limit(1);
-
-    if (error) {
-      console.error('Error fetching telemetry:', error);
-      return null;
-    }
-
-    // Process message data if it exists
-    if (data && data.length > 0) {
-      let result = { ...data[0] };
-      
-      if (result.message) {
-        if (typeof result.message === 'string') {
-          try {
-            const parsedMessage = JSON.parse(result.message);
-            result = { ...result, ...parsedMessage };
-          } catch (e) {
-            console.warn('Could not parse message as JSON:', e);
-          }
-        } else if (typeof result.message === 'object') {
-          result = { ...result, ...result.message };
-        }
-      }
-      
-      return result;
-    }
-
-    return null;
-  } catch (error) {
-    console.error('Error in getLatestTelemetry:', error);
+/**
+ * Helper function to get the latest telemetry data for a device
+ * from a telemetry array
+ */
+export const getLatestTelemetry = (telemetry: TelemetryData[] | undefined): TelemetryData | null => {
+  if (!telemetry || telemetry.length === 0) {
     return null;
   }
-}
+  return telemetry[0];
+};
+
+/**
+ * Helper function to extract a specific parameter value from telemetry data
+ */
+export const getTelemetryValue = (
+  telemetry: TelemetryData[] | undefined, 
+  parameter: string, 
+  defaultValue: number = 0
+): number => {
+  if (!telemetry || telemetry.length === 0) {
+    return defaultValue;
+  }
+
+  const match = telemetry.find(t => t.parameter === parameter);
+  if (match && typeof match.value === 'number') {
+    return match.value;
+  }
+  return defaultValue;
+};
+
+/**
+ * Get telemetry data for a specific metric from the data object
+ */
+export const getTelemetryDataValue = (
+  telemetry: TelemetryData | null,
+  dataKey: string,
+  defaultValue: number = 0
+): number => {
+  if (!telemetry || !telemetry.data || typeof telemetry.data[dataKey] === 'undefined') {
+    return defaultValue;
+  }
+  
+  const value = telemetry.data[dataKey];
+  return typeof value === 'number' ? value : defaultValue;
+};

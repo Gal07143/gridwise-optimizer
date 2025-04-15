@@ -1,12 +1,12 @@
 
 declare module 'sonner' {
-  import React from 'react';
+  import { ReactNode } from 'react';
 
   export interface ToastOptions {
     id?: string;
     duration?: number;
-    icon?: React.ReactNode;
-    description?: React.ReactNode;
+    icon?: ReactNode;
+    description?: ReactNode;
     action?: {
       label: string;
       onClick: () => void;
@@ -41,9 +41,9 @@ declare module 'sonner' {
 
   export interface Toast {
     id: string;
-    title?: React.ReactNode;
-    description?: React.ReactNode;
-    icon?: React.ReactNode;
+    title?: ReactNode;
+    description?: ReactNode;
+    icon?: ReactNode;
     duration?: number;
     promise?: Promise<any>;
     cancel?: () => void;
@@ -63,26 +63,26 @@ declare module 'sonner' {
   }
 
   export interface ToastT {
-    (message: React.ReactNode, data?: ToastOptions): string;
-    success: (message: React.ReactNode, data?: ToastOptions) => string;
-    error: (message: React.ReactNode, data?: ToastOptions) => string;
-    info: (message: React.ReactNode, data?: ToastOptions) => string;
-    warning: (message: React.ReactNode, data?: ToastOptions) => string;
-    loading: (message: React.ReactNode, data?: ToastOptions) => string;
+    (message: ReactNode, data?: ToastOptions): string;
+    success: (message: ReactNode, data?: ToastOptions) => string;
+    error: (message: ReactNode, data?: ToastOptions) => string;
+    info: (message: ReactNode, data?: ToastOptions) => string;
+    warning: (message: ReactNode, data?: ToastOptions) => string;
+    loading: (message: ReactNode, data?: ToastOptions) => string;
     custom: (component: (id: string) => JSX.Element, data?: ToastOptions) => string;
     dismiss: (id?: string) => void;
     promise: <T>(
       promise: Promise<T>,
       msgs: {
-        loading: React.ReactNode;
-        success: React.ReactNode | ((data: T) => React.ReactNode);
-        error: React.ReactNode | ((error: Error) => React.ReactNode);
+        loading: ReactNode;
+        success: ReactNode | ((data: T) => ReactNode);
+        error: ReactNode | ((error: Error) => ReactNode);
       },
       options?: ToastOptions
     ) => Promise<T>;
     update: (
       id: string,
-      data: { message?: React.ReactNode; description?: React.ReactNode } & ToastOptions
+      data: { message?: ReactNode; description?: ReactNode } & ToastOptions
     ) => void;
   }
 

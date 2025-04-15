@@ -62,6 +62,7 @@ declare module 'lucide-react' {
   export const LineChart: LucideIcon;
   export const Loader2: LucideIcon;
   export const Menu: LucideIcon;
+  export const Moon: LucideIcon;
   export const MoreHorizontal: LucideIcon;
   export const MoreVertical: LucideIcon;
   export const PanelLeftClose: LucideIcon;

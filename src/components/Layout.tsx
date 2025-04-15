@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Outlet, Link } from 'react-router-dom';
-import { Toaster as HotToaster } from 'react-hot-toast';
+import { Toaster } from 'react-hot-toast';
 import { 
   Home, 
   Settings, 
@@ -102,7 +102,7 @@ export const Layout: React.FC = () => {
         </main>
       </div>
       
-      <HotToaster 
+      <Toaster 
         position="top-right"
         toastOptions={{
           duration: 3000,

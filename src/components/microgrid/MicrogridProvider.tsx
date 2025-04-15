@@ -1,8 +1,8 @@
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useDevices } from '@/contexts/DeviceContext';
 import { TelemetryData } from '@/types/telemetry';
-import { toast } from 'sonner';
+import { toast } from 'react-hot-toast';
 
 /**
  * Types for microgrid metrics and status
@@ -63,7 +63,7 @@ const MicrogridContext = createContext<MicrogridContextType>(defaultContext);
 export const useMicrogrid = () => useContext(MicrogridContext);
 
 interface MicrogridProviderProps {
-  children: React.ReactNode;
+  children: ReactNode;
   refreshInterval?: number; // in milliseconds
 }
 

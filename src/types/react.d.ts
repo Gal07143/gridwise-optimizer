@@ -1,4 +1,3 @@
-
 declare module 'react' {
   // React types
   export type Key = string | number;
@@ -47,7 +46,7 @@ declare module 'react' {
     type: string;
   }
 
-  // Define Element and ReactElement properly
+  // Elements and React elements
   export interface ReactElement<P = any, T extends string | JSXElementConstructor<any> = string | JSXElementConstructor<any>> {
     type: T;
     props: P;
@@ -83,7 +82,7 @@ declare module 'react' {
   export function useCallback<T extends (...args: any[]) => any>(callback: T, deps: ReadonlyArray<any>): T;
   export function useMemo<T>(factory: () => T, deps: ReadonlyArray<any> | undefined): T;
   export function useRef<T = undefined>(initialValue: T): MutableRefObject<T>;
-
+  
   // Component types
   export class Component<P = {}, S = {}, SS = any> {
     constructor(props: P, context?: any);
@@ -113,6 +112,74 @@ declare module 'react' {
   }
   export function createContext<T>(defaultValue: T): Context<T>;
 
+  // Add missing types
+  export function forwardRef<T, P = {}>(
+    render: (props: P, ref: React.Ref<T>) => React.ReactNode
+  ): (props: P & { ref?: React.Ref<T> }) => React.ReactNode;
+  
+  export type Ref<T> = RefCallback<T> | RefObject<T> | null;
+  export type RefCallback<T> = (instance: T | null) => void;
+  export interface RefObject<T> {
+    readonly current: T | null;
+  }
+  
+  export type ElementRef<C> = C extends React.ComponentClass<any> ? InstanceType<C> : C extends React.ForwardRefExoticComponent<infer P> ? P extends { ref?: infer R } ? R : never : never;
+
+  export type ComponentPropsWithoutRef<T> = T extends React.ComponentType<infer P> ? P : never;
+  export type ComponentPropsWithRef<T> = T extends React.ComponentType<infer P> ? P : never;
+  
+  export type ComponentProps<T> = T extends React.ComponentType<infer P> ? P : never;
+
+  export interface HTMLAttributes<T> extends AriaAttributes, DOMAttributes<T> {
+    className?: string;
+    style?: CSSProperties;
+    id?: string;
+    // ... other HTML attributes
+  }
+
+  export interface DOMAttributes<T> {
+    children?: ReactNode;
+    dangerouslySetInnerHTML?: {
+      __html: string;
+    };
+    // ... event handlers
+    onClick?: (event: MouseEvent<T>) => void;
+    onKeyDown?: (event: KeyboardEvent<T>) => void;
+    // ... other event handlers
+  }
+
+  export interface CSSProperties {
+    [key: string]: string | number | undefined;
+  }
+
+  export interface AriaAttributes {
+    // ARIA attributes
+    'aria-label'?: string;
+    'aria-labelledby'?: string;
+    'aria-hidden'?: boolean | 'false' | 'true';
+    // ... other ARIA attributes
+  }
+  
+  export interface ButtonHTMLAttributes<T> extends HTMLAttributes<T> {
+    autoFocus?: boolean;
+    disabled?: boolean;
+    form?: string;
+    formAction?: string;
+    formEncType?: string;
+    formMethod?: string;
+    formNoValidate?: boolean;
+    formTarget?: string;
+    name?: string;
+    type?: 'submit' | 'reset' | 'button';
+    value?: string | ReadonlyArray<string> | number;
+  }
+
+  export type SVGAttributes<T> = HTMLAttributes<T> & {
+    viewBox?: string;
+    xmlns?: string;
+    // ... other SVG attributes
+  };
+
   // Types for internal use
   export type Reducer<S, A> = (prevState: S, action: A) => S;
   export type ReducerState<R extends Reducer<any, any>> = R extends Reducer<infer S, any> ? S : never;
@@ -138,22 +205,14 @@ declare module 'react' {
   // Add Fragment support
   export const Fragment: unique symbol;
   export interface SVGProps<T> extends SVGAttributes<T> {}
-  export interface SVGAttributes<T> extends HTMLAttributes<T> {
-    // SVG specific attributes
-    accentHeight?: number | string;
-    // ...and other SVG attributes
-  }
-  export interface HTMLAttributes<T> extends DOMAttributes<T> {
-    // HTML attributes
-    className?: string;
-    // ...and other HTML attributes
-  }
-  export interface DOMAttributes<T> {
-    // DOM event handlers
-    onClick?: (event: MouseEvent<T>) => void;
-    // ...and other event handlers
-  }
-  export interface MouseEvent<T = Element> extends SyntheticEvent<T> {
-    // Mouse event specific properties
+  
+  export interface MouseEvent<T = Element> extends SyntheticEvent<T> {}
+  export interface KeyboardEvent<T = Element> extends SyntheticEvent<T> {
+    altKey: boolean;
+    ctrlKey: boolean;
+    key: string;
+    keyCode: number;
+    metaKey: boolean;
+    shiftKey: boolean;
   }
 }
