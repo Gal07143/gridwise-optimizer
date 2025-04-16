@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Insight, MLService, MLServiceConfig } from '../types/mlService';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
-import { Badge } from './ui/badge'; // Import the Badge component
+import { Badge } from './ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Progress } from './ui/progress';
 
@@ -128,10 +128,10 @@ const MLInsights: React.FC = () => {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
             {insights.map((insight, index) => (
-              <Card key={index} className={`bg-card hover:shadow-md transition-shadow border-l-4 ${
+              <Card className={`bg-card hover:shadow-md transition-shadow border-l-4 ${
                 insight.trend === 'up' ? 'border-l-red-500' : 
                 insight.trend === 'down' ? 'border-l-green-500' : 'border-l-amber-500'
-              }`}>
+              }`} key={index}>
                 <CardContent className="p-4">
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex items-center">
@@ -139,7 +139,7 @@ const MLInsights: React.FC = () => {
                       <h3 className="font-semibold ml-2">{insight.title}</h3>
                     </div>
                     <Badge variant={
-                      insight.trend === 'up' ? 'danger' :
+                      insight.trend === 'up' ? 'destructive' :
                       insight.trend === 'down' ? 'success' : 
                       'warning'
                     }>
@@ -164,6 +164,7 @@ const MLInsights: React.FC = () => {
               <TabsTrigger value="accuracy">Model Accuracy</TabsTrigger>
               <TabsTrigger value="anomalies">Anomalies</TabsTrigger>
             </TabsList>
+            
             <TabsContent value="predictions" className="pt-4">
               <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -178,6 +179,7 @@ const MLInsights: React.FC = () => {
                 </ResponsiveContainer>
               </div>
             </TabsContent>
+            
             <TabsContent value="accuracy" className="pt-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
@@ -228,6 +230,7 @@ const MLInsights: React.FC = () => {
                 </div>
               </div>
             </TabsContent>
+            
             <TabsContent value="anomalies" className="pt-4">
               <div className="flex flex-col space-y-3">
                 <div className="flex items-center p-3 bg-red-50 dark:bg-red-900/20 rounded-md">

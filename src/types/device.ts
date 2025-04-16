@@ -3,117 +3,65 @@ export interface Device {
   id: string;
   name: string;
   type: string;
-  protocol: string;
-  status: 'online' | 'offline' | 'warning' | 'error';
+  status: string;
+  protocol?: string;
   location?: string;
-  description?: string;
-  manufacturer?: string;
-  model?: string;
-  serial_number?: string;
   firmware_version?: string;
-  installation_date?: string;
-  last_maintenance?: string;
-  ip_address?: string;
-  mac_address?: string;
-  created_at: string;
-  updated_at: string;
-  tags?: string[];
-  metadata?: Record<string, any>;
-  capabilities?: string[];
-  group_id?: string;
-  site_id?: string;
-  parent_id?: string;
-  // Additional properties needed
-  firmware?: string;
-  lastSeen?: string;
-  last_seen?: string;
-  mqtt_topic?: string;
-  http_endpoint?: string;
-  port?: number;
-  slave_id?: number;
-  capacity?: number;
+  created_at?: Date | string;
+  updated_at?: Date | string;
+  last_seen?: Date | string;
+  metrics?: Record<string, any>;
+  connection_info?: Record<string, any>;
+  config?: Record<string, any>;
 }
 
-export interface DeviceCredentials {
+export interface TelemetryData {
   id: string;
-  device_id: string;
-  username?: string;
-  password?: string;
-  api_key?: string;
-  token?: string;
-  certificate?: string;
-  last_rotated?: string;
+  deviceId: string;
+  timestamp: string;
+  parameter?: string;
+  value?: number;
+  unit?: string;
+  power?: number;
+  energy?: number;
+  voltage?: number;
+  current?: number;
+  data?: Record<string, any>;
+  temperature?: number;
+  measurement?: string;
 }
 
-export interface DeviceGroup {
+export interface DeviceStatus {
   id: string;
-  name: string;
-  description?: string;
-  parent_id?: string;
-  devices: string[];
-  created_at: string;
-  updated_at: string;
+  deviceId: string;
+  timestamp: Date;
+  status: 'online' | 'offline' | 'error' | 'maintenance';
+  details?: string;
+}
+
+export interface DeviceEvent {
+  id: string;
+  deviceId: string;
+  timestamp: Date;
+  eventType: string;
+  severity: 'info' | 'warning' | 'error' | 'critical';
+  message: string;
+  details?: Record<string, any>;
 }
 
 export interface DeviceCommand {
   id: string;
-  device_id: string;
+  deviceId: string;
   command: string;
   parameters?: Record<string, any>;
-  status: 'pending' | 'sent' | 'delivered' | 'executed' | 'failed' | 'timeout';
-  result?: any;
-  sent_at?: string;
-  completed_at?: string;
-  error?: string;
+  timestamp: Date;
+  status: 'pending' | 'sent' | 'acknowledged' | 'executed' | 'failed';
+  result?: Record<string, any>;
 }
 
-export interface DeviceConfiguration {
-  id: string;
-  device_id: string;
-  config: Record<string, any>;
-  version: number;
-  active: boolean;
-  created_at: string;
-  applied_at?: string;
-}
-
-// Export TelemetryData directly
-export interface TelemetryData {
-  id: string;
-  timestamp: string;
-  value: number;
-  parameter: string;
-  deviceId: string;
-  device_id: string;
-  measurement: string;
-  unit: string;
-  data?: any;
-  [key: string]: any;
-}
-
-// Add missing types for Dashboard.tsx
-export interface TelemetryStats {
-  deviceId: string;
-  deviceName: string;
-  lastUpdate: string;
-  dataPoints: number;
-}
-
-export type { TelemetryData as TelemetryFromTelemetry } from './telemetry';
-
-// Add types for lib/api/energy.ts
-export interface EnergyMetrics {
-  consumption: number;
-  production: number;
-  grid_import: number;
-  grid_export: number;
-  self_consumption: number;
-  timestamp: string;
-}
-
-export interface ForecastData {
-  timestamp: string;
-  value: number;
-  type: string;
-  confidence: number;
+export interface DeviceOperationalMetrics {
+  uptime: number;
+  errorRate: number;
+  responseTime: number;
+  lastCommunication: Date;
 }

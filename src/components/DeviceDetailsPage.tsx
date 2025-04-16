@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Device } from '@/types/device';
 import { TelemetryData } from '@/types/telemetry';
@@ -28,7 +27,12 @@ export const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({ deviceId }
         
         // Fetch telemetry data
         const telemetry = await deviceService.fetchDeviceTelemetry(deviceId, { limit: 100 });
-        setTelemetryData(telemetry);
+        // Ensure timestamp is properly handled (could be string or Date)
+        const parsedTelemetry = telemetry.map(item => ({
+          ...item,
+          timestamp: item.timestamp instanceof Date ? item.timestamp : new Date(item.timestamp)
+        }));
+        setTelemetryData(parsedTelemetry);
         
         setError(null);
       } catch (err) {
@@ -43,8 +47,15 @@ export const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({ deviceId }
     // Subscribe to real-time updates
     const telemetrySubscription = deviceService.subscribeToDeviceTelemetry(deviceId, (payload) => {
       setTelemetryData(prevData => {
-        const newData = payload.new as TelemetryData;
-        const updatedData = [...prevData, newData];
+        const newDataItem = payload.new as TelemetryData;
+        // Ensure the timestamp is a Date object
+        const parsedItem = {
+          ...newDataItem,
+          timestamp: newDataItem.timestamp instanceof Date ? 
+            newDataItem.timestamp : 
+            new Date(newDataItem.timestamp as string)
+        };
+        const updatedData = [...prevData, parsedItem];
         // Keep only the most recent 100 data points
         return updatedData.slice(-100);
       });
@@ -196,13 +207,19 @@ export const DeviceDetailsPage: React.FC<DeviceDetailsPageProps> = ({ deviceId }
         )}
         
         {activeTab === 'health' && device && (
-          <DeviceHealthVisualization device={device} telemetryData={telemetryData} />
+          <DeviceHealthVisualization 
+            device={device} 
+            telemetryData={telemetryData as any} 
+          />
         )}
         
         {activeTab === 'optimization' && device && (
-          <EnergyOptimizationVisualization device={device} telemetryData={telemetryData} />
+          <EnergyOptimizationVisualization 
+            device={device} 
+            telemetryData={telemetryData as any}
+          />
         )}
       </div>
     </div>
   );
-}; 
+};

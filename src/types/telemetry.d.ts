@@ -1,9 +1,11 @@
 
 export interface TelemetryData {
   id: string;
-  deviceId: string;
-  timestamp: Date;
+  deviceId?: string;
+  device_id?: string; // For compatibility with backend
+  timestamp: Date | string;
   parameter?: string;
+  measurement?: string; // For compatibility with device telemetry
   value?: number;
   unit?: string;
   data?: Record<string, any>;
@@ -17,8 +19,6 @@ export interface TelemetryData {
   errorCount?: number;
   uptime?: number;
   loadFactor?: number;
-  device_id?: string; // For compatibility with backend
-  measurement?: string; // For compatibility with device telemetry
   [key: string]: any; // Allow for additional properties
 }
 

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { AIAgentService, AgentDecision } from '@/services/aiAgentService';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -244,13 +245,18 @@ export const AIAgentDecisions: React.FC<AIAgentDecisionsProps> = ({
           <CardTitle>AI Agent Decisions</CardTitle>
           <CardDescription>Decisions made by the AI agent</CardDescription>
         </div>
-        <Button variant="outline" size="sm" onClick={handleRefresh} className="flex items-center gap-1">
+        <Button 
+          className="flex items-center gap-1"
+          size="sm" 
+          onClick={handleRefresh} 
+          variant="outline"
+        >
           <RefreshCw className="h-4 w-4" />
           Refresh
         </Button>
       </CardHeader>
       <CardContent>
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid grid-cols-5 mb-4">
             <TabsTrigger value="pending">Pending</TabsTrigger>
             <TabsTrigger value="approved">Approved</TabsTrigger>
@@ -390,4 +396,4 @@ export const AIAgentDecisions: React.FC<AIAgentDecisionsProps> = ({
       </CardContent>
     </Card>
   );
-}; 
+};

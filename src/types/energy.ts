@@ -1,120 +1,79 @@
 
-export type DeviceType = 'solar' | 'battery' | 'inverter' | 'meter' | 'ev_charger' | 'load' | 'grid' | 'generator' | 'wind' | 'other';
-
-export type DeviceStatus = 'online' | 'offline' | 'warning' | 'error' | 'maintenance';
-
 export interface EnergyDevice {
   id: string;
   name: string;
-  type: DeviceType;
-  status: DeviceStatus;
-  location?: string;
-  capacity?: number;
-  firmware?: string;
+  type: string;
+  capacity: number;
+  status: 'online' | 'offline' | 'maintenance' | 'error' | 'warning';
   description?: string;
-  manufacturer?: string;
-  model?: string;
-  installation_date?: string;
-  last_maintenance?: string;
+  location?: string;
   site_id?: string;
-  ip_address?: string;
-  mac_address?: string;
-  last_seen?: string;
-  serial_number?: string;
+  lat?: number;
+  lng?: number;
+  firmware?: string;
+  protocol?: string;
+  created_at?: Date;
+  updated_at?: Date;
+  last_updated?: Date;
+  installation_date?: Date;
+  metrics?: Record<string, any>;
+  config?: Record<string, any>;
+  connection_info?: Record<string, any>;
+  tags?: string[];
 }
 
-export interface ConsumptionData {
-  timestamp: string;
-  value: number;
-  unit: string;
-}
-
-export interface DeviceState {
-  power: number;
-  energy: number;
-  voltage: number;
-  current: number;
-  frequency: number;
-  temperature: number;
-  state_of_charge?: number;
-  state_of_health?: number;
-}
-
-// Define the Site interface to avoid conflicts with site.ts
-export interface SiteEnergy {
+export interface EnergySite {
   id: string;
   name: string;
-  address: string;
+  location: string;
   timezone: string;
-  geo_location?: {
-    latitude: number;
-    longitude: number;
-  };
-  active: boolean;
-  created_at: string;
-  updated_at: string;
+  lat?: number;
+  lng?: number;
+  created_at?: Date;
+  updated_at?: Date;
 }
 
-// Add these types for useForecast.ts
-export interface ProcessedForecastData {
-  timestamp: string;
-  production: number;
-  consumption: number;
-  balance: number;
-}
-
-export interface ForecastMetrics {
-  totalConsumption: number;
-  totalGeneration?: number;
-  peakLoad: number;
-  minLoad: number;
-  averageProduction: number;
-  selfConsumptionRate: number;
-  gridDependenceRate: number;
-  netEnergy?: number;
-}
-
-// Add EnergyReading interface for useLiveTelemetry
-export interface EnergyReading {
-  timestamp: string;
-  value: number;
-  type: string;
-  deviceId: string;
-  unit: string;
-}
-
-// Add SystemRecommendation for usePredictions
-export interface SystemRecommendation {
+export interface EnergyTariff {
   id: string;
-  timestamp: string;
-  type: string;
-  description: string;
-  priority: 'high' | 'medium' | 'low';
-  impact: number;
-  implemented: boolean;
-  savings?: number;
-  category?: string;
+  name: string;
+  description?: string;
+  peak_rate: number;
+  off_peak_rate: number;
+  shoulder_rate?: number;
+  peak_hours: string[];
+  off_peak_hours: string[];
+  shoulder_hours?: string[];
+  valid_from: Date;
+  valid_to?: Date;
+  created_at?: Date;
+  updated_at?: Date;
 }
 
-// Add EnergyMetrics for lib/api/energy.ts
-export interface EnergyMetrics {
-  consumption: number;
-  production: number;
-  grid_import: number;
-  grid_export: number;
-  self_consumption: number;
-  peak_power: number;
-  timestamp: string;
-}
-
-// Add ForecastData for lib/api/energy.ts
-export interface ForecastData {
-  timestamp: string;
+export interface EnergyConsumption {
+  timestamp: Date;
   value: number;
-  type: string;
-  confidence: number;
+  unit: string;
+  device_id?: string;
+  site_id?: string;
+  category?: string;
+  source?: string;
 }
 
-// Import Site type from site.ts for compatibility
-import { Site } from './site';
-export { Site };
+export interface EnergyProduction {
+  timestamp: Date;
+  value: number;
+  unit: string;
+  device_id?: string;
+  site_id?: string;
+  source?: string;
+}
+
+export interface BatteryStatus {
+  timestamp: Date;
+  state_of_charge: number;
+  power: number;
+  status: 'charging' | 'discharging' | 'idle' | 'error';
+  temperature?: number;
+  voltage?: number;
+  current?: number;
+}

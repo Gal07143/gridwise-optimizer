@@ -4,24 +4,25 @@ import { supabase } from '@/integrations/supabase/client';
 import { EnergyDevice } from '@/types/energy';
 import { toast } from 'sonner';
 
-export function useDevices(siteId?: string) {
-  try {
-    // Using dynamic import to avoid circular dependency
-    const { useDevicesContext } = require('@/contexts/DeviceContext');
-    const deviceContext = useDevicesContext();
-    
-    // If we have access to the device context, use it
-    if (deviceContext) {
-      return deviceContext;
-    }
-  } catch (error) {
-    // Context not available or circular dependency, proceed with local implementation
-  }
+// Create a wrapper for device context to avoid circular dependencies
+// This is done to prevent the "useDevices must be used within a DeviceProvider" error
+let deviceContextInstance: any = null;
+export function setDeviceContextInstance(instance: any) {
+  deviceContextInstance = instance;
+}
 
+export function useDevices(siteId?: string) {
+  // Try to use the device context if available
+  if (deviceContextInstance) {
+    return deviceContextInstance;
+  }
+  
+  // If context not available (or we're initializing the context itself), use local implementation
   const [devices, setDevices] = useState<EnergyDevice[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [deviceTelemetry, setDeviceTelemetry] = useState<Record<string, any[]>>({});
+  const [selectedDevice, setSelectedDevice] = useState<EnergyDevice | null>(null);
 
   const fetchDevices = async () => {
     try {
@@ -40,6 +41,12 @@ export function useDevices(siteId?: string) {
       }
       
       setDevices(data as EnergyDevice[]);
+      
+      // Set first device as selected if we don't have one already
+      if (!selectedDevice && data && data.length > 0) {
+        setSelectedDevice(data[0] as EnergyDevice);
+      }
+      
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch devices';
       setError(err instanceof Error ? err : new Error(errorMessage));
@@ -47,6 +54,51 @@ export function useDevices(siteId?: string) {
       console.error('Error fetching devices:', err);
     } finally {
       setLoading(false);
+    }
+  };
+  
+  const fetchDeviceTelemetry = async (deviceId: string) => {
+    try {
+      // Mock implementation - in a real app this would fetch from API
+      setDeviceTelemetry(prev => ({
+        ...prev,
+        [deviceId]: Array(24).fill(0).map((_, i) => ({
+          id: `telemetry-${i}`,
+          deviceId: deviceId,
+          timestamp: new Date(Date.now() - i * 60 * 60 * 1000),
+          power: Math.random() * 5,
+          energy: Math.random() * 10,
+          voltage: 220 + Math.random() * 10,
+          current: Math.random() * 20
+        }))
+      }));
+    } catch (err) {
+      console.error('Error fetching device telemetry:', err);
+    }
+  };
+  
+  const selectDevice = (device: EnergyDevice) => {
+    setSelectedDevice(device);
+  };
+  
+  const createDevice = async (deviceData: Partial<EnergyDevice>): Promise<EnergyDevice> => {
+    try {
+      const { data, error } = await supabase
+        .from('devices')
+        .insert([{ ...deviceData, created_at: new Date() }])
+        .select();
+        
+      if (error) throw new Error(error.message);
+      if (!data || data.length === 0) throw new Error('Failed to create device');
+      
+      // Refresh the device list
+      fetchDevices();
+      
+      return data[0] as EnergyDevice;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create device';
+      toast.error(errorMessage);
+      throw err;
     }
   };
 
@@ -59,6 +111,10 @@ export function useDevices(siteId?: string) {
     loading,
     error,
     refetch: fetchDevices,
-    deviceTelemetry
+    deviceTelemetry,
+    fetchDeviceTelemetry,
+    selectedDevice,
+    selectDevice,
+    createDevice
   };
 }

@@ -5,7 +5,7 @@ import React, { ReactNode, Ref } from 'react';
 export interface ButtonProps {
   children?: ReactNode;
   className?: string;
-  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link' | 'success' | 'warning' | 'info';
+  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link' | 'success' | 'warning' | 'info' | 'danger';
   size?: 'default' | 'sm' | 'lg' | 'icon' | 'full';
   onClick?: () => void;
   disabled?: boolean;
@@ -104,6 +104,10 @@ export interface LabelProps {
   htmlFor?: string;
   className?: string;
   children?: ReactNode;
+  variant?: 'default' | 'muted' | 'error' | 'success';
+  size?: 'default' | 'sm' | 'lg';
+  required?: boolean;
+  helperText?: string;
 }
 
 // Select component props
@@ -133,12 +137,14 @@ export interface SelectItemProps {
   value: string;
   className?: string;
   children?: ReactNode;
+  key?: string;
 }
 
 export interface DeviceParameterProps {
   name: string;
   value: string;
   unit?: string;
+  key?: string; 
 }
 
 // Progress component props

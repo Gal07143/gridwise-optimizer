@@ -1,208 +1,165 @@
 
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import useDeviceForm from '@/hooks/useDeviceForm';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useDevices } from '@/hooks/useDevices';
 import { toast } from 'sonner';
 
 interface AddDeviceDialogProps {
   children: React.ReactNode;
+  onSave?: () => void;
 }
 
-export function AddDeviceDialog({ children }: AddDeviceDialogProps) {
+export const AddDeviceDialog: React.FC<AddDeviceDialogProps> = ({ 
+  children,
+  onSave,
+}) => {
   const [open, setOpen] = useState(false);
-  const {
-    device: formValues,
-    handleInputChange,
-    handleSelectChange,
-    handleSubmit,
-    isSaving,
-    validationErrors,
-    clearValidationError,
-  } = useDeviceForm();
+  const [deviceName, setDeviceName] = useState('');
+  const [deviceType, setDeviceType] = useState('smart_meter');
+  const [deviceCapacity, setDeviceCapacity] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const onSubmit = async (e: React.FormEvent) => {
+  const { createDevice } = useDevices();
+  
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const result = await handleSubmit();
     
-    if (result) {
+    if (!deviceName || !deviceType) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+    
+    try {
+      setIsSubmitting(true);
+      
+      await createDevice({
+        name: deviceName,
+        type: deviceType,
+        capacity: deviceCapacity ? parseFloat(deviceCapacity) : 0,
+        status: 'online',
+      });
+      
+      toast.success('Device added successfully!');
       setOpen(false);
-      toast.success('Device added successfully');
+      setDeviceName('');
+      setDeviceType('smart_meter');
+      setDeviceCapacity('');
+      
+      if (onSave) onSave();
+    } catch (error) {
+      console.error('Error adding device:', error);
+      toast.error('Failed to add device');
+    } finally {
+      setIsSubmitting(false);
     }
   };
   
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <div onClick={() => setOpen(true)}>
+        {children}
+      </div>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Add New Device</DialogTitle>
+          <DialogDescription>
+            Fill in the details for the new energy device.
+          </DialogDescription>
         </DialogHeader>
-        
-        <form onSubmit={onSubmit} className="space-y-4">
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">
-                Name
-              </Label>
-              <Input
-                id="name"
-                name="name"
-                value={formValues.name}
-                onChange={handleInputChange}
-                className="col-span-3"
-                placeholder="Device name"
-                required
-                onFocus={() => clearValidationError('name')}
-              />
-              {validationErrors.name && (
-                <p className="col-span-3 col-start-2 text-sm text-red-500">
-                  {validationErrors.name}
-                </p>
-              )}
-            </div>
 
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="location" className="text-right">
-                Location
-              </Label>
-              <Input
-                id="location"
-                name="location"
-                value={formValues.location}
-                onChange={handleInputChange}
-                className="col-span-3"
-                placeholder="Device location"
-                required
-                onFocus={() => clearValidationError('location')}
-              />
-              {validationErrors.location && (
-                <p className="col-span-3 col-start-2 text-sm text-red-500">
-                  {validationErrors.location}
-                </p>
-              )}
-            </div>
-
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="type" className="text-right">
-                Type
-              </Label>
-              <Select 
-                name="type" 
-                value={formValues.type} 
-                onValueChange={(value) => handleSelectChange('type', value)}
-              >
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Select device type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="inverter">Inverter</SelectItem>
-                  <SelectItem value="battery">Battery</SelectItem>
-                  <SelectItem value="solar">Solar Panel</SelectItem>
-                  <SelectItem value="meter">Smart Meter</SelectItem>
-                  <SelectItem value="ev_charger">EV Charger</SelectItem>
-                  <SelectItem value="controller">Controller</SelectItem>
-                  <SelectItem value="sensor">Sensor</SelectItem>
-                </SelectContent>
-              </Select>
-              {validationErrors.type && (
-                <p className="col-span-3 col-start-2 text-sm text-red-500">
-                  {validationErrors.type}
-                </p>
-              )}
-            </div>
-
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="status" className="text-right">
-                Status
-              </Label>
-              <Select 
-                name="status" 
-                value={formValues.status} 
-                onValueChange={(value) => handleSelectChange('status', value)}
-              >
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Select device status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="online">Online</SelectItem>
-                  <SelectItem value="offline">Offline</SelectItem>
-                  <SelectItem value="maintenance">Maintenance</SelectItem>
-                </SelectContent>
-              </Select>
-              {validationErrors.status && (
-                <p className="col-span-3 col-start-2 text-sm text-red-500">
-                  {validationErrors.status}
-                </p>
-              )}
-            </div>
-
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="capacity" className="text-right">
-                Capacity (kW)
-              </Label>
-              <Input
-                id="capacity"
-                name="capacity"
-                type="number"
-                value={formValues.capacity || ''}
-                onChange={handleInputChange}
-                className="col-span-3"
-                placeholder="Device capacity"
-                onFocus={() => clearValidationError('capacity')}
-              />
-              {validationErrors.capacity && (
-                <p className="col-span-3 col-start-2 text-sm text-red-500">
-                  {validationErrors.capacity}
-                </p>
-              )}
-            </div>
-
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="firmware" className="text-right">
-                Firmware
-              </Label>
-              <Input
-                id="firmware"
-                name="firmware"
-                value={formValues.firmware || ''}
-                onChange={handleInputChange}
-                className="col-span-3"
-                placeholder="Firmware version"
-                onFocus={() => clearValidationError('firmware')}
-              />
-            </div>
-
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="description" className="text-right">
-                Description
-              </Label>
-              <Input
-                id="description"
-                name="description"
-                value={formValues.description || ''}
-                onChange={handleInputChange}
-                className="col-span-3"
-                placeholder="Device description (optional)"
-                onFocus={() => clearValidationError('description')}
-              />
-            </div>
-
+        <form onSubmit={handleSubmit} className="space-y-4 py-4">
+          <div className="space-y-1">
+            <Label
+              className="text-sm font-medium leading-none"
+              htmlFor="device-name"
+            >
+              Device Name
+            </Label>
+            <Input
+              id="device-name"
+              placeholder="Enter device name"
+              value={deviceName}
+              onChange={(e) => setDeviceName(e.target.value)}
+            />
           </div>
           
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+          <div className="space-y-1">
+            <Label 
+              className="text-sm font-medium leading-none"
+              htmlFor="device-type"
+            >
+              Device Type
+            </Label>
+            <Select
+              value={deviceType}
+              onValueChange={setDeviceType}
+            >
+              <SelectTrigger
+                className="w-full"
+                id="device-type"
+              >
+                <SelectValue placeholder="Select device type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="smart_meter">Smart Meter</SelectItem>
+                <SelectItem value="solar_inverter">Solar Inverter</SelectItem>
+                <SelectItem value="battery">Battery Storage</SelectItem>
+                <SelectItem value="ev_charger">EV Charger</SelectItem>
+                <SelectItem value="hvac">HVAC System</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="space-y-1">
+            <Label
+              className="text-sm font-medium leading-none"
+              htmlFor="device-capacity"
+            >
+              Capacity (kW/kWh)
+            </Label>
+            <Input
+              id="device-capacity"
+              type="number"
+              placeholder="Enter device capacity"
+              value={deviceCapacity}
+              onChange={(e) => setDeviceCapacity(e.target.value)}
+            />
+          </div>
+
+          <DialogFooter className="pt-4">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => setOpen(false)}
+            >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSaving}>
-              {isSaving ? 'Adding...' : 'Add Device'}
+            <Button 
+              type="submit"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Adding...' : 'Add Device'}
             </Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
   );
-}
+};

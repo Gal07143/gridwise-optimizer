@@ -1,214 +1,142 @@
 
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { toast } from 'sonner';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { useDevicesContext } from '@/contexts/DeviceContext';
 
-/**
- * Types for microgrid metrics and status
- */
-export type GridStatus = 'connected' | 'disconnected' | 'unknown';
-export type DeviceType = 'battery' | 'grid' | 'solar' | 'wind' | 'load';
-
-export interface MicrogridMetrics {
-  isConnected: boolean;
-  totalPower: number;
-  batteryLevel: number;
-  gridStatus: GridStatus;
-  solarPower: number;
-  windPower: number;
-  loadPower: number;
-  efficiency: number;
-  lastUpdated: Date;
+interface MicrogridState {
+  solarProduction: number;
+  batteryCharge: number;
+  gridPower: number;
+  homeConsumption: number;
+  batteryStatus: 'charging' | 'discharging' | 'idle';
+  gridStatus: 'importing' | 'exporting' | 'neutral';
 }
 
-export interface MicrogridState extends MicrogridMetrics {
+interface MicrogridContextType {
+  state: MicrogridState;
   isLoading: boolean;
-  error: string | null;
+  error: Error | null;
+  updateMicrogrid: (data: Partial<MicrogridState>) => void;
 }
 
-export interface MicrogridContextType extends MicrogridState {
-  refreshMetrics: () => Promise<void>;
-  getDeviceMetrics: (type: DeviceType) => {
-    count: number;
-    totalPower: number;
-    averageEfficiency: number;
-  };
-}
-
-/**
- * Default values for microgrid context
- */
-const defaultContext: MicrogridContextType = {
-  isConnected: false,
-  totalPower: 0,
-  batteryLevel: 0,
-  gridStatus: 'unknown',
-  solarPower: 0,
-  windPower: 0,
-  loadPower: 0,
-  efficiency: 0,
-  lastUpdated: new Date(),
-  isLoading: false,
-  error: null,
-  refreshMetrics: async () => {},
-  getDeviceMetrics: () => ({ count: 0, totalPower: 0, averageEfficiency: 0 }),
+const defaultState: MicrogridState = {
+  solarProduction: 0,
+  batteryCharge: 50,
+  gridPower: 0,
+  homeConsumption: 0,
+  batteryStatus: 'idle',
+  gridStatus: 'neutral',
 };
 
-const MicrogridContext = createContext<MicrogridContextType>(defaultContext);
+const MicrogridContext = createContext<MicrogridContextType | null>(null);
 
-/**
- * Hook to access microgrid context
- */
-export const useMicrogrid = () => useContext(MicrogridContext);
+export const useMicrogrid = () => {
+  const context = useContext(MicrogridContext);
+  if (!context) {
+    throw new Error('useMicrogrid must be used within a MicrogridProvider');
+  }
+  return context;
+};
 
 interface MicrogridProviderProps {
   children: ReactNode;
-  refreshInterval?: number; // in milliseconds
 }
 
-// Helper interface for telemetry data
-interface TelemetryData {
-  id?: string;
-  device_id?: string;
-  timestamp?: Date;
-  parameter?: string;
-  value?: number;
-  unit?: string;
-  data?: Record<string, any>;
-}
-
-/**
- * Provider component for microgrid-related data and state
- * Manages connection status, power metrics, and grid status
- */
-const MicrogridProvider: React.FC<MicrogridProviderProps> = ({ 
-  children,
-  refreshInterval = 30000, // 30 seconds default
-}) => {
-  // Import useDevices hook independently to avoid circular dependency
-  const { devices = [], deviceTelemetry = {} } = require('@/hooks/useDevices').useDevices();
+const MicrogridProvider: React.FC<MicrogridProviderProps> = ({ children }) => {
+  const [state, setState] = useState<MicrogridState>(defaultState);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
   
-  const [state, setState] = useState<MicrogridState>({
-    ...defaultContext,
-    isLoading: true,
-  });
+  // Use device context if available, otherwise proceed without it
+  let deviceContext;
+  try {
+    deviceContext = useDevicesContext();
+  } catch (error) {
+    console.log('Device context not available in MicrogridProvider');
+  }
 
-  /**
-   * Get the latest telemetry data for a device
-   */
-  const getLatestTelemetry = useCallback((deviceId: string): TelemetryData | null => {
-    const telemetry = deviceTelemetry[deviceId];
-    if (telemetry && telemetry.length > 0) {
-      return telemetry[0];
-    }
-    return null;
-  }, [deviceTelemetry]);
-
-  /**
-   * Calculate metrics for a specific device type
-   */
-  const calculateDeviceMetrics = useCallback((type: DeviceType) => {
-    const typeDevices = (devices || []).filter(device => device.type === type && device.status === 'online');
-    const totalPower = typeDevices.reduce((sum, device) => {
-      const telemetry = getLatestTelemetry(device.id);
-      return sum + (telemetry?.data?.power || 0);
-    }, 0);
-    const averageEfficiency = typeDevices.length > 0 ? 
-      (typeDevices.reduce((sum, device) => {
-        const telemetry = getLatestTelemetry(device.id);
-        return sum + (telemetry?.data?.efficiency || 0);
-      }, 0) / typeDevices.length) : 0;
-
-    return {
-      count: typeDevices.length,
-      totalPower,
-      averageEfficiency,
+  useEffect(() => {
+    const fetchMicrogridData = async () => {
+      try {
+        setIsLoading(true);
+        
+        // In a real application, this would fetch data from an API
+        // For now, we'll use simulated data
+        const now = new Date();
+        const hour = now.getHours();
+        
+        // Simulate solar production based on time of day
+        let solarProduction = 0;
+        if (hour >= 6 && hour <= 18) {
+          // Peak solar production at noon (hour 12)
+          const peakFactor = 1 - Math.abs(hour - 12) / 6;
+          solarProduction = 7 * peakFactor * (0.85 + Math.random() * 0.3);
+        }
+        
+        // Simulate battery dynamics
+        let batteryCharge = 30 + Math.random() * 60;
+        let batteryStatus: 'charging' | 'discharging' | 'idle' = 'idle';
+        
+        if (solarProduction > 3.5) {
+          batteryStatus = 'charging';
+        } else if (hour >= 18 || hour <= 6) {
+          batteryStatus = 'discharging';
+        }
+        
+        // Simulate home consumption
+        let homeConsumption = 1 + Math.random();
+        if (hour >= 7 && hour <= 9) {
+          homeConsumption = 3 + Math.random() * 2; // Morning peak
+        } else if (hour >= 17 && hour <= 22) {
+          homeConsumption = 4 + Math.random() * 3; // Evening peak
+        }
+        
+        // Calculate grid power
+        const gridPower = homeConsumption - solarProduction - 
+          (batteryStatus === 'discharging' ? 2 : batteryStatus === 'charging' ? -1 : 0);
+        
+        // Determine grid status
+        let gridStatus: 'importing' | 'exporting' | 'neutral' = 'neutral';
+        if (gridPower > 0.2) {
+          gridStatus = 'importing';
+        } else if (gridPower < -0.2) {
+          gridStatus = 'exporting';
+        }
+        
+        setState({
+          solarProduction: Number(solarProduction.toFixed(2)),
+          batteryCharge: Number(batteryCharge.toFixed(1)),
+          gridPower: Number(gridPower.toFixed(2)),
+          homeConsumption: Number(homeConsumption.toFixed(2)),
+          batteryStatus,
+          gridStatus,
+        });
+        
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching microgrid data:', err);
+        setError(err instanceof Error ? err : new Error('Failed to fetch microgrid data'));
+      } finally {
+        setIsLoading(false);
+      }
     };
-  }, [devices, getLatestTelemetry]);
 
-  /**
-   * Calculate all microgrid metrics based on device data
-   */
-  const calculateMetrics = useCallback(async () => {
-    try {
-      setState(prev => ({ ...prev, isLoading: true, error: null }));
-
-      const connectedDevices = (devices || []).filter(device => device.status === 'online');
-      const totalPower = connectedDevices.reduce((sum, device) => {
-        const telemetry = getLatestTelemetry(device.id);
-        return sum + (telemetry?.data?.power || 0);
-      }, 0);
-
-      const batteryMetrics = calculateDeviceMetrics('battery');
-      const solarMetrics = calculateDeviceMetrics('solar');
-      const windMetrics = calculateDeviceMetrics('wind');
-      const loadMetrics = calculateDeviceMetrics('load');
-
-      const gridDevices = connectedDevices.filter(device => device.type === 'grid');
-      const gridStatus = gridDevices.length > 0
-        ? gridDevices.some(device => {
-            const telemetry = getLatestTelemetry(device.id);
-            return telemetry?.data?.gridConnected;
-          })
-          ? 'connected'
-          : 'disconnected'
-        : 'unknown';
-
-      const efficiency = connectedDevices.length > 0 ? 
-        (connectedDevices.reduce((sum, device) => {
-          const telemetry = getLatestTelemetry(device.id);
-          return sum + (telemetry?.data?.efficiency || 0);
-        }, 0) / connectedDevices.length) : 0;
-
-      setState({
-        isConnected: connectedDevices.length > 0,
-        totalPower,
-        batteryLevel: batteryMetrics.totalPower,
-        gridStatus,
-        solarPower: solarMetrics.totalPower,
-        windPower: windMetrics.totalPower,
-        loadPower: loadMetrics.totalPower,
-        efficiency,
-        lastUpdated: new Date(),
-        isLoading: false,
-        error: null,
-      });
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to calculate metrics';
-      setState(prev => ({
-        ...prev,
-        isLoading: false,
-        error: errorMessage,
-      }));
-      toast.error(errorMessage);
-    }
-  }, [devices, calculateDeviceMetrics, getLatestTelemetry]);
-
-  /**
-   * Get metrics for a specific device type
-   */
-  const getDeviceMetrics = useCallback((type: DeviceType) => {
-    return calculateDeviceMetrics(type);
-  }, [calculateDeviceMetrics]);
-
-  // Initial metrics calculation
-  useEffect(() => {
-    calculateMetrics();
-  }, [calculateMetrics]);
-
-  // Set up refresh interval
-  useEffect(() => {
-    const interval = setInterval(calculateMetrics, refreshInterval);
+    fetchMicrogridData();
+    
+    // Update every minute
+    const interval = setInterval(fetchMicrogridData, 60000);
+    
     return () => clearInterval(interval);
-  }, [calculateMetrics, refreshInterval]);
+  }, []);
+
+  const updateMicrogrid = (data: Partial<MicrogridState>) => {
+    setState(prev => ({
+      ...prev,
+      ...data,
+    }));
+  };
 
   return (
-    <MicrogridContext.Provider 
-      value={{
-        ...state,
-        refreshMetrics: calculateMetrics,
-        getDeviceMetrics,
-      }}
-    >
+    <MicrogridContext.Provider value={{ state, isLoading, error, updateMicrogrid }}>
       {children}
     </MicrogridContext.Provider>
   );

@@ -33,10 +33,10 @@ export const Layout: React.FC = () => {
             <Zap className="h-6 w-6 text-blue-600 mx-auto" />
           )}
           <Button 
-            variant="ghost" 
+            className="ml-auto"
             size="icon"
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="ml-auto"
+            variant="ghost"
           >
             <Menu className="h-5 w-5" />
           </Button>
@@ -86,7 +86,7 @@ export const Layout: React.FC = () => {
             </div>
             
             <div className="flex items-center space-x-3">
-              <Button variant="outline" size="icon">
+              <Button size="icon" variant="outline">
                 <Bell className="h-4 w-4" />
               </Button>
               <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white">
