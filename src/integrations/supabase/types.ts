@@ -362,6 +362,45 @@ export type Database = {
           },
         ]
       }
+      benchmarks: {
+        Row: {
+          applicable_space_types: string[] | null
+          category: string
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          source: string | null
+          unit: string
+          updated_at: string | null
+          value: number
+        }
+        Insert: {
+          applicable_space_types?: string[] | null
+          category: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          source?: string | null
+          unit: string
+          updated_at?: string | null
+          value: number
+        }
+        Update: {
+          applicable_space_types?: string[] | null
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          source?: string | null
+          unit?: string
+          updated_at?: string | null
+          value?: number
+        }
+        Relationships: []
+      }
       billing: {
         Row: {
           billing_period: string | null
@@ -424,6 +463,110 @@ export type Database = {
           id?: string
           system_name?: string | null
           timestamp?: string | null
+        }
+        Relationships: []
+      }
+      carbon_emission_factors: {
+        Row: {
+          created_at: string | null
+          energy_category: string
+          factor: number
+          id: string
+          region: string | null
+          source: string | null
+          unit: string
+          updated_at: string | null
+          valid_from: string
+          valid_to: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          energy_category: string
+          factor: number
+          id?: string
+          region?: string | null
+          source?: string | null
+          unit: string
+          updated_at?: string | null
+          valid_from: string
+          valid_to?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          energy_category?: string
+          factor?: number
+          id?: string
+          region?: string | null
+          source?: string | null
+          unit?: string
+          updated_at?: string | null
+          valid_from?: string
+          valid_to?: string | null
+        }
+        Relationships: []
+      }
+      cost_centers: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          parent_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          parent_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          parent_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cost_centers_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "cost_centers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dashboard_customizations: {
+        Row: {
+          created_at: string | null
+          dashboard_id: string
+          id: string
+          layout: Json
+          updated_at: string | null
+          user_id: string
+          widgets: Json
+        }
+        Insert: {
+          created_at?: string | null
+          dashboard_id: string
+          id?: string
+          layout: Json
+          updated_at?: string | null
+          user_id: string
+          widgets: Json
+        }
+        Update: {
+          created_at?: string | null
+          dashboard_id?: string
+          id?: string
+          layout?: Json
+          updated_at?: string | null
+          user_id?: string
+          widgets?: Json
         }
         Relationships: []
       }
@@ -844,6 +987,39 @@ export type Database = {
           },
         ]
       }
+      energy_categories: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          display_color: string | null
+          icon: string | null
+          id: string
+          name: string
+          unit: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          display_color?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+          unit: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          display_color?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+          unit?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       energy_efficiency_metrics: {
         Row: {
           cost_impact: number | null
@@ -1232,6 +1408,112 @@ export type Database = {
             columns: ["device_id"]
             isOneToOne: false
             referencedRelation: "devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      energy_saving_measures: {
+        Row: {
+          actual_savings: number | null
+          category: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          implementation_date: string | null
+          name: string
+          project_id: string | null
+          savings_unit: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          actual_savings?: number | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          implementation_date?: string | null
+          name: string
+          project_id?: string | null
+          savings_unit?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          actual_savings?: number | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          implementation_date?: string | null
+          name?: string
+          project_id?: string | null
+          savings_unit?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "energy_saving_measures_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "energy_saving_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      energy_saving_projects: {
+        Row: {
+          created_at: string | null
+          currency: string | null
+          description: string | null
+          end_date: string | null
+          id: string
+          investment_cost: number | null
+          name: string
+          payback_period: number | null
+          space_id: string | null
+          start_date: string
+          status: string | null
+          target_savings: number | null
+          target_unit: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          investment_cost?: number | null
+          name: string
+          payback_period?: number | null
+          space_id?: string | null
+          start_date: string
+          status?: string | null
+          target_savings?: number | null
+          target_unit?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          investment_cost?: number | null
+          name?: string
+          payback_period?: number | null
+          space_id?: string | null
+          start_date?: string
+          status?: string | null
+          target_savings?: number | null
+          target_unit?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "energy_saving_projects_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
             referencedColumns: ["id"]
           },
         ]
@@ -2159,6 +2441,54 @@ export type Database = {
           },
         ]
       }
+      scheduled_reports: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          file_format: string | null
+          id: string
+          is_active: boolean | null
+          last_run_at: string | null
+          name: string
+          parameters: Json | null
+          recipients: string[] | null
+          report_type: string
+          schedule: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          file_format?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_run_at?: string | null
+          name: string
+          parameters?: Json | null
+          recipients?: string[] | null
+          report_type: string
+          schedule: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          file_format?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_run_at?: string | null
+          name?: string
+          parameters?: Json | null
+          recipients?: string[] | null
+          report_type?: string
+          schedule?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       security_settings: {
         Row: {
           allowed_origins: string[] | null
@@ -2420,6 +2750,51 @@ export type Database = {
           },
         ]
       }
+      tenant_spaces: {
+        Row: {
+          created_at: string | null
+          end_date: string | null
+          id: string
+          space_id: string
+          start_date: string
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          end_date?: string | null
+          id?: string
+          space_id: string
+          start_date: string
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          end_date?: string | null
+          id?: string
+          space_id?: string
+          start_date?: string
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_spaces_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_spaces_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenants: {
         Row: {
           contact_email: string | null
@@ -2643,6 +3018,39 @@ export type Database = {
         }
         Relationships: []
       }
+      virtual_meters: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          device_ids: string[]
+          formula: string
+          id: string
+          name: string
+          unit: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          device_ids: string[]
+          formula: string
+          id?: string
+          name: string
+          unit: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          device_ids?: string[]
+          formula?: string
+          id?: string
+          name?: string
+          unit?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       weather_data: {
         Row: {
           cloud_cover: number | null
@@ -2689,6 +3097,47 @@ export type Database = {
             columns: ["site_id"]
             isOneToOne: false
             referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      weather_normalization: {
+        Row: {
+          base_temperature: number | null
+          cooling_degree_days: number | null
+          created_at: string | null
+          date: string
+          heating_degree_days: number | null
+          id: string
+          space_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          base_temperature?: number | null
+          cooling_degree_days?: number | null
+          created_at?: string | null
+          date: string
+          heating_degree_days?: number | null
+          id?: string
+          space_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          base_temperature?: number | null
+          cooling_degree_days?: number | null
+          created_at?: string | null
+          date?: string
+          heating_degree_days?: number | null
+          id?: string
+          space_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weather_normalization_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
             referencedColumns: ["id"]
           },
         ]

@@ -5,11 +5,14 @@ import React, { ReactNode, Ref } from 'react';
 export interface ButtonProps {
   children?: ReactNode;
   className?: string;
-  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
-  size?: 'default' | 'sm' | 'lg' | 'icon';
+  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link' | 'success' | 'warning' | 'info';
+  size?: 'default' | 'sm' | 'lg' | 'icon' | 'full';
   onClick?: () => void;
   disabled?: boolean;
   type?: 'button' | 'submit' | 'reset';
+  loading?: boolean;
+  loadingText?: string;
+  asChild?: boolean;
 }
 
 // Card component props
@@ -17,6 +20,8 @@ export interface CardProps {
   className?: string;
   children?: ReactNode;
   key?: string | number;
+  variant?: 'default' | 'ghost' | 'outline' | 'elevated';
+  interactive?: boolean;
 }
 
 export interface CardHeaderProps {
@@ -35,6 +40,11 @@ export interface CardDescriptionProps {
 }
 
 export interface CardContentProps {
+  className?: string;
+  children?: ReactNode;
+}
+
+export interface CardFooterProps {
   className?: string;
   children?: ReactNode;
 }
@@ -128,7 +138,7 @@ export interface SelectItemProps {
 export interface DeviceParameterProps {
   name: string;
   value: string;
-  unit: string;
+  unit?: string;
 }
 
 // Progress component props

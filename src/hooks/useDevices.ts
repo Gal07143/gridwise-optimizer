@@ -2,23 +2,26 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { EnergyDevice } from '@/types/energy';
+import { toast } from 'sonner';
 
 export function useDevices(siteId?: string) {
-  let deviceContext;
-  
-  // Try to import the context if available, but handle the potential circular dependency
   try {
     // Using dynamic import to avoid circular dependency
-    const { useDevices: useDevicesContext } = require('@/contexts/DeviceContext');
-    deviceContext = useDevicesContext();
+    const { useDevicesContext } = require('@/contexts/DeviceContext');
+    const deviceContext = useDevicesContext();
+    
+    // If we have access to the device context, use it
+    if (deviceContext) {
+      return deviceContext;
+    }
   } catch (error) {
     // Context not available or circular dependency, proceed with local implementation
-    deviceContext = null;
   }
 
   const [devices, setDevices] = useState<EnergyDevice[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [deviceTelemetry, setDeviceTelemetry] = useState<Record<string, any[]>>({});
 
   const fetchDevices = async () => {
     try {
@@ -38,7 +41,9 @@ export function useDevices(siteId?: string) {
       
       setDevices(data as EnergyDevice[]);
     } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to fetch devices'));
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch devices';
+      setError(err instanceof Error ? err : new Error(errorMessage));
+      toast.error(errorMessage);
       console.error('Error fetching devices:', err);
     } finally {
       setLoading(false);
@@ -49,17 +54,11 @@ export function useDevices(siteId?: string) {
     fetchDevices();
   }, [siteId]);
 
-  // If we have access to the device context, use it instead
-  if (deviceContext) {
-    return deviceContext;
-  }
-
-  // Otherwise, return our local state
   return {
     devices,
     loading,
     error,
     refetch: fetchDevices,
-    deviceTelemetry: {}  // Provide an empty default for deviceTelemetry
+    deviceTelemetry
   };
 }

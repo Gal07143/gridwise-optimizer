@@ -6,6 +6,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { EnergyFlowProvider } from '@/components/dashboard/energy-flow/EnergyFlowContext';
 import { DeviceProvider } from '@/contexts/DeviceContext';
 import MicrogridProvider from '@/components/microgrid/MicrogridProvider';
+import { Toaster } from 'sonner';
 
 // Create Query Client
 const queryClient = new QueryClient({
@@ -31,6 +32,11 @@ export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
             <MicrogridProvider>
               <EnergyFlowProvider>
                 {children}
+                <Toaster 
+                  position="top-right"
+                  closeButton
+                  richColors
+                />
               </EnergyFlowProvider>
             </MicrogridProvider>
           </DeviceProvider>

@@ -1,6 +1,5 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { useDevices } from '@/hooks/useDevices';
 import { toast } from 'sonner';
 
 /**
@@ -85,7 +84,9 @@ const MicrogridProvider: React.FC<MicrogridProviderProps> = ({
   children,
   refreshInterval = 30000, // 30 seconds default
 }) => {
-  const { devices, deviceTelemetry = {} } = useDevices();
+  // Import useDevices hook independently to avoid circular dependency
+  const { devices = [], deviceTelemetry = {} } = require('@/hooks/useDevices').useDevices();
+  
   const [state, setState] = useState<MicrogridState>({
     ...defaultContext,
     isLoading: true,
