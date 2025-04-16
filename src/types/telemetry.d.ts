@@ -17,6 +17,8 @@ export interface TelemetryData {
   errorCount?: number;
   uptime?: number;
   loadFactor?: number;
+  device_id?: string; // For compatibility with backend
+  measurement?: string; // For compatibility with device telemetry
   [key: string]: any; // Allow for additional properties
 }
 

@@ -16,6 +16,7 @@ export interface ButtonProps {
 export interface CardProps {
   className?: string;
   children?: ReactNode;
+  key?: string | number;
 }
 
 export interface CardHeaderProps {
